@@ -16,3 +16,16 @@ services:
     restart: unless-stopped
     stdin_open: true
     tty: true
+
+  ping-server:
+    build: ./ping-server
+    container_name: dashboard-ping-server
+    ports:
+      - "3001:3001"
+    environment:
+      - PING_SERVER_PORT=3001
+    restart: unless-stopped
+    # Required for ICMP ping to work in container
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN

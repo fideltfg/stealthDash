@@ -66,6 +66,36 @@
   }
 }
 
+/* Custom Scrollbars */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Body and Canvas */
 body {
   margin: 0;
@@ -525,7 +555,16 @@ body {
 
 #app.locked .widget {
   cursor: default !important;
-  pointer-events: none;
+}
+
+#app.locked .widget-header {
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+#app.locked .widget-content {
+  pointer-events: auto !important;
+  cursor: auto !important;
 }
 
 #app.locked .lock-toggle {

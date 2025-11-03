@@ -583,6 +583,20 @@ class Dashboard {
   }
 
   private handleWheel(e: WheelEvent): void {
+    // Only zoom if cursor is over the canvas background, not over a widget
+    const target = e.target as HTMLElement;
+    const isOverWidget = target.closest('.widget');
+    
+    if (isOverWidget) {
+      // Let the widget handle scrolling
+      return;
+    }
+    
+    // Don't zoom when dashboard is locked
+    if (this.isLocked) {
+      return;
+    }
+    
     e.preventDefault();
     
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -796,6 +810,23 @@ class Dashboard {
         // Common embed sizes: 16:9 video ratio
         idealWidth = Math.max(400, widget.size.w);
         idealHeight = Math.max(300, widget.size.h);
+        break;
+      }
+      
+      case 'rss': {
+        // RSS feed widget needs space for multiple items
+        const rssContent = widget.content as { maxItems?: number };
+        const itemCount = rssContent.maxItems || 10;
+        // Each item is ~100px, plus header ~80px
+        idealWidth = 400;
+        idealHeight = Math.min(800, 80 + itemCount * 100);
+        break;
+      }
+      
+      case 'uptime': {
+        // Uptime widget with bar chart
+        idealWidth = 500;
+        idealHeight = 300;
         break;
       }
     }
@@ -1025,7 +1056,9 @@ class Dashboard {
       { type: 'data' as WidgetType, icon: '📊', name: 'Data', content: { json: { example: 'data', value: 123 } } },
       { type: 'embed' as WidgetType, icon: '🌐', name: 'Embed', content: { url: '', sandbox: [] } },
       { type: 'weather' as WidgetType, icon: '🌤️', name: 'Weather', content: { location: '' } },
-      { type: 'clock' as WidgetType, icon: '🕐', name: 'Clock', content: { timezone: '', format24h: true } }
+      { type: 'clock' as WidgetType, icon: '🕐', name: 'Clock', content: { timezone: '', format24h: true } },
+      { type: 'rss' as WidgetType, icon: '📰', name: 'RSS Feed', content: { feedUrl: '', maxItems: 10, refreshInterval: 5 } },
+      { type: 'uptime' as WidgetType, icon: '📊', name: 'Uptime Monitor', content: { target: '', interval: 30, timeout: 5000 } }
     ];
     
     widgetTypes.forEach(wt => {

@@ -20,12 +20,22 @@ A web-based dashboard with draggable, resizable widgets. No menus, just widgets 
 
 📱 **Responsive** - Works on desktop and tablet devices.
 
+🏓 **Uptime Monitoring** - Real network ping monitoring with backend service.
+
 ## Quick Start
 
 ### Prerequisites
 
 - Docker and Docker Compose installed
 - No local Node.js installation required!
+
+### Start with Ping Server (Recommended for Uptime Widget)
+
+```bash
+./start-with-ping.sh
+```
+
+This starts both the dashboard and the ping server for the uptime widget.
 
 ### Using the Setup Script (Recommended)
 

@@ -5,6 +5,8 @@ import { DataWidgetRenderer } from './data';
 import { EmbedWidgetRenderer } from './embed';
 import { WeatherWidgetRenderer } from './weather';
 import { ClockWidgetRenderer } from './clock';
+import { RssWidgetRenderer } from './rss';
+import { UptimeWidgetRenderer } from './uptime';
 import type { WidgetType } from '../../types';
 
 // Widget registry - plugin-like architecture
@@ -15,6 +17,8 @@ const widgetRenderers: Record<WidgetType, WidgetRenderer> = {
   embed: new EmbedWidgetRenderer(),
   weather: new WeatherWidgetRenderer(),
   clock: new ClockWidgetRenderer(),
+  rss: new RssWidgetRenderer(),
+  uptime: new UptimeWidgetRenderer(),
 };
 
 export function getWidgetRenderer(type: WidgetType): WidgetRenderer | undefined {

@@ -1,6 +1,6 @@
 // Core type definitions for the dashboard
 
-export type WidgetType = 'text' | 'image' | 'data' | 'embed' | 'weather' | 'clock';
+export type WidgetType = 'text' | 'image' | 'data' | 'embed' | 'weather' | 'clock' | 'rss' | 'uptime';
 export type Theme = 'light' | 'dark' | 'system';
 
 export interface Vec2 {
@@ -55,7 +55,19 @@ export interface ClockContent {
   showTimezone?: boolean;
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent;
+export interface RssContent {
+  feedUrl: string;
+  maxItems?: number;
+  refreshInterval?: number;
+}
+
+export interface UptimeContent {
+  target: string;
+  interval?: number; // seconds between pings
+  timeout?: number; // milliseconds
+}
+
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent;
 
 export interface Widget {
   id: string;

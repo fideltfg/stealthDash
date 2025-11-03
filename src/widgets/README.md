@@ -107,3 +107,21 @@ Shows current weather and 5-day forecast using Open-Meteo API.
 
 ### Clock Widget
 Displays time in any timezone with configurable format (12h/24h) and timezone visibility.
+
+### RSS Feed Widget
+Displays RSS/Atom feeds with auto-refresh capability. Features include:
+- Configurable number of items to display
+- Auto-refresh at specified intervals
+- Clickable items that open in new tabs
+- Shows title, date, author, and description for each item
+- Uses RSS2JSON service as a CORS proxy
+
+### Uptime Monitor Widget
+Monitors target uptime by pinging a URL or IP address. Features include:
+- Visual bar chart showing last 20 ping results
+- Color-coded bars (green < 100ms, yellow < 300ms, orange < 1s, red > 1s or timeout)
+- Real-time statistics (uptime %, average response time, sample count)
+- Configurable ping interval (5-300 seconds)
+- Configurable timeout (1-30 seconds)
+- Hover tooltips showing timestamp and response time
+- Uses HTTP HEAD requests to check availability
