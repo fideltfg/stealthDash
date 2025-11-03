@@ -2,6 +2,7 @@
 
 export type WidgetType = 'text' | 'image' | 'data' | 'embed' | 'weather' | 'clock' | 'rss' | 'uptime';
 export type Theme = 'light' | 'dark' | 'system';
+export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid';
 
 export interface Vec2 {
   x: number;
@@ -88,6 +89,7 @@ export interface Viewport {
 export interface DashboardState {
   widgets: Widget[];
   theme: Theme;
+  background: BackgroundPattern;
   grid: number;
   zoom: number;
   viewport: Viewport;

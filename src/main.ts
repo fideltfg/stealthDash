@@ -29,6 +29,7 @@ class Dashboard {
   private init(): void {
     this.setupDOM();
     this.setupTheme();
+    this.setupBackground();
     this.setupEventListeners();
     this.render();
     this.saveHistory();
@@ -101,6 +102,14 @@ class Dashboard {
     themeToggle.setAttribute('title', 'Toggle light/dark theme');
     themeToggle.addEventListener('click', () => this.toggleTheme());
     
+    // Background Toggle
+    const backgroundToggle = document.createElement('button');
+    backgroundToggle.className = 'background-toggle';
+    backgroundToggle.innerHTML = '◫';
+    backgroundToggle.setAttribute('aria-label', 'Change background pattern');
+    backgroundToggle.setAttribute('title', 'Change background pattern');
+    backgroundToggle.addEventListener('click', () => this.toggleBackground());
+    
     // Lock Toggle
     this.lockButton = document.createElement('button');
     this.lockButton.className = 'lock-toggle';
@@ -129,6 +138,7 @@ class Dashboard {
     app.appendChild(fab);
     app.appendChild(fullscreenToggle);
     app.appendChild(themeToggle);
+    app.appendChild(backgroundToggle);
     app.appendChild(this.lockButton);
     app.appendChild(resetZoomButton);
     app.appendChild(autoArrangeButton);
@@ -153,6 +163,18 @@ class Dashboard {
     const currentIndex = themes.indexOf(this.state.theme);
     this.state.theme = themes[(currentIndex + 1) % themes.length];
     this.setupTheme();
+    this.save();
+  }
+
+  private setupBackground(): void {
+    this.canvas.setAttribute('data-background', this.state.background);
+  }
+
+  private toggleBackground(): void {
+    const backgrounds: Array<'grid' | 'dots' | 'lines' | 'solid'> = ['grid', 'dots', 'lines', 'solid'];
+    const currentIndex = backgrounds.indexOf(this.state.background);
+    this.state.background = backgrounds[(currentIndex + 1) % backgrounds.length];
+    this.setupBackground();
     this.save();
   }
 
@@ -272,13 +294,6 @@ class Dashboard {
     if (target.classList.contains('resize-handle')) {
       e.preventDefault();
       this.startResize(widgetId, target.dataset.direction!, e);
-      return;
-    }
-    
-    // Check if clicking toolbar button
-    if (target.classList.contains('toolbar-btn')) {
-      e.preventDefault();
-      this.handleToolbarAction(widgetId, target.dataset.action!);
       return;
     }
     
@@ -840,23 +855,6 @@ class Dashboard {
     
     // Force a re-render
     this.updateWidget(widget);
-  }
-
-  private handleToolbarAction(widgetId: string, action: string): void {
-    switch (action) {
-      case 'duplicate':
-        this.duplicateWidget(widgetId);
-        break;
-      case 'delete':
-        this.deleteWidget(widgetId);
-        break;
-      case 'autosize':
-        this.toggleAutoSize(widgetId);
-        break;
-      case 'forward':
-        this.bringForward(widgetId);
-        break;
-    }
   }
 
   private selectWidget(widgetId: string | null): void {

@@ -8,6 +8,7 @@ export function getDefaultState(): DashboardState {
   return {
     widgets: [],
     theme: 'system',
+    background: 'grid',
     grid: DEFAULT_GRID_SIZE,
     zoom: DEFAULT_ZOOM,
     viewport: { x: 0, y: 0 },
@@ -22,14 +23,19 @@ export function loadState(): DashboardState {
       return getDefaultState();
     }
 
-    const parsed = JSON.parse(stored) as DashboardState;
+    const parsed = JSON.parse(stored) as any;
+    
+    // Add background property if missing (migration)
+    if (!('background' in parsed)) {
+      parsed.background = 'grid';
+    }
     
     // Simple migration support
     if (parsed.version !== CURRENT_VERSION) {
-      return migrateState(parsed);
+      return migrateState(parsed as DashboardState);
     }
 
-    return parsed;
+    return parsed as DashboardState;
   } catch (error) {
     console.error('Failed to load dashboard state:', error);
     return getDefaultState();
@@ -51,8 +57,7 @@ export function resetState(): DashboardState {
 }
 
 function migrateState(_oldState: DashboardState): DashboardState {
-  // Migration logic for future versions
-  // For now, just return default with a warning
+  // For version changes, reset to default with warning
   console.warn('Dashboard state version mismatch, resetting to default');
   return getDefaultState();
 }

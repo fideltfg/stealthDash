@@ -47,9 +47,6 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   // Resize handles
   addResizeHandles(el);
 
-  // Toolbar
-  addToolbar(el);
-
   return el;
 }
 
@@ -62,29 +59,6 @@ function addResizeHandles(widget: HTMLElement): void {
     handle.dataset.direction = direction;
     widget.appendChild(handle);
   });
-}
-
-function addToolbar(widget: HTMLElement): void {
-  const toolbar = document.createElement('div');
-  toolbar.className = 'widget-toolbar';
-  
-  const buttons = [
-    { label: 'Duplicate', action: 'duplicate', icon: '📋' },
-    { label: 'Delete', action: 'delete', icon: '🗑️' },
-    { label: 'Auto-size', action: 'autosize', icon: '⚡' },
-    { label: 'Bring Forward', action: 'forward', icon: '⬆️' },
-  ];
-  
-  buttons.forEach(btn => {
-    const button = document.createElement('button');
-    button.className = 'toolbar-btn';
-    button.textContent = `${btn.icon} ${btn.label}`;
-    button.setAttribute('aria-label', btn.label);
-    button.dataset.action = btn.action;
-    toolbar.appendChild(button);
-  });
-  
-  widget.appendChild(toolbar);
 }
 
 export function updateWidgetPosition(element: HTMLElement, position: Vec2): void {

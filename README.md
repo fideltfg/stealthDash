@@ -138,15 +138,6 @@ npm run build
 - **Keyboard**: Alt+Arrow keys
 - Minimum size enforced automatically
 
-### Widget Actions
-
-When a widget is selected, a toolbar appears below it:
-
-- **📋 Duplicate** - Clone the widget
-- **🗑️ Delete** - Remove the widget
-- **⚡ Auto-size** - Toggle content-based sizing
-- **⬆️ Bring Forward** - Move widget to front
-
 ### Keyboard Shortcuts
 
 - `Cmd/Ctrl+Z` - Undo
@@ -166,6 +157,17 @@ Click the **🌓** button (bottom-left) to cycle through:
 3. System theme (follows OS preference)
 
 Theme preference is saved automatically.
+
+### Backgrounds
+
+Click the **◫** button (bottom-left, above theme toggle) to cycle through background patterns:
+
+1. **Grid** - Classic grid pattern (default)
+2. **Dots** - Subtle dot pattern
+3. **Lines** - Horizontal lines
+4. **Solid** - Clean solid color
+
+Background preference is saved automatically.
 
 ## Widget Types
 
