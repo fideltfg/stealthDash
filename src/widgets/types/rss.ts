@@ -330,3 +330,13 @@ export class RssWidgetRenderer implements WidgetRenderer {
     container.appendChild(feedContainer);
   }
 }
+
+export const widget = {
+  type: 'rss',
+  name: 'RSS Feed',
+  icon: '📰',
+  description: 'Display RSS/Atom feeds',
+  renderer: new RssWidgetRenderer(),
+  defaultSize: { w: 400, h: 500 },
+  defaultContent: { feedUrl: '', maxItems: 10, refreshInterval: 300 }
+};

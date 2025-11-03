@@ -187,6 +187,11 @@ class Dashboard {
       this.updateWidgetContent(e.detail.id, e.detail.content);
     }) as EventListener);
     
+    // Widget delete event
+    window.addEventListener('widget-delete', ((e: CustomEvent) => {
+      this.deleteWidget(e.detail.widgetId);
+    }) as EventListener);
+    
     // Pointer events for drag/resize
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
@@ -253,13 +258,6 @@ class Dashboard {
         e.preventDefault();
         widget.position.x += step;
         this.updateWidget(widget);
-        break;
-      case 'Delete':
-      case 'Backspace':
-        if (!(e.target as HTMLElement).isContentEditable) {
-          e.preventDefault();
-          this.deleteWidget(this.selectedWidgetId);
-        }
         break;
       case 'Escape':
         this.selectWidget(null);
@@ -1021,7 +1019,7 @@ class Dashboard {
     this.saveHistory();
   }
 
-  private showAddWidgetModal(): void {
+  private async showAddWidgetModal(): Promise<void> {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -1048,35 +1046,28 @@ class Dashboard {
     const types = document.createElement('div');
     types.className = 'widget-types';
     
-    const widgetTypes = [
-      { type: 'text' as WidgetType, icon: '📝', name: 'Text', content: { markdown: '# New Text Widget\n\nStart typing...' } },
-      { type: 'image' as WidgetType, icon: '🖼️', name: 'Image', content: { src: '', objectFit: 'contain' } },
-      { type: 'data' as WidgetType, icon: '📊', name: 'Data', content: { json: { example: 'data', value: 123 } } },
-      { type: 'embed' as WidgetType, icon: '🌐', name: 'Embed', content: { url: '', sandbox: [] } },
-      { type: 'weather' as WidgetType, icon: '🌤️', name: 'Weather', content: { location: '' } },
-      { type: 'clock' as WidgetType, icon: '🕐', name: 'Clock', content: { timezone: '', format24h: true } },
-      { type: 'rss' as WidgetType, icon: '📰', name: 'RSS Feed', content: { feedUrl: '', maxItems: 10, refreshInterval: 5 } },
-      { type: 'uptime' as WidgetType, icon: '📊', name: 'Uptime Monitor', content: { target: '', interval: 30, timeout: 5000 } }
-    ];
+    // Get all registered widgets from the plugin system
+    const { getAllWidgetPlugins } = await import('./widgets/types');
+    const plugins = getAllWidgetPlugins();
     
-    widgetTypes.forEach(wt => {
+    plugins.forEach((plugin: any) => {
       const card = document.createElement('button');
       card.className = 'widget-type-card';
       card.tabIndex = 0;
       
       const icon = document.createElement('div');
       icon.className = 'widget-type-icon';
-      icon.textContent = wt.icon;
+      icon.textContent = plugin.icon;
       
       const name = document.createElement('div');
       name.className = 'widget-type-name';
-      name.textContent = wt.name;
+      name.textContent = plugin.name;
       
       card.appendChild(icon);
       card.appendChild(name);
       
       card.addEventListener('click', () => {
-        this.addWidget(wt.type, wt.content);
+        this.addWidget(plugin.type as WidgetType, plugin.defaultContent || {});
         overlay.remove();
       });
       

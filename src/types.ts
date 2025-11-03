@@ -1,6 +1,7 @@
 // Core type definitions for the dashboard
 
-export type WidgetType = 'text' | 'image' | 'data' | 'embed' | 'weather' | 'clock' | 'rss' | 'uptime';
+// Dynamic widget type - widgets register themselves via the plugin system
+export type WidgetType = string;
 export type Theme = 'light' | 'dark' | 'system';
 export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid';
 
@@ -68,7 +69,25 @@ export interface UptimeContent {
   timeout?: number; // milliseconds
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent;
+export interface CometP8541Content {
+  host: string;
+  port?: number;
+  unitId?: number;
+  refreshInterval?: number;
+  enabledChannels?: {
+    temp1?: boolean;
+    temp2?: boolean;
+    temp3?: boolean;
+    temp4?: boolean;
+    humidity?: boolean;
+    pressure?: boolean;
+    dewPoint?: boolean;
+  };
+  temperatureUnit?: 'C' | 'F';
+  showAlarms?: boolean;
+}
+
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content;
 
 export interface Widget {
   id: string;

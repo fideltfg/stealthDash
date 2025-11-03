@@ -278,3 +278,13 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     container.appendChild(forecastContainer);
   }
 }
+
+export const widget = {
+  type: 'weather',
+  name: 'Weather',
+  icon: '🌤️',
+  description: 'Display weather information',
+  renderer: new WeatherWidgetRenderer(),
+  defaultSize: { w: 340, h: 580 },
+  defaultContent: { location: '' }
+};

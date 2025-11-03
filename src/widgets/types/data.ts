@@ -55,3 +55,13 @@ export class DataWidgetRenderer implements WidgetRenderer {
     container.appendChild(div);
   }
 }
+
+export const widget = {
+  type: 'data',
+  name: 'Data',
+  icon: '📊',
+  description: 'Display JSON data',
+  renderer: new DataWidgetRenderer(),
+  defaultSize: { w: 400, h: 300 },
+  defaultContent: { json: {} }
+};

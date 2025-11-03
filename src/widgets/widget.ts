@@ -27,7 +27,23 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   title.className = 'widget-title';
   title.textContent = widget.meta?.title || widget.type.toUpperCase();
   
+  // Delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'widget-delete-btn';
+  deleteBtn.innerHTML = '×';
+  deleteBtn.title = 'Delete widget';
+  deleteBtn.setAttribute('aria-label', 'Delete widget');
+  deleteBtn.onclick = (e) => {
+    e.stopPropagation();
+    const confirmed = confirm('Are you sure you want to delete this widget?');
+    if (confirmed) {
+      const event = new CustomEvent('widget-delete', { detail: { widgetId: widget.id } });
+      window.dispatchEvent(event);
+    }
+  };
+  
   header.appendChild(title);
+  header.appendChild(deleteBtn);
   el.appendChild(header);
 
   // Content

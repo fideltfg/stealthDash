@@ -33,3 +33,13 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     container.appendChild(div);
   }
 }
+
+export const widget = {
+  type: 'image',
+  name: 'Image',
+  icon: '🖼️',
+  description: 'Display images from URLs',
+  renderer: new ImageWidgetRenderer(),
+  defaultSize: { w: 400, h: 400 },
+  defaultContent: { src: '', objectFit: 'contain' }
+};

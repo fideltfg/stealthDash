@@ -273,3 +273,13 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     div.appendChild(timezoneDisplay);
   }
 }
+
+export const widget = {
+  type: 'clock',
+  name: 'Clock',
+  icon: '🕐',
+  description: 'World clock with timezone support',
+  renderer: new ClockWidgetRenderer(),
+  defaultSize: { w: 400, h: 500 },
+  defaultContent: { timezone: '', format24h: false, showTimezone: true }
+};

@@ -1,5 +1,5 @@
 import type { Widget } from '../../types';
-import type { WidgetRenderer } from './base';
+import type { WidgetRenderer, WidgetPlugin } from './base';
 
 export class TextWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
@@ -36,3 +36,14 @@ export class TextWidgetRenderer implements WidgetRenderer {
     container.appendChild(textarea);
   }
 }
+
+// Plugin configuration
+export const widget: WidgetPlugin = {
+  type: 'text',
+  name: 'Text',
+  icon: '📝',
+  description: 'Simple text editor with markdown support',
+  renderer: new TextWidgetRenderer(),
+  defaultSize: { w: 400, h: 300 },
+  defaultContent: { markdown: '' }
+};

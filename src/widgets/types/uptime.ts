@@ -443,3 +443,13 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     this.renderUptimeDisplay(container, widget);
   }
 }
+
+export const widget = {
+  type: 'uptime',
+  name: 'Uptime Monitor',
+  icon: '📊',
+  description: 'Monitor uptime via ping',
+  renderer: new UptimeWidgetRenderer(),
+  defaultSize: { w: 500, h: 300 },
+  defaultContent: { target: '', interval: 60, timeout: 5 }
+};

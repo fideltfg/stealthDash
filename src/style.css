@@ -216,6 +216,34 @@ body {
   user-select: none;
 }
 
+.widget-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.widget-delete-btn:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  opacity: 1;
+}
+
+.widget-delete-btn:active {
+  transform: scale(0.95);
+}
+
 .widget-content {
   padding: 12px;
   height: 100%;
@@ -545,7 +573,8 @@ body {
 #app.locked .reset-zoom-toggle,
 #app.locked .auto-arrange-toggle,
 #app.locked .resize-handle,
-#app.locked .widget-header {
+#app.locked .widget-header,
+#app.locked .widget-delete-btn {
   display: none !important;
 }
 

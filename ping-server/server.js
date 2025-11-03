@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const ping = require('ping');
+const ModbusRTU = require('modbus-serial');
 
 const app = express();
 const PORT = process.env.PING_SERVER_PORT || 3001;
@@ -8,6 +9,69 @@ const PORT = process.env.PING_SERVER_PORT || 3001;
 // Enable CORS for all origins (adjust in production)
 app.use(cors());
 app.use(express.json());
+
+// Modbus TCP Read Endpoint
+app.get('/modbus/read', async (req, res) => {
+  const { host, port = 502, address, count = 1, type = 'holding', unitId = 1 } = req.query;
+  
+  if (!host || address === undefined) {
+    return res.status(400).json({ 
+      error: 'host and address parameters are required',
+      success: false 
+    });
+  }
+  
+  const client = new ModbusRTU();
+  
+  try {
+    await client.connectTCP(host, { port: parseInt(port) });
+    client.setID(parseInt(unitId));
+    client.setTimeout(5000);
+    
+    const addr = parseInt(address);
+    const cnt = parseInt(count);
+    let data;
+    
+    switch(type) {
+      case 'coil':
+        data = await client.readCoils(addr, cnt);
+        break;
+      case 'discrete':
+        data = await client.readDiscreteInputs(addr, cnt);
+        break;
+      case 'input':
+        data = await client.readInputRegisters(addr, cnt);
+        break;
+      case 'holding':
+      default:
+        data = await client.readHoldingRegisters(addr, cnt);
+        break;
+    }
+    
+    await client.close();
+    
+    res.json({
+      success: true,
+      host,
+      port: parseInt(port),
+      unitId: parseInt(unitId),
+      address: addr,
+      count: cnt,
+      type,
+      data: data.data,
+      timestamp: Date.now()
+    });
+    
+  } catch (error) {
+    try { await client.close(); } catch (e) {}
+    console.error('Modbus error:', error);
+    res.status(500).json({
+      error: error.message,
+      success: false,
+      timestamp: Date.now()
+    });
+  }
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

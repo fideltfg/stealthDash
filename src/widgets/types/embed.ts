@@ -123,3 +123,13 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     div.appendChild(inputContainer);
   }
 }
+
+export const widget = {
+  type: 'embed',
+  name: 'Embed',
+  icon: '🌐',
+  description: 'Embed websites via iframe',
+  renderer: new EmbedWidgetRenderer(),
+  defaultSize: { w: 600, h: 400 },
+  defaultContent: { url: '' }
+};

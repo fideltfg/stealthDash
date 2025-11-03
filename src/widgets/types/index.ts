@@ -1,28 +1,26 @@
-import type { WidgetRenderer } from './base';
-import { TextWidgetRenderer } from './text';
-import { ImageWidgetRenderer } from './image';
-import { DataWidgetRenderer } from './data';
-import { EmbedWidgetRenderer } from './embed';
-import { WeatherWidgetRenderer } from './weather';
-import { ClockWidgetRenderer } from './clock';
-import { RssWidgetRenderer } from './rss';
-import { UptimeWidgetRenderer } from './uptime';
-import type { WidgetType } from '../../types';
+import { registerWidget } from './base';
 
-// Widget registry - plugin-like architecture
-const widgetRenderers: Record<WidgetType, WidgetRenderer> = {
-  text: new TextWidgetRenderer(),
-  image: new ImageWidgetRenderer(),
-  data: new DataWidgetRenderer(),
-  embed: new EmbedWidgetRenderer(),
-  weather: new WeatherWidgetRenderer(),
-  clock: new ClockWidgetRenderer(),
-  rss: new RssWidgetRenderer(),
-  uptime: new UptimeWidgetRenderer(),
-};
+// Automatic widget registration - just import the widget files!
+// Each widget file exports a 'widget' object that gets auto-registered
+import * as text from './text';
+import * as image from './image';
+import * as data from './data';
+import * as embed from './embed';
+import * as weather from './weather';
+import * as clock from './clock';
+import * as rss from './rss';
+import * as uptime from './uptime';
+import * as cometP8541 from './comet-p8541';
 
-export function getWidgetRenderer(type: WidgetType): WidgetRenderer | undefined {
-  return widgetRenderers[type];
-}
+// Auto-register all widgets
+const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541];
 
-export { WidgetRenderer };
+widgets.forEach(mod => {
+  if (mod.widget) {
+    registerWidget(mod.widget);
+  }
+});
+
+// Re-export for convenience
+export { registerWidget, getWidgetPlugin, getWidgetRenderer, getAllWidgetPlugins, getRegisteredWidgetTypes } from './base';
+export type { WidgetPlugin, WidgetRenderer } from './base';
