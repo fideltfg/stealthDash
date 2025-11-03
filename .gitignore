@@ -1,0 +1,21 @@
+node_modules
+dist
+.DS_Store
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build
+.vite
+
+# Docker volumes (if any)
+volumes/

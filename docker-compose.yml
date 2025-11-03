@@ -1,0 +1,18 @@
+services:
+  dashboard:
+    build: .
+    container_name: dashboard-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload during development
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

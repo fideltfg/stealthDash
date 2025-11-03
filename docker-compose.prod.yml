@@ -1,0 +1,11 @@
+services:
+  dashboard-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: dashboard-production
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
