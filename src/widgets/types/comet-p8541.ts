@@ -1,5 +1,6 @@
 import type { Widget } from '../../types';
 import type { WidgetRenderer, WidgetPlugin } from './base';
+import JustGage from 'justgage';
 
 interface CometP8541Content {
   host: string;
@@ -72,6 +73,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = '⚙️';
+    settingsBtn.className = 'widget-settings-btn';
     settingsBtn.style.cssText = `
       background: rgba(255, 255, 255, 0.1);
       border: none;
@@ -79,8 +81,33 @@ export class CometP8541Renderer implements WidgetRenderer {
       padding: 4px 8px;
       cursor: pointer;
       font-size: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
     `;
     settingsBtn.onclick = () => this.showSettings(container, widget);
+    
+    // Show settings button when widget is selected
+    const updateSettingsVisibility = () => {
+      const widgetElement = container.closest('.widget');
+      if (widgetElement?.classList.contains('selected')) {
+        settingsBtn.style.opacity = '1';
+        settingsBtn.style.pointerEvents = 'auto';
+      } else {
+        settingsBtn.style.opacity = '0';
+        settingsBtn.style.pointerEvents = 'none';
+      }
+    };
+    
+    // Initial check
+    updateSettingsVisibility();
+    
+    // Watch for class changes
+    const observer = new MutationObserver(updateSettingsVisibility);
+    const widgetElement = container.closest('.widget');
+    if (widgetElement) {
+      observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
+    }
 
     headerRow.appendChild(headerLeft);
     headerRow.appendChild(settingsBtn);
@@ -120,7 +147,7 @@ export class CometP8541Renderer implements WidgetRenderer {
               port: (content.port || 502).toString(),
               unitId: (content.unitId || 1).toString(),
               address: modbusAddress.toString(),
-              count: '1',
+              count: '6', // Read 6 registers: value, alarm, upper, lower, hysteresis, delay
               type: 'holding'
             });
 
@@ -133,22 +160,34 @@ export class CometP8541Renderer implements WidgetRenderer {
             const result = await response.json();
             if (!result.success) throw new Error(result.error || 'Read failed');
 
-            // Comet P8541 Modbus registers store values as signed 16-bit integers
-            // Temperature and Humidity: multiply by 10 (so divide by 10 to get actual value)
-            // Example: 11 in register = 1.1°C, 35 in register = 3.5°C
-            let value = result.data[0];
+            // Parse the 6 registers: [value, alarm, upper, lower, hysteresis, delay]
+            const [rawValue, rawAlarm, rawUpper, rawLower, rawHysteresis, rawDelay] = result.data;
             
-            // Handle signed integers (two's complement for 16-bit)
-            if (value > 32767) value -= 65536;
+            // Helper to convert signed 16-bit integers
+            const toSigned = (val: number) => val > 32767 ? val - 65536 : val;
             
-            // Divide by 10 to get actual value
-            value = value / 10;
+            // Convert values (all Int*10 except alarm and delay)
+            let value = toSigned(rawValue) / 10;
+            const alarmStatus = String.fromCharCode(rawAlarm >> 8, rawAlarm & 0xFF).trim(); // Convert to ASCII
+            const upperLimit = toSigned(rawUpper) / 10;
+            const lowerLimit = toSigned(rawLower) / 10;
+            const hysteresis = toSigned(rawHysteresis) / 10;
+            const delay = rawDelay;
 
             if (ch.unit.includes('°') && content.temperatureUnit === 'F') {
               value = (value * 9/5) + 32;
             }
 
-            return { name: ch.name, value: value.toFixed(1), unit: ch.unit };
+            return { 
+              name: ch.name, 
+              value: value, 
+              unit: ch.unit,
+              alarm: alarmStatus,
+              upperLimit,
+              lowerLimit,
+              hysteresis,
+              delay
+            };
           })
         );
 
@@ -174,6 +213,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
         const settingsBtn = document.createElement('button');
         settingsBtn.innerHTML = '⚙️';
+        settingsBtn.className = 'widget-settings-btn';
         settingsBtn.style.cssText = `
           background: rgba(255, 255, 255, 0.1);
           border: none;
@@ -181,46 +221,163 @@ export class CometP8541Renderer implements WidgetRenderer {
           padding: 4px 8px;
           cursor: pointer;
           font-size: 16px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s;
         `;
         settingsBtn.onclick = () => this.showSettings(container, widget);
+        
+        // Show settings button when widget is selected
+        const updateSettingsVisibility = () => {
+          const widgetElement = container.closest('.widget');
+          if (widgetElement?.classList.contains('selected')) {
+            settingsBtn.style.opacity = '1';
+            settingsBtn.style.pointerEvents = 'auto';
+          } else {
+            settingsBtn.style.opacity = '0';
+            settingsBtn.style.pointerEvents = 'none';
+          }
+        };
+        
+        // Initial check
+        updateSettingsVisibility();
+        
+        // Watch for class changes
+        const observer = new MutationObserver(updateSettingsVisibility);
+        const widgetElement = container.closest('.widget');
+        if (widgetElement) {
+          observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
+        }
 
         headerRow.appendChild(headerLeft);
         headerRow.appendChild(settingsBtn);
         wrapper.appendChild(headerRow);
 
-        // Color palette for channels (similar to Cascade interface)
-        const colors = ['#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50'];
+        // Create gauges container
+        const gaugesContainer = document.createElement('div');
+        gaugesContainer.style.cssText = `
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 20px;
+          padding: 10px;
+        `;
         
         readings.forEach((reading, index) => {
-          const channelDiv = document.createElement('div');
-          channelDiv.style.cssText = `
-            background: ${colors[index % colors.length]};
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+          // Create gauge wrapper with dark dashboard theme
+          const gaugeWrapper = document.createElement('div');
+          gaugeWrapper.style.cssText = `
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            color: white;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
           `;
 
-          const label = document.createElement('div');
-          label.style.cssText = 'font-size: 16px; font-weight: 500; opacity: 0.95;';
-          label.textContent = reading.name;
+          // Create gauge container
+          const gaugeContainer = document.createElement('div');
+          const gaugeId = `gauge-${widget.id}-${index}`;
+          gaugeContainer.id = gaugeId;
+          gaugeContainer.style.cssText = 'width: 150px; height: 120px;';
 
-          const value = document.createElement('div');
-          value.style.cssText = 'font-size: 32px; font-weight: bold; line-height: 1;';
-          value.textContent = `${reading.value}${reading.unit}`;
+          // Create alarm status div
+          const alarmDiv = document.createElement('div');
+          alarmDiv.className = 'alarm-div';
+          alarmDiv.style.cssText = `
+            margin-top: 10px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+          `;
 
-          channelDiv.appendChild(label);
-          channelDiv.appendChild(value);
-          wrapper.appendChild(channelDiv);
+          // Determine alarm state from reading
+          // alarm register: "no" = normal (0), "lo" = too cold (2), "hi" = too hot (1)
+          let alarmText = "Norminal";
+          
+          if (reading.alarm === "hi") {
+            alarmText = "TOO HOT!";
+            alarmDiv.style.background = '';
+            alarmDiv.style.color = '';
+            alarmDiv.style.animation = 'flash-hot 0.5s infinite alternate';
+          } else if (reading.alarm === "lo") {
+            alarmText = "TOO COLD!";
+            alarmDiv.style.background = '';
+            alarmDiv.style.color = '';
+            alarmDiv.style.animation = 'flash-cold 0.5s infinite alternate';
+          }
+          
+          alarmDiv.textContent = alarmText;
+
+          gaugeWrapper.appendChild(gaugeContainer);
+          gaugeWrapper.appendChild(alarmDiv);
+          gaugesContainer.appendChild(gaugeWrapper);
+
+          // Create gauge after DOM is ready
+          setTimeout(() => {
+            try {
+              new JustGage({
+                id: gaugeId,
+                value: reading.value,
+                min: reading.lowerLimit - 30,
+                max: reading.upperLimit + 35,
+                title: reading.name,
+                label: reading.unit,
+                pointer: true,
+                customSectors: [{
+                  color: "#0000ff",
+                  lo: reading.lowerLimit - 30,
+                  hi: reading.lowerLimit
+                }, {
+                  color: "#00ff00",
+                  lo: reading.lowerLimit,
+                  hi: reading.upperLimit
+                }, {
+                  color: "#ff0000",
+                  lo: reading.upperLimit,
+                  hi: reading.upperLimit + 35
+                }],
+                counter: true,
+                gaugeColor: '#333333',
+                titleFontColor: '#ffffff',
+                valueFontColor: '#ffffff',
+                labelFontColor: '#cccccc',
+                shadowOpacity: 0
+              });
+            } catch (e) {
+              console.error('Error creating JustGage:', e);
+              gaugeContainer.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
+            }
+          }, 100);
         });
+        
+        wrapper.appendChild(gaugesContainer);
+
+        // Add flash animation styles if not already present
+        if (!document.getElementById('comet-flash-styles')) {
+          const style = document.createElement('style');
+          style.id = 'comet-flash-styles';
+          style.textContent = `
+            @keyframes flash-hot {
+              from { background-color: rgba(244, 67, 54, 0.2); color: #f44336; }
+              to { background-color: rgba(244, 67, 54, 0.8); color: white; }
+            }
+            @keyframes flash-cold {
+              from { background-color: rgba(33, 150, 243, 0.2); color: #2196F3; }
+              to { background-color: rgba(33, 150, 243, 0.8); color: white; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
 
       } catch (error: any) {
         if (error.name === 'AbortError') return;
         wrapper.innerHTML = '';
-        wrapper.appendChild(header);
+        wrapper.appendChild(headerRow);
         this.renderError(wrapper, error.message || 'Failed to read');
       }
     };

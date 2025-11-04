@@ -24,7 +24,14 @@ app.get('/modbus/read', async (req, res) => {
   const client = new ModbusRTU();
   
   try {
-    await client.connectTCP(host, { port: parseInt(port) });
+    // Set connection timeout
+    await Promise.race([
+      client.connectTCP(host, { port: parseInt(port) }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 3000)
+      )
+    ]);
+    
     client.setID(parseInt(unitId));
     client.setTimeout(5000);
     

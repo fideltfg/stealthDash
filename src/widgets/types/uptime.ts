@@ -203,23 +203,52 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     
     container.innerHTML = '';
     
-    // Header
-    const header = document.createElement('div');
-    header.style.marginBottom = '16px';
+    // Main container with horizontal layout
+    const mainContainer = document.createElement('div');
+    mainContainer.style.display = 'flex';
+    mainContainer.style.flexDirection = 'column';
+    mainContainer.style.gap = '16px';
+    mainContainer.style.height = '100%';
     
+    // Top row: target and bars side by side
+    const topRow = document.createElement('div');
+    topRow.style.display = 'flex';
+    topRow.style.alignItems = 'center';
+    topRow.style.gap = '16px';
+    topRow.style.justifyContent = 'space-between';
+    
+    // Left side: target
     const targetLabel = document.createElement('div');
     targetLabel.style.fontSize = '16px';
     targetLabel.style.fontWeight = '600';
-    targetLabel.style.marginBottom = '8px';
+    targetLabel.style.flexShrink = '0';
     targetLabel.textContent = content.target;
     
+    // Right side: chart bars
+    const chartContainer = document.createElement('div');
+    chartContainer.style.flex = '1';
+    chartContainer.style.display = 'flex';
+    chartContainer.style.alignItems = 'flex-end';
+    chartContainer.style.gap = '3px';
+    chartContainer.style.height = '40px';
+    chartContainer.style.minHeight = '40px';
+    chartContainer.style.maxHeight = '40px';
+    
+    const history = this.pingHistory.get(widget.id) || [];
+    this.renderChart(chartContainer, history);
+    
+    topRow.appendChild(targetLabel);
+    topRow.appendChild(chartContainer);
+    
+    // Stats row
     const statsContainer = document.createElement('div');
     statsContainer.style.display = 'flex';
     statsContainer.style.gap = '16px';
     statsContainer.style.fontSize = '12px';
     statsContainer.style.color = 'var(--muted)';
+    statsContainer.style.paddingTop = '8px';
+    statsContainer.style.borderTop = '1px solid var(--border)';
     
-    const history = this.pingHistory.get(widget.id) || [];
     const successCount = history.filter(p => p.success).length;
     const uptime = history.length > 0 ? ((successCount / history.length) * 100).toFixed(1) : '0.0';
     
@@ -241,25 +270,10 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     statsContainer.appendChild(avgDiv);
     statsContainer.appendChild(countDiv);
     
-    header.appendChild(targetLabel);
-    header.appendChild(statsContainer);
+    mainContainer.appendChild(topRow);
+    mainContainer.appendChild(statsContainer);
     
-    // Chart container - horizontal bar chart like the reference
-    const chartContainer = document.createElement('div');
-    chartContainer.style.flex = '1';
-    chartContainer.style.display = 'flex';
-    chartContainer.style.alignItems = 'flex-end';
-    chartContainer.style.gap = '3px';
-    chartContainer.style.padding = '16px 0';
-    chartContainer.style.borderTop = '1px solid var(--border)';
-    chartContainer.style.height = '80px'; // Fixed height for consistent look
-    chartContainer.style.minHeight = '80px';
-    chartContainer.style.maxHeight = '80px';
-    
-    this.renderChart(chartContainer, history);
-    
-    container.appendChild(header);
-    container.appendChild(chartContainer);
+    container.appendChild(mainContainer);
   }
 
   private renderChart(container: HTMLElement, history: PingResult[]): void {
