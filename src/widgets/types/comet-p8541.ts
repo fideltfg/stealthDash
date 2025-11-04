@@ -10,12 +10,20 @@ interface CometP8541Content {
   temperatureUnit?: 'C' | 'F';
   showAlarms?: boolean;
   deviceName?: string;
+  displayMode?: 'gauge' | 'text';
   enabledChannels?: {
     temp1?: boolean;
     temp2?: boolean;
     temp3?: boolean;
     temp4?: boolean;
     humidity?: boolean;
+  };
+  channelNames?: {
+    temp1?: string;
+    temp2?: string;
+    temp3?: string;
+    temp4?: string;
+    humidity?: string;
   };
 }
 
@@ -128,13 +136,14 @@ export class CometP8541Renderer implements WidgetRenderer {
         this.abortControllers.set(widget.id, controller);
 
         const enabled = content.enabledChannels || {};
+        const customNames = content.channelNames || {};
         const channels = [];
         
-        if (enabled.temp1 !== false) channels.push({ name: 'Temp 1', reg: REGISTERS.TEMP1, unit: '°' + (content.temperatureUnit || 'C') });
-        if (enabled.temp2 !== false) channels.push({ name: 'Temp 2', reg: REGISTERS.TEMP2, unit: '°' + (content.temperatureUnit || 'C') });
-        if (enabled.temp3 !== false) channels.push({ name: 'Temp 3', reg: REGISTERS.TEMP3, unit: '°' + (content.temperatureUnit || 'C') });
-        if (enabled.temp4 !== false) channels.push({ name: 'Temp 4', reg: REGISTERS.TEMP4, unit: '°' + (content.temperatureUnit || 'C') });
-        if (enabled.humidity !== false) channels.push({ name: 'Humidity', reg: REGISTERS.HUMIDITY, unit: '%' });
+        if (enabled.temp1 !== false) channels.push({ name: customNames.temp1 || 'Temp 1', reg: REGISTERS.TEMP1, unit: '°' + (content.temperatureUnit || 'C') });
+        if (enabled.temp2 !== false) channels.push({ name: customNames.temp2 || 'Temp 2', reg: REGISTERS.TEMP2, unit: '°' + (content.temperatureUnit || 'C') });
+        if (enabled.temp3 !== false) channels.push({ name: customNames.temp3 || 'Temp 3', reg: REGISTERS.TEMP3, unit: '°' + (content.temperatureUnit || 'C') });
+        if (enabled.temp4 !== false) channels.push({ name: customNames.temp4 || 'Temp 4', reg: REGISTERS.TEMP4, unit: '°' + (content.temperatureUnit || 'C') });
+        if (enabled.humidity !== false) channels.push({ name: customNames.humidity || 'Humidity', reg: REGISTERS.HUMIDITY, unit: '%' });
 
         const readings = await Promise.all(
           channels.map(async (ch) => {
@@ -253,109 +262,203 @@ export class CometP8541Renderer implements WidgetRenderer {
         headerRow.appendChild(settingsBtn);
         wrapper.appendChild(headerRow);
 
-        // Create gauges container
-        const gaugesContainer = document.createElement('div');
-        gaugesContainer.style.cssText = `
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: center;
-          gap: 20px;
-          padding: 10px;
-        `;
+        // Create display container
+        const displayContainer = document.createElement('div');
+        const displayMode = content.displayMode || 'gauge';
         
-        readings.forEach((reading, index) => {
-          // Create gauge wrapper with dark dashboard theme
-          const gaugeWrapper = document.createElement('div');
-          gaugeWrapper.style.cssText = `
+        if (displayMode === 'gauge') {
+          // Gauge display mode
+          displayContainer.style.cssText = `
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+          `;
+          
+          readings.forEach((reading, index) => {
+            // Create gauge wrapper with dark dashboard theme
+            const gaugeWrapper = document.createElement('div');
+            gaugeWrapper.style.cssText = `
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              background: rgba(0, 0, 0, 0.3);
+              border-radius: 8px;
+              padding: 15px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            `;
+
+            // Create gauge container
+            const gaugeContainer = document.createElement('div');
+            const gaugeId = `gauge-${widget.id}-${index}`;
+            gaugeContainer.id = gaugeId;
+            gaugeContainer.style.cssText = 'width: 150px; height: 120px;';
+
+            // Create alarm status div
+            const alarmDiv = document.createElement('div');
+            alarmDiv.className = 'alarm-div';
+            alarmDiv.style.cssText = `
+              margin-top: 10px;
+              font-weight: bold;
+              padding: 5px 10px;
+              border-radius: 5px;
+              background: rgba(76, 175, 80, 0.2);
+              color: #4CAF50;
+            `;
+
+            // Determine alarm state from reading
+            // alarm register: "no" = normal (0), "lo" = too cold (2), "hi" = too hot (1)
+            let alarmText = "Norminal";
+            
+            if (reading.alarm === "hi") {
+              alarmText = "TOO HOT!";
+              alarmDiv.style.background = '';
+              alarmDiv.style.color = '';
+              alarmDiv.style.animation = 'flash-hot 0.5s infinite alternate';
+            } else if (reading.alarm === "lo") {
+              alarmText = "TOO COLD!";
+              alarmDiv.style.background = '';
+              alarmDiv.style.color = '';
+              alarmDiv.style.animation = 'flash-cold 0.5s infinite alternate';
+            }
+            
+            alarmDiv.textContent = alarmText;
+
+            gaugeWrapper.appendChild(gaugeContainer);
+            gaugeWrapper.appendChild(alarmDiv);
+            displayContainer.appendChild(gaugeWrapper);
+
+            // Create gauge after DOM is ready
+            setTimeout(() => {
+              try {
+                new JustGage({
+                  id: gaugeId,
+                  value: reading.value,
+                  min: reading.lowerLimit - 30,
+                  max: reading.upperLimit + 35,
+                  title: reading.name,
+                  label: reading.unit,
+                  pointer: true,
+                  customSectors: [{
+                    color: "#0000ff",
+                    lo: reading.lowerLimit - 30,
+                    hi: reading.lowerLimit
+                  }, {
+                    color: "#00ff00",
+                    lo: reading.lowerLimit,
+                    hi: reading.upperLimit
+                  }, {
+                    color: "#ff0000",
+                    lo: reading.upperLimit,
+                    hi: reading.upperLimit + 35
+                  }],
+                  counter: true,
+                  gaugeColor: '#333333',
+                  titleFontColor: '#ffffff',
+                  valueFontColor: '#ffffff',
+                  labelFontColor: '#cccccc',
+                  shadowOpacity: 0
+                });
+              } catch (e) {
+                console.error('Error creating JustGage:', e);
+                gaugeContainer.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
+              }
+            }, 100);
+          });
+        } else {
+          // Text display mode
+          displayContainer.style.cssText = `
             display: flex;
             flex-direction: column;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            gap: 10px;
+            padding: 10px;
           `;
-
-          // Create gauge container
-          const gaugeContainer = document.createElement('div');
-          const gaugeId = `gauge-${widget.id}-${index}`;
-          gaugeContainer.id = gaugeId;
-          gaugeContainer.style.cssText = 'width: 150px; height: 120px;';
-
-          // Create alarm status div
-          const alarmDiv = document.createElement('div');
-          alarmDiv.className = 'alarm-div';
-          alarmDiv.style.cssText = `
-            margin-top: 10px;
-            font-weight: bold;
-            padding: 5px 10px;
-            border-radius: 5px;
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-          `;
-
-          // Determine alarm state from reading
-          // alarm register: "no" = normal (0), "lo" = too cold (2), "hi" = too hot (1)
-          let alarmText = "Norminal";
           
-          if (reading.alarm === "hi") {
-            alarmText = "TOO HOT!";
-            alarmDiv.style.background = '';
-            alarmDiv.style.color = '';
-            alarmDiv.style.animation = 'flash-hot 0.5s infinite alternate';
-          } else if (reading.alarm === "lo") {
-            alarmText = "TOO COLD!";
-            alarmDiv.style.background = '';
-            alarmDiv.style.color = '';
-            alarmDiv.style.animation = 'flash-cold 0.5s infinite alternate';
-          }
-          
-          alarmDiv.textContent = alarmText;
+          readings.forEach((reading) => {
+            const channelDiv = document.createElement('div');
+            channelDiv.style.cssText = `
+              display: flex;
+              flex-direction: column;
+              background: rgba(0, 0, 0, 0.3);
+              border-radius: 8px;
+              padding: 12px 15px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            `;
 
-          gaugeWrapper.appendChild(gaugeContainer);
-          gaugeWrapper.appendChild(alarmDiv);
-          gaugesContainer.appendChild(gaugeWrapper);
+            // Top row: name and value
+            const topRow = document.createElement('div');
+            topRow.style.cssText = `
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              margin-bottom: 8px;
+            `;
 
-          // Create gauge after DOM is ready
-          setTimeout(() => {
-            try {
-              new JustGage({
-                id: gaugeId,
-                value: reading.value,
-                min: reading.lowerLimit - 30,
-                max: reading.upperLimit + 35,
-                title: reading.name,
-                label: reading.unit,
-                pointer: true,
-                customSectors: [{
-                  color: "#0000ff",
-                  lo: reading.lowerLimit - 30,
-                  hi: reading.lowerLimit
-                }, {
-                  color: "#00ff00",
-                  lo: reading.lowerLimit,
-                  hi: reading.upperLimit
-                }, {
-                  color: "#ff0000",
-                  lo: reading.upperLimit,
-                  hi: reading.upperLimit + 35
-                }],
-                counter: true,
-                gaugeColor: '#333333',
-                titleFontColor: '#ffffff',
-                valueFontColor: '#ffffff',
-                labelFontColor: '#cccccc',
-                shadowOpacity: 0
-              });
-            } catch (e) {
-              console.error('Error creating JustGage:', e);
-              gaugeContainer.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
+            const nameLabel = document.createElement('div');
+            nameLabel.style.cssText = 'font-size: 14px; font-weight: 500; opacity: 0.9;';
+            nameLabel.textContent = reading.name;
+
+            const valueLabel = document.createElement('div');
+            valueLabel.style.cssText = 'font-size: 24px; font-weight: bold;';
+            
+            // Color based on alarm status
+            if (reading.alarm === "hi") {
+              valueLabel.style.color = '#f44336';
+              valueLabel.style.animation = 'flash-hot 0.5s infinite alternate';
+            } else if (reading.alarm === "lo") {
+              valueLabel.style.color = '#2196F3';
+              valueLabel.style.animation = 'flash-cold 0.5s infinite alternate';
+            } else {
+              valueLabel.style.color = '#4CAF50';
             }
-          }, 100);
-        });
+            
+            valueLabel.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
+
+            topRow.appendChild(nameLabel);
+            topRow.appendChild(valueLabel);
+
+            // Bottom row: limits and alarm status
+            const bottomRow = document.createElement('div');
+            bottomRow.style.cssText = `
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 11px;
+              opacity: 0.7;
+            `;
+
+            const limitsLabel = document.createElement('div');
+            limitsLabel.textContent = `Range: ${reading.lowerLimit.toFixed(1)} - ${reading.upperLimit.toFixed(1)}${reading.unit}`;
+
+            const alarmLabel = document.createElement('div');
+            alarmLabel.style.cssText = 'font-weight: 600; padding: 3px 8px; border-radius: 4px;';
+            
+            if (reading.alarm === "hi") {
+              alarmLabel.textContent = "TOO HOT";
+              alarmLabel.style.background = 'rgba(244, 67, 54, 0.2)';
+              alarmLabel.style.color = '#f44336';
+            } else if (reading.alarm === "lo") {
+              alarmLabel.textContent = "TOO COLD";
+              alarmLabel.style.background = 'rgba(33, 150, 243, 0.2)';
+              alarmLabel.style.color = '#2196F3';
+            } else {
+              alarmLabel.textContent = "Normal";
+              alarmLabel.style.background = 'rgba(76, 175, 80, 0.2)';
+              alarmLabel.style.color = '#4CAF50';
+            }
+
+            bottomRow.appendChild(limitsLabel);
+            bottomRow.appendChild(alarmLabel);
+
+            channelDiv.appendChild(topRow);
+            channelDiv.appendChild(bottomRow);
+            displayContainer.appendChild(channelDiv);
+          });
+        }
         
-        wrapper.appendChild(gaugesContainer);
+        wrapper.appendChild(displayContainer);
 
         // Add flash animation styles if not already present
         if (!document.getElementById('comet-flash-styles')) {
@@ -589,37 +692,80 @@ export class CometP8541Renderer implements WidgetRenderer {
     tempGroup.appendChild(tempSelect);
     modal.appendChild(tempGroup);
 
-    // Channel enable/disable
+    // Display mode selector
+    const displayGroup = document.createElement('div');
+    displayGroup.style.marginBottom = '15px';
+    
+    const displayLabel = document.createElement('label');
+    displayLabel.textContent = 'Display Mode';
+    displayLabel.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 5px; display: block;';
+    
+    const displaySelect = document.createElement('select');
+    displaySelect.style.cssText = `
+      width: 100%;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      box-sizing: border-box;
+    `;
+    ['gauge', 'text'].forEach(mode => {
+      const option = document.createElement('option');
+      option.value = mode;
+      option.textContent = mode === 'gauge' ? 'Gauge Display' : 'Text Display';
+      option.selected = (content.displayMode || 'gauge') === mode;
+      displaySelect.appendChild(option);
+    });
+    
+    displayGroup.appendChild(displayLabel);
+    displayGroup.appendChild(displaySelect);
+    modal.appendChild(displayGroup);
+
+    // Channel enable/disable and naming
     const channelsGroup = document.createElement('div');
     channelsGroup.style.marginBottom = '15px';
     
     const channelsLabel = document.createElement('div');
-    channelsLabel.textContent = 'Enabled Channels';
+    channelsLabel.textContent = 'Channels';
     channelsLabel.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 10px;';
     channelsGroup.appendChild(channelsLabel);
 
     const channels = ['temp1', 'temp2', 'temp3', 'temp4', 'humidity'];
-    const channelNames = ['Temperature 1', 'Temperature 2', 'Temperature 3', 'Temperature 4', 'Humidity'];
+    const channelDefaultNames = ['Temperature 1', 'Temperature 2', 'Temperature 3', 'Temperature 4', 'Humidity'];
     const channelInputs: { [key: string]: HTMLInputElement } = {};
+    const channelNameInputs: { [key: string]: HTMLInputElement } = {};
 
     channels.forEach((ch, idx) => {
-      const checkGroup = document.createElement('div');
-      checkGroup.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;';
+      const channelRow = document.createElement('div');
+      channelRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;';
       
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = content.enabledChannels?.[ch as keyof typeof content.enabledChannels] !== false;
-      checkbox.style.cursor = 'pointer';
+      checkbox.style.cssText = 'cursor: pointer; flex-shrink: 0;';
       
-      const label = document.createElement('label');
-      label.textContent = channelNames[idx];
-      label.style.cursor = 'pointer';
-      label.onclick = () => checkbox.click();
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = channelDefaultNames[idx];
+      nameInput.value = content.channelNames?.[ch as keyof typeof content.channelNames] || '';
+      nameInput.style.cssText = `
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        font-size: 12px;
+        box-sizing: border-box;
+      `;
       
       channelInputs[ch] = checkbox;
-      checkGroup.appendChild(checkbox);
-      checkGroup.appendChild(label);
-      channelsGroup.appendChild(checkGroup);
+      channelNameInputs[ch] = nameInput;
+      
+      channelRow.appendChild(checkbox);
+      channelRow.appendChild(nameInput);
+      channelsGroup.appendChild(channelRow);
     });
     
     modal.appendChild(channelsGroup);
@@ -649,6 +795,7 @@ export class CometP8541Renderer implements WidgetRenderer {
         unitId: parseInt(inputs.unitId.value) || 1,
         refreshInterval: parseInt(inputs.refreshInterval.value) || 10,
         temperatureUnit: tempSelect.value as 'C' | 'F',
+        displayMode: displaySelect.value as 'gauge' | 'text',
         showAlarms: content.showAlarms !== false,
         enabledChannels: {
           temp1: channelInputs.temp1.checked,
@@ -656,6 +803,13 @@ export class CometP8541Renderer implements WidgetRenderer {
           temp3: channelInputs.temp3.checked,
           temp4: channelInputs.temp4.checked,
           humidity: channelInputs.humidity.checked
+        },
+        channelNames: {
+          temp1: channelNameInputs.temp1.value || '',
+          temp2: channelNameInputs.temp2.value || '',
+          temp3: channelNameInputs.temp3.value || '',
+          temp4: channelNameInputs.temp4.value || '',
+          humidity: channelNameInputs.humidity.value || ''
         }
       };
       
@@ -730,6 +884,7 @@ export const widget: WidgetPlugin = {
     unitId: 1,
     refreshInterval: 10,
     temperatureUnit: 'C',
+    displayMode: 'gauge',
     showAlarms: true,
     enabledChannels: {
       temp1: true,
@@ -737,6 +892,13 @@ export const widget: WidgetPlugin = {
       temp3: true,
       temp4: true,
       humidity: true
+    },
+    channelNames: {
+      temp1: '',
+      temp2: '',
+      temp3: '',
+      temp4: '',
+      humidity: ''
     }
   }
 };
