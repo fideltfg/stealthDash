@@ -342,7 +342,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   }
 
   /**
-   * Parses Environment Canada RSS feed XML
+   * Parses Environment Canada RSS/Atom feed XML
    */
   private parseRSS(xmlDoc: Document): any {
     const data: any = {
@@ -352,37 +352,69 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       entries: []
     };
 
-    // Parse channel info
-    const channel = xmlDoc.querySelector('channel');
-    if (channel) {
-      data.title = channel.querySelector('title')?.textContent || '';
-      data.location = data.title.replace('Weather - ', '').replace(' - ', ', ');
+    // Check if it's an Atom feed (Environment Canada uses Atom format)
+    const feed = xmlDoc.querySelector('feed');
+    if (feed) {
+      // Atom feed format
+      data.title = feed.querySelector('title')?.textContent || '';
+      data.location = data.title.replace(' - Weather - Environment Canada', '');
       
-      const pubDate = channel.querySelector('pubDate')?.textContent;
-      if (pubDate) {
-        data.updated = new Date(pubDate).toLocaleString();
+      const updated = feed.querySelector('updated')?.textContent;
+      if (updated) {
+        data.updated = new Date(updated).toLocaleString();
       }
-    }
-
-    // Parse forecast entries
-    const entries = xmlDoc.querySelectorAll('item');
-    console.log('Found', entries.length, 'items in RSS feed');
-    
-    entries.forEach(entry => {
-      const title = entry.querySelector('title')?.textContent || '';
-      const summary = entry.querySelector('summary')?.textContent || 
-                     entry.querySelector('description')?.textContent || '';
       
-      // Extract temperature if present
-      const tempMatch = summary.match(/(-?\d+)°C/);
-      const temperature = tempMatch ? tempMatch[1] : null;
+      // Parse Atom entries
+      const entries = xmlDoc.querySelectorAll('entry');
+      console.log('Found', entries.length, 'entries in Atom feed');
       
-      data.entries.push({
-        title,
-        summary: summary.replace(/<[^>]*>/g, ''), // Strip HTML tags
-        temperature
+      entries.forEach(entry => {
+        const title = entry.querySelector('title')?.textContent || '';
+        const summary = entry.querySelector('summary')?.textContent || '';
+        
+        // Extract temperature if present
+        const tempMatch = summary.match(/(-?\d+)°C/);
+        const temperature = tempMatch ? tempMatch[1] : null;
+        
+        data.entries.push({
+          title,
+          summary: summary.replace(/<[^>]*>/g, ''), // Strip HTML tags
+          temperature
+        });
       });
-    });
+    } else {
+      // RSS feed format
+      const channel = xmlDoc.querySelector('channel');
+      if (channel) {
+        data.title = channel.querySelector('title')?.textContent || '';
+        data.location = data.title.replace('Weather - ', '').replace(' - ', ', ');
+        
+        const pubDate = channel.querySelector('pubDate')?.textContent;
+        if (pubDate) {
+          data.updated = new Date(pubDate).toLocaleString();
+        }
+      }
+
+      // Parse RSS items
+      const entries = xmlDoc.querySelectorAll('item');
+      console.log('Found', entries.length, 'items in RSS feed');
+      
+      entries.forEach(entry => {
+        const title = entry.querySelector('title')?.textContent || '';
+        const summary = entry.querySelector('summary')?.textContent || 
+                       entry.querySelector('description')?.textContent || '';
+        
+        // Extract temperature if present
+        const tempMatch = summary.match(/(-?\d+)°C/);
+        const temperature = tempMatch ? tempMatch[1] : null;
+        
+        data.entries.push({
+          title,
+          summary: summary.replace(/<[^>]*>/g, ''), // Strip HTML tags
+          temperature
+        });
+      });
+    }
 
     return data;
   }
