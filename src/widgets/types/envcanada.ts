@@ -315,24 +315,20 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const feedUrl = `https://weather.gc.ca/rss/weather/${content.latitude}_${content.longitude}_${content.language}.xml`;
     
     let response: Response | undefined;
-    let usedProxy = false;
     
     try {
-      console.log('Fetching Environment Canada forecast from:', feedUrl);
+      // Try direct fetch first (silently, CORS errors are expected)
       response = await fetch(feedUrl, {
         mode: 'cors',
         cache: 'no-cache'
       });
-      console.log('Direct fetch response status:', response.status);
     } catch (directError) {
-      console.log('Direct fetch failed, trying proxy...', directError);
+      // Direct fetch failed (likely CORS), try local proxy
       try {
         const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(feedUrl)}`;
         response = await fetch(proxyUrl);
-        usedProxy = true;
-        console.log('Proxy fetch response status:', response.status);
       } catch (proxyError) {
-        console.error('Both direct and proxy fetch failed:', proxyError);
+        console.error('Failed to fetch forecast:', proxyError);
         throw new Error('Failed to fetch forecast. Check coordinates.');
       }
     }
@@ -342,7 +338,6 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     }
 
     const xmlText = await response.text();
-    console.log(`Forecast fetched via ${usedProxy ? 'PROXY' : 'DIRECT'}`);
     
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');

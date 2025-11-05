@@ -201,11 +201,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       content.cachedData = data;
       content.lastUpdated = Date.now();
       
-      console.log('Feed fetched successfully, rendering data...');
-      
       // Render the mountain data
       this.renderMountainData(contentArea, data, content);
-      console.log('Data rendered successfully');
       
       // Note: We don't dispatch widget-update here as it causes a re-render loop
       // The content is already updated by reference, and will be saved by the dashboard
@@ -247,28 +244,20 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private async fetchFeed(url: string): Promise<any> {
     let response: Response | undefined;
-    let usedProxy = false;
     
     try {
-      // Try direct fetch first
-      console.log('Attempting direct fetch from:', url);
+      // Try direct fetch first (silently, CORS errors are expected)
       response = await fetch(url, {
         mode: 'cors',
         cache: 'no-cache'
       });
-      console.log('Direct fetch response status:', response.status);
     } catch (directError) {
       // Direct fetch failed (likely CORS), try local proxy
-      console.log('Direct fetch failed, trying local proxy...', directError);
       try {
-        // Use local ping-server proxy
         const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(url)}`;
-        console.log('Fetching via local proxy:', proxyUrl);
         response = await fetch(proxyUrl);
-        usedProxy = true;
-        console.log('Proxy fetch response status:', response.status);
       } catch (proxyError) {
-        console.error('Both direct and proxy fetch failed:', proxyError);
+        console.error('Failed to fetch feed:', proxyError);
         throw new Error('Failed to fetch feed. Check console for details.');
       }
     }
@@ -283,9 +272,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     const xmlText = await response.text();
     
-    // Log first 500 chars for debugging
-    console.log(`XML Response via ${usedProxy ? 'PROXY' : 'DIRECT'} (first 500 chars):`, xmlText.substring(0, 500));
-    
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -296,9 +282,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       throw new Error('Invalid XML format');
     }
 
-    const parsedData = this.parseXML(xmlDoc);
-    console.log('Parsed XML data:', parsedData);
-    return parsedData;
+    return this.parseXML(xmlDoc);
   }
 
   private parseXML(xmlDoc: Document): any {
@@ -395,8 +379,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   }
 
   private renderMountainData(container: HTMLElement, data: any, content: MTNXMLContent): void {
-    console.log('renderMountainData called with data:', data);
-    console.log('Container:', container);
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
@@ -417,7 +399,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       border-bottom: 2px solid var(--border);
     `;
     resortName.textContent = data.resort.name || 'Unknown Resort';
-    console.log('Adding resort name:', resortName.textContent);
     wrapper.appendChild(resortName);
 
     // Snow conditions
@@ -479,7 +460,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     }
 
     container.appendChild(wrapper);
-    console.log('Wrapper appended to container, children count:', wrapper.children.length);
   }
 
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
