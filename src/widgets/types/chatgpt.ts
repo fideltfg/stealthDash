@@ -29,7 +29,6 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     const header = document.createElement('div');
     header.style.cssText = `
       padding: 12px 16px;
-      background: var(--accent);
       color: white;
       font-weight: bold;
       font-size: 14px;
@@ -147,7 +146,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     sendBtn.disabled = !content.apiKey;
     sendBtn.style.cssText = `
       padding: 10px 16px;
-      background: var(--accent);
+      background: var(--shadow);
       border: none;
       border-radius: 6px;
       color: white;

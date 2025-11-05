@@ -13,9 +13,10 @@ import * as uptime from './uptime';
 import * as cometP8541 from './comet-p8541';
 import * as homeAssistant from './home-assistant';
 import * as chatgpt from './chatgpt';
+import * as mtnxml from './mtnxml';
 
 // Auto-register all widgets
-const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt];
+const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml];
 
 widgets.forEach(mod => {
   if (mod.widget) {
