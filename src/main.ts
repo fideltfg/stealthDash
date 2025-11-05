@@ -405,6 +405,7 @@ class Dashboard {
   private handlePointerUp(): void {
     if (this.dragState || this.resizeState) {
       this.saveHistory();
+      this.save(); // Save after drag/resize is complete
     }
     
     // Save viewport position after panning
@@ -552,7 +553,8 @@ class Dashboard {
     // Show visual guides
     this.showSnapGuides({ x: snapTargets.x, y: snapTargets.y });
     
-    this.updateWidget(widget);
+    // Don't save during drag - only update visuals
+    this.updateWidget(widget, false);
   }
 
   private startResize(widgetId: string, direction: string, e: PointerEvent): void {
@@ -653,7 +655,8 @@ class Dashboard {
     // Show visual guides for snapped edges
     this.showSnapGuides({ x: snapTargets.x, y: snapTargets.y });
     
-    this.updateWidget(widget);
+    // Don't save during resize - only update visuals
+    this.updateWidget(widget, false);
   }
 
   private startPan(e: PointerEvent): void {
@@ -995,7 +998,7 @@ class Dashboard {
     this.save();
   }
 
-  private updateWidget(widget: Widget): void {
+  private updateWidget(widget: Widget, shouldSave: boolean = true): void {
     if (widget.meta) {
       widget.meta.updatedAt = Date.now();
     } else {
@@ -1012,7 +1015,9 @@ class Dashboard {
       updateWidgetZIndex(el, widget.z);
     }
     
-    this.save();
+    if (shouldSave) {
+      this.save();
+    }
   }
 
   private updateWidgetContent(widgetId: string, content: any): void {
