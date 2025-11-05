@@ -203,14 +203,16 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       
       console.log('Feed fetched successfully, rendering data...');
       
-      // Save updated content
+      // Render BEFORE dispatching the event to avoid re-render clearing the display
+      this.renderMountainData(contentArea, data, content);
+      console.log('Data rendered successfully');
+      
+      // Save updated content AFTER rendering
       const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content }
       });
       document.dispatchEvent(event);
       
-      this.renderMountainData(contentArea, data, content);
-      console.log('Data rendered successfully');
     } catch (error) {
       console.error('Widget render error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
