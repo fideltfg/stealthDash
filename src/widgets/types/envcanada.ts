@@ -314,27 +314,12 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   private async fetchForecast(content: EnvCanadaContent): Promise<any> {
     const feedUrl = `https://weather.gc.ca/rss/weather/${content.latitude}_${content.longitude}_${content.language}.xml`;
     
-    let response: Response | undefined;
+    // Use proxy by default to avoid CORS errors in console
+    const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(feedUrl)}`;
+    const response = await fetch(proxyUrl);
     
-    try {
-      // Try direct fetch first (silently, CORS errors are expected)
-      response = await fetch(feedUrl, {
-        mode: 'cors',
-        cache: 'no-cache'
-      });
-    } catch (directError) {
-      // Direct fetch failed (likely CORS), try local proxy
-      try {
-        const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(feedUrl)}`;
-        response = await fetch(proxyUrl);
-      } catch (proxyError) {
-        console.error('Failed to fetch forecast:', proxyError);
-        throw new Error('Failed to fetch forecast. Check coordinates.');
-      }
-    }
-    
-    if (!response || !response.ok) {
-      throw new Error(`HTTP ${response?.status}: ${response?.statusText || 'Failed to fetch'}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText || 'Failed to fetch'}`);
     }
 
     const xmlText = await response.text();

@@ -243,28 +243,10 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchFeed(url: string): Promise<any> {
-    let response: Response | undefined;
+    // Use proxy by default to avoid CORS errors in console
+    const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(url)}`;
     
-    try {
-      // Try direct fetch first (silently, CORS errors are expected)
-      response = await fetch(url, {
-        mode: 'cors',
-        cache: 'no-cache'
-      });
-    } catch (directError) {
-      // Direct fetch failed (likely CORS), try local proxy
-      try {
-        const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(url)}`;
-        response = await fetch(proxyUrl);
-      } catch (proxyError) {
-        console.error('Failed to fetch feed:', proxyError);
-        throw new Error('Failed to fetch feed. Check console for details.');
-      }
-    }
-    
-    if (!response) {
-      throw new Error('No response received from server');
-    }
+    const response = await fetch(proxyUrl);
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
