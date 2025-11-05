@@ -247,7 +247,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchFeed(url: string): Promise<any> {
-    let response: Response;
+    let response: Response | undefined;
     let usedProxy = false;
     
     try {
@@ -271,6 +271,10 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         console.error('Both direct and proxy fetch failed:', proxyError);
         throw new Error('Failed to fetch feed. Check console for details.');
       }
+    }
+    
+    if (!response) {
+      throw new Error('No response received from server');
     }
     
     if (!response.ok) {
