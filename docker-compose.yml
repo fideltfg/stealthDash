@@ -23,6 +23,13 @@ services:
     container_name: dashboard-ping-server
     ports:
       - "3001:3001"
+    volumes:
+      # Mount source files for hot reload
+      - ./ping-server/server.js:/app/server.js
+      - ./ping-server/auth.js:/app/auth.js
+      - ./ping-server/db.js:/app/db.js
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
     environment:
       - PING_SERVER_PORT=3001
       - DB_HOST=postgres
