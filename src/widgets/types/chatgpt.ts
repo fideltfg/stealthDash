@@ -49,49 +49,25 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       <span>ChatGPT (${content.model})</span>
     `;
     
-    // Settings button
+    // Settings button - always visible for now to debug
     const settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = '⚙️';
     settingsBtn.title = 'Settings';
     settingsBtn.style.cssText = `
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.3);
       border: none;
       border-radius: 4px;
-      padding: 4px 8px;
+      padding: 6px 10px;
       cursor: pointer;
-      font-size: 16px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
+      font-size: 18px;
       color: white;
+      flex-shrink: 0;
     `;
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.showSettings(container, widget);
     });
     settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    
-    // Show settings button when widget is selected
-    const updateButtonVisibility = () => {
-      const widgetElement = container.closest('.widget');
-      if (widgetElement && widgetElement.classList.contains('selected')) {
-        settingsBtn.style.opacity = '1';
-        settingsBtn.style.pointerEvents = 'auto';
-      } else {
-        settingsBtn.style.opacity = '0';
-        settingsBtn.style.pointerEvents = 'none';
-      }
-    };
-    
-    // Initial check
-    updateButtonVisibility();
-    
-    // Watch for class changes on the widget element
-    const widgetElement = container.closest('.widget');
-    if (widgetElement) {
-      const observer = new MutationObserver(updateButtonVisibility);
-      observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
-    }
     
     header.appendChild(headerLeft);
     header.appendChild(settingsBtn);
