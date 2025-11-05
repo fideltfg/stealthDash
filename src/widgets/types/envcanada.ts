@@ -328,6 +328,8 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     const xmlText = await response.text();
     
+    console.log('Environment Canada XML (first 500 chars):', xmlText.substring(0, 500));
+    
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -364,6 +366,8 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     // Parse forecast entries
     const entries = xmlDoc.querySelectorAll('item');
+    console.log('Found', entries.length, 'items in RSS feed');
+    
     entries.forEach(entry => {
       const title = entry.querySelector('title')?.textContent || '';
       const summary = entry.querySelector('summary')?.textContent || 
