@@ -545,8 +545,15 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     `;
     section.appendChild(header);
 
-    // Show first 5 items in summary mode
-    const displayItems = items.slice(0, 5);
+    // Container for items with scrolling
+    const itemsContainer = document.createElement('div');
+    itemsContainer.style.cssText = `
+      max-height: 200px;
+      overflow-y: auto;
+    `;
+
+    // Show first 10 items
+    const displayItems = items.slice(0, 10);
     displayItems.forEach(item => {
       const status = item.status === 'open' ? '✅' : '❌';
       const row = document.createElement('div');
@@ -563,10 +570,12 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         <span style="flex: 1;">${item.name}</span>
         ${item.difficulty ? `<span style="opacity: 0.6;">${item.difficulty}</span>` : ''}
       `;
-      section.appendChild(row);
+      itemsContainer.appendChild(row);
     });
 
-    if (items.length > 5) {
+    section.appendChild(itemsContainer);
+
+    if (items.length > 10) {
       const more = document.createElement('div');
       more.style.cssText = `
         text-align: center;
@@ -574,7 +583,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         color: var(--muted);
         margin-top: 4px;
       `;
-      more.textContent = `... and ${items.length - 5} more`;
+      more.textContent = `... and ${items.length - 10} more`;
       section.appendChild(more);
     }
 
