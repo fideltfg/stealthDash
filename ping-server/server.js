@@ -1096,8 +1096,45 @@ app.post('/home-assistant/service', async (req, res) => {
   }
 });
 
+// CORS proxy endpoint for fetching external XML/data
+app.get('/proxy', async (req, res) => {
+  try {
+    const targetUrl = req.query.url;
+    
+    if (!targetUrl) {
+      return res.status(400).send('Missing url parameter');
+    }
+
+    console.log(`Proxying request to: ${targetUrl}`);
+    
+    const https = require('https');
+    const http = require('http');
+    const urlModule = require('url');
+    
+    const parsedUrl = urlModule.parse(targetUrl);
+    const protocol = parsedUrl.protocol === 'https:' ? https : http;
+    
+    protocol.get(targetUrl, (proxyRes) => {
+      // Forward the content-type header
+      res.set('Content-Type', proxyRes.headers['content-type'] || 'text/xml');
+      res.set('Access-Control-Allow-Origin', '*');
+      
+      // Pipe the response
+      proxyRes.pipe(res);
+    }).on('error', (error) => {
+      console.error('Proxy error:', error);
+      res.status(500).send(`Proxy error: ${error.message}`);
+    });
+    
+  } catch (error) {
+    console.error('Proxy endpoint error:', error);
+    res.status(500).send(`Error: ${error.message}`);
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Ping server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Ping endpoint: http://localhost:${PORT}/ping/<target>`);
+  console.log(`Proxy endpoint: http://localhost:${PORT}/proxy?url=<target_url>`);
 });

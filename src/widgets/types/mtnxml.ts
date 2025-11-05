@@ -259,11 +259,12 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       });
       console.log('Direct fetch response status:', response.status);
     } catch (directError) {
-      // Direct fetch failed (likely CORS), try proxy
-      console.log('Direct fetch failed, trying CORS proxy...', directError);
+      // Direct fetch failed (likely CORS), try local proxy
+      console.log('Direct fetch failed, trying local proxy...', directError);
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        console.log('Fetching via proxy:', proxyUrl);
+        // Use local ping-server proxy
+        const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(url)}`;
+        console.log('Fetching via local proxy:', proxyUrl);
         response = await fetch(proxyUrl);
         usedProxy = true;
         console.log('Proxy fetch response status:', response.status);
