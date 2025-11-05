@@ -12,9 +12,10 @@ import * as rss from './rss';
 import * as uptime from './uptime';
 import * as cometP8541 from './comet-p8541';
 import * as homeAssistant from './home-assistant';
+import * as chatgpt from './chatgpt';
 
 // Auto-register all widgets
-const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant];
+const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt];
 
 widgets.forEach(mod => {
   if (mod.widget) {
