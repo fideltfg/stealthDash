@@ -513,10 +513,14 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       content.systemPrompt = systemPromptInput.value;
       
       // Dispatch update event to save changes
-      container.dispatchEvent(new CustomEvent('widget-update', {
+      const event = new CustomEvent('widget-update', {
         bubbles: true,
-        detail: { widget }
-      }));
+        detail: { 
+          id: widget.id, 
+          content: content 
+        }
+      });
+      document.dispatchEvent(event);
     };
 
     apiKeyInput.addEventListener('input', updateContent);
