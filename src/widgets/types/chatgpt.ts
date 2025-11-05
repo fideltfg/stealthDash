@@ -208,6 +208,23 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
       try {
+        // Prepare the request payload
+        const requestPayload = {
+          model: content.model,
+          messages: [
+            { role: 'system', content: content.systemPrompt },
+            ...content.messages.map(m => ({ role: m.role, content: m.content }))
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        };
+        
+        console.log('Sending to OpenAI:', {
+          model: requestPayload.model,
+          messageCount: requestPayload.messages.length,
+          apiKeyPrefix: content.apiKey.substring(0, 7) + '...'
+        });
+
         // Call OpenAI API
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -215,25 +232,20 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${content.apiKey}`
           },
-          body: JSON.stringify({
-            model: content.model,
-            messages: [
-              { role: 'system', content: content.systemPrompt },
-              ...content.messages.map(m => ({ role: m.role, content: m.content }))
-            ],
-            temperature: 0.7,
-            max_tokens: 1000
-          })
+          body: JSON.stringify(requestPayload)
         });
 
         typingIndicator.remove();
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error?.message || 'API request failed');
+        const data = await response.json();
+        
+        // Check for errors in response
+        if (!response.ok || data.error) {
+          const errorMessage = data.error?.message || `API Error (${response.status})`;
+          console.error('OpenAI API Error:', data);
+          throw new Error(errorMessage);
         }
 
-        const data = await response.json();
         const assistantMessage = {
           role: 'assistant' as const,
           content: data.choices[0].message.content,
