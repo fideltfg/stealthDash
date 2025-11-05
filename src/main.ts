@@ -3,6 +3,8 @@ import { DEFAULT_WIDGET_SIZE } from './types';
 import { loadState, saveState, debouncedSave } from './storage';
 import { createHistoryManager, shouldCoalesceAction } from './history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
+import { authService, type User } from './services/auth';
+import { AuthUI } from './components/AuthUI';
 import './css/style.css';
 import './css/custom.css';
 
@@ -21,19 +23,71 @@ class Dashboard {
   private readonly SNAP_DISTANCE = 10; // pixels to snap to nearby edges
   private readonly SNAP_THRESHOLD = 15; // distance at which snapping occurs
   private snapGuides: HTMLElement[] = [];
+  private authUI: AuthUI;
+  private currentUser: User | null = null;
+  private userMenuElement: HTMLElement | null = null;
+  private autoSaveInterval: number | null = null;
 
   constructor() {
+    this.authUI = new AuthUI(this.handleAuthChange.bind(this));
     this.state = loadState();
     this.init();
   }
 
-  private init(): void {
-    this.setupDOM();
-    this.setupTheme();
-    this.setupBackground();
-    this.setupEventListeners();
-    this.render();
-    this.saveHistory();
+  private async init(): Promise<void> {
+    // Check if user is logged in
+    if (authService.isAuthenticated()) {
+      this.currentUser = authService.getUser();
+      
+      // Verify token is still valid
+      const valid = await authService.verify();
+      if (!valid) {
+        authService.logout();
+        return;
+      }
+
+      // Load dashboard from server
+      const serverDashboard = await authService.loadDashboard();
+      if (serverDashboard) {
+        this.state = serverDashboard;
+      }
+
+      this.setupDOM();
+      this.setupTheme();
+      this.setupBackground();
+      this.setupEventListeners();
+      this.render();
+      this.saveHistory();
+      this.showUserMenu();
+      this.startAutoSave();
+    } else {
+      // Show login dialog
+      this.authUI.showLoginDialog();
+    }
+  }
+
+  private handleAuthChange(user: User | null): void {
+    this.currentUser = user;
+    if (user) {
+      // User logged in, initialize dashboard
+      this.init();
+    }
+  }
+
+  private showUserMenu(): void {
+    if (this.currentUser && !this.userMenuElement) {
+      this.userMenuElement = this.authUI.createUserMenu(this.currentUser);
+      document.body.appendChild(this.userMenuElement);
+    }
+  }
+
+  private startAutoSave(): void {
+    // Auto-save to server every 30 seconds
+    this.autoSaveInterval = window.setInterval(() => {
+      if (authService.isAuthenticated()) {
+        authService.saveDashboard(this.state);
+      }
+    }, 30000);
   }
 
   private toggleFullscreen(): void {
@@ -1136,6 +1190,12 @@ class Dashboard {
 
   private save(): void {
     debouncedSave(this.state);
+    // Also save to server if authenticated
+    if (authService.isAuthenticated()) {
+      authService.saveDashboard(this.state).catch(err => {
+        console.error('Failed to save dashboard to server:', err);
+      });
+    }
   }
 
   private undo(): void {

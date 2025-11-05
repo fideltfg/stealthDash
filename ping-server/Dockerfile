@@ -10,6 +10,9 @@ COPY package*.json ./
 RUN npm install --production
 
 COPY server.js ./
+COPY auth.js ./
+COPY db.js ./
+COPY init-db.sql ./
 
 EXPOSE 3001
 

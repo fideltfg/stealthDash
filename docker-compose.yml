@@ -24,8 +24,33 @@ services:
       - "3001:3001"
     environment:
       - PING_SERVER_PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=dashboard
+      - DB_USER=dashboard
+      - DB_PASSWORD=dashboard123
+      - JWT_SECRET=your-secret-key-change-in-production
     restart: unless-stopped
+    depends_on:
+      - postgres
     # Required for ICMP ping to work in container
     cap_add:
       - NET_RAW
       - NET_ADMIN
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dashboard-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=dashboard
+      - POSTGRES_USER=dashboard
+      - POSTGRES_PASSWORD=dashboard123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ping-server/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

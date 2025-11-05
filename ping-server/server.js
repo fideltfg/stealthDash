@@ -3,6 +3,9 @@ const cors = require('cors');
 const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
 const snmp = require('net-snmp');
+const bcrypt = require('bcryptjs');
+const db = require('./db');
+const { authMiddleware, generateToken } = require('./auth');
 
 const app = express();
 const PORT = process.env.PING_SERVER_PORT || 3001;
@@ -10,6 +13,180 @@ const PORT = process.env.PING_SERVER_PORT || 3001;
 // Enable CORS for all origins (adjust in production)
 app.use(cors());
 app.use(express.json());
+
+// ==================== AUTH ROUTES ====================
+
+// Register new user
+app.post('/auth/register', async (req, res) => {
+  const { username, email, password } = req.body;
+  
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Username, email, and password are required' });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  try {
+    // Check if user already exists
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const result = await db.query(
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
+      [username, email, passwordHash]
+    );
+    
+    const user = result.rows[0];
+    const token = generateToken(user);
+    
+    res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.created_at
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Login
+app.post('/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  try {
+    // Find user
+    const result = await db.query(
+      'SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1',
+      [username]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    const user = result.rows[0];
+    
+    // Verify password
+    const valid = await bcrypt.compare(password, user.password_hash);
+    
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    const token = generateToken(user);
+    
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.created_at
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Verify token (check if logged in)
+app.get('/auth/verify', authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    user: {
+      id: req.user.userId,
+      username: req.user.username,
+      email: req.user.email
+    }
+  });
+});
+
+// ==================== DASHBOARD ROUTES ====================
+
+// Save dashboard
+app.post('/dashboard/save', authMiddleware, async (req, res) => {
+  const { dashboardData } = req.body;
+  
+  if (!dashboardData) {
+    return res.status(400).json({ error: 'Dashboard data is required' });
+  }
+  
+  try {
+    // Check if user already has a dashboard
+    const existing = await db.query(
+      'SELECT id FROM dashboards WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
+    if (existing.rows.length > 0) {
+      // Update existing dashboard
+      await db.query(
+        'UPDATE dashboards SET dashboard_data = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+        [JSON.stringify(dashboardData), req.user.userId]
+      );
+    } else {
+      // Create new dashboard
+      await db.query(
+        'INSERT INTO dashboards (user_id, dashboard_data) VALUES ($1, $2)',
+        [req.user.userId, JSON.stringify(dashboardData)]
+      );
+    }
+    
+    res.json({ success: true, message: 'Dashboard saved successfully' });
+  } catch (error) {
+    console.error('Save dashboard error:', error);
+    res.status(500).json({ error: 'Failed to save dashboard' });
+  }
+});
+
+// Load dashboard
+app.get('/dashboard/load', authMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT dashboard_data, updated_at FROM dashboards WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ success: true, dashboard: null });
+    }
+    
+    res.json({
+      success: true,
+      dashboard: result.rows[0].dashboard_data,
+      updatedAt: result.rows[0].updated_at
+    });
+  } catch (error) {
+    console.error('Load dashboard error:', error);
+    res.status(500).json({ error: 'Failed to load dashboard' });
+  }
+});
+
+// ==================== EXISTING ROUTES ====================
 
 // Modbus TCP Read Endpoint
 app.get('/modbus/read', async (req, res) => {
