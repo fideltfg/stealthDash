@@ -389,7 +389,7 @@ body {
 .theme-toggle {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  left: 248px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -418,8 +418,8 @@ body {
 /* Background Toggle */
 .background-toggle {
   position: fixed;
-  bottom: 80px;
-  left: 24px;
+  bottom: 24px;
+  left: 304px;
   width: 40px;
   height: 40px;
   border-radius: 50%;

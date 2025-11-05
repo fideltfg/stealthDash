@@ -224,11 +224,11 @@ class Dashboard {
     app.appendChild(this.canvas);
     app.appendChild(fab);
     app.appendChild(fullscreenToggle);
-    app.appendChild(themeToggle);
-    app.appendChild(backgroundToggle);
     app.appendChild(this.lockButton);
     app.appendChild(resetZoomButton);
     app.appendChild(autoArrangeButton);
+    app.appendChild(themeToggle);
+    app.appendChild(backgroundToggle);
   }
 
   private setupTheme(): void {

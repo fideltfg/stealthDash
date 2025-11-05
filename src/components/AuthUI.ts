@@ -314,87 +314,173 @@ export class AuthUI {
   }
 
   createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void): HTMLElement {
-    const menu = document.createElement('div');
-    menu.style.cssText = `
+    const container = document.createElement('div');
+    container.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(30, 30, 30, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
+      bottom: 24px;
+      left: 24px;
       z-index: 10000;
-      backdrop-filter: blur(10px);
     `;
 
-    menu.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="
-          width: 32px;
-          height: 32px;
-          background: #4CAF50;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-        ">${user.username.charAt(0).toUpperCase()}</div>
-        <span style="font-size: 14px;">${user.username}</span>
+    container.innerHTML = `
+      <div id="user-menu-toggle" style="
+        width: 48px;
+        height: 48px;
+        background: var(--accent);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px var(--shadow);
+        border: 2px solid var(--border);
+        transition: transform 0.2s;
+        color: white;
+      " title="${user.username}">
+        ${user.username.charAt(0).toUpperCase()}
       </div>
-      <button id="settings-btn" style="
-        padding: 6px 12px;
-        background: rgba(33, 150, 243, 0.2);
-        border: 1px solid #2196F3;
-        border-radius: 4px;
-        color: #2196F3;
-        cursor: pointer;
-        font-size: 12px;
-      ">⚙️ Settings</button>
-      ${user.isAdmin ? `
-        <button id="admin-btn" style="
-          padding: 6px 12px;
-          background: rgba(255, 193, 7, 0.2);
-          border: 1px solid #FFC107;
-          border-radius: 4px;
-          color: #FFC107;
-          cursor: pointer;
-          font-size: 12px;
-        ">👑 Admin</button>
-      ` : ''}
-      <button id="logout-btn" style="
-        padding: 6px 12px;
-        background: rgba(244, 67, 54, 0.2);
-        border: 1px solid #f44336;
-        border-radius: 4px;
-        color: #f44336;
-        cursor: pointer;
-        font-size: 12px;
-      ">Logout</button>
+      <div id="user-dropdown" style="
+        position: absolute;
+        bottom: 60px;
+        left: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 200px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px var(--shadow);
+        display: none;
+        overflow: hidden;
+      ">
+        <div style="
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--border);
+          font-size: 14px;
+          color: var(--text);
+          opacity: 0.7;
+        ">
+          <div style="font-weight: bold; opacity: 1;">${user.username}</div>
+          ${user.isAdmin ? '<div style="color: #FFC107; font-size: 12px; margin-top: 4px;">👑 Administrator</div>' : ''}
+        </div>
+        <div style="padding: 8px 0;">
+          <button id="settings-btn" style="
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #2196F3;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+          ">
+            <span>⚙️</span>
+            <span>Settings</span>
+          </button>
+          ${user.isAdmin ? `
+            <button id="admin-btn" style="
+              width: 100%;
+              padding: 12px 16px;
+              background: none;
+              border: none;
+              color: #FFC107;
+              cursor: pointer;
+              font-size: 14px;
+              text-align: left;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              transition: background 0.2s;
+            ">
+              <span>👑</span>
+              <span>Admin</span>
+            </button>
+          ` : ''}
+          <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+          <button id="logout-btn" style="
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+          ">
+            <span>🚪</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
     `;
+
+    const toggle = container.querySelector('#user-menu-toggle') as HTMLElement;
+    const dropdown = container.querySelector('#user-dropdown') as HTMLElement;
+
+    // Toggle dropdown
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = dropdown.style.display === 'block';
+      dropdown.style.display = isVisible ? 'none' : 'block';
+      toggle.style.transform = isVisible ? 'scale(1)' : 'scale(1.1)';
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target as Node)) {
+        dropdown.style.display = 'none';
+        toggle.style.transform = 'scale(1)';
+      }
+    });
+
+    // Hover effects for buttons
+    const buttons = dropdown.querySelectorAll('button');
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        (btn as HTMLElement).style.background = 'var(--surface-hover)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        (btn as HTMLElement).style.background = 'none';
+      });
+    });
 
     // Settings button
-    const settingsBtn = menu.querySelector('#settings-btn') as HTMLButtonElement;
+    const settingsBtn = dropdown.querySelector('#settings-btn') as HTMLButtonElement;
     if (settingsBtn && onSettingsClick) {
-      settingsBtn.addEventListener('click', onSettingsClick);
+      settingsBtn.addEventListener('click', () => {
+        dropdown.style.display = 'none';
+        toggle.style.transform = 'scale(1)';
+        onSettingsClick();
+      });
     }
 
     // Admin button (if user is admin)
-    const adminBtn = menu.querySelector('#admin-btn') as HTMLButtonElement;
+    const adminBtn = dropdown.querySelector('#admin-btn') as HTMLButtonElement;
     if (adminBtn && onAdminClick) {
-      adminBtn.addEventListener('click', onAdminClick);
+      adminBtn.addEventListener('click', () => {
+        dropdown.style.display = 'none';
+        toggle.style.transform = 'scale(1)';
+        onAdminClick();
+      });
     }
 
     // Logout button
-    const logoutBtn = menu.querySelector('#logout-btn') as HTMLButtonElement;
+    const logoutBtn = dropdown.querySelector('#logout-btn') as HTMLButtonElement;
     logoutBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to logout?')) {
         authService.logout();
       }
     });
 
-    return menu;
+    return container;
   }
 }
