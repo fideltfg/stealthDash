@@ -135,7 +135,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const header = document.createElement('div');
     header.style.cssText = `
       padding: 12px 16px;
-      background: var(--accent);
+      background: var(--primary);
       color: white;
       font-weight: bold;
       font-size: 14px;
@@ -160,7 +160,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     settingsBtn.innerHTML = '⚙️';
     settingsBtn.title = 'Settings';
     settingsBtn.style.cssText = `
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 4px;
       padding: 6px 10px;
@@ -168,7 +168,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       font-size: 18px;
       color: white;
       flex-shrink: 0;
+      transition: background 0.2s;
     `;
+    settingsBtn.addEventListener('mouseenter', () => {
+      settingsBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+    });
+    settingsBtn.addEventListener('mouseleave', () => {
+      settingsBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.showSettings(container, widget);
