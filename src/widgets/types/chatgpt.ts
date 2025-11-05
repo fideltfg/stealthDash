@@ -366,8 +366,18 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     `;
     closeBtn.onclick = () => {
       overlay.remove();
-      // Re-render widget to show updated model in header
-      this.render(container, widget);
+      // Just update the header text to show the new model
+      const widgetContent = widget.content as unknown as ChatGPTContent;
+      const header = container.querySelector('div') as HTMLElement;
+      if (header) {
+        const headerLeft = header.querySelector('div') as HTMLElement;
+        if (headerLeft) {
+          headerLeft.innerHTML = `
+            <span>🤖</span>
+            <span>ChatGPT (${widgetContent.model})</span>
+          `;
+        }
+      }
     };
 
     buttonGroup.appendChild(closeBtn);
@@ -379,8 +389,18 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     overlay.onclick = (e) => {
       if (e.target === overlay) {
         overlay.remove();
-        // Re-render widget to show updated model in header
-        this.render(container, widget);
+        // Just update the header text to show the new model
+        const widgetContent = widget.content as unknown as ChatGPTContent;
+        const header = container.querySelector('div') as HTMLElement;
+        if (header) {
+          const headerLeft = header.querySelector('div') as HTMLElement;
+          if (headerLeft) {
+            headerLeft.innerHTML = `
+              <span>🤖</span>
+              <span>ChatGPT (${widgetContent.model})</span>
+            `;
+          }
+        }
       }
     };
 
