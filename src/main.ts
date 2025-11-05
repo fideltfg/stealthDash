@@ -1143,27 +1143,37 @@ class Dashboard {
     const plugins = getAllWidgetPlugins();
     
     plugins.forEach((plugin: any) => {
-      const card = document.createElement('button');
-      card.className = 'widget-type-card';
-      card.tabIndex = 0;
+      const row = document.createElement('button');
+      row.className = 'widget-type-row';
+      row.tabIndex = 0;
       
       const icon = document.createElement('div');
       icon.className = 'widget-type-icon';
       icon.textContent = plugin.icon;
       
+      const content = document.createElement('div');
+      content.className = 'widget-type-content';
+      
       const name = document.createElement('div');
       name.className = 'widget-type-name';
       name.textContent = plugin.name;
       
-      card.appendChild(icon);
-      card.appendChild(name);
+      const description = document.createElement('div');
+      description.className = 'widget-type-description';
+      description.textContent = plugin.description || '';
       
-      card.addEventListener('click', () => {
+      content.appendChild(name);
+      content.appendChild(description);
+      
+      row.appendChild(icon);
+      row.appendChild(content);
+      
+      row.addEventListener('click', () => {
         this.addWidget(plugin.type as WidgetType, plugin.defaultContent || {});
         overlay.remove();
       });
       
-      types.appendChild(card);
+      types.appendChild(row);
     });
     
     modal.appendChild(header);

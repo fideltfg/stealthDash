@@ -665,43 +665,75 @@ body {
   outline: 2px solid var(--ring);
 }
 
-/* Widget Type Cards */
+/* Widget Type List (Table Style) */
 .widget-types {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.widget-type-card {
-  padding: 24px;
-  background: var(--surface);
-  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--border);
   border-radius: var(--border-radius);
+  background: var(--surface);
+}
+
+.widget-type-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: none;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  text-align: center;
-  transition: border-color var(--transition-speed), background var(--transition-speed), transform var(--transition-speed);
+  text-align: left;
+  transition: background var(--transition-speed);
+  width: 100%;
 }
 
-.widget-type-card:hover {
-  border-color: var(--accent);
+.widget-type-row:last-child {
+  border-bottom: none;
+}
+
+.widget-type-row:hover {
   background: var(--hover);
-  transform: translateY(-2px);
 }
 
-.widget-type-card:focus {
+.widget-type-row:focus {
   outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
+  z-index: 1;
 }
 
 .widget-type-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
+  font-size: 36px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget-type-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .widget-type-name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text);
+}
+
+.widget-type-description {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 /* Widget Content Types */
