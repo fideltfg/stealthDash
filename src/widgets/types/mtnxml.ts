@@ -301,52 +301,82 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       weather: {}
     };
 
-    // Parse resort info
+    // Parse report info (Banff Norquay format)
+    const report = xmlDoc.querySelector('report');
+    if (report) {
+      data.resort.name = report.getAttribute('name') || 'Unknown Resort';
+      data.resort.updated = report.getAttribute('updated') || '';
+      data.resort.units = report.getAttribute('units') || 'metric';
+    }
+
+    // Try standard MTNXML format first
     const resort = xmlDoc.querySelector('resort');
     if (resort) {
-      data.resort.name = resort.getAttribute('name') || 'Unknown Resort';
+      data.resort.name = resort.getAttribute('name') || data.resort.name;
       data.resort.url = resort.getAttribute('url') || '';
     }
 
-    // Parse lifts
-    const lifts = xmlDoc.querySelectorAll('lift');
+    // Parse lifts (both formats)
+    const lifts = xmlDoc.querySelectorAll('lift, liftStatus');
     lifts.forEach(lift => {
       data.lifts.push({
-        name: lift.getAttribute('name') || '',
-        status: lift.getAttribute('status') || 'unknown',
+        name: lift.getAttribute('name') || lift.getAttribute('liftName') || '',
+        status: lift.getAttribute('status') || lift.getAttribute('liftStatus') || 'unknown',
         type: lift.getAttribute('type') || ''
       });
     });
 
-    // Parse trails
-    const trails = xmlDoc.querySelectorAll('trail');
+    // Parse trails (both formats)
+    const trails = xmlDoc.querySelectorAll('trail, trailStatus');
     trails.forEach(trail => {
       data.trails.push({
-        name: trail.getAttribute('name') || '',
-        status: trail.getAttribute('status') || 'unknown',
+        name: trail.getAttribute('name') || trail.getAttribute('trailName') || '',
+        status: trail.getAttribute('status') || trail.getAttribute('trailStatus') || 'unknown',
         difficulty: trail.getAttribute('difficulty') || '',
         groomed: trail.getAttribute('groomed') === 'true'
       });
     });
 
-    // Parse snow report
-    const snowReport = xmlDoc.querySelector('snowReport');
-    if (snowReport) {
+    // Parse Banff Norquay current conditions format
+    const locations = xmlDoc.querySelectorAll('location');
+    if (locations.length > 0) {
+      const location = locations[0]; // Use first location
       data.snowReport = {
-        baseDepth: snowReport.querySelector('baseDepth')?.textContent || '0',
-        newSnow24: snowReport.querySelector('newSnow[period="24"]')?.textContent || '0',
-        newSnow48: snowReport.querySelector('newSnow[period="48"]')?.textContent || '0',
-        lastSnowfall: snowReport.querySelector('lastSnowfall')?.textContent || '',
-        units: snowReport.getAttribute('units') || 'in'
+        baseDepth: location.getAttribute('base') || '0',
+        newSnow24: location.getAttribute('snow24Hours') || '0',
+        newSnow48: location.getAttribute('snow48Hours') || '0',
+        snowOverNight: location.getAttribute('snowOverNight') || '0',
+        snow7Days: location.getAttribute('snow7Days') || '0',
+        lastSnowfall: '',
+        units: data.resort.units === 'metric' ? 'cm' : 'in'
+      };
+      
+      data.weather = {
+        condition: location.getAttribute('weatherConditions') || '',
+        temperature: location.getAttribute('temperature') || '',
+        windSpeed: '',
+        windDirection: ''
       };
     }
 
-    // Parse weather
+    // Parse standard MTNXML snow report
+    const snowReport = xmlDoc.querySelector('snowReport');
+    if (snowReport) {
+      data.snowReport = {
+        baseDepth: snowReport.querySelector('baseDepth')?.textContent || data.snowReport.baseDepth || '0',
+        newSnow24: snowReport.querySelector('newSnow[period="24"]')?.textContent || data.snowReport.newSnow24 || '0',
+        newSnow48: snowReport.querySelector('newSnow[period="48"]')?.textContent || data.snowReport.newSnow48 || '0',
+        lastSnowfall: snowReport.querySelector('lastSnowfall')?.textContent || '',
+        units: snowReport.getAttribute('units') || data.snowReport.units || 'in'
+      };
+    }
+
+    // Parse standard MTNXML weather
     const weather = xmlDoc.querySelector('weather');
     if (weather) {
       data.weather = {
-        condition: weather.querySelector('condition')?.textContent || '',
-        temperature: weather.querySelector('temperature')?.textContent || '',
+        condition: weather.querySelector('condition')?.textContent || data.weather.condition || '',
+        temperature: weather.querySelector('temperature')?.textContent || data.weather.temperature || '',
         windSpeed: weather.querySelector('windSpeed')?.textContent || '',
         windDirection: weather.querySelector('windDirection')?.textContent || ''
       };
@@ -732,7 +762,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       }
     });
 
-    modal.appendChild(modal);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
   }
