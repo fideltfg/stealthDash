@@ -7,12 +7,13 @@ services:
     volumes:
       # Mount source code for hot reload during development
       - ./src:/app/src
-      - ./index.html:/app/index.html
+      - ./http:/app/http
       - ./vite.config.ts:/app/vite.config.ts
       # Prevent node_modules from being overwritten
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-localhost}
     restart: unless-stopped
     stdin_open: true
     tty: true
