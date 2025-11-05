@@ -1,6 +1,6 @@
-# Authentication & Persistence System
+# Authentication & User Management System
 
-This dashboard now includes user authentication and server-side persistence, allowing users to save their dashboard layouts and access them from any browser.
+This dashboard now includes comprehensive user authentication, server-side persistence, and admin user management capabilities.
 
 ## Features
 
@@ -16,13 +16,29 @@ This dashboard now includes user authentication and server-side persistence, all
 - **Load on Login**: Your dashboard layout is restored when you log in
 - **Cross-Device**: Access your dashboard from any browser
 
+### User Profile Management
+- **Settings Dialog**: Access via ⚙️ Settings button in user menu
+- **Update Email**: Change your email address
+- **Change Password**: Update your password (requires current password verification)
+- **Account Information**: View account details and admin status
+
+### Admin Dashboard
+- **Admin Access**: Admin users see 👑 Admin button in user menu
+- **User Management**: View all users with detailed information
+- **User Statistics**: Dashboard showing total users, dashboards, and admins
+- **Make/Remove Admin**: Promote users to admin or demote them
+- **Reset Password**: Admin can reset any user's password
+- **Delete Users**: Remove users and their dashboards
+- **Self-Protection**: Admins cannot delete themselves or remove their own admin status
+
 ## Architecture
 
 ### Backend (ping-server)
 - **PostgreSQL Database**: Stores users and dashboard data
 - **JWT Authentication**: Secure token-based authentication
 - **Password Hashing**: bcryptjs for secure password storage
-- **RESTful API**: Clean API endpoints for auth and data
+- **Admin Middleware**: Authorization checks for admin-only routes
+- **RESTful API**: Clean API endpoints for auth, data, and administration
 
 ### Database Schema
 ```sql
@@ -31,6 +47,7 @@ users:
   - username (unique)
   - email (unique)
   - password_hash
+  - is_admin (boolean, default false)
   - created_at
   - updated_at
 
@@ -133,13 +150,179 @@ Response:
 }
 ```
 
+### User Profile
+
+#### POST /user/change-password
+Change current user's password
+```json
+Headers:
+Authorization: Bearer <token>
+
+Request:
+{
+  "currentPassword": "oldpass123",
+  "newPassword": "newpass456"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Password changed successfully"
+}
+```
+
+#### POST /user/update-profile
+Update current user's email
+```json
+Headers:
+Authorization: Bearer <token>
+
+Request:
+{
+  "email": "newemail@example.com"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Profile updated successfully"
+}
+```
+
+#### GET /user/profile
+Get current user's profile with admin status
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "username": "john",
+    "email": "john@example.com",
+    "is_admin": true,
+    "created_at": "2025-01-05T12:00:00.000Z",
+    "updated_at": "2025-01-05T12:00:00.000Z"
+  }
+}
+```
+
+### Admin Routes
+
+**Note**: All admin routes require the user to have `is_admin = true` in the database.
+
+#### GET /admin/users
+Get all users (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "users": [
+    {
+      "id": 1,
+      "username": "john",
+      "email": "john@example.com",
+      "is_admin": true,
+      "created_at": "2025-01-05T12:00:00.000Z",
+      "updated_at": "2025-01-05T12:00:00.000Z"
+    },
+    ...
+  ]
+}
+```
+
+#### POST /admin/users/:userId/make-admin
+Promote user to administrator (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "message": "User promoted to admin"
+}
+```
+
+#### POST /admin/users/:userId/remove-admin
+Remove administrator privileges (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "message": "Admin privileges removed"
+}
+
+// Note: Users cannot remove their own admin status
+```
+
+#### POST /admin/users/:userId/reset-password
+Reset a user's password (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Request:
+{
+  "newPassword": "resetpass123"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+```
+
+#### DELETE /admin/users/:userId
+Delete user and their dashboard (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "message": "User deleted successfully"
+}
+
+// Note: Users cannot delete themselves
+```
+
+#### GET /admin/stats
+Get system statistics (admin only)
+```json
+Headers:
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "stats": {
+    "totalUsers": 15,
+    "totalDashboards": 12,
+    "totalAdmins": 2
+  }
+}
+```
+
 ## Frontend Integration
 
 ### AuthService
-The `authService` singleton handles all authentication operations:
+The `authService` singleton handles all authentication and user management operations:
 
 ```typescript
 import { authService } from './services/auth';
+
+// ===== Authentication =====
 
 // Register
 const result = await authService.register('username', 'email', 'password');
@@ -153,14 +336,87 @@ const isAuth = authService.isAuthenticated();
 // Get current user
 const user = authService.getUser();
 
+// Logout
+authService.logout();
+
+// ===== Dashboard Persistence =====
+
 // Save dashboard
 await authService.saveDashboard(dashboardData);
 
 // Load dashboard
 const dashboard = await authService.loadDashboard();
 
-// Logout
-authService.logout();
+// ===== User Profile =====
+
+// Get fresh profile (updates local user object)
+await authService.getProfile();
+
+// Change password
+const result = await authService.changePassword('currentPass', 'newPass');
+
+// Update email
+const result = await authService.updateProfile('newemail@example.com');
+
+// Check if current user is admin
+const isAdmin = authService.isAdmin();
+
+// ===== Admin Functions =====
+
+// Get all users
+const users = await authService.getUsers();
+
+// Make user admin
+const result = await authService.makeAdmin(userId);
+
+// Remove admin privileges
+const result = await authService.removeAdmin(userId);
+
+// Reset user's password
+const result = await authService.resetUserPassword(userId, 'newPass');
+
+// Delete user
+const result = await authService.deleteUser(userId);
+
+// Get system statistics
+const stats = await authService.getAdminStats();
+```
+
+### UI Components
+
+#### AuthUI
+Login and registration dialog
+```typescript
+import { AuthUI } from './components/AuthUI';
+
+const authUI = new AuthUI(handleAuthChange);
+authUI.showLoginDialog();
+
+// Create user menu with settings and admin buttons
+const menu = authUI.createUserMenu(
+  user,
+  () => settingsUI.showSettingsDialog(),
+  () => adminUI.showAdminDashboard()
+);
+```
+
+#### UserSettingsUI
+User profile and password management
+```typescript
+import { UserSettingsUI } from './components/UserSettingsUI';
+
+const settingsUI = new UserSettingsUI();
+settingsUI.showSettingsDialog();
+```
+
+#### AdminDashboardUI
+Admin control panel for user management
+```typescript
+import { AdminDashboardUI } from './components/AdminDashboardUI';
+
+const adminUI = new AdminDashboardUI();
+await adminUI.showAdminDashboard();
+
 ```
 
 ### AuthUI Component

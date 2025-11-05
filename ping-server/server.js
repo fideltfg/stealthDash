@@ -4,11 +4,100 @@ const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
 const snmp = require('net-snmp');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const db = require('./db');
 const { authMiddleware, generateToken } = require('./auth');
 
 const app = express();
 const PORT = process.env.PING_SERVER_PORT || 3001;
+
+// Email transporter configuration
+let emailTransporter = null;
+const SMTP_CONFIGURED = process.env.SMTP_USER && process.env.SMTP_PASS;
+
+if (SMTP_CONFIGURED) {
+  emailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  
+  // Verify SMTP connection
+  emailTransporter.verify((error, success) => {
+    if (error) {
+      console.error('SMTP configuration error:', error);
+      console.log('Password recovery will use fallback mode (token in logs only)');
+    } else {
+      console.log('✅ Email server is ready to send password recovery emails');
+    }
+  });
+} else {
+  console.log('⚠️  SMTP not configured - Password recovery will use fallback mode');
+  console.log('   Configure SMTP in .env file for email-based recovery');
+}
+
+// Helper function to send recovery email
+async function sendRecoveryEmail(email, username, token) {
+  const dashboardUrl = process.env.DASHBOARD_URL || 'http://localhost:3000';
+  const recoveryLink = `${dashboardUrl}/#/reset-password?token=${token}`;
+  
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || 'Dashboard <noreply@dashboard.local>',
+    to: email,
+    subject: 'Password Recovery - Dashboard',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Recovery Request</h2>
+        <p>Hello <strong>${username}</strong>,</p>
+        <p>We received a request to reset your password. Click the button below to reset your password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${recoveryLink}" 
+             style="background: #4CAF50; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+            Reset Password
+          </a>
+        </div>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="background: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all; font-family: monospace; font-size: 12px;">
+          ${recoveryLink}
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          This link will expire in <strong>1 hour</strong> and can only be used once.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          If you didn't request this password reset, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">
+          This is an automated message from Dashboard. Please do not reply to this email.
+        </p>
+      </div>
+    `,
+    text: `
+Password Recovery Request
+
+Hello ${username},
+
+We received a request to reset your password. Click the link below to reset your password:
+
+${recoveryLink}
+
+This link will expire in 1 hour and can only be used once.
+
+If you didn't request this password reset, you can safely ignore this email.
+    `
+  };
+  
+  if (emailTransporter) {
+    await emailTransporter.sendMail(mailOptions);
+    return true;
+  }
+  return false;
+}
 
 // Enable CORS for all origins (adjust in production)
 app.use(cors());
@@ -125,6 +214,257 @@ app.get('/auth/verify', authMiddleware, (req, res) => {
   });
 });
 
+// ==================== PASSWORD RECOVERY ROUTES ====================
+
+// Request password recovery token
+app.post('/auth/request-recovery', async (req, res) => {
+  const { usernameOrEmail } = req.body;
+  
+  if (!usernameOrEmail) {
+    return res.status(400).json({ error: 'Username or email is required' });
+  }
+  
+  try {
+    // Check if user exists (by username or email)
+    const result = await db.query(
+      'SELECT id, username, email FROM users WHERE username = $1 OR email = $1',
+      [usernameOrEmail]
+    );
+    
+    // Always return success to prevent username/email enumeration
+    if (result.rows.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'If an account with that username or email exists, a recovery email has been sent.'
+      });
+    }
+    
+    const user = result.rows[0];
+    
+    // Generate random token
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Token expires in 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    
+    // Invalidate any existing tokens for this user
+    await db.query(
+      'UPDATE password_recovery_tokens SET used = true WHERE user_id = $1 AND used = false',
+      [user.id]
+    );
+    
+    // Insert new token
+    await db.query(
+      'INSERT INTO password_recovery_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+      [user.id, token, expiresAt]
+    );
+    
+    // Try to send email
+    let emailSent = false;
+    if (SMTP_CONFIGURED) {
+      try {
+        await sendRecoveryEmail(user.email, user.username, token);
+        emailSent = true;
+        console.log(`✅ Password recovery email sent to ${user.email}`);
+      } catch (emailError) {
+        console.error('Failed to send recovery email:', emailError);
+        emailSent = false;
+      }
+    }
+    
+    // If email not sent, log token to console for admin assistance
+    if (!emailSent) {
+      console.log('='.repeat(80));
+      console.log('PASSWORD RECOVERY TOKEN GENERATED');
+      console.log('='.repeat(80));
+      console.log(`Username: ${user.username}`);
+      console.log(`Email: ${user.email}`);
+      console.log(`Recovery Link: ${process.env.DASHBOARD_URL || 'http://localhost:3000'}/#/reset-password?token=${token}`);
+      console.log(`Expires: ${expiresAt.toISOString()}`);
+      console.log(`Valid for: 1 hour`);
+      console.log('='.repeat(80));
+      console.log('⚠️  Email not sent - SMTP not configured or failed');
+      console.log('   Share this link with the user to reset their password.');
+      console.log('='.repeat(80));
+    }
+    
+    res.json({ 
+      success: true, 
+      message: emailSent 
+        ? 'A password recovery email has been sent to your registered email address.'
+        : 'Recovery request received. Please contact an administrator for the recovery link.'
+    });
+  } catch (err) {
+    console.error('Password recovery request error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Validate recovery token (check if it's valid before showing reset form)
+app.post('/auth/validate-token', async (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+  
+  try {
+    const result = await db.query(
+      `SELECT prt.id, prt.expires_at, prt.used, u.username 
+       FROM password_recovery_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`,
+      [token]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(400).json({ 
+        valid: false, 
+        error: 'Invalid recovery token' 
+      });
+    }
+    
+    const recovery = result.rows[0];
+    
+    if (new Date() > new Date(recovery.expires_at)) {
+      return res.status(400).json({ 
+        valid: false, 
+        error: 'Recovery token has expired' 
+      });
+    }
+    
+    if (recovery.used) {
+      return res.status(400).json({ 
+        valid: false, 
+        error: 'Recovery token has already been used' 
+      });
+    }
+    
+    res.json({ 
+      valid: true, 
+      username: recovery.username 
+    });
+  } catch (err) {
+    console.error('Token validation error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Reset password with validated token
+app.post('/auth/reset-password-with-token', async (req, res) => {
+  const { token, newPassword } = req.body;
+  
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token and password are required' });
+  }
+  
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  try {
+    // Check if token exists and is valid
+    const result = await db.query(
+      `SELECT prt.id, prt.user_id, prt.expires_at, prt.used, u.username 
+       FROM password_recovery_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`,
+      [token]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    
+    const recovery = result.rows[0];
+    
+    // Check if token is expired
+    if (new Date() > new Date(recovery.expires_at)) {
+      return res.status(400).json({ error: 'Recovery token has expired' });
+    }
+    
+    // Check if token has been used
+    if (recovery.used) {
+      return res.status(400).json({ error: 'Recovery token has already been used' });
+    }
+    
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [passwordHash, recovery.user_id]
+    );
+    
+    // Mark token as used
+    await db.query(
+      'UPDATE password_recovery_tokens SET used = true WHERE id = $1',
+      [recovery.id]
+    );
+    
+    console.log(`✅ Password reset successful for user: ${recovery.username}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Password has been reset successfully'
+    });
+  } catch (err) {
+    console.error('Password reset error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Validate recovery token (check if it's valid before showing reset form)
+app.get('/auth/validate-token/:token', async (req, res) => {
+  const { token } = req.params;
+  
+  if (!token) {
+    return res.status(400).json({ valid: false, error: 'Token is required' });
+  }
+  
+  try {
+    const result = await db.query(
+      `SELECT prt.id, prt.expires_at, prt.used, u.username 
+       FROM password_recovery_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`,
+      [token]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ 
+        valid: false, 
+        error: 'Invalid recovery token' 
+      });
+    }
+    
+    const recovery = result.rows[0];
+    
+    if (new Date() > new Date(recovery.expires_at)) {
+      return res.json({ 
+        valid: false, 
+        error: 'Recovery token has expired' 
+      });
+    }
+    
+    if (recovery.used) {
+      return res.json({ 
+        valid: false, 
+        error: 'Recovery token has already been used' 
+      });
+    }
+    
+    res.json({ 
+      valid: true, 
+      username: recovery.username 
+    });
+  } catch (err) {
+    console.error('Token validation error:', err);
+    res.status(500).json({ valid: false, error: 'Server error' });
+  }
+});
+
 // ==================== DASHBOARD ROUTES ====================
 
 // Save dashboard
@@ -183,6 +523,247 @@ app.get('/dashboard/load', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Load dashboard error:', error);
     res.status(500).json({ error: 'Failed to load dashboard' });
+  }
+});
+
+// ==================== USER PROFILE ROUTES ====================
+
+// Change password
+app.post('/user/change-password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current password and new password are required' });
+  }
+  
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  }
+  
+  try {
+    // Get current user
+    const result = await db.query(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Verify current password
+    const valid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+    
+    if (!valid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [newPasswordHash, req.user.userId]
+    );
+    
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Update profile (email only for now)
+app.post('/user/update-profile', authMiddleware, async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  try {
+    // Check if email is already taken by another user
+    const existing = await db.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email, req.user.userId]
+    );
+    
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Email already in use' });
+    }
+    
+    // Update email
+    await db.query(
+      'UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [email, req.user.userId]
+    );
+    
+    res.json({ success: true, message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Get user profile
+app.get('/user/profile', authMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, username, email, created_at, is_admin FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to get profile' });
+  }
+});
+
+// ==================== ADMIN ROUTES ====================
+
+// Middleware to check if user is admin
+const adminMiddleware = async (req, res, next) => {
+  try {
+    const result = await db.query(
+      'SELECT is_admin FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+    
+    if (result.rows.length === 0 || !result.rows[0].is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({ error: 'Authorization failed' });
+  }
+};
+
+// Get all users (admin only)
+app.get('/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, username, email, is_admin, created_at, updated_at FROM users ORDER BY created_at DESC'
+    );
+    
+    res.json({ success: true, users: result.rows });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Failed to get users' });
+  }
+});
+
+// Make user admin (admin only)
+app.post('/admin/users/:userId/make-admin', authMiddleware, adminMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    await db.query(
+      'UPDATE users SET is_admin = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [userId]
+    );
+    
+    res.json({ success: true, message: 'User promoted to admin' });
+  } catch (error) {
+    console.error('Make admin error:', error);
+    res.status(500).json({ error: 'Failed to make user admin' });
+  }
+});
+
+// Remove admin privileges (admin only)
+app.post('/admin/users/:userId/remove-admin', authMiddleware, adminMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  
+  // Prevent removing admin from yourself
+  if (parseInt(userId) === req.user.userId) {
+    return res.status(400).json({ error: 'Cannot remove admin privileges from yourself' });
+  }
+  
+  try {
+    await db.query(
+      'UPDATE users SET is_admin = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [userId]
+    );
+    
+    res.json({ success: true, message: 'Admin privileges removed' });
+  } catch (error) {
+    console.error('Remove admin error:', error);
+    res.status(500).json({ error: 'Failed to remove admin privileges' });
+  }
+});
+
+// Reset user password (admin only)
+app.post('/admin/users/:userId/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  const { newPassword } = req.body;
+  
+  if (!newPassword) {
+    return res.status(400).json({ error: 'New password is required' });
+  }
+  
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  try {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [passwordHash, userId]
+    );
+    
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// Delete user (admin only)
+app.delete('/admin/users/:userId', authMiddleware, adminMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  
+  // Prevent deleting yourself
+  if (parseInt(userId) === req.user.userId) {
+    return res.status(400).json({ error: 'Cannot delete your own account' });
+  }
+  
+  try {
+    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+    
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Get dashboard stats (admin only)
+app.get('/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userCount = await db.query('SELECT COUNT(*) FROM users');
+    const dashboardCount = await db.query('SELECT COUNT(*) FROM dashboards');
+    const adminCount = await db.query('SELECT COUNT(*) FROM users WHERE is_admin = true');
+    
+    res.json({
+      success: true,
+      stats: {
+        totalUsers: parseInt(userCount.rows[0].count),
+        totalDashboards: parseInt(dashboardCount.rows[0].count),
+        totalAdmins: parseInt(adminCount.rows[0].count)
+      }
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to get stats' });
   }
 });
 

@@ -1,10 +1,13 @@
 import { authService, type User } from '../services/auth';
+import { PasswordRecoveryUI } from './PasswordRecoveryUI';
 
 export class AuthUI {
   private onAuthChange: (user: User | null) => void;
+  private recoveryUI: PasswordRecoveryUI;
 
   constructor(onAuthChange: (user: User | null) => void) {
     this.onAuthChange = onAuthChange;
+    this.recoveryUI = new PasswordRecoveryUI();
   }
 
   showLoginDialog(): void {
@@ -87,6 +90,14 @@ export class AuthUI {
               color: white;
               font-size: 16px;
             ">
+          </div>
+          <div style="margin-bottom: 20px; text-align: right;">
+            <a href="#" id="forgot-password-link" style="
+              color: #2196F3;
+              text-decoration: none;
+              font-size: 13px;
+              cursor: pointer;
+            ">Forgot Password?</a>
           </div>
           <button id="login-btn" style="
             width: 100%;
@@ -173,6 +184,14 @@ export class AuthUI {
     `;
 
     document.body.appendChild(dialog);
+
+    // Forgot password link
+    const forgotPasswordLink = dialog.querySelector('#forgot-password-link') as HTMLAnchorElement;
+    forgotPasswordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      dialog.remove();
+      this.recoveryUI.showRequestRecoveryDialog();
+    });
 
     // Tab switching
     const loginTab = dialog.querySelector('#login-tab') as HTMLButtonElement;
@@ -294,7 +313,7 @@ export class AuthUI {
     }
   }
 
-  createUserMenu(user: User): HTMLElement {
+  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void): HTMLElement {
     const menu = document.createElement('div');
     menu.style.cssText = `
       position: fixed;
@@ -325,6 +344,26 @@ export class AuthUI {
         ">${user.username.charAt(0).toUpperCase()}</div>
         <span style="font-size: 14px;">${user.username}</span>
       </div>
+      <button id="settings-btn" style="
+        padding: 6px 12px;
+        background: rgba(33, 150, 243, 0.2);
+        border: 1px solid #2196F3;
+        border-radius: 4px;
+        color: #2196F3;
+        cursor: pointer;
+        font-size: 12px;
+      ">⚙️ Settings</button>
+      ${user.isAdmin ? `
+        <button id="admin-btn" style="
+          padding: 6px 12px;
+          background: rgba(255, 193, 7, 0.2);
+          border: 1px solid #FFC107;
+          border-radius: 4px;
+          color: #FFC107;
+          cursor: pointer;
+          font-size: 12px;
+        ">👑 Admin</button>
+      ` : ''}
       <button id="logout-btn" style="
         padding: 6px 12px;
         background: rgba(244, 67, 54, 0.2);
@@ -336,6 +375,19 @@ export class AuthUI {
       ">Logout</button>
     `;
 
+    // Settings button
+    const settingsBtn = menu.querySelector('#settings-btn') as HTMLButtonElement;
+    if (settingsBtn && onSettingsClick) {
+      settingsBtn.addEventListener('click', onSettingsClick);
+    }
+
+    // Admin button (if user is admin)
+    const adminBtn = menu.querySelector('#admin-btn') as HTMLButtonElement;
+    if (adminBtn && onAdminClick) {
+      adminBtn.addEventListener('click', onAdminClick);
+    }
+
+    // Logout button
     const logoutBtn = menu.querySelector('#logout-btn') as HTMLButtonElement;
     logoutBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to logout?')) {

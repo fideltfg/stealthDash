@@ -5,6 +5,8 @@ import { createHistoryManager, shouldCoalesceAction } from './history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
 import { authService, type User } from './services/auth';
 import { AuthUI } from './components/AuthUI';
+import { UserSettingsUI } from './components/UserSettingsUI';
+import { AdminDashboardUI } from './components/AdminDashboardUI';
 import './css/style.css';
 import './css/custom.css';
 
@@ -24,27 +26,53 @@ class Dashboard {
   private readonly SNAP_THRESHOLD = 15; // distance at which snapping occurs
   private snapGuides: HTMLElement[] = [];
   private authUI: AuthUI;
+  private userSettingsUI: UserSettingsUI;
+  private adminDashboardUI: AdminDashboardUI;
   private currentUser: User | null = null;
   private userMenuElement: HTMLElement | null = null;
   private autoSaveInterval: number | null = null;
 
   constructor() {
     this.authUI = new AuthUI(this.handleAuthChange.bind(this));
+    this.userSettingsUI = new UserSettingsUI();
+    this.adminDashboardUI = new AdminDashboardUI();
     this.state = loadState();
     this.init();
   }
 
   private async init(): Promise<void> {
+    // Check for password reset token in URL hash
+    const hash = window.location.hash;
+    if (hash.startsWith('#/reset-password?token=')) {
+      const params = new URLSearchParams(hash.split('?')[1]);
+      const token = params.get('token');
+      if (token) {
+        // Show reset password dialog
+        const { PasswordRecoveryUI } = await import('./components/PasswordRecoveryUI');
+        const recoveryUI = new PasswordRecoveryUI();
+        recoveryUI.showResetPasswordDialog(token, () => {
+          // After successful reset, clear the hash and show login
+          window.location.hash = '';
+          this.authUI.showLoginDialog();
+        });
+        return;
+      }
+    }
+
     // Check if user is logged in
     if (authService.isAuthenticated()) {
       this.currentUser = authService.getUser();
       
-      // Verify token is still valid
+      // Verify token is still valid and get fresh profile with admin flag
       const valid = await authService.verify();
       if (!valid) {
         authService.logout();
         return;
       }
+
+      // Get fresh profile to ensure we have is_admin flag
+      await authService.getProfile();
+      this.currentUser = authService.getUser();
 
       // Load dashboard from server
       const serverDashboard = await authService.loadDashboard();
@@ -76,7 +104,11 @@ class Dashboard {
 
   private showUserMenu(): void {
     if (this.currentUser && !this.userMenuElement) {
-      this.userMenuElement = this.authUI.createUserMenu(this.currentUser);
+      this.userMenuElement = this.authUI.createUserMenu(
+        this.currentUser,
+        () => this.userSettingsUI.showSettingsDialog(),
+        () => this.adminDashboardUI.showAdminDashboard()
+      );
       document.body.appendChild(this.userMenuElement);
     }
   }

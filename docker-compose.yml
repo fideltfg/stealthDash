@@ -30,6 +30,13 @@ services:
       - DB_USER=dashboard
       - DB_PASSWORD=dashboard123
       - JWT_SECRET=your-secret-key-change-in-production
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@dashboard.local}
+      - DASHBOARD_URL=${DASHBOARD_URL:-http://localhost:3000}
     restart: unless-stopped
     depends_on:
       - postgres
