@@ -35,12 +35,66 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       font-size: 14px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
+    `;
+    
+    const headerLeft = document.createElement('div');
+    headerLeft.style.cssText = `
+      display: flex;
+      align-items: center;
       gap: 8px;
     `;
-    header.innerHTML = `
+    headerLeft.innerHTML = `
       <span>🤖</span>
       <span>ChatGPT (${content.model})</span>
     `;
+    
+    // Settings button
+    const settingsBtn = document.createElement('button');
+    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.title = 'Settings';
+    settingsBtn.style.cssText = `
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      color: white;
+    `;
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.showSettings(container, widget);
+    });
+    settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    
+    // Show settings button when widget is selected
+    const updateButtonVisibility = () => {
+      const widgetElement = container.closest('.widget');
+      if (widgetElement && widgetElement.classList.contains('selected')) {
+        settingsBtn.style.opacity = '1';
+        settingsBtn.style.pointerEvents = 'auto';
+      } else {
+        settingsBtn.style.opacity = '0';
+        settingsBtn.style.pointerEvents = 'none';
+      }
+    };
+    
+    // Initial check
+    updateButtonVisibility();
+    
+    // Watch for class changes on the widget element
+    const widgetElement = container.closest('.widget');
+    if (widgetElement) {
+      const observer = new MutationObserver(updateButtonVisibility);
+      observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    header.appendChild(headerLeft);
+    header.appendChild(settingsBtn);
 
     // Messages container
     const messagesContainer = document.createElement('div');
@@ -282,8 +336,83 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     return messageEl;
   }
 
+  private showSettings(container: HTMLElement, widget: Widget): void {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: var(--text);
+    `;
+
+    const settingsContainer = document.createElement('div');
+    this.renderEditDialog(settingsContainer, widget);
+
+    const buttonGroup = document.createElement('div');
+    buttonGroup.style.cssText = `
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    `;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.cssText = `
+      flex: 1;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+    `;
+    closeBtn.onclick = () => {
+      overlay.remove();
+      // Re-render widget to show updated model in header
+      this.render(container, widget);
+    };
+
+    buttonGroup.appendChild(closeBtn);
+
+    modal.appendChild(settingsContainer);
+    modal.appendChild(buttonGroup);
+    overlay.appendChild(modal);
+
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        // Re-render widget to show updated model in header
+        this.render(container, widget);
+      }
+    };
+
+    document.body.appendChild(overlay);
+  }
+
   renderEditDialog(container: HTMLElement, widget: Widget): void {
-    const content = widget.content as ChatGPTContent;
+    const content = widget.content as unknown as ChatGPTContent;
     
     container.innerHTML = '';
     container.style.cssText = `
