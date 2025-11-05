@@ -548,13 +548,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     // Container for items with scrolling
     const itemsContainer = document.createElement('div');
     itemsContainer.style.cssText = `
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--surface);
     `;
 
-    // Show first 10 items
-    const displayItems = items.slice(0, 10);
-    displayItems.forEach(item => {
+    // Show all items
+    items.forEach(item => {
       const status = item.status === 'open' ? '✅' : '❌';
       const row = document.createElement('div');
       row.style.cssText = `
@@ -574,18 +575,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     });
 
     section.appendChild(itemsContainer);
-
-    if (items.length > 10) {
-      const more = document.createElement('div');
-      more.style.cssText = `
-        text-align: center;
-        font-size: 11px;
-        color: var(--muted);
-        margin-top: 4px;
-      `;
-      more.textContent = `... and ${items.length - 10} more`;
-      section.appendChild(more);
-    }
 
     return section;
   }
