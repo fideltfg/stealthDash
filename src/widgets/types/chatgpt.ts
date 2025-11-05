@@ -128,7 +128,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       setupMsg.innerHTML = `
         <div style="font-weight: bold; margin-bottom: 8px;">⚠️ API Key Required</div>
         <div style="font-size: 12px; opacity: 0.8;">
-          Click the edit button to add your OpenAI API key.<br>
+          Click the widget to select it, then click the ⚙️ settings button to add your API key.<br>
           Get yours at <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #2196F3;">platform.openai.com</a>
         </div>
       `;
