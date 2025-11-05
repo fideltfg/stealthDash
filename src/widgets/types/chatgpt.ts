@@ -299,7 +299,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--text);">
           OpenAI API Key <span style="color: #f44336;">*</span>
         </label>
-        <input type="password" id="api-key" value="${content.apiKey}" style="
+        <input type="password" id="api-key" value="${content.apiKey}" placeholder="sk-..." style="
           width: 100%;
           padding: 10px;
           box-sizing: border-box;
@@ -328,8 +328,12 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
           font-size: 14px;
         ">
           <option value="gpt-3.5-turbo" ${content.model === 'gpt-3.5-turbo' ? 'selected' : ''}>GPT-3.5 Turbo (Cheaper, faster)</option>
-          <option value="gpt-4" ${content.model === 'gpt-4' ? 'selected' : ''}>GPT-4 (More capable)</option>
-          <option value="gpt-4-turbo-preview" ${content.model === 'gpt-4-turbo-preview' ? 'selected' : ''}>GPT-4 Turbo (Latest)</option>
+          <option value="gpt-4" ${content.model === 'gpt-4' ? 'selected' : ''}>GPT-4 (Most capable)</option>
+          <option value="gpt-4-turbo" ${content.model === 'gpt-4-turbo' ? 'selected' : ''}>GPT-4 Turbo (Faster GPT-4)</option>
+          <option value="gpt-4o" ${content.model === 'gpt-4o' ? 'selected' : ''}>GPT-4o (Latest, multimodal)</option>
+          <option value="gpt-4o-mini" ${content.model === 'gpt-4o-mini' ? 'selected' : ''}>GPT-4o Mini (Affordable)</option>
+          <option value="o1-preview" ${content.model === 'o1-preview' ? 'selected' : ''}>o1 Preview (Advanced reasoning)</option>
+          <option value="o1-mini" ${content.model === 'o1-mini' ? 'selected' : ''}>o1 Mini (Fast reasoning)</option>
         </select>
       </div>
 
@@ -383,19 +387,42 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         <div style="font-weight: bold; margin-bottom: 4px;">💡 Pricing Info</div>
         <div style="opacity: 0.9;">
           • GPT-3.5: $0.0015/$0.002 per 1K tokens<br>
+          • GPT-4o: $0.005/$0.015 per 1K tokens<br>
           • GPT-4: $0.03/$0.06 per 1K tokens<br>
           <a href="https://openai.com/pricing" target="_blank" style="color: #2196F3;">View full pricing</a>
         </div>
       </div>
     `;
 
+    // Get input elements
+    const apiKeyInput = container.querySelector('#api-key') as HTMLInputElement;
+    const modelSelect = container.querySelector('#model') as HTMLSelectElement;
+    const systemPromptInput = container.querySelector('#system-prompt') as HTMLTextAreaElement;
     const clearHistoryBtn = container.querySelector('#clear-history') as HTMLButtonElement;
     const messageCount = container.querySelector('#message-count') as HTMLElement;
+
+    // Update content when inputs change
+    const updateContent = () => {
+      content.apiKey = apiKeyInput.value.trim();
+      content.model = modelSelect.value;
+      content.systemPrompt = systemPromptInput.value;
+      
+      // Dispatch update event to save changes
+      container.dispatchEvent(new CustomEvent('widget-update', {
+        bubbles: true,
+        detail: { widget }
+      }));
+    };
+
+    apiKeyInput.addEventListener('input', updateContent);
+    modelSelect.addEventListener('change', updateContent);
+    systemPromptInput.addEventListener('input', updateContent);
 
     clearHistoryBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all chat messages?')) {
         content.messages = [];
         messageCount.textContent = '0 message(s) in history';
+        updateContent();
       }
     });
   }
