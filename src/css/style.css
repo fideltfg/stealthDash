@@ -245,14 +245,14 @@ body {
 }
 
 .widget-content {
-  padding: 12px;
+  padding: 8px;
   height: 100%;
   overflow: auto;
 }
 
-.widget.selected .widget-content {
-  padding-top: 44px; /* Account for header */
-}
+/* .widget.selected .widget-content {
+  padding-top: 44px; 
+}*/
 
 /* Resize Handles */
 .resize-handle {

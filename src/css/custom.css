@@ -1,0 +1,147 @@
+.loadingDiv {
+    opacity: 0.5;
+    font-size: 14px;
+    text-align: center;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    font-size: 18px;
+    font-weight: 600;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.device-info {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 2px;
+}
+
+.errorDiv {
+    color: #f44336;
+    padding: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.gauge-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px 0;
+    width: 100%;
+}
+
+.text-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.gauge-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    width: 100%;
+}
+
+.gauge-container {
+    height: 140px;
+}
+
+.alarm-div {
+    margin-top: 10px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    margin-bottom: 10px;
+}
+
+
+.alarm-flash-hot {
+    animation: flash-hot 1s infinite;
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.alarm-flash-cold {
+    animation: flash-cold 1s infinite;
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+}
+
+.alarm-flash-error {
+    animation: flash-error 1s infinite;
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+@keyframes flash-hot {
+    0% {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+    }
+
+    50% {
+        background-color: rgba(244, 67, 54, 0.9);
+        color: white;
+    }
+
+    100% {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+    }
+}
+
+@keyframes flash-cold {
+    0% {
+        background-color: rgba(33, 150, 243, 0.2);
+        color: #2196F3;
+    }
+
+    50% {
+        background-color: rgba(33, 150, 243, 0.9);
+        color: white;
+    }
+
+    100% {
+        background-color: rgba(33, 150, 243, 0.2);
+        color: #2196F3;
+    }
+}
+
+@keyframes flash-error {
+    0% {
+        background-color: rgba(244, 67, 54, 0.3);
+        color: #f44336;
+    }
+
+    50% {
+        background-color: rgba(244, 67, 54, 1);
+        color: white;
+    }
+
+    100% {
+        background-color: rgba(244, 67, 54, 0.3);
+        color: #f44336;
+    }
+}

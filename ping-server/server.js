@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
+const snmp = require('net-snmp');
 
 const app = express();
 const PORT = process.env.PING_SERVER_PORT || 3001;
@@ -72,6 +73,114 @@ app.get('/modbus/read', async (req, res) => {
   } catch (error) {
     try { await client.close(); } catch (e) {}
     console.error('Modbus error:', error);
+    res.status(500).json({
+      error: error.message,
+      success: false,
+      timestamp: Date.now()
+    });
+  }
+});
+
+// SNMP Read Endpoint
+app.get('/snmp/get', (req, res) => {
+  const { host, community = 'public', oids } = req.query;
+  
+  if (!host || !oids) {
+    return res.status(400).json({ 
+      error: 'host and oids parameters are required',
+      success: false 
+    });
+  }
+  
+  try {
+    // Parse OIDs (can be comma-separated)
+    const oidArray = oids.split(',').map(oid => oid.trim());
+    
+    console.log(`SNMP GET request: host=${host}, community=${community}, oids=${oidArray.join(',')}`);
+    
+    // Create SNMP session with default options (they work better!)
+    const session = snmp.createSession(host, community);
+    
+    console.log('SNMP session created, sending request...');
+    
+    let sessionClosed = false;
+    
+    // Handle session errors
+    session.on('error', (err) => {
+      console.error('SNMP session error:', err.message);
+    });
+    
+    // Set response timeout
+    const timeoutHandle = setTimeout(() => {
+      console.log('SNMP request timed out (10s timeout)');
+      if (!sessionClosed) {
+        sessionClosed = true;
+        session.close();
+      }
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: 'SNMP request timeout',
+          success: false,
+          timestamp: Date.now()
+        });
+      }
+    }, 10000);
+    
+    // Perform SNMP GET
+    session.get(oidArray, (error, varbinds) => {
+      console.log('SNMP callback received:', error ? `error: ${error.message}` : `success, ${varbinds.length} varbinds`);
+      clearTimeout(timeoutHandle);
+      if (!sessionClosed) {
+        sessionClosed = true;
+        session.close();
+      }
+      
+      if (res.headersSent) return;
+      
+      if (error) {
+        console.error('SNMP error:', error);
+        return res.status(500).json({
+          error: error.message,
+          success: false,
+          timestamp: Date.now()
+        });
+      }
+      
+      // Check for errors in varbinds
+      const hasError = varbinds.some(vb => snmp.isVarbindError(vb));
+      if (hasError) {
+        return res.status(500).json({
+          error: 'SNMP varbind error',
+          success: false,
+          timestamp: Date.now()
+        });
+      }
+      
+      // Format response
+      const data = varbinds.map(vb => {
+        let value = vb.value;
+        // Convert Buffer to string for SNMP OctetString types
+        if (Buffer.isBuffer(value)) {
+          value = value.toString('utf8');
+        }
+        return {
+          oid: vb.oid,
+          type: vb.type,
+          value: value
+        };
+      });
+      
+      res.json({
+        success: true,
+        host,
+        community,
+        data,
+        timestamp: Date.now()
+      });
+    });
+    
+  } catch (error) {
+    console.error('SNMP error:', error);
     res.status(500).json({
       error: error.message,
       success: false,

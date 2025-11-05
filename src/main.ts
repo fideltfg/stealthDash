@@ -3,7 +3,8 @@ import { DEFAULT_WIDGET_SIZE } from './types';
 import { loadState, saveState, debouncedSave } from './storage';
 import { createHistoryManager, shouldCoalesceAction } from './history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
-import './style.css';
+import './css/style.css';
+import './css/custom.css';
 
 class Dashboard {
   private state: DashboardState;
