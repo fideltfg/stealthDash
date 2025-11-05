@@ -520,6 +520,16 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     return section;
   }
 
+  /**
+   * Creates a scrollable section for displaying lifts or trails status
+   * Shows all items with a scrollable container (max 250px height)
+   * 
+   * @param title - Section title (e.g., "🚡 Lifts" or "⛷️ Trails")
+   * @param items - Array of lift/trail objects with name, status, and optional difficulty
+   * @param openCount - Number of items with 'open' status
+   * @param totalCount - Total number of items
+   * @returns HTMLElement containing the formatted status section
+   */
   private createStatusSection(title: string, items: any[], openCount: number, totalCount: number): HTMLElement {
     const section = document.createElement('div');
     section.style.cssText = `
@@ -529,6 +539,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       padding: 12px;
     `;
 
+    // Header showing title and open/total count
     const header = document.createElement('div');
     header.style.cssText = `
       display: flex;
@@ -545,7 +556,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     `;
     section.appendChild(header);
 
-    // Container for items with scrolling
+    // Scrollable container for all items (no limit, shows all lifts/trails)
     const itemsContainer = document.createElement('div');
     itemsContainer.style.cssText = `
       max-height: 250px;
@@ -554,7 +565,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       scrollbar-color: var(--accent) var(--surface);
     `;
 
-    // Show all items
+    // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
       const status = item.status === 'open' ? '✅' : '❌';
       const row = document.createElement('div');
