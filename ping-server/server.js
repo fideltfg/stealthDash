@@ -275,6 +275,69 @@ app.post('/ping-batch', async (req, res) => {
   }
 });
 
+// Home Assistant proxy endpoints
+app.post('/home-assistant/states', async (req, res) => {
+  const { url, token } = req.body;
+  
+  if (!url || !token) {
+    return res.status(400).json({ 
+      error: 'url and token are required',
+      success: false 
+    });
+  }
+  
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`${url}/api/states`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message, success: false });
+  }
+});
+
+app.post('/home-assistant/service', async (req, res) => {
+  const { url, token, domain, service, entity_id } = req.body;
+  
+  if (!url || !token || !domain || !service || !entity_id) {
+    return res.status(400).json({ 
+      error: 'url, token, domain, service, and entity_id are required',
+      success: false 
+    });
+  }
+  
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`${url}/api/services/${domain}/${service}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ entity_id })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ error: error.message, success: false });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Ping server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);

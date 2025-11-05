@@ -11,9 +11,10 @@ import * as clock from './clock';
 import * as rss from './rss';
 import * as uptime from './uptime';
 import * as cometP8541 from './comet-p8541';
+import * as homeAssistant from './home-assistant';
 
 // Auto-register all widgets
-const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541];
+const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant];
 
 widgets.forEach(mod => {
   if (mod.widget) {

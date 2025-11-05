@@ -12,6 +12,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "justgage": "^2.0.1",
     "marked": "^11.0.0"
   }
 }
