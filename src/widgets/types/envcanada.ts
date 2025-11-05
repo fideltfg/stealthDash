@@ -205,7 +205,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const header = document.createElement('div');
     header.style.cssText = `
       padding: 12px 16px;
-      background: var(--accent);
+      background: var(--primary);
       color: white;
       font-weight: bold;
       font-size: 14px;
@@ -230,7 +230,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     settingsBtn.innerHTML = '⚙️';
     settingsBtn.title = 'Settings';
     settingsBtn.style.cssText = `
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 4px;
       padding: 6px 10px;
@@ -238,7 +238,14 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       font-size: 18px;
       color: white;
       flex-shrink: 0;
+      transition: background 0.2s;
     `;
+    settingsBtn.addEventListener('mouseenter', () => {
+      settingsBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+    });
+    settingsBtn.addEventListener('mouseleave', () => {
+      settingsBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.showSettings(container, widget);
@@ -271,11 +278,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       content.cachedData = data;
       content.lastUpdated = Date.now();
       
-      console.log('Environment Canada data fetched:', data);
-      console.log('Entries count:', data.entries?.length);
-      
       this.renderForecastData(contentArea, data, content);
-      console.log('Forecast rendered successfully');
       
     } catch (error) {
       console.error('Weather widget error:', error);
@@ -328,8 +331,6 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     const xmlText = await response.text();
     
-    console.log('Environment Canada XML (first 500 chars):', xmlText.substring(0, 500));
-    
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -366,7 +367,6 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       
       // Parse Atom entries
       const entries = xmlDoc.querySelectorAll('entry');
-      console.log('Found', entries.length, 'entries in Atom feed');
       
       entries.forEach(entry => {
         const title = entry.querySelector('title')?.textContent || '';
@@ -397,7 +397,6 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
       // Parse RSS items
       const entries = xmlDoc.querySelectorAll('item');
-      console.log('Found', entries.length, 'items in RSS feed');
       
       entries.forEach(entry => {
         const title = entry.querySelector('title')?.textContent || '';
@@ -420,7 +419,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   }
 
   /**
-   * Renders the parsed forecast data
+   * Renders the parsed forecast data with card-based design
    */
   private renderForecastData(container: HTMLElement, data: any, content: EnvCanadaContent): void {
     container.innerHTML = '';
@@ -429,65 +428,110 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     wrapper.style.cssText = `
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     `;
 
-    // Location
+    // Location header with icon
     const locationDiv = document.createElement('div');
     locationDiv.style.cssText = `
       font-size: 18px;
       font-weight: bold;
       color: var(--text);
       text-align: center;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--border);
+      padding: 12px;
+      background: linear-gradient(135deg, var(--surface-hover) 0%, var(--surface) 100%);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     `;
-    locationDiv.textContent = data.location || 'Weather Forecast';
+    locationDiv.innerHTML = `
+      <span style="font-size: 24px;">📍</span>
+      <span>${data.location || 'Weather Forecast'}</span>
+    `;
     wrapper.appendChild(locationDiv);
 
-    // Forecast entries
+    // Forecast entries with improved visual design
     data.entries.forEach((entry: any) => {
       const entryDiv = document.createElement('div');
       entryDiv.style.cssText = `
         background: var(--surface-hover);
         border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 12px;
+        border-radius: 8px;
+        padding: 16px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: default;
       `;
+      
+      // Add hover effect
+      entryDiv.addEventListener('mouseenter', () => {
+        entryDiv.style.transform = 'translateY(-2px)';
+        entryDiv.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+      });
+      entryDiv.addEventListener('mouseleave', () => {
+        entryDiv.style.transform = 'translateY(0)';
+        entryDiv.style.boxShadow = 'none';
+      });
 
+      // Title row with temperature
       const titleDiv = document.createElement('div');
       titleDiv.style.cssText = `
         font-weight: bold;
-        font-size: 14px;
+        font-size: 15px;
         color: var(--text);
-        margin-bottom: 8px;
+        margin-bottom: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
       `;
       
       const titleText = document.createElement('span');
-      titleText.textContent = entry.title;
+      titleText.style.cssText = `
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      `;
+      
+      // Add weather icon based on title
+      const weatherIcon = this.getWeatherIcon(entry.title);
+      titleText.innerHTML = `
+        <span style="font-size: 20px;">${weatherIcon}</span>
+        <span>${entry.title}</span>
+      `;
       titleDiv.appendChild(titleText);
       
       if (entry.temperature) {
         const tempSpan = document.createElement('span');
         tempSpan.style.cssText = `
-          font-size: 16px;
-          color: var(--accent);
+          font-size: 24px;
+          font-weight: bold;
+          color: ${this.getTempColor(entry.temperature)};
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+          display: flex;
+          align-items: center;
+          gap: 2px;
         `;
-        tempSpan.textContent = `${entry.temperature}°C`;
+        tempSpan.innerHTML = `
+          <span>${entry.temperature}</span>
+          <span style="font-size: 16px;">°C</span>
+        `;
         titleDiv.appendChild(tempSpan);
       }
       
       entryDiv.appendChild(titleDiv);
 
+      // Summary text with better formatting
       const summaryDiv = document.createElement('div');
       summaryDiv.style.cssText = `
         font-size: 13px;
         color: var(--text);
-        opacity: 0.9;
-        line-height: 1.5;
+        opacity: 0.85;
+        line-height: 1.6;
+        padding-left: 28px;
       `;
       summaryDiv.textContent = entry.summary;
       entryDiv.appendChild(summaryDiv);
@@ -495,7 +539,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       wrapper.appendChild(entryDiv);
     });
 
-    // Last updated
+    // Last updated with icon
     if (content.lastUpdated) {
       const lastUpdate = document.createElement('div');
       lastUpdate.style.cssText = `
@@ -503,12 +547,52 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
         font-size: 11px;
         color: var(--muted);
         margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
       `;
-      lastUpdate.textContent = `Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}`;
+      lastUpdate.innerHTML = `
+        <span>🕐</span>
+        <span>Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}</span>
+      `;
       wrapper.appendChild(lastUpdate);
     }
 
     container.appendChild(wrapper);
+  }
+
+  /**
+   * Get weather icon emoji based on forecast title
+   */
+  private getWeatherIcon(title: string): string {
+    const t = title.toLowerCase();
+    
+    if (t.includes('sunny') || t.includes('clear')) return '☀️';
+    if (t.includes('cloudy') || t.includes('overcast')) return '☁️';
+    if (t.includes('rain') || t.includes('shower')) return '🌧️';
+    if (t.includes('snow') || t.includes('flurries')) return '❄️';
+    if (t.includes('storm') || t.includes('thunder')) return '⛈️';
+    if (t.includes('fog') || t.includes('mist')) return '🌫️';
+    if (t.includes('wind')) return '💨';
+    if (t.includes('mix') || t.includes('chance')) return '🌦️';
+    if (t.includes('night')) return '🌙';
+    
+    return '🌤️'; // Default partly cloudy
+  }
+
+  /**
+   * Get temperature color based on value
+   */
+  private getTempColor(temp: string): string {
+    const tempNum = parseInt(temp);
+    
+    if (tempNum >= 30) return '#ff4444'; // Hot - red
+    if (tempNum >= 20) return '#ff8800'; // Warm - orange
+    if (tempNum >= 10) return '#ffaa00'; // Mild - yellow-orange
+    if (tempNum >= 0) return '#00aaff'; // Cool - light blue
+    if (tempNum >= -10) return '#0088ff'; // Cold - blue
+    return '#4466ff'; // Very cold - deep blue
   }
 
   /**
