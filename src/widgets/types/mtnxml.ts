@@ -79,7 +79,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         id="load-feed"
         style="
           padding: 12px 24px;
-          background: var(--accent);
           color: white;
           border: none;
           border-radius: 6px;
@@ -210,15 +209,20 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       
       this.renderMountainData(contentArea, data, content);
     } catch (error) {
+      console.error('Widget render error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       contentArea.innerHTML = `
         <div style="padding: 20px; text-align: center; color: #f44336;">
           <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
           <div style="font-weight: bold; margin-bottom: 8px;">Failed to load feed</div>
-          <div style="font-size: 12px; opacity: 0.8;">${error instanceof Error ? error.message : 'Unknown error'}</div>
+          <div style="font-size: 12px; opacity: 0.8; margin-bottom: 12px;">${errorMessage}</div>
+          <div style="font-size: 11px; opacity: 0.6; color: var(--muted); margin-bottom: 16px;">
+            Check browser console (F12) for details
+          </div>
           <button
-            onclick="location.reload()"
+            id="retry-btn"
             style="
-              margin-top: 16px;
               padding: 8px 16px;
               background: var(--accent);
               color: white;
@@ -231,28 +235,54 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           </button>
         </div>
       `;
+      
+      const retryBtn = contentArea.querySelector('#retry-btn') as HTMLButtonElement;
+      retryBtn.addEventListener('click', () => {
+        this.renderData(container, widget);
+      });
     }
   }
 
   private async fetchFeed(url: string): Promise<any> {
-    // Use a CORS proxy or direct fetch
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    try {
+      // Try direct fetch first
+      let response = await fetch(url, {
+        mode: 'cors',
+        cache: 'no-cache'
+      });
+      
+      // If direct fetch fails with CORS, try CORS proxy
+      if (!response.ok) {
+        console.log('Direct fetch failed, trying CORS proxy...');
+        // Use allorigins.win as CORS proxy
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        response = await fetch(proxyUrl);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const xmlText = await response.text();
+      
+      // Log first 500 chars for debugging
+      console.log('XML Response (first 500 chars):', xmlText.substring(0, 500));
+      
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+      // Check for XML parsing errors
+      const parserError = xmlDoc.querySelector('parsererror');
+      if (parserError) {
+        console.error('XML Parse Error:', parserError.textContent);
+        throw new Error('Invalid XML format');
+      }
+
+      return this.parseXML(xmlDoc);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
     }
-
-    const xmlText = await response.text();
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-    // Check for XML parsing errors
-    const parserError = xmlDoc.querySelector('parsererror');
-    if (parserError) {
-      throw new Error('Invalid XML format');
-    }
-
-    return this.parseXML(xmlDoc);
   }
 
   private parseXML(xmlDoc: Document): any {
