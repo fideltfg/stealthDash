@@ -271,7 +271,11 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       content.cachedData = data;
       content.lastUpdated = Date.now();
       
+      console.log('Environment Canada data fetched:', data);
+      console.log('Entries count:', data.entries?.length);
+      
       this.renderForecastData(contentArea, data, content);
+      console.log('Forecast rendered successfully');
       
     } catch (error) {
       console.error('Weather widget error:', error);
