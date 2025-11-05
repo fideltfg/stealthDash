@@ -395,6 +395,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   }
 
   private renderMountainData(container: HTMLElement, data: any, content: MTNXMLContent): void {
+    console.log('renderMountainData called with data:', data);
+    console.log('Container:', container);
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
@@ -414,7 +416,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       padding-bottom: 8px;
       border-bottom: 2px solid var(--border);
     `;
-    resortName.textContent = data.resort.name;
+    resortName.textContent = data.resort.name || 'Unknown Resort';
+    console.log('Adding resort name:', resortName.textContent);
     wrapper.appendChild(resortName);
 
     // Snow conditions
@@ -476,6 +479,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     }
 
     container.appendChild(wrapper);
+    console.log('Wrapper appended to container, children count:', wrapper.children.length);
   }
 
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
