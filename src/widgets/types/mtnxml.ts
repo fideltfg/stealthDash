@@ -244,45 +244,52 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchFeed(url: string): Promise<any> {
+    let response: Response;
+    let usedProxy = false;
+    
     try {
       // Try direct fetch first
-      let response = await fetch(url, {
+      console.log('Attempting direct fetch from:', url);
+      response = await fetch(url, {
         mode: 'cors',
         cache: 'no-cache'
       });
-      
-      // If direct fetch fails with CORS, try CORS proxy
-      if (!response.ok) {
-        console.log('Direct fetch failed, trying CORS proxy...');
-        // Use allorigins.win as CORS proxy
+      console.log('Direct fetch response status:', response.status);
+    } catch (directError) {
+      // Direct fetch failed (likely CORS), try proxy
+      console.log('Direct fetch failed, trying CORS proxy...', directError);
+      try {
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        console.log('Fetching via proxy:', proxyUrl);
         response = await fetch(proxyUrl);
+        usedProxy = true;
+        console.log('Proxy fetch response status:', response.status);
+      } catch (proxyError) {
+        console.error('Both direct and proxy fetch failed:', proxyError);
+        throw new Error('Failed to fetch feed. Check console for details.');
       }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const xmlText = await response.text();
-      
-      // Log first 500 chars for debugging
-      console.log('XML Response (first 500 chars):', xmlText.substring(0, 500));
-      
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-      // Check for XML parsing errors
-      const parserError = xmlDoc.querySelector('parsererror');
-      if (parserError) {
-        console.error('XML Parse Error:', parserError.textContent);
-        throw new Error('Invalid XML format');
-      }
-
-      return this.parseXML(xmlDoc);
-    } catch (error) {
-      console.error('Fetch error:', error);
-      throw error;
     }
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const xmlText = await response.text();
+    
+    // Log first 500 chars for debugging
+    console.log(`XML Response via ${usedProxy ? 'PROXY' : 'DIRECT'} (first 500 chars):`, xmlText.substring(0, 500));
+    
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+    // Check for XML parsing errors
+    const parserError = xmlDoc.querySelector('parsererror');
+    if (parserError) {
+      console.error('XML Parse Error:', parserError.textContent);
+      throw new Error('Invalid XML format');
+    }
+
+    return this.parseXML(xmlDoc);
   }
 
   private parseXML(xmlDoc: Document): any {
