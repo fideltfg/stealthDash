@@ -2,9 +2,9 @@ import { registerWidget } from './base';
 
 // Automatic widget registration - just import the widget files!
 // Each widget file exports a 'widget' object that gets auto-registered
-import * as text from './text';
+// import * as text from './text';
 import * as image from './image';
-import * as data from './data';
+// import * as data from './data';
 import * as embed from './embed';
 import * as weather from './weather';
 import * as clock from './clock';
@@ -16,7 +16,8 @@ import * as chatgpt from './chatgpt';
 import * as mtnxml from './mtnxml';
 
 // Auto-register all widgets
-const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml];
+// const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml];
+const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml];
 
 widgets.forEach(mod => {
   if (mod.widget) {

@@ -201,6 +201,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       content.cachedData = data;
       content.lastUpdated = Date.now();
       
+      console.log('Feed fetched successfully, rendering data...');
+      
       // Save updated content
       const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content }
@@ -208,6 +210,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       document.dispatchEvent(event);
       
       this.renderMountainData(contentArea, data, content);
+      console.log('Data rendered successfully');
     } catch (error) {
       console.error('Widget render error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -289,7 +292,9 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       throw new Error('Invalid XML format');
     }
 
-    return this.parseXML(xmlDoc);
+    const parsedData = this.parseXML(xmlDoc);
+    console.log('Parsed XML data:', parsedData);
+    return parsedData;
   }
 
   private parseXML(xmlDoc: Document): any {
