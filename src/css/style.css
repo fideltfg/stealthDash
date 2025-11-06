@@ -405,6 +405,36 @@ body {
   left: 80px;  /* Position to the right of menu button (24px + 40px + 16px gap) */
 }
 
+/* Lock Toggle (top-right, replaces user button when locked) */
+.lock-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  z-index: var(--z-fab);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: transform var(--transition-speed);
+}
+
+.lock-toggle:hover {
+  transform: scale(1.1);
+}
+
+.lock-toggle:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* Shared button styles for controls */
 .controls-container button {
   width: 40px;
@@ -454,7 +484,6 @@ body {
 .fullscreen-toggle,
 .theme-toggle,
 .background-toggle,
-.lock-toggle,
 .auto-arrange-toggle,
 .dashboard-switcher {
   font-size: 18px;
@@ -464,13 +493,22 @@ body {
   font-size: 20px;
 }
 
-/* Locked State - Hide menu button */
+/* Locked State - Hide menu button and user menu, show lock button */
 #app.locked .menu-button,
 #app.locked .controls-container,
 #app.locked .resize-handle,
 #app.locked .widget-header,
 #app.locked .widget-delete-btn {
   display: none !important;
+}
+
+/* Hide user menu when locked, show lock button */
+#app.locked .user-menu {
+  display: none !important;
+}
+
+#app.locked .lock-toggle {
+  display: flex !important;
 }
 
 #app.locked .canvas {

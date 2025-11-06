@@ -222,7 +222,7 @@ class Dashboard {
       this.closeMenu();
     });
     
-    // Lock Toggle
+    // Lock Toggle (positioned at top-right, replaces user button when locked)
     this.lockButton = document.createElement('button');
     this.lockButton.className = 'lock-toggle';
     this.lockButton.innerHTML = '🔓';
@@ -230,7 +230,6 @@ class Dashboard {
     this.lockButton.setAttribute('title', 'Lock dashboard (prevents editing)');
     this.lockButton.addEventListener('click', () => {
       this.toggleLock();
-      this.closeMenu();
     });
     
     // Reset Zoom Button
@@ -266,10 +265,9 @@ class Dashboard {
       this.closeMenu();
     });
     
-    // Add all buttons to controls container
+    // Add all buttons to controls container (except lock button)
     controlsContainer.appendChild(fab);
     controlsContainer.appendChild(fullscreenToggle);
-    controlsContainer.appendChild(this.lockButton);
     controlsContainer.appendChild(resetZoomButton);
     controlsContainer.appendChild(autoArrangeButton);
     controlsContainer.appendChild(dashboardSwitcher);
@@ -278,6 +276,7 @@ class Dashboard {
     
     app.appendChild(this.canvas);
     app.appendChild(menuButton);
+    app.appendChild(this.lockButton);
     app.appendChild(controlsContainer);
     
     // Close menu when clicking outside
