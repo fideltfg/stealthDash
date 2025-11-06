@@ -432,6 +432,14 @@ export class AuthUI {
       const isVisible = dropdown.style.display === 'block';
       dropdown.style.display = isVisible ? 'none' : 'block';
       toggle.style.transform = isVisible ? 'scale(1)' : 'scale(1.1)';
+      
+      // Close the controls menu when user menu is opened
+      if (!isVisible) {
+        const controlsContainer = document.getElementById('controls-container');
+        if (controlsContainer) {
+          controlsContainer.classList.remove('open');
+        }
+      }
     });
 
     // Close dropdown when clicking outside

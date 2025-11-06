@@ -391,14 +391,16 @@ body {
   bottom: 24px;
   left: -500px;
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  gap: 8px;
+  padding: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: 24px;
   box-shadow: 0 4px 16px var(--shadow);
   z-index: calc(var(--z-fab) + 1);
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 40px;  /* Match button height */
+  align-items: center;
 }
 
 .controls-container.open {
@@ -437,8 +439,8 @@ body {
 
 /* Shared button styles for controls */
 .controls-container button {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -447,7 +449,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   box-shadow: none;
   transition: all var(--transition-speed);
   flex-shrink: 0;
@@ -465,7 +467,7 @@ body {
 
 /* Individual button adjustments */
 .fab {
-  font-size: 24px !important;
+  font-size: 20px !important;
   background: var(--accent) !important;
   color: white !important;
   border: none !important;
@@ -477,7 +479,7 @@ body {
 }
 
 .reset-zoom-toggle {
-  font-size: 12px !important;
+  font-size: 11px !important;
   font-weight: 600;
 }
 
@@ -486,11 +488,11 @@ body {
 .background-toggle,
 .auto-arrange-toggle,
 .dashboard-switcher {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .theme-toggle {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 /* Locked State - Hide menu button and user menu, show lock button */
