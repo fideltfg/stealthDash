@@ -394,6 +394,11 @@ export class CometP8541Renderer implements WidgetRenderer {
                     console.warn(`Gauge element ${gaugeId} not found in DOM`);
                     return;
                   }
+                  
+                  // Get container dimensions
+                  const containerWidth = gaugeContainer.offsetWidth || 300;
+                  const containerHeight = gaugeContainer.offsetHeight || 150;
+                  
                   const config = {
                     id: gaugeId,
                     value: reading.sensorError ? 0 : reading.value,
@@ -401,13 +406,14 @@ export class CometP8541Renderer implements WidgetRenderer {
                     max: reading.upperLimit + 35,
                     title: reading.name,
                     label: reading.unit,
+                    width: containerWidth,
+                    height: containerHeight,
+                    relativeGaugeSize: true,
                     pointer: true,
                     pointerOptions: {
                       color: "#ffffff",
                       toplength: 0,
                       bottomlength: 20
-
-
                     },
                     levelColors: [
                       "#2196F3",
