@@ -447,6 +447,13 @@ export class AuthUI {
     // Toggle dropdown
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
+      
+      // Don't open menu if dashboard is locked
+      const app = document.getElementById('app');
+      if (app?.classList.contains('locked')) {
+        return;
+      }
+      
       const isVisible = dropdown.style.display === 'block';
       dropdown.style.display = isVisible ? 'none' : 'block';
       toggle.style.transform = isVisible ? 'scale(1)' : 'scale(1.1)';
