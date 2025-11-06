@@ -506,6 +506,7 @@ body {
 /* Hide user menu when locked, show lock button */
 #app.locked .user-menu {
   display: none !important;
+  pointer-events: none !important;
 }
 
 #app.locked .lock-toggle {
