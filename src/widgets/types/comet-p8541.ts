@@ -384,21 +384,48 @@ export class CometP8541Renderer implements WidgetRenderer {
 
             if (existingGauge && gaugeContainer) {
               // Update existing gauge value
-              existingGauge.refresh(reading.sensorError ? 0 : reading.value);
-            } else if (gaugeContainer) {
-              // Create new gauge after a small delay to ensure DOM is ready
-              setTimeout(() => {
+              try {
+                existingGauge.refresh(reading.sensorError ? 0 : reading.value);
+              } catch (e) {
+                console.warn(`Error refreshing gauge ${gaugeId}, will recreate:`, e);
+                // If refresh fails, destroy and recreate
+                if (typeof existingGauge.destroy === 'function') {
+                  existingGauge.destroy();
+                }
+                this.gauges.delete(gaugeId);
+                // Clear the container and force recreation
+                gaugeContainer.innerHTML = '';
+                gaugeContainer.id = gaugeId;
+              }
+            }
+            
+            // Create new gauge if it doesn't exist or was destroyed
+            if (!this.gauges.has(gaugeId) && gaugeContainer) {
+              // Use requestAnimationFrame to ensure DOM is fully updated
+              requestAnimationFrame(() => {
+                // Double-check the element still exists and isn't being recreated
+                const element = document.getElementById(gaugeId);
+                if (!element) {
+                  console.warn(`Gauge element ${gaugeId} not found in DOM after requestAnimationFrame`);
+                  return;
+                }
+                
+                // Ensure we don't already have a gauge (race condition check)
+                if (this.gauges.has(gaugeId)) {
+                  return;
+                }
+                
                 try {
-                  const element = document.getElementById(gaugeId);
-                  if (!element) {
-                    console.warn(`Gauge element ${gaugeId} not found in DOM`);
-                    return;
-                  }
-                  
                   // Get actual container dimensions for consistent gauge sizing
                   // This ensures gauges render at the correct size every time
-                  const containerWidth = gaugeContainer.offsetWidth || 300;
-                  const containerHeight = gaugeContainer.offsetHeight || 150;
+                  const containerWidth = element.offsetWidth || 300;
+                  const containerHeight = element.offsetHeight || 150;
+                  
+                  // Don't create gauge if container has no size
+                  if (containerWidth === 0 || containerHeight === 0) {
+                    console.warn(`Gauge container ${gaugeId} has zero dimensions, skipping creation`);
+                    return;
+                  }
                   
                   const config = {
                     id: gaugeId,
@@ -450,16 +477,23 @@ export class CometP8541Renderer implements WidgetRenderer {
                     labelFontColor: '#cccccc',
                     shadowOpacity: 0
                   } as any;
+                  
                   const gauge = new JustGage(config);
                   this.gauges.set(gaugeId, gauge);
+                  console.log(`Successfully created gauge: ${gaugeId}`);
                 } catch (e) {
-                  console.error('Error creating JustGage:', e);
+                  console.error(`Error creating JustGage ${gaugeId}:`, e);
                   const fallbackElement = document.getElementById(gaugeId);
                   if (fallbackElement) {
-                    fallbackElement.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
+                    fallbackElement.innerHTML = `
+                      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: white;">
+                        <div style="font-size: 24px; font-weight: bold;">${reading.value.toFixed(1)}${reading.unit}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${reading.name}</div>
+                      </div>
+                    `;
                   }
                 }
-              }, 100);
+              });
             }
           });
         } else {
