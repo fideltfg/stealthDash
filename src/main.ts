@@ -165,13 +165,29 @@ class Dashboard {
     this.canvasContent.className = 'canvas-content';
     this.canvas.appendChild(this.canvasContent);
     
+    // Menu Button (hamburger icon)
+    const menuButton = document.createElement('button');
+    menuButton.className = 'menu-button';
+    menuButton.innerHTML = '☰';
+    menuButton.setAttribute('aria-label', 'Toggle menu');
+    menuButton.setAttribute('title', 'Toggle menu');
+    menuButton.addEventListener('click', () => this.toggleMenu());
+    
+    // Controls Container (slides out from left)
+    const controlsContainer = document.createElement('div');
+    controlsContainer.className = 'controls-container';
+    controlsContainer.id = 'controls-container';
+    
     // FAB (Add Widget)
     const fab = document.createElement('button');
     fab.className = 'fab';
     fab.innerHTML = '+';
     fab.setAttribute('aria-label', 'Add widget');
     fab.setAttribute('title', 'Add widget');
-    fab.addEventListener('click', () => this.showAddWidgetModal());
+    fab.addEventListener('click', () => {
+      this.showAddWidgetModal();
+      this.closeMenu();
+    });
     
     // Fullscreen Toggle
     const fullscreenToggle = document.createElement('button');
@@ -179,7 +195,10 @@ class Dashboard {
     fullscreenToggle.innerHTML = '⛶';
     fullscreenToggle.setAttribute('aria-label', 'Toggle fullscreen');
     fullscreenToggle.setAttribute('title', 'Toggle fullscreen');
-    fullscreenToggle.addEventListener('click', () => this.toggleFullscreen());
+    fullscreenToggle.addEventListener('click', () => {
+      this.toggleFullscreen();
+      this.closeMenu();
+    });
     
     // Theme Toggle
     const themeToggle = document.createElement('button');
@@ -187,7 +206,10 @@ class Dashboard {
     themeToggle.innerHTML = '🌓';
     themeToggle.setAttribute('aria-label', 'Toggle theme');
     themeToggle.setAttribute('title', 'Toggle light/dark theme');
-    themeToggle.addEventListener('click', () => this.toggleTheme());
+    themeToggle.addEventListener('click', () => {
+      this.toggleTheme();
+      this.closeMenu();
+    });
     
     // Background Toggle
     const backgroundToggle = document.createElement('button');
@@ -195,7 +217,10 @@ class Dashboard {
     backgroundToggle.innerHTML = '◫';
     backgroundToggle.setAttribute('aria-label', 'Change background pattern');
     backgroundToggle.setAttribute('title', 'Change background pattern');
-    backgroundToggle.addEventListener('click', () => this.toggleBackground());
+    backgroundToggle.addEventListener('click', () => {
+      this.toggleBackground();
+      this.closeMenu();
+    });
     
     // Lock Toggle
     this.lockButton = document.createElement('button');
@@ -203,7 +228,10 @@ class Dashboard {
     this.lockButton.innerHTML = '🔓';
     this.lockButton.setAttribute('aria-label', 'Lock dashboard');
     this.lockButton.setAttribute('title', 'Lock dashboard (prevents editing)');
-    this.lockButton.addEventListener('click', () => this.toggleLock());
+    this.lockButton.addEventListener('click', () => {
+      this.toggleLock();
+      this.closeMenu();
+    });
     
     // Reset Zoom Button
     const resetZoomButton = document.createElement('button');
@@ -211,7 +239,10 @@ class Dashboard {
     resetZoomButton.innerHTML = '1:1';
     resetZoomButton.setAttribute('aria-label', 'Reset zoom to 100%');
     resetZoomButton.setAttribute('title', 'Reset zoom to 100%');
-    resetZoomButton.addEventListener('click', () => this.resetZoom());
+    resetZoomButton.addEventListener('click', () => {
+      this.resetZoom();
+      this.closeMenu();
+    });
     
     // Auto-Arrange Button
     const autoArrangeButton = document.createElement('button');
@@ -219,7 +250,10 @@ class Dashboard {
     autoArrangeButton.innerHTML = '⚡';
     autoArrangeButton.setAttribute('aria-label', 'Auto-arrange widgets');
     autoArrangeButton.setAttribute('title', 'Auto-arrange and resize widgets to fit content');
-    autoArrangeButton.addEventListener('click', () => this.autoArrangeWidgets());
+    autoArrangeButton.addEventListener('click', () => {
+      this.autoArrangeWidgets();
+      this.closeMenu();
+    });
     
     // Dashboard Switcher Button
     const dashboardSwitcher = document.createElement('button');
@@ -227,17 +261,46 @@ class Dashboard {
     dashboardSwitcher.innerHTML = '🎛️';
     dashboardSwitcher.setAttribute('aria-label', 'Switch dashboard');
     dashboardSwitcher.setAttribute('title', 'Manage dashboards');
-    dashboardSwitcher.addEventListener('click', () => this.showDashboardManager());
+    dashboardSwitcher.addEventListener('click', () => {
+      this.showDashboardManager();
+      this.closeMenu();
+    });
+    
+    // Add all buttons to controls container
+    controlsContainer.appendChild(fab);
+    controlsContainer.appendChild(fullscreenToggle);
+    controlsContainer.appendChild(this.lockButton);
+    controlsContainer.appendChild(resetZoomButton);
+    controlsContainer.appendChild(autoArrangeButton);
+    controlsContainer.appendChild(dashboardSwitcher);
+    controlsContainer.appendChild(themeToggle);
+    controlsContainer.appendChild(backgroundToggle);
     
     app.appendChild(this.canvas);
-    app.appendChild(fab);
-    app.appendChild(fullscreenToggle);
-    app.appendChild(this.lockButton);
-    app.appendChild(resetZoomButton);
-    app.appendChild(autoArrangeButton);
-    app.appendChild(dashboardSwitcher);
-    app.appendChild(themeToggle);
-    app.appendChild(backgroundToggle);
+    app.appendChild(menuButton);
+    app.appendChild(controlsContainer);
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!menuButton.contains(target) && !controlsContainer.contains(target)) {
+        this.closeMenu();
+      }
+    });
+  }
+  
+  private toggleMenu(): void {
+    const container = document.getElementById('controls-container');
+    if (container) {
+      container.classList.toggle('open');
+    }
+  }
+  
+  private closeMenu(): void {
+    const container = document.getElementById('controls-container');
+    if (container) {
+      container.classList.remove('open');
+    }
   }
 
   private setupTheme(): void {

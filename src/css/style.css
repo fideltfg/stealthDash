@@ -355,100 +355,10 @@ body {
 }
 
 /* FAB (Floating Action Button) */
-.fab {
+/* Menu Button (Hamburger) */
+.menu-button {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px var(--shadow);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  z-index: var(--z-fab);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.fab:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px var(--shadow);
-}
-
-.fab:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 4px;
-}
-
-/* Theme Toggle */
-.theme-toggle {
-  position: fixed;
-  bottom: 24px;
-  left: 248px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
-}
-
-.theme-toggle:hover {
-  transform: scale(1.1);
-}
-
-.theme-toggle:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Background Toggle */
-.background-toggle {
-  position: fixed;
-  bottom: 24px;
-  left: 304px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
-}
-
-.background-toggle:hover {
-  transform: scale(1.1);
-}
-
-.background-toggle:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Fullscreen Toggle */
-.fullscreen-toggle {
-  position: fixed;
-  bottom: 24px;
+  top: 24px;
   left: 80px;
   width: 40px;
   height: 40px;
@@ -460,26 +370,43 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  z-index: var(--z-fab);
+  font-size: 24px;
+  z-index: calc(var(--z-fab) + 2);
   box-shadow: 0 2px 8px var(--shadow);
   transition: transform var(--transition-speed);
 }
 
-.fullscreen-toggle:hover {
+.menu-button:hover {
   transform: scale(1.1);
 }
 
-.fullscreen-toggle:focus {
+.menu-button:focus {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Lock Toggle */
-.lock-toggle {
+/* Controls Container (Slide-out Menu) */
+.controls-container {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  bottom: 24px;
+  left: -500px;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: 0 4px 16px var(--shadow);
+  z-index: calc(var(--z-fab) + 1);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.controls-container.open {
+  left: 24px;
+}
+
+/* Shared button styles for controls */
+.controls-container button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -490,118 +417,56 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
+  font-size: 18px;
+  box-shadow: none;
+  transition: all var(--transition-speed);
+  flex-shrink: 0;
 }
 
-.lock-toggle:hover {
+.controls-container button:hover {
   transform: scale(1.1);
+  background: var(--hover);
 }
 
-.lock-toggle:focus {
+.controls-container button:focus {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Reset Zoom Toggle */
+/* Individual button adjustments */
+.fab {
+  font-size: 24px !important;
+  background: var(--accent) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.fab:hover {
+  background: var(--accent) !important;
+  filter: brightness(1.1);
+}
+
 .reset-zoom-toggle {
-  position: fixed;
-  bottom: 24px;
-  left: 136px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+  font-size: 12px !important;
   font-weight: 600;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
 }
 
-.reset-zoom-toggle:hover {
-  transform: scale(1.1);
-}
-
-.reset-zoom-toggle:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.auto-arrange-toggle {
-  position: fixed;
-  bottom: 24px;
-  left: 192px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
-}
-
-.auto-arrange-toggle:hover {
-  transform: scale(1.1);
-}
-
-.auto-arrange-toggle:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
+.fullscreen-toggle,
+.theme-toggle,
+.background-toggle,
+.lock-toggle,
+.auto-arrange-toggle,
 .dashboard-switcher {
-  position: fixed;
-  bottom: 24px;
-  left: 360px;  /* Position after background-toggle (304px + 56px spacing) */
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 18px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
 }
 
-.dashboard-switcher:hover {
-  transform: scale(1.1);
+.theme-toggle {
+  font-size: 20px;
 }
 
-.dashboard-switcher:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* Locked State - Hide all UI except lock button */
-#app.locked .fab,
-#app.locked .theme-toggle,
-#app.locked .background-toggle,
-#app.locked .fullscreen-toggle,
-#app.locked .reset-zoom-toggle,
-#app.locked .auto-arrange-toggle,
-#app.locked .dashboard-switcher,
+/* Locked State - Hide menu button */
+#app.locked .menu-button,
+#app.locked .controls-container,
 #app.locked .resize-handle,
 #app.locked .widget-header,
 #app.locked .widget-delete-btn {
