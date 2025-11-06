@@ -160,6 +160,8 @@ export function createDashboard(name: string): Dashboard {
 export function deleteDashboard(dashboardId: string): void {
   const multiState = loadMultiDashboardState();
   
+  console.log('Before delete:', multiState.dashboards.length, 'dashboards');
+  
   // Don't delete if it's the last dashboard
   if (multiState.dashboards.length <= 1) {
     console.warn('Cannot delete the last dashboard');
@@ -168,12 +170,15 @@ export function deleteDashboard(dashboardId: string): void {
   
   multiState.dashboards = multiState.dashboards.filter(d => d.id !== dashboardId);
   
+  console.log('After delete:', multiState.dashboards.length, 'dashboards');
+  
   // If we deleted the active dashboard, switch to the first one
   if (multiState.activeDashboardId === dashboardId) {
     multiState.activeDashboardId = multiState.dashboards[0].id;
   }
   
   saveMultiDashboardState(multiState);
+  console.log('Saved state with', multiState.dashboards.length, 'dashboards');
 }
 
 export function renameDashboard(dashboardId: string, newName: string): void {

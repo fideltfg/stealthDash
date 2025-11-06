@@ -568,7 +568,7 @@ body {
 .dashboard-switcher {
   position: fixed;
   bottom: 24px;
-  left: 248px;
+  left: 360px;  /* Position after background-toggle (304px + 56px spacing) */
   width: 40px;
   height: 40px;
   border-radius: 50%;

@@ -1338,7 +1338,12 @@ class Dashboard {
         `;
         deleteBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (confirm(`Delete dashboard "${dashboard.name}"? This cannot be undone.`)) {
+          const widgetCount = dashboard.state.widgets.length;
+          const message = widgetCount > 0 
+            ? `Delete dashboard "${dashboard.name}"? This will delete ${widgetCount} widget${widgetCount > 1 ? 's' : ''}. This cannot be undone.`
+            : `Delete dashboard "${dashboard.name}"? This cannot be undone.`;
+          
+          if (confirm(message)) {
             deleteDashboard(dashboard.id);
             overlay.remove();
             if (dashboard.id === activeDashboardId) {
@@ -1380,9 +1385,10 @@ class Dashboard {
     addButton.addEventListener('click', () => {
       const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
       if (name && name.trim()) {
-        createDashboard(name.trim());
+        const newDashboard = createDashboard(name.trim());
         overlay.remove();
-        this.showDashboardManager();
+        // Switch to the new dashboard
+        this.switchToDashboard(newDashboard.id);
       }
     });
     content.appendChild(addButton);
