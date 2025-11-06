@@ -1344,11 +1344,14 @@ class Dashboard {
             : `Delete dashboard "${dashboard.name}"? This cannot be undone.`;
           
           if (confirm(message)) {
+            const wasActive = dashboard.id === activeDashboardId;
             deleteDashboard(dashboard.id);
             overlay.remove();
-            if (dashboard.id === activeDashboardId) {
-              // Reload if we deleted the active dashboard
-              window.location.reload();
+            
+            if (wasActive) {
+              // Switch to the new active dashboard (deleteDashboard already changed activeDashboardId)
+              const newActiveDashboardId = getActiveDashboardId();
+              this.switchToDashboard(newActiveDashboardId);
             } else {
               this.showDashboardManager();
             }
