@@ -1,4 +1,4 @@
-import type { DashboardState, Widget, Vec2, Size, WidgetType, Dashboard as DashboardConfig } from './types';
+import type { DashboardState, Widget, Vec2, Size, WidgetType } from './types';
 import { DEFAULT_WIDGET_SIZE } from './types';
 import { loadState, saveState, debouncedSave, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './storage';
 import { createHistoryManager, shouldCoalesceAction } from './history';
