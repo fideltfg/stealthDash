@@ -5,6 +5,20 @@ const STORAGE_KEY = 'dashboard.v1';
 const MULTI_DASHBOARD_KEY = 'dashboards.v2';
 const CURRENT_VERSION = 1;
 
+// Generate UUID with fallback for older browsers
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  
+  // Fallback UUID v4 generator
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export function getDefaultState(): DashboardState {
   return {
     widgets: [],
@@ -19,7 +33,7 @@ export function getDefaultState(): DashboardState {
 
 export function getDefaultDashboard(): Dashboard {
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name: 'Main Dashboard',
     state: getDefaultState(),
     createdAt: Date.now(),
@@ -51,7 +65,7 @@ export function loadMultiDashboardState(): MultiDashboardState {
     if (oldStored) {
       const oldState = JSON.parse(oldStored) as DashboardState;
       const dashboard: Dashboard = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name: 'Main Dashboard',
         state: oldState,
         createdAt: Date.now(),
@@ -130,7 +144,7 @@ export function debouncedSave(state: DashboardState, delay = 500): void {
 export function createDashboard(name: string): Dashboard {
   const multiState = loadMultiDashboardState();
   const newDashboard: Dashboard = {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name,
     state: getDefaultState(),
     createdAt: Date.now(),
