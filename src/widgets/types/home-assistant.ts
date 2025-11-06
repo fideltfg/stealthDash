@@ -420,51 +420,108 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private showAddEntityDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
     const dialog = document.createElement('div');
     dialog.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1e1e1e;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 10000;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
       min-width: 400px;
+      max-width: 500px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      color: var(--text);
     `;
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0;">Add Entity</h3>
+      <h3 style="margin-top: 0; color: var(--text);">Add Entity</h3>
       <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px;">Entity ID:</label>
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Entity ID:</label>
         <input type="text" id="entity-id" placeholder="light.living_room" 
-               style="width: 100%; padding: 8px; box-sizing: border-box;">
-        <small style="opacity: 0.7;">Example: light.kitchen, switch.fan, sensor.temperature</small>
+               style="
+                 width: 100%; 
+                 padding: 10px; 
+                 box-sizing: border-box;
+                 background: var(--background);
+                 color: var(--text);
+                 border: 1px solid var(--border);
+                 border-radius: 6px;
+                 font-size: 14px;
+               ">
+        <small style="opacity: 0.7; color: var(--muted); font-size: 12px;">Example: light.kitchen, switch.fan, sensor.temperature</small>
       </div>
       <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px;">Display Name (optional):</label>
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Display Name (optional):</label>
         <input type="text" id="display-name" placeholder="Living Room Light" 
-               style="width: 100%; padding: 8px; box-sizing: border-box;">
+               style="
+                 width: 100%; 
+                 padding: 10px; 
+                 box-sizing: border-box;
+                 background: var(--background);
+                 color: var(--text);
+                 border: 1px solid var(--border);
+                 border-radius: 6px;
+                 font-size: 14px;
+               ">
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px;">Type:</label>
-        <select id="entity-type" style="width: 100%; padding: 8px;">
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Type:</label>
+        <select id="entity-type" style="
+          width: 100%; 
+          padding: 10px;
+          background: var(--background);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">
           <option value="light">Light</option>
           <option value="switch">Switch</option>
           <option value="sensor">Sensor</option>
         </select>
       </div>
-      <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button id="cancel-entity" style="padding: 8px 16px; cursor: pointer;">Cancel</button>
-        <button id="save-entity" style="padding: 8px 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px;">
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button id="cancel-entity" style="
+          padding: 10px 20px; 
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">Cancel</button>
+        <button id="save-entity" style="
+          padding: 10px 20px; 
+          cursor: pointer; 
+          background: var(--accent); 
+          color: white; 
+          border: none; 
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+        ">
           Add Entity
         </button>
       </div>
     `;
 
-    document.body.appendChild(dialog);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
 
     const entityIdInput = dialog.querySelector('#entity-id') as HTMLInputElement;
     const displayNameInput = dialog.querySelector('#display-name') as HTMLInputElement;
@@ -479,7 +536,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Cancel button
     cancelBtn.addEventListener('click', () => {
-      dialog.remove();
+      overlay.remove();
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
     });
 
     // Save button
@@ -500,7 +564,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         type: type
       });
 
-      dialog.remove();
+      overlay.remove();
 
       // Trigger widget update
       const event = new CustomEvent('widget-update', { 
@@ -512,32 +576,45 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private showManageEntitiesDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
     const dialog = document.createElement('div');
     dialog.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1e1e1e;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 20px;
-      z-index: 10000;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
       min-width: 500px;
+      max-width: 600px;
       max-height: 80vh;
       overflow-y: auto;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      color: var(--text);
     `;
 
     const entities = content.entities || [];
     
     let dialogHTML = `
-      <h3 style="margin-top: 0;">Manage Entities</h3>
+      <h3 style="margin-top: 0; color: var(--text);">Manage Entities</h3>
       <div style="margin-bottom: 20px;">
     `;
 
     if (entities.length === 0) {
-      dialogHTML += `<p style="opacity: 0.7;">No entities added yet.</p>`;
+      dialogHTML += `<p style="opacity: 0.7; color: var(--muted);">No entities added yet.</p>`;
     } else {
       dialogHTML += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
       entities.forEach((entity, index) => {
@@ -546,25 +623,27 @@ export class HomeAssistantRenderer implements WidgetRenderer {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
             border-radius: 6px;
           ">
             <div style="flex: 1;">
-              <div style="font-weight: bold;">${entity.display_name || entity.entity_id}</div>
-              <div style="font-size: 12px; opacity: 0.7;">${entity.entity_id} (${entity.type})</div>
+              <div style="font-weight: bold; color: var(--text);">${entity.display_name || entity.entity_id}</div>
+              <div style="font-size: 12px; opacity: 0.7; color: var(--muted);">${entity.entity_id} (${entity.type})</div>
             </div>
             <button 
               class="remove-entity-btn" 
               data-index="${index}"
               style="
-                padding: 6px 12px;
+                padding: 8px 14px;
                 background: #f44336;
                 color: white;
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 12px;
+                font-weight: 500;
               "
             >Remove</button>
           </div>
@@ -575,30 +654,55 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     dialogHTML += `
       </div>
-      <div style="display: flex; gap: 10px; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-        <button id="add-new-entity-btn" style="padding: 8px 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px;">
+      <div style="display: flex; gap: 12px; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 15px;">
+        <button id="add-new-entity-btn" style="
+          padding: 10px 20px; 
+          cursor: pointer; 
+          background: var(--accent); 
+          color: white; 
+          border: none; 
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+        ">
           + Add Entity
         </button>
-        <button id="close-manage-dialog" style="padding: 8px 16px; cursor: pointer;">
+        <button id="close-manage-dialog" style="
+          padding: 10px 20px; 
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">
           Close
         </button>
       </div>
     `;
 
     dialog.innerHTML = dialogHTML;
-    document.body.appendChild(dialog);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
 
     // Close button
     const closeBtn = dialog.querySelector('#close-manage-dialog') as HTMLButtonElement;
     closeBtn.addEventListener('click', () => {
-      dialog.remove();
+      overlay.remove();
     });
     closeBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
 
     // Add new entity button
     const addBtn = dialog.querySelector('#add-new-entity-btn') as HTMLButtonElement;
     addBtn.addEventListener('click', () => {
-      dialog.remove();
+      overlay.remove();
       this.showAddEntityDialog(widget);
     });
     addBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -618,7 +722,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           });
           document.dispatchEvent(event);
           
-          dialog.remove();
+          overlay.remove();
         }
       });
       btn.addEventListener('pointerdown', (e) => e.stopPropagation());
