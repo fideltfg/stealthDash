@@ -224,7 +224,7 @@ class Dashboard {
     // Dashboard Switcher Button
     const dashboardSwitcher = document.createElement('button');
     dashboardSwitcher.className = 'dashboard-switcher';
-    dashboardSwitcher.innerHTML = '📊';
+    dashboardSwitcher.innerHTML = '�️';
     dashboardSwitcher.setAttribute('aria-label', 'Switch dashboard');
     dashboardSwitcher.setAttribute('title', 'Manage dashboards');
     dashboardSwitcher.addEventListener('click', () => this.showDashboardManager());
