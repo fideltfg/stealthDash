@@ -313,7 +313,7 @@ export class AuthUI {
     }
   }
 
-  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void): HTMLElement {
+  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void): HTMLElement {
     const container = document.createElement('div');
     container.style.cssText = `
       position: fixed;
@@ -365,6 +365,23 @@ export class AuthUI {
           ${user.isAdmin ? '<div style="color: #FFC107; font-size: 12px; margin-top: 4px;">👑 Administrator</div>' : ''}
         </div>
         <div style="padding: 8px 0;">
+          <button id="manage-dashboards-btn" style="
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+          ">
+            <span>🎛️</span>
+            <span>Manage Dashboards</span>
+          </button>
           <button id="settings-btn" style="
             width: 100%;
             padding: 12px 16px;
@@ -460,6 +477,16 @@ export class AuthUI {
         (btn as HTMLElement).style.background = 'none';
       });
     });
+
+    // Manage Dashboards button
+    const manageDashboardsBtn = dropdown.querySelector('#manage-dashboards-btn') as HTMLButtonElement;
+    if (manageDashboardsBtn && onManageDashboardsClick) {
+      manageDashboardsBtn.addEventListener('click', () => {
+        dropdown.style.display = 'none';
+        toggle.style.transform = 'scale(1)';
+        onManageDashboardsClick();
+      });
+    }
 
     // Settings button
     const settingsBtn = dropdown.querySelector('#settings-btn') as HTMLButtonElement;

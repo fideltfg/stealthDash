@@ -107,7 +107,8 @@ class Dashboard {
       this.userMenuElement = this.authUI.createUserMenu(
         this.currentUser,
         () => this.userSettingsUI.showSettingsDialog(),
-        () => this.adminDashboardUI.showAdminDashboard()
+        () => this.adminDashboardUI.showAdminDashboard(),
+        () => this.showDashboardManager()
       );
       document.body.appendChild(this.userMenuElement);
     }
@@ -254,23 +255,11 @@ class Dashboard {
       this.closeMenu();
     });
     
-    // Dashboard Switcher Button
-    const dashboardSwitcher = document.createElement('button');
-    dashboardSwitcher.className = 'dashboard-switcher';
-    dashboardSwitcher.innerHTML = '🎛️';
-    dashboardSwitcher.setAttribute('aria-label', 'Switch dashboard');
-    dashboardSwitcher.setAttribute('title', 'Manage dashboards');
-    dashboardSwitcher.addEventListener('click', () => {
-      this.showDashboardManager();
-      this.closeMenu();
-    });
-    
     // Add all buttons to controls container (except lock button)
     controlsContainer.appendChild(fab);
     controlsContainer.appendChild(fullscreenToggle);
     controlsContainer.appendChild(resetZoomButton);
     controlsContainer.appendChild(autoArrangeButton);
-    controlsContainer.appendChild(dashboardSwitcher);
     controlsContainer.appendChild(themeToggle);
     controlsContainer.appendChild(backgroundToggle);
     

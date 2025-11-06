@@ -486,8 +486,7 @@ body {
 .fullscreen-toggle,
 .theme-toggle,
 .background-toggle,
-.auto-arrange-toggle,
-.dashboard-switcher {
+.auto-arrange-toggle {
   font-size: 16px;
 }
 
