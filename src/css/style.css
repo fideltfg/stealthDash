@@ -359,7 +359,7 @@ body {
 .menu-button {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  left: 80px;  /* Position to the right of user avatar button */
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -402,7 +402,7 @@ body {
 }
 
 .controls-container.open {
-  left: 80px;  /* Position to the right of menu button (24px + 40px + 16px gap) */
+  left: 136px;  /* Position to the right of menu button (80px + 40px + 16px gap) */
 }
 
 /* Lock Toggle (top-right, replaces user button when locked) */
