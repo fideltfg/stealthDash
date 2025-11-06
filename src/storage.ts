@@ -81,8 +81,13 @@ export function loadMultiDashboardState(): MultiDashboardState {
       // Save migrated state
       saveMultiDashboardState(multiState);
       
+      // Keep a backup of the old data instead of deleting it
+      localStorage.setItem(STORAGE_KEY + '.backup', oldStored);
+      
       // Remove old storage key
       localStorage.removeItem(STORAGE_KEY);
+      
+      console.log('Migrated dashboard data from v1 to v2. Backup saved as dashboard.v1.backup');
       
       return multiState;
     }
