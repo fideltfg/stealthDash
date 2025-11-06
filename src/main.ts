@@ -1,6 +1,6 @@
-import type { DashboardState, Widget, Vec2, Size, WidgetType } from './types';
+import type { DashboardState, Widget, Vec2, Size, WidgetType, Dashboard as DashboardConfig } from './types';
 import { DEFAULT_WIDGET_SIZE } from './types';
-import { loadState, saveState, debouncedSave } from './storage';
+import { loadState, saveState, debouncedSave, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './storage';
 import { createHistoryManager, shouldCoalesceAction } from './history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
 import { authService, type User } from './services/auth';
@@ -221,12 +221,21 @@ class Dashboard {
     autoArrangeButton.setAttribute('title', 'Auto-arrange and resize widgets to fit content');
     autoArrangeButton.addEventListener('click', () => this.autoArrangeWidgets());
     
+    // Dashboard Switcher Button
+    const dashboardSwitcher = document.createElement('button');
+    dashboardSwitcher.className = 'dashboard-switcher';
+    dashboardSwitcher.innerHTML = '📊';
+    dashboardSwitcher.setAttribute('aria-label', 'Switch dashboard');
+    dashboardSwitcher.setAttribute('title', 'Manage dashboards');
+    dashboardSwitcher.addEventListener('click', () => this.showDashboardManager());
+    
     app.appendChild(this.canvas);
     app.appendChild(fab);
     app.appendChild(fullscreenToggle);
     app.appendChild(this.lockButton);
     app.appendChild(resetZoomButton);
     app.appendChild(autoArrangeButton);
+    app.appendChild(dashboardSwitcher);
     app.appendChild(themeToggle);
     app.appendChild(backgroundToggle);
   }
@@ -1216,6 +1225,223 @@ class Dashboard {
         document.removeEventListener('keydown', handleKeyDown);
       }
     });
+  }
+
+  private showDashboardManager(): void {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+    
+    const title = document.createElement('h2');
+    title.className = 'modal-title';
+    title.textContent = 'Manage Dashboards';
+    header.appendChild(title);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.addEventListener('click', () => overlay.remove());
+    header.appendChild(closeBtn);
+    
+    const content = document.createElement('div');
+    content.className = 'dashboard-manager-content';
+    content.style.cssText = `
+      padding: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+    `;
+    
+    // Get all dashboards
+    const dashboards = getAllDashboards();
+    const activeDashboardId = getActiveDashboardId();
+    
+    // Dashboard list
+    const listContainer = document.createElement('div');
+    listContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    `;
+    
+    dashboards.forEach(dashboard => {
+      const dashboardRow = document.createElement('div');
+      dashboardRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--surface-hover);
+        border: 2px solid ${dashboard.id === activeDashboardId ? 'var(--accent)' : 'var(--border)'};
+        border-radius: 8px;
+        transition: border-color 0.2s;
+      `;
+      
+      // Dashboard name (editable)
+      const nameSpan = document.createElement('span');
+      nameSpan.style.cssText = `
+        flex: 1;
+        font-weight: ${dashboard.id === activeDashboardId ? '600' : '400'};
+        color: var(--text);
+        cursor: pointer;
+      `;
+      nameSpan.textContent = dashboard.name + (dashboard.id === activeDashboardId ? ' (Active)' : '');
+      nameSpan.addEventListener('click', () => {
+        if (dashboard.id !== activeDashboardId) {
+          this.switchToDashboard(dashboard.id);
+          overlay.remove();
+        }
+      });
+      
+      // Rename button
+      const renameBtn = document.createElement('button');
+      renameBtn.innerHTML = '✏️';
+      renameBtn.title = 'Rename';
+      renameBtn.style.cssText = `
+        padding: 6px 10px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      `;
+      renameBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newName = prompt('Enter new dashboard name:', dashboard.name);
+        if (newName && newName.trim()) {
+          renameDashboard(dashboard.id, newName.trim());
+          overlay.remove();
+          this.showDashboardManager();
+        }
+      });
+      
+      // Delete button (only if not the last dashboard)
+      if (dashboards.length > 1) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerHTML = '🗑️';
+        deleteBtn.title = 'Delete';
+        deleteBtn.style.cssText = `
+          padding: 6px 10px;
+          background: #f44336;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+        `;
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm(`Delete dashboard "${dashboard.name}"? This cannot be undone.`)) {
+            deleteDashboard(dashboard.id);
+            overlay.remove();
+            if (dashboard.id === activeDashboardId) {
+              // Reload if we deleted the active dashboard
+              window.location.reload();
+            } else {
+              this.showDashboardManager();
+            }
+          }
+        });
+        dashboardRow.appendChild(renameBtn);
+        dashboardRow.appendChild(deleteBtn);
+      } else {
+        dashboardRow.appendChild(renameBtn);
+      }
+      
+      dashboardRow.appendChild(nameSpan);
+      dashboardRow.insertBefore(nameSpan, dashboardRow.firstChild);
+      
+      listContainer.appendChild(dashboardRow);
+    });
+    
+    content.appendChild(listContainer);
+    
+    // Add new dashboard button
+    const addButton = document.createElement('button');
+    addButton.textContent = '+ New Dashboard';
+    addButton.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    `;
+    addButton.addEventListener('click', () => {
+      const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
+      if (name && name.trim()) {
+        createDashboard(name.trim());
+        overlay.remove();
+        this.showDashboardManager();
+      }
+    });
+    content.appendChild(addButton);
+    
+    modal.appendChild(header);
+    modal.appendChild(content);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+    
+    // Close on ESC
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        overlay.remove();
+        document.removeEventListener('keydown', handleKeyDown);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+  }
+
+  private switchToDashboard(dashboardId: string): void {
+    // Clean up current widgets before switching
+    this.cleanup();
+    
+    // Switch to new dashboard
+    const newState = switchDashboard(dashboardId);
+    if (newState) {
+      this.state = newState;
+      this.history = createHistoryManager();
+      this.render();
+      this.setupTheme();
+      this.setupBackground();
+      this.save();
+    }
+  }
+
+  private cleanup(): void {
+    // Stop all widget refresh intervals and cleanup
+    this.state.widgets.forEach(widget => {
+      const widgetElement = document.getElementById(`widget-${widget.id}`);
+      if (widgetElement) {
+        // Dispatch cleanup event for widgets to stop intervals
+        const event = new CustomEvent('widget-cleanup', {
+          detail: { widgetId: widget.id }
+        });
+        widgetElement.dispatchEvent(event);
+      }
+    });
+    
+    // Clear any intervals we might have
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+    }
   }
 
   private render(): void {

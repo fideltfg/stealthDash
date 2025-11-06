@@ -115,6 +115,20 @@ export interface DashboardState {
   version: number;
 }
 
+export interface Dashboard {
+  id: string;
+  name: string;
+  state: DashboardState;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface MultiDashboardState {
+  dashboards: Dashboard[];
+  activeDashboardId: string;
+  version: number;
+}
+
 export interface HistoryState {
   past: DashboardState[];
   future: DashboardState[];
