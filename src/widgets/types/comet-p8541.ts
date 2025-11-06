@@ -383,23 +383,20 @@ export class CometP8541Renderer implements WidgetRenderer {
             const existingGauge = this.gauges.get(gaugeId);
 
             if (existingGauge && gaugeContainer) {
-              // Update existing gauge value
+              // Update existing gauge value (pointer moves, no redraw)
               try {
                 existingGauge.refresh(reading.sensorError ? 0 : reading.value);
+                // Successfully updated - no need to create new gauge
+                return;
               } catch (e) {
-                console.warn(`Error refreshing gauge ${gaugeId}, will recreate:`, e);
-                // If refresh fails, destroy and recreate
-                if (typeof existingGauge.destroy === 'function') {
-                  existingGauge.destroy();
-                }
-                this.gauges.delete(gaugeId);
-                // Clear the container and force recreation
-                gaugeContainer.innerHTML = '';
-                gaugeContainer.id = gaugeId;
+                console.error(`Error refreshing gauge ${gaugeId}:`, e);
+                // Only recreate if the gauge is actually broken
+                // Most refresh errors are temporary, so just log and skip recreation
+                return;
               }
             }
             
-            // Create new gauge if it doesn't exist or was destroyed
+            // Create new gauge ONLY if it doesn't exist
             if (!this.gauges.has(gaugeId) && gaugeContainer) {
               // Use requestAnimationFrame to ensure DOM is fully updated
               requestAnimationFrame(() => {
