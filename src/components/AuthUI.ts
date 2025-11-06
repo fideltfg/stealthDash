@@ -315,6 +315,7 @@ export class AuthUI {
 
   createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void): HTMLElement {
     const container = document.createElement('div');
+    container.className = 'user-menu';
     container.style.cssText = `
       position: fixed;
       bottom: 24px;
@@ -324,18 +325,18 @@ export class AuthUI {
 
     container.innerHTML = `
       <div id="user-menu-toggle" style="
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
         background: var(--accent);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 20px;
+        font-size: 18px;
         cursor: pointer;
         box-shadow: 0 2px 8px var(--shadow);
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         transition: transform 0.2s;
         color: white;
       " title="${user.username}">
@@ -343,7 +344,7 @@ export class AuthUI {
       </div>
       <div id="user-dropdown" style="
         position: absolute;
-        bottom: 60px;
+        bottom: 52px;
         left: 0;
         background: var(--surface);
         border: 1px solid var(--border);
