@@ -395,7 +395,8 @@ export class CometP8541Renderer implements WidgetRenderer {
                     return;
                   }
                   
-                  // Get container dimensions
+                  // Get actual container dimensions for consistent gauge sizing
+                  // This ensures gauges render at the correct size every time
                   const containerWidth = gaugeContainer.offsetWidth || 300;
                   const containerHeight = gaugeContainer.offsetHeight || 150;
                   
@@ -406,9 +407,9 @@ export class CometP8541Renderer implements WidgetRenderer {
                     max: reading.upperLimit + 35,
                     title: reading.name,
                     label: reading.unit,
-                    width: containerWidth,
-                    height: containerHeight,
-                    relativeGaugeSize: true,
+                    width: containerWidth,         // Explicit width from container
+                    height: containerHeight,       // Explicit height from container
+                    relativeGaugeSize: true,       // Scale gauge elements proportionally
                     pointer: true,
                     pointerOptions: {
                       color: "#ffffff",

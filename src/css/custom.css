@@ -62,13 +62,15 @@
     width: 100%;
 }
 
+/* Gauge container with fixed dimensions to ensure consistent sizing */
 .gauge-container {
     width: 100%;
-    max-width: 300px;
-    height: 150px;
-    min-height: 150px;
+    max-width: 300px;  /* Prevents gauges from becoming too large */
+    height: 150px;     /* Fixed height for consistency */
+    min-height: 150px; /* Ensures minimum size is maintained */
 }
 
+/* Force JustGage canvas to respect container dimensions */
 .gauge-container canvas {
     width: 100% !important;
     height: 100% !important;
