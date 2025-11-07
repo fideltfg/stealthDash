@@ -1132,6 +1132,118 @@ app.get('/proxy', async (req, res) => {
   }
 });
 
+// Pi-hole session cache to avoid rate limiting
+// Key: host+password hash, Value: { sid, expires }
+const piholeSessionCache = new Map();
+
+// Pi-hole API proxy endpoint
+app.get('/api/pihole', async (req, res) => {
+  try {
+    const { host, password } = req.query;
+    
+    if (!host) {
+      return res.status(400).json({ error: 'Missing host parameter' });
+    }
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Missing password parameter. Pi-hole v6+ requires authentication.' });
+    }
+
+    // Use node-fetch to make requests
+    const fetch = (await import('node-fetch')).default;
+    
+    // Create cache key from host+password
+    const cacheKey = `${host}:${password}`;
+    
+    let sid;
+    const cachedSession = piholeSessionCache.get(cacheKey);
+    
+    // Check if we have a valid cached session
+    if (cachedSession && cachedSession.expires > Date.now()) {
+      console.log('Using cached Pi-hole session');
+      sid = cachedSession.sid;
+    } else {
+      // Step 1: Authenticate and get session ID
+      const authUrl = `${host}/api/auth`;
+      console.log(`Authenticating with Pi-hole at: ${authUrl}`);
+      
+      const authResponse = await fetch(authUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ password }),
+        timeout: 5000
+      });
+      
+      if (!authResponse.ok) {
+        console.error(`Pi-hole auth error: ${authResponse.status} ${authResponse.statusText}`);
+        return res.status(authResponse.status).json({ 
+          error: `Pi-hole authentication failed: ${authResponse.status}` 
+        });
+      }
+      
+      const authData = await authResponse.json();
+      
+      if (!authData.session || !authData.session.valid) {
+        console.error('Pi-hole authentication failed:', authData.session?.message || 'Unknown error');
+        return res.status(401).json({ 
+          error: 'Authentication failed',
+          details: authData.session?.message || 'Invalid credentials'
+        });
+      }
+      
+      sid = authData.session.sid;
+      
+      // Cache the session for 5 minutes (Pi-hole sessions typically last longer)
+      piholeSessionCache.set(cacheKey, {
+        sid: sid,
+        expires: Date.now() + (5 * 60 * 1000) // 5 minutes
+      });
+      
+      console.log('Authentication successful, session cached');
+    }
+    
+    // Step 2: Fetch stats with the session ID
+    const statsUrl = `${host}/api/stats/summary?sid=${encodeURIComponent(sid)}`;
+    
+    const statsResponse = await fetch(statsUrl, { 
+      headers: {
+        'Accept': 'application/json'
+      },
+      timeout: 5000 
+    });
+    
+    if (!statsResponse.ok) {
+      console.error(`Pi-hole API error: ${statsResponse.status} ${statsResponse.statusText}`);
+      const errorText = await statsResponse.text();
+      console.error(`Response body: ${errorText}`);
+      return res.status(statsResponse.status).json({ 
+        error: `Pi-hole API returned ${statsResponse.status}: ${statsResponse.statusText}`,
+        details: errorText
+      });
+    }
+    
+    const data = await statsResponse.json();
+    
+    console.log('Pi-hole stats data:', JSON.stringify(data).substring(0, 500));
+    
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'application/json');
+    
+    res.json(data);
+    
+  } catch (error) {
+    console.error('Pi-hole proxy error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to fetch Pi-hole data. Check if Pi-hole is accessible and credentials are correct.'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Ping server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);

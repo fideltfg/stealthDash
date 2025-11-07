@@ -1229,8 +1229,9 @@ class Dashboard {
       row.appendChild(content);
       
       row.addEventListener('click', () => {
-        this.addWidget(plugin.type as WidgetType, plugin.defaultContent || {});
-        overlay.remove();
+        // Check if this widget type needs configuration
+          this.addWidget(plugin.type as WidgetType, plugin.defaultContent || {});
+          overlay.remove();
       });
       
       types.appendChild(row);

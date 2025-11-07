@@ -15,11 +15,10 @@ import * as homeAssistant from './home-assistant';
 import * as chatgpt from './chatgpt';
 import * as mtnxml from './mtnxml';
 import * as envcanada from './envcanada';
-import * as sensorGraph from './sensor-graph';
+import * as pihole from './pihole';
 
 // Auto-register all widgets
-// const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada];
-const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada, sensorGraph];
+const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada, pihole];
 
 widgets.forEach(mod => {
   if (mod.widget) {
