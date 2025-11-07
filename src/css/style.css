@@ -483,6 +483,10 @@ body {
   font-weight: 600;
 }
 
+.reset-view-toggle {
+  font-size: 18px;
+}
+
 .fullscreen-toggle,
 .theme-toggle,
 .background-toggle,

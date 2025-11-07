@@ -16,9 +16,10 @@ import * as chatgpt from './chatgpt';
 import * as mtnxml from './mtnxml';
 import * as envcanada from './envcanada';
 import * as pihole from './pihole';
+import * as googleCalendar from './google-calendar';
 
 // Auto-register all widgets
-const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada, pihole];
+const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada, pihole, googleCalendar];
 
 widgets.forEach(mod => {
   if (mod.widget) {

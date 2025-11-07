@@ -244,14 +244,14 @@ class Dashboard {
       this.closeMenu();
     });
     
-    // Auto-Arrange Button
-    const autoArrangeButton = document.createElement('button');
-    autoArrangeButton.className = 'auto-arrange-toggle';
-    autoArrangeButton.innerHTML = '⚡';
-    autoArrangeButton.setAttribute('aria-label', 'Auto-arrange widgets');
-    autoArrangeButton.setAttribute('title', 'Auto-arrange and resize widgets to fit content');
-    autoArrangeButton.addEventListener('click', () => {
-      this.autoArrangeWidgets();
+    // Reset View Button
+    const resetViewButton = document.createElement('button');
+    resetViewButton.className = 'reset-view-toggle';
+    resetViewButton.innerHTML = '🎯';
+    resetViewButton.setAttribute('aria-label', 'Reset canvas view');
+    resetViewButton.setAttribute('title', 'Reset canvas position to center');
+    resetViewButton.addEventListener('click', () => {
+      this.resetView();
       this.closeMenu();
     });
     
@@ -259,7 +259,7 @@ class Dashboard {
     controlsContainer.appendChild(fab);
     controlsContainer.appendChild(fullscreenToggle);
     controlsContainer.appendChild(resetZoomButton);
-    controlsContainer.appendChild(autoArrangeButton);
+    controlsContainer.appendChild(resetViewButton);
     controlsContainer.appendChild(themeToggle);
     controlsContainer.appendChild(backgroundToggle);
     
@@ -824,7 +824,18 @@ class Dashboard {
 
   private resetZoom(): void {
     this.state.zoom = 1.0;
-    this.applyZoom();
+    // Don't reset viewport position, just apply the zoom
+    this.canvasContent.style.transform = `scale(${this.state.zoom})`;
+    this.canvasContent.style.transformOrigin = 'top left';
+    this.save();
+  }
+
+  private resetView(): void {
+    // Reset canvas position to top-left (0, 0)
+    this.canvasContent.style.left = '0px';
+    this.canvasContent.style.top = '0px';
+    // Update the viewport state
+    this.state.viewport = { x: 0, y: 0 };
     this.save();
   }
 
@@ -1018,7 +1029,7 @@ class Dashboard {
     if (widgetId) {
       const el = document.getElementById(`widget-${widgetId}`);
       el?.classList.add('selected');
-      el?.focus();
+      // Don't focus - it causes unwanted scrolling when widget is partly out of view
     }
   }
 
