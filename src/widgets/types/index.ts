@@ -15,10 +15,11 @@ import * as homeAssistant from './home-assistant';
 import * as chatgpt from './chatgpt';
 import * as mtnxml from './mtnxml';
 import * as envcanada from './envcanada';
+import * as sensorGraph from './sensor-graph';
 
 // Auto-register all widgets
 // const widgets = [text, image, data, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada];
-const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada];
+const widgets = [image, embed, weather, clock, rss, uptime, cometP8541, homeAssistant, chatgpt, mtnxml, envcanada, sensorGraph];
 
 widgets.forEach(mod => {
   if (mod.widget) {
