@@ -4,11 +4,13 @@ import * as d3 from 'd3';
 
 interface SensorGraphContent {
   apiUrl: string;
-  unitId: string;
-  range: number; // hours of data to display
+  sqlQuery?: string; // Custom SQL query to execute
+  unitId?: string; // Optional: for backward compatibility
+  range?: number; // Optional: hours of data to display
   refreshInterval?: number; // in seconds
   title?: string;
   yAxisLabel?: string;
+  xAxisField?: string; // Field name for X-axis (timestamp)
   channels?: string[]; // which channels to display (e.g., ['ch1_value', 'ch2_value'])
   colors?: string[]; // custom colors for each channel
   showLegend?: boolean;
@@ -59,9 +61,26 @@ class SensorGraphRenderer implements WidgetRenderer {
         loadingEl.style.display = 'block';
         errorEl.style.display = 'none';
 
+        // Build request payload
+        const requestBody: any = {};
+        
+        if (content.sqlQuery) {
+          // Custom SQL query mode
+          requestBody.query = content.sqlQuery;
+        } else {
+          // Legacy mode - unit ID and range
+          requestBody.unitId = content.unitId;
+          requestBody.range = content.range || 24;
+        }
+
         // Fetch data from API
-        const url = `${content.apiUrl}?unitId=${content.unitId}&range=${content.range || 24}`;
-        const response = await fetch(url);
+        const response = await fetch(content.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,8 +134,11 @@ class SensorGraphRenderer implements WidgetRenderer {
 
     // Parse timestamps
     const parseTime = d3.timeParse('%Y-%m-%d %H:%M:%S');
+    const timestampField = content.xAxisField || 'timestamp';
+    
     data.forEach(d => {
-      d.parsedTime = parseTime(d.timestamp) || new Date(d.timestamp);
+      const timestampValue = d[timestampField];
+      d.parsedTime = parseTime(timestampValue) || new Date(timestampValue);
     });
 
     // Get channels to display
@@ -273,14 +295,22 @@ class SensorGraphRenderer implements WidgetRenderer {
   private detectChannels(data: SensorDataPoint[]): string[] {
     if (data.length === 0) return [];
     
-    // Get all keys except timestamp
+    // Get all keys except timestamp and common non-data fields
     const firstRow = data[0];
-    return Object.keys(firstRow).filter(key => 
-      key !== 'timestamp' && 
-      key !== 'parsedTime' &&
-      key !== 'id' &&
-      !isNaN(parseFloat(firstRow[key]))
-    );
+    const excludeFields = ['timestamp', 'parsedTime', 'id', 'unit_id', 'created_at', 'updated_at'];
+    
+    return Object.keys(firstRow).filter(key => {
+      // Exclude known non-data fields
+      if (excludeFields.includes(key)) return false;
+      
+      // Exclude fields ending with _name, _unit, _alarm, _id
+      if (key.endsWith('_name') || key.endsWith('_unit') || 
+          key.endsWith('_alarm') || key.endsWith('_id')) return false;
+      
+      // Include only numeric fields
+      const value = firstRow[key];
+      return !isNaN(parseFloat(value)) && isFinite(value);
+    });
   }
 
   private formatChannelName(channel: string): string {
@@ -297,16 +327,16 @@ export const widget = {
   type: 'sensor-graph',
   name: 'Sensor Graph',
   icon: '📊',
-  description: 'Display sensor data as a time-series graph using D3',
+  description: 'Display sensor data as a time-series graph using D3 with custom SQL queries',
   renderer: new SensorGraphRenderer(),
   defaultSize: { w: 600, h: 400 },
   defaultContent: {
     apiUrl: '/api/sensor-data',
-    unitId: '1',
-    range: 24,
+    sqlQuery: 'SELECT timestamp, ch1_value, ch2_value FROM web_sensor_data WHERE unit_id = "1" ORDER BY timestamp DESC LIMIT 100',
     refreshInterval: 60,
     title: 'Sensor Data',
     yAxisLabel: 'Value',
+    xAxisField: 'timestamp',
     showLegend: true,
     showGrid: true
   }

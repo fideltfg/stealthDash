@@ -172,7 +172,11 @@ DELIMITER ;
 
 1. Install D3.js dependency (already added to package.json):
 ```bash
-npm install
+# In the Dashboard directory, install dependencies
+docker-compose exec dashboard npm install
+
+# Or if rebuilding the container
+docker-compose up -d --build
 ```
 
 2. The widget will automatically register and appear in the widget picker
