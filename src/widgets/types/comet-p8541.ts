@@ -81,6 +81,13 @@ export class CometP8541Renderer implements WidgetRenderer {
   private abortControllers = new Map<string, AbortController>();
   private gauges = new Map<string, any>(); // Store gauge instances by widget ID
 
+  configure(widget: Widget): void {
+    const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
+    if (container) {
+      this.showSettings(container, widget);
+    }
+  }
+
   // Get the ping-server base URL (works for both localhost and remote deployments)
   private getPingServerUrl(): string {
     // Check if we're in development (localhost) or production

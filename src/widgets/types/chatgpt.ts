@@ -13,6 +13,13 @@ export interface ChatGPTContent extends WidgetContent {
 }
 
 class ChatGPTWidgetRenderer implements WidgetRenderer {
+  configure(widget: Widget): void {
+    const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
+    if (container) {
+      this.showSettings(container, widget);
+    }
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as ChatGPTContent;
     

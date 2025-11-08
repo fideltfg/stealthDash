@@ -1,6 +1,6 @@
 import type { Widget, Vec2, Size } from '../types';
 import { MIN_WIDGET_SIZE } from '../types';
-import { getWidgetRenderer } from './types';
+import { getWidgetRenderer, getWidgetPlugin } from './types';
 
 export function snapToGrid(value: number, gridSize: number): number {
   return Math.round(value / gridSize) * gridSize;
@@ -27,6 +27,28 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   title.className = 'widget-title';
   title.textContent = widget.meta?.title || widget.type.toUpperCase();
   
+  // Header buttons container
+  const headerButtons = document.createElement('div');
+  headerButtons.className = 'widget-header-buttons';
+  
+  // Settings button (if widget has configuration)
+  const plugin = getWidgetPlugin(widget.type);
+  const renderer = getWidgetRenderer(widget.type);
+  if (plugin?.hasSettings !== false && renderer?.configure) {
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'widget-settings-btn';
+    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.title = 'Configure widget';
+    settingsBtn.setAttribute('aria-label', 'Configure widget');
+    settingsBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (renderer.configure) {
+        renderer.configure(widget);
+      }
+    };
+    headerButtons.appendChild(settingsBtn);
+  }
+  
   // Delete button
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'widget-delete-btn';
@@ -42,16 +64,17 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
     }
   };
   
+  headerButtons.appendChild(deleteBtn);
+  
   header.appendChild(title);
-  header.appendChild(deleteBtn);
+  header.appendChild(headerButtons);
   el.appendChild(header);
 
   // Content
   const content = document.createElement('div');
   content.className = 'widget-content';
   
-  // Use plugin architecture to render widget content
-  const renderer = getWidgetRenderer(widget.type);
+  // Use plugin architecture to render widget content (renderer already defined above)
   if (renderer) {
     renderer.render(content, widget);
   } else {

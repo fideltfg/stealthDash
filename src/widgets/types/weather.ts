@@ -2,6 +2,77 @@ import type { Widget } from '../../types';
 import type { WidgetRenderer } from './base';
 
 export class WeatherWidgetRenderer implements WidgetRenderer {
+  configure(widget: Widget): void {
+    const content = widget.content as { location: string };
+    
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    `;
+
+    dialog.innerHTML = `
+      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure Weather</h3>
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Location</label>
+        <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo"
+          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
+          Cancel
+        </button>
+        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
+          Save
+        </button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    const locationInput = dialog.querySelector('#weather-location') as HTMLInputElement;
+    const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
+    const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
+
+    const close = () => overlay.remove();
+
+    cancelBtn.onclick = close;
+    overlay.onclick = (e) => e.target === overlay && close();
+
+    saveBtn.onclick = () => {
+      const location = locationInput.value.trim();
+      if (location) {
+        const event = new CustomEvent('widget-update', {
+          detail: {
+            id: widget.id,
+            content: { location }
+          }
+        });
+        document.dispatchEvent(event);
+        close();
+      }
+    };
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as { location: string };
     const div = document.createElement('div');

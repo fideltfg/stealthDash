@@ -2,6 +2,7 @@ import type { Widget } from '../../types';
 
 export interface WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void;
+  configure?(widget: Widget): void; // Optional configuration method
 }
 
 // Plugin interface for self-registering widgets
@@ -13,6 +14,7 @@ export interface WidgetPlugin {
   renderer: WidgetRenderer;
   defaultSize?: { w: number; h: number };
   defaultContent?: any;
+  hasSettings?: boolean; // Whether to show settings button
 }
 
 // Global widget registry

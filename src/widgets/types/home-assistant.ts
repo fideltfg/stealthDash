@@ -27,6 +27,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private intervals: Map<string, number> = new Map();
   private entityStates: Map<string, Map<string, HomeAssistantEntity>> = new Map();
 
+  configure(widget: Widget): void {
+    this.showManageEntitiesDialog(widget);
+  }
+
   async render(container: HTMLElement, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
     container.innerHTML = '';

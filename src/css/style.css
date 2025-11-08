@@ -216,11 +216,18 @@ body {
   user-select: none;
 }
 
+.widget-header-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.widget-settings-btn,
 .widget-delete-btn {
   background: transparent;
   border: none;
   color: var(--muted);
-  font-size: 24px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -234,12 +241,22 @@ body {
   opacity: 0.6;
 }
 
+.widget-settings-btn:hover {
+  background: var(--hover);
+  opacity: 1;
+}
+
+.widget-delete-btn {
+  font-size: 24px;
+}
+
 .widget-delete-btn:hover {
   background: rgba(255, 59, 48, 0.1);
   color: #ff3b30;
   opacity: 1;
 }
 
+.widget-settings-btn:active,
 .widget-delete-btn:active {
   transform: scale(0.95);
 }
@@ -503,6 +520,7 @@ body {
 #app.locked .controls-container,
 #app.locked .resize-handle,
 #app.locked .widget-header,
+#app.locked .widget-settings-btn,
 #app.locked .widget-delete-btn {
   display: none !important;
 }

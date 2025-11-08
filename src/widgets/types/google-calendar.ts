@@ -50,6 +50,10 @@ interface CalendarResponse {
 class GoogleCalendarRenderer implements WidgetRenderer {
   private updateIntervals: Map<string, number> = new Map();
 
+  configure(widget: Widget): void {
+    this.showConfigDialog(widget);
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as GoogleCalendarContent;
 
@@ -67,19 +71,6 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             <span style="font-size: 24px;">📅</span>
             <span>Calendar</span>
           </h3>
-          <button id="calendar-settings-btn" title="Configure" style="
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            font-size: 18px;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s;
-          ">⚙️</button>
         </div>
         <div class="calendar-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
           <div class="calendar-loading" style="text-align: center; padding: 40px; color: var(--muted);">
@@ -90,14 +81,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     `;
 
     const contentEl = container.querySelector('.calendar-content') as HTMLElement;
-    const settingsBtn = container.querySelector('#calendar-settings-btn');
-    
-    // Add settings button handler
-    settingsBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showConfigDialog(widget);
-    });
-
+ 
     const fetchAndRender = async () => {
       try {
         const maxEvents = content.maxEvents || 10;

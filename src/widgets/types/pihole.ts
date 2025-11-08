@@ -34,6 +34,10 @@ interface PiholeSummary {
 class PiholeRenderer implements WidgetRenderer {
   private updateIntervals: Map<string, number> = new Map();
 
+  configure(widget: Widget): void {
+    this.showConfigDialog(widget);
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as PiholeContent;
     
@@ -54,22 +58,9 @@ class PiholeRenderer implements WidgetRenderer {
       <div class="pihole-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
         <div class="pihole-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
           <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 24px; height: 24px;" />
+            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 24px; height: 20px;" />
             <span>Pi-hole</span>
           </h3>
-          <button id="pihole-settings-btn" title="Configure" style="
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            font-size: 18px;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s;
-          ">⚙️</button>
         </div>
         <div class="pihole-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
           <div class="pihole-loading" style="text-align: center; padding: 40px; color: var(--muted);">
@@ -80,14 +71,7 @@ class PiholeRenderer implements WidgetRenderer {
     `;
 
     const contentEl = container.querySelector('.pihole-content') as HTMLElement;
-    const settingsBtn = container.querySelector('#pihole-settings-btn');
     
-    // Add settings button handler
-    settingsBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showConfigDialog(widget);
-    });
-
     const fetchAndRender = async () => {
       try {
         // Use the ping-server proxy to avoid CORS issues

@@ -16,6 +16,13 @@ export interface MTNXMLContent extends WidgetContent {
 class MTNXMLWidgetRenderer implements WidgetRenderer {
   private refreshIntervals = new Map<string, number>();
 
+  configure(widget: Widget): void {
+    const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
+    if (container) {
+      this.showSettings(container, widget);
+    }
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
     
@@ -156,34 +163,9 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       <span>Mountain Conditions</span>
     `;
 
-    const settingsBtn = document.createElement('button');
-    settingsBtn.innerHTML = '⚙️';
-    settingsBtn.title = 'Settings';
-    settingsBtn.style.cssText = `
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 18px;
-      color: white;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    `;
-    settingsBtn.addEventListener('mouseenter', () => {
-      settingsBtn.style.background = 'rgba(255, 255, 255, 0.3)';
-    });
-    settingsBtn.addEventListener('mouseleave', () => {
-      settingsBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-    });
-    settingsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showSettings(container, widget);
-    });
-    settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+ 
 
     header.appendChild(headerLeft);
-    header.appendChild(settingsBtn);
     container.appendChild(header);
 
     // Content area
