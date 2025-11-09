@@ -3,8 +3,8 @@ import type { WidgetRenderer } from './base';
 
 interface PiholeContent {
   host: string; // Pi-hole host (e.g., 'http://pi.hole' or 'http://192.168.1.100')
-  password?: string; // Pi-hole admin password for authentication
-  apiKey?: string; // Deprecated: use password instead
+  apiKey?: string; // Pi-hole Application Password (recommended) or API key
+  password?: string; // Deprecated: Legacy field for backward compatibility
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
   displayMode?: 'compact' | 'detailed' | 'minimal'; // Display style
   showCharts?: boolean; // Show mini charts for blocked queries
@@ -42,7 +42,7 @@ class PiholeRenderer implements WidgetRenderer {
     const content = widget.content as PiholeContent;
     
     console.log('Pi-hole widget render - Full content:', content);
-    console.log('Pi-hole widget render - Has password?', !!content.password, 'Has apiKey?', !!content.apiKey);
+    console.log('Pi-hole widget render - Has apiKey?', !!content.apiKey, 'Has legacy password?', !!content.password);
     
     // If widget has no host configured, show configuration prompt
     if (!content.host || content.host === 'http://pi.hole') {
@@ -80,8 +80,11 @@ class PiholeRenderer implements WidgetRenderer {
         // Use the ping-server proxy to avoid CORS issues
         const proxyUrl = new URL('/api/pihole', window.location.origin.replace(':3000', ':3001'));
         proxyUrl.searchParams.set('host', content.host);
-        if (content.password || content.apiKey) {
-          proxyUrl.searchParams.set('password', content.password || content.apiKey || '');
+        
+        // Use apiKey (preferred) or fall back to password for backward compatibility
+        const authKey = content.apiKey || content.password;
+        if (authKey) {
+          proxyUrl.searchParams.set('password', authKey);
         }
         
         console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString().replace(/password=[^&]+/, 'password=***'));
@@ -236,13 +239,13 @@ class PiholeRenderer implements WidgetRenderer {
 
         <div>
           <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Admin Password *
+            Application Password / API Key *
           </label>
           <input 
             type="password" 
             id="pihole-apikey" 
-            value="${content.password || content.apiKey || ''}"
-            placeholder="Your Pi-hole admin password"
+            value="${content.apiKey || content.password || ''}"
+            placeholder="Your Pi-hole application password"
             required
             style="
               width: 100%;
@@ -256,7 +259,8 @@ class PiholeRenderer implements WidgetRenderer {
             "
           />
           <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Required for Pi-hole v6+. Your Pi-hole admin password.
+            <strong>Recommended:</strong> Use an Application Password instead of your admin password.<br/>
+            Generate one in Pi-hole: Settings → API / Web interface → Application passwords
           </small>
         </div>
 
@@ -355,14 +359,14 @@ class PiholeRenderer implements WidgetRenderer {
       e.preventDefault();
       
       const host = (document.getElementById('pihole-host') as HTMLInputElement).value.trim();
-      const password = (document.getElementById('pihole-apikey') as HTMLInputElement).value.trim();
+      const apiKey = (document.getElementById('pihole-apikey') as HTMLInputElement).value.trim();
       const displayMode = (document.getElementById('pihole-display-mode') as HTMLSelectElement).value;
       const refreshInterval = parseInt((document.getElementById('pihole-refresh') as HTMLInputElement).value);
 
-      console.log('Form values - password field:', password ? '***' : '(empty)', 'existing password:', content.password ? '***' : '(none)');
+      console.log('Form values - apiKey field:', apiKey ? '***' : '(empty)', 'existing apiKey:', content.apiKey ? '***' : '(none)');
 
       // Update widget content
-      // Important: Only include password if it has a value (new or existing)
+      // Store as apiKey (Application Password) instead of password for better security
       const newContent: PiholeContent = {
         host,
         displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
@@ -370,18 +374,25 @@ class PiholeRenderer implements WidgetRenderer {
         showCharts: content.showCharts
       };
 
-      // Set password: use new value if entered, otherwise preserve existing, but never set to null/undefined
-      if (password) {
-        newContent.password = password;
-        console.log('Using newly entered password');
+      // Set apiKey: use new value if entered, otherwise preserve existing (including legacy password)
+      if (apiKey) {
+        newContent.apiKey = apiKey;
+        // Remove legacy password field when updating
+        newContent.password = undefined;
+        console.log('Using newly entered API key');
+      } else if (content.apiKey) {
+        newContent.apiKey = content.apiKey;
+        console.log('Preserving existing API key');
       } else if (content.password) {
-        newContent.password = content.password;
-        console.log('Preserving existing password');
+        // Migrate legacy password to apiKey field
+        newContent.apiKey = content.password;
+        newContent.password = undefined;
+        console.log('Migrating legacy password to API key field');
       } else {
-        console.log('No password available - widget will not authenticate');
+        console.log('No API key available - widget will not authenticate');
       }
 
-      console.log('Final content being saved:', { ...newContent, password: newContent.password ? '***' : '(none)' });
+      console.log('Final content being saved:', { ...newContent, apiKey: newContent.apiKey ? '***' : '(none)', password: '(removed)' });
 
       // Dispatch update event
       const event = new CustomEvent('widget-update', {
