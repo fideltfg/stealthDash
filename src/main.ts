@@ -760,6 +760,12 @@ class Dashboard {
       return;
     }
     
+    // Require Control key to be pressed for mouse wheel zoom
+    // This prevents accidental zooming while scrolling
+    if (!e.ctrlKey) {
+      return;
+    }
+    
     e.preventDefault();
     
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
