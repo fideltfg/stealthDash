@@ -1068,9 +1068,16 @@ class Dashboard {
   private addWidget(type: WidgetType, content: any): void {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
     
-    // Get viewport center
-    const viewportCenterX = this.canvas.scrollLeft + this.canvas.clientWidth / 2;
-    const viewportCenterY = this.canvas.scrollTop + this.canvas.clientHeight / 2;
+    // Calculate viewport center based on canvas pan position and zoom
+    // The canvas content is positioned using CSS left/top, stored in state.viewport
+    // We need to find the center of the visible viewport in canvas coordinates
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const centerX = (canvasRect.width / 2) / this.state.zoom;
+    const centerY = (canvasRect.height / 2) / this.state.zoom;
+    
+    // Convert viewport center to canvas coordinates by accounting for pan offset
+    const canvasCenterX = centerX - this.state.viewport.x / this.state.zoom;
+    const canvasCenterY = centerY - this.state.viewport.y / this.state.zoom;
     
     // Set size based on widget type
     const size = type === 'clock' 
@@ -1081,8 +1088,8 @@ class Dashboard {
       id,
       type,
       position: {
-        x: snapToGrid(viewportCenterX - size.w / 2, this.state.grid),
-        y: snapToGrid(viewportCenterY - size.h / 2, this.state.grid)
+        x: snapToGrid(canvasCenterX - size.w / 2, this.state.grid),
+        y: snapToGrid(canvasCenterY - size.h / 2, this.state.grid)
       },
       size,
       autoSize: { width: false, height: false },
