@@ -116,7 +116,7 @@ body {
 .canvas {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden; /* Disabled auto scrolling - use drag to pan instead */
   position: relative;
   cursor: grab;
   transition: background 300ms ease;

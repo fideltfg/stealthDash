@@ -24,6 +24,7 @@ class Dashboard {
   private lockButton!: HTMLElement;
   private readonly SNAP_DISTANCE = 10; // pixels to snap to nearby edges
   private readonly SNAP_THRESHOLD = 15; // distance at which snapping occurs
+  private readonly PAN_LIMIT = 1000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
   private authUI: AuthUI;
   private userSettingsUI: UserSettingsUI;
@@ -734,8 +735,13 @@ class Dashboard {
     const dx = e.clientX - this.panState.startMousePos.x;
     const dy = e.clientY - this.panState.startMousePos.y;
     
-    const newX = this.panState.startScrollX + dx;
-    const newY = this.panState.startScrollY + dy;
+    let newX = this.panState.startScrollX + dx;
+    let newY = this.panState.startScrollY + dy;
+    
+    // Apply pan limits to prevent dragging too far from origin
+    // Limit how far the canvas can be panned in any direction
+    newX = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newX));
+    newY = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newY));
     
     this.canvasContent.style.left = `${newX}px`;
     this.canvasContent.style.top = `${newY}px`;
