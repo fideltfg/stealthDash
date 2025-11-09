@@ -357,13 +357,21 @@ class PiholeRenderer implements WidgetRenderer {
       const refreshInterval = parseInt((document.getElementById('pihole-refresh') as HTMLInputElement).value);
 
       // Update widget content
+      // Only include password in the update if it was actually entered
       const newContent: PiholeContent = {
         host,
-        password: password || undefined,
         displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
         refreshInterval,
         showCharts: content.showCharts
       };
+
+      // Only update password if a value was entered
+      if (password) {
+        newContent.password = password;
+      } else if (content.password) {
+        // Preserve existing password if field was left empty
+        newContent.password = content.password;
+      }
 
       // Dispatch update event
       const event = new CustomEvent('widget-update', {
