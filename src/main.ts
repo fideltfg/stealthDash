@@ -76,9 +76,29 @@ class Dashboard {
       this.currentUser = authService.getUser();
 
       // Load dashboard from server
+      // NOTE: Server dashboard may not include sensitive widget data like passwords
+      // for security reasons. We keep using localStorage which has complete widget configs.
+      console.log('Attempting to load dashboard from server...');
       const serverDashboard = await authService.loadDashboard();
-      if (serverDashboard) {
+      console.log('Server dashboard response:', serverDashboard ? 'received' : 'null/failed');
+      
+      // For now, we prefer localStorage over server dashboard to preserve widget passwords
+      // TODO: Implement secure server-side storage for widget credentials
+      if (serverDashboard && false) { // Disabled - use localStorage instead
+        console.log('Using server dashboard state');
         this.state = serverDashboard;
+      } else {
+        console.log('Using localStorage state (preserves widget passwords)');
+      }
+
+      console.log('Final state has', this.state.widgets.length, 'widgets');
+      const piholeWidget = this.state.widgets.find((w: Widget) => w.type === 'pihole');
+      if (piholeWidget) {
+        const content = piholeWidget.content as any;
+        console.log('Pi-hole widget in final state:', {
+          ...content,
+          password: content.password ? '***' : '(none)'
+        });
       }
 
       this.setupDOM();
@@ -1107,7 +1127,21 @@ class Dashboard {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
     
-    widget.content = { ...widget.content, ...content };
+    console.log('updateWidgetContent - Before merge:', JSON.parse(JSON.stringify(widget.content)));
+    console.log('updateWidgetContent - New content:', JSON.parse(JSON.stringify(content)));
+    
+    // Merge content, but filter out undefined and null values to preserve existing properties
+    // This is important for fields like passwords that should persist if not explicitly updated
+    const filteredContent = Object.fromEntries(
+      Object.entries(content).filter(([_, value]) => value !== undefined && value !== null)
+    );
+    
+    console.log('updateWidgetContent - Filtered content:', JSON.parse(JSON.stringify(filteredContent)));
+    
+    widget.content = { ...widget.content, ...filteredContent };
+    
+    console.log('updateWidgetContent - After merge:', JSON.parse(JSON.stringify(widget.content)));
+    
     if (widget.meta) {
       widget.meta.updatedAt = Date.now();
     } else {

@@ -41,6 +41,9 @@ class PiholeRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as PiholeContent;
     
+    console.log('Pi-hole widget render - Full content:', content);
+    console.log('Pi-hole widget render - Has password?', !!content.password, 'Has apiKey?', !!content.apiKey);
+    
     // If widget has no host configured, show configuration prompt
     if (!content.host || content.host === 'http://pi.hole') {
       this.renderConfigPrompt(container, widget);
@@ -356,8 +359,10 @@ class PiholeRenderer implements WidgetRenderer {
       const displayMode = (document.getElementById('pihole-display-mode') as HTMLSelectElement).value;
       const refreshInterval = parseInt((document.getElementById('pihole-refresh') as HTMLInputElement).value);
 
+      console.log('Form values - password field:', password ? '***' : '(empty)', 'existing password:', content.password ? '***' : '(none)');
+
       // Update widget content
-      // Only include password in the update if it was actually entered
+      // Important: Only include password if it has a value (new or existing)
       const newContent: PiholeContent = {
         host,
         displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
@@ -365,13 +370,18 @@ class PiholeRenderer implements WidgetRenderer {
         showCharts: content.showCharts
       };
 
-      // Only update password if a value was entered
+      // Set password: use new value if entered, otherwise preserve existing, but never set to null/undefined
       if (password) {
         newContent.password = password;
+        console.log('Using newly entered password');
       } else if (content.password) {
-        // Preserve existing password if field was left empty
         newContent.password = content.password;
+        console.log('Preserving existing password');
+      } else {
+        console.log('No password available - widget will not authenticate');
       }
+
+      console.log('Final content being saved:', { ...newContent, password: newContent.password ? '***' : '(none)' });
 
       // Dispatch update event
       const event = new CustomEvent('widget-update', {
