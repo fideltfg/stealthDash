@@ -1244,6 +1244,176 @@ app.get('/api/pihole', async (req, res) => {
   }
 });
 
+// UniFi Controller session cache to avoid rate limiting
+// Key: host+username+password hash, Value: { cookies, expires }
+const unifiSessionCache = new Map();
+
+// UniFi Controller API proxy endpoint
+app.get('/api/unifi/stats', async (req, res) => {
+  try {
+    const { host, username, password, site = 'default' } = req.query;
+    
+    if (!host) {
+      return res.status(400).json({ error: 'Missing host parameter' });
+    }
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Missing username or password parameter' });
+    }
+
+    // Use node-fetch to make requests
+    const fetch = (await import('node-fetch')).default;
+    const https = require('https');
+    
+    // Create an HTTPS agent that ignores self-signed certificates
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
+    // Create cache key from host+username+password
+    const cacheKey = `${host}:${username}:${password}`;
+    
+    let cookies;
+    const cachedSession = unifiSessionCache.get(cacheKey);
+    
+    // Check if we have a valid cached session
+    if (cachedSession && cachedSession.expires > Date.now()) {
+      console.log('Using cached UniFi session');
+      cookies = cachedSession.cookies;
+    } else {
+      // Step 1: Authenticate and get session cookies
+      const loginUrl = `${host}/api/login`;
+      console.log(`Authenticating with UniFi Controller at: ${loginUrl}`);
+      
+      const loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          username,
+          password,
+          remember: false
+        }),
+        agent: httpsAgent,
+        timeout: 10000
+      });
+      
+      if (!loginResponse.ok) {
+        console.error(`UniFi login error: ${loginResponse.status} ${loginResponse.statusText}`);
+        const errorText = await loginResponse.text();
+        return res.status(loginResponse.status).json({ 
+          error: `UniFi authentication failed: ${loginResponse.status}`,
+          details: errorText
+        });
+      }
+      
+      // Extract cookies from response
+      const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
+      if (!setCookieHeaders || setCookieHeaders.length === 0) {
+        return res.status(401).json({ 
+          error: 'Authentication failed',
+          details: 'No session cookies received from UniFi Controller'
+        });
+      }
+      
+      // Join all cookies
+      cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]).join('; ');
+      
+      // Cache the session for 30 minutes
+      unifiSessionCache.set(cacheKey, {
+        cookies: cookies,
+        expires: Date.now() + (30 * 60 * 1000) // 30 minutes
+      });
+      
+      console.log('UniFi authentication successful, session cached');
+    }
+    
+    // Step 2: Fetch site stats with the session cookies
+    const statsUrl = `${host}/api/s/${site}/stat/health`;
+    
+    const statsResponse = await fetch(statsUrl, { 
+      headers: {
+        'Accept': 'application/json',
+        'Cookie': cookies
+      },
+      agent: httpsAgent,
+      timeout: 10000 
+    });
+    
+    if (!statsResponse.ok) {
+      console.error(`UniFi API error: ${statsResponse.status} ${statsResponse.statusText}`);
+      const errorText = await statsResponse.text();
+      console.error(`Response body: ${errorText}`);
+      
+      // Clear cache on auth errors
+      if (statsResponse.status === 401) {
+        unifiSessionCache.delete(cacheKey);
+      }
+      
+      return res.status(statsResponse.status).json({ 
+        error: `UniFi API returned ${statsResponse.status}: ${statsResponse.statusText}`,
+        details: errorText
+      });
+    }
+    
+    const data = await statsResponse.json();
+    
+    // UniFi wraps data in a { meta: {}, data: [] } structure
+    if (data.data && Array.isArray(data.data)) {
+      // Aggregate stats from all subsystems
+      const stats = {
+        site_name: site,
+        num_user: 0,
+        num_guest: 0,
+        num_iot: 0,
+        gateways: 0,
+        switches: 0,
+        access_points: 0
+      };
+      
+      data.data.forEach(item => {
+        if (item.subsystem === 'wlan') {
+          stats.num_user = item.num_user || 0;
+          stats.num_guest = item.num_guest || 0;
+          stats.num_iot = item.num_iot || 0;
+        } else if (item.subsystem === 'wan') {
+          stats.wan_ip = item.wan_ip;
+          stats.uptime = item.uptime;
+        } else if (item.subsystem === 'www') {
+          // Gateway info
+          stats.gateways = (item.num_gw || 0);
+        } else if (item.subsystem === 'sw') {
+          // Switch info
+          stats.switches = (item.num_sw || 0);
+        } else if (item.subsystem === 'wlan') {
+          // AP info
+          stats.access_points = (item.num_ap || 0);
+        }
+      });
+      
+      console.log('UniFi stats data:', JSON.stringify(stats));
+      
+      // Set CORS headers
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Content-Type', 'application/json');
+      
+      res.json(stats);
+    } else {
+      console.warn('Unexpected UniFi response format:', data);
+      res.json(data);
+    }
+    
+  } catch (error) {
+    console.error('UniFi proxy error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to fetch UniFi data. Check if controller is accessible and credentials are correct.'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Ping server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
