@@ -40,7 +40,78 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       this.showManageEntitiesDialog(widget);
     };
     entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    return [entitiesBtn];
+
+    // Add dropdown for bulk actions
+    const dropdown = document.createElement('select');
+    dropdown.className = 'widget-settings-btn';
+    dropdown.style.cssText = `
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+    `;
+    dropdown.innerHTML = `
+      <option value="">Actions...</option>
+      <option value="all-on">Turn All On</option>
+      <option value="all-off">Turn All Off</option>
+    `;
+    
+    dropdown.addEventListener('change', async (e) => {
+      const action = (e.target as HTMLSelectElement).value;
+      if (!action) return;
+
+      const content = widget.content as HomeAssistantContent;
+      const entities = content.entities || [];
+      const switchesAndLights = entities.filter(e => e.type === 'switch' || e.type === 'light');
+
+      if (switchesAndLights.length === 0) {
+        alert('No switches or lights to control');
+        dropdown.value = '';
+        return;
+      }
+
+      // Confirm action
+      const actionText = action === 'all-on' ? 'turn ON' : 'turn OFF';
+      if (!confirm(`${actionText} all ${switchesAndLights.length} switches/lights?`)) {
+        dropdown.value = '';
+        return;
+      }
+
+      // Disable dropdown during operation
+      dropdown.disabled = true;
+      dropdown.style.opacity = '0.5';
+
+      try {
+        // Toggle all entities
+        for (const entity of switchesAndLights) {
+          await this.toggleEntityToState(entity.entity_id, widget, action === 'all-on');
+        }
+
+        // Refresh states
+        await this.fetchEntityStates(widget);
+        const container = document.querySelector(`[data-widget-id="${widget.id}"]`);
+        if (container) {
+          const grid = container.querySelector('.ha-entities-grid') as HTMLElement;
+          if (grid) {
+            this.updateEntityCards(widget, grid);
+          }
+        }
+      } catch (error) {
+        alert(`Failed to ${actionText} all entities: ${error}`);
+      } finally {
+        // Re-enable dropdown
+        dropdown.disabled = false;
+        dropdown.style.opacity = '1';
+        dropdown.value = '';
+      }
+    });
+    
+    dropdown.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    return [dropdown, entitiesBtn];
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
@@ -425,6 +496,39 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     } catch (error) {
       console.error('Failed to toggle entity:', error);
       alert(`Failed to toggle ${entityId}: ${error}`);
+    }
+  }
+
+  private async toggleEntityToState(entityId: string, widget: Widget, turnOn: boolean): Promise<void> {
+    const content = widget.content as HomeAssistantContent;
+    if (!content.url || !content.token) return;
+
+    try {
+      const domain = entityId.split('.')[0];
+      const service = turnOn ? 'turn_on' : 'turn_off';
+
+      // Use ping-server proxy to avoid CORS issues
+      const pingServerUrl = this.getPingServerUrl();
+      const response = await fetch(`${pingServerUrl}/home-assistant/service`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: content.url,
+          token: content.token,
+          domain,
+          service,
+          entity_id: entityId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Failed to ${turnOn ? 'turn on' : 'turn off'} entity:`, error);
+      throw error;
     }
   }
 
