@@ -28,7 +28,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private entityStates: Map<string, Map<string, HomeAssistantEntity>> = new Map();
 
   configure(widget: Widget): void {
-    this.showManageEntitiesDialog(widget);
+    this.showSettingsDialog(widget);
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
@@ -146,15 +146,88 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     `;
     container.appendChild(grid);
 
-    // Add floating settings button (only visible when widget is selected)
-
+    // Add floating action buttons
     container.style.position = 'relative';
 
-  
- 
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'ha-floating-buttons';
+    buttonContainer.style.cssText = `
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    `;
 
- 
- 
+    // Entities button
+    const entitiesBtn = document.createElement('button');
+    entitiesBtn.className = 'ha-entities-btn';
+    entitiesBtn.innerHTML = '📋';
+    entitiesBtn.title = 'Manage Entities';
+    entitiesBtn.style.cssText = `
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background 0.2s;
+      backdrop-filter: blur(10px);
+    `;
+    entitiesBtn.addEventListener('mouseenter', () => {
+      entitiesBtn.style.background = 'rgba(0, 0, 0, 0.9)';
+    });
+    entitiesBtn.addEventListener('mouseleave', () => {
+      entitiesBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+    });
+    entitiesBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.showManageEntitiesDialog(widget);
+    });
+    entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    // Settings button
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'ha-settings-btn';
+    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.title = 'Settings';
+    settingsBtn.style.cssText = `
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background 0.2s;
+      backdrop-filter: blur(10px);
+    `;
+    settingsBtn.addEventListener('mouseenter', () => {
+      settingsBtn.style.background = 'rgba(0, 0, 0, 0.9)';
+    });
+    settingsBtn.addEventListener('mouseleave', () => {
+      settingsBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+    });
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.showSettingsDialog(widget);
+    });
+    settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    buttonContainer.appendChild(entitiesBtn);
+    buttonContainer.appendChild(settingsBtn);
+    container.appendChild(buttonContainer);
 
     // Render each entity with loading state
     const entities = content.entities || [];
@@ -518,6 +591,208 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       });
       document.dispatchEvent(event);
     });
+  }
+
+  private showSettingsDialog(widget: Widget): void {
+    const content = widget.content as HomeAssistantContent;
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      min-width: 500px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      color: var(--text);
+    `;
+
+    dialog.innerHTML = `
+      <h3 style="margin-top: 0; color: var(--text);">⚙️ Home Assistant Settings</h3>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+          Home Assistant URL
+        </label>
+        <input 
+          type="text" 
+          id="ha-url-input" 
+          placeholder="http://homeassistant.local:8123"
+          value="${content.url || ''}"
+          style="
+            width: 100%;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+          "
+        />
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+          The base URL of your Home Assistant instance
+        </small>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+          Long-Lived Access Token
+        </label>
+        <input 
+          type="password" 
+          id="ha-token-input" 
+          placeholder="Enter your access token"
+          value="${content.token || ''}"
+          style="
+            width: 100%;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+          "
+        />
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+          Create in Home Assistant: Profile → Security → Long-Lived Access Tokens
+        </small>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+          Refresh Interval (seconds)
+        </label>
+        <input 
+          type="number" 
+          id="ha-refresh-input" 
+          min="1"
+          max="300"
+          value="${content.refreshInterval || 5}"
+          style="
+            width: 100%;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+          "
+        />
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+          How often to refresh entity states
+        </small>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 20px;">
+        <button id="cancel-settings-btn" style="
+          padding: 10px 20px;
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">
+          Cancel
+        </button>
+        <button id="save-settings-btn" style="
+          padding: 10px 20px;
+          cursor: pointer;
+          background: var(--accent);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+        ">
+          Save Settings
+        </button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // Get input elements
+    const urlInput = dialog.querySelector('#ha-url-input') as HTMLInputElement;
+    const tokenInput = dialog.querySelector('#ha-token-input') as HTMLInputElement;
+    const refreshInput = dialog.querySelector('#ha-refresh-input') as HTMLInputElement;
+    const saveBtn = dialog.querySelector('#save-settings-btn') as HTMLButtonElement;
+    const cancelBtn = dialog.querySelector('#cancel-settings-btn') as HTMLButtonElement;
+
+    // Save button handler
+    saveBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      const token = tokenInput.value.trim();
+      const refreshInterval = parseInt(refreshInput.value);
+
+      if (!url || !token) {
+        alert('Please enter both URL and token');
+        return;
+      }
+
+      if (refreshInterval < 1 || refreshInterval > 300) {
+        alert('Refresh interval must be between 1 and 300 seconds');
+        return;
+      }
+
+      // Trigger widget update
+      const event = new CustomEvent('widget-update', {
+        detail: { 
+          id: widget.id, 
+          content: { 
+            ...content, 
+            url, 
+            token, 
+            refreshInterval 
+          } 
+        }
+      });
+      document.dispatchEvent(event);
+
+      overlay.remove();
+    });
+    saveBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    // Cancel button handler
+    cancelBtn.addEventListener('click', () => {
+      overlay.remove();
+    });
+    cancelBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+
+    // Prevent dialog from being dragged
+    dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
+    urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    tokenInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    refreshInput.addEventListener('pointerdown', (e) => e.stopPropagation());
   }
 
   private showManageEntitiesDialog(widget: Widget): void {
