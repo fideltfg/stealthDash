@@ -1330,80 +1330,189 @@ app.get('/api/unifi/stats', async (req, res) => {
       console.log('UniFi authentication successful, session cached');
     }
     
-    // Step 2: Fetch site stats with the session cookies
-    const statsUrl = `${host}/api/s/${site}/stat/health`;
+    // Step 2: Fetch multiple endpoints in parallel for comprehensive data
+    const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
+      // Health/stats
+      fetch(`${host}/api/s/${site}/stat/health`, { 
+        headers: { 'Accept': 'application/json', 'Cookie': cookies },
+        agent: httpsAgent,
+        timeout: 10000 
+      }),
+      // Device list (APs, switches, gateways)
+      fetch(`${host}/api/s/${site}/stat/device`, { 
+        headers: { 'Accept': 'application/json', 'Cookie': cookies },
+        agent: httpsAgent,
+        timeout: 10000 
+      }).catch(err => {
+        console.log('Device fetch failed (non-critical):', err.message);
+        return null;
+      }),
+      // Active clients
+      fetch(`${host}/api/s/${site}/stat/sta`, { 
+        headers: { 'Accept': 'application/json', 'Cookie': cookies },
+        agent: httpsAgent,
+        timeout: 10000 
+      }).catch(err => {
+        console.log('Clients fetch failed (non-critical):', err.message);
+        return null;
+      }),
+      // Recent alarms
+      fetch(`${host}/api/s/${site}/stat/alarm`, { 
+        headers: { 'Accept': 'application/json', 'Cookie': cookies },
+        agent: httpsAgent,
+        timeout: 10000 
+      }).catch(err => {
+        console.log('Alarms fetch failed (non-critical):', err.message);
+        return null;
+      })
+    ]);
     
-    const statsResponse = await fetch(statsUrl, { 
-      headers: {
-        'Accept': 'application/json',
-        'Cookie': cookies
-      },
-      agent: httpsAgent,
-      timeout: 10000 
-    });
-    
-    if (!statsResponse.ok) {
-      console.error(`UniFi API error: ${statsResponse.status} ${statsResponse.statusText}`);
-      const errorText = await statsResponse.text();
+    if (!healthResponse.ok) {
+      console.error(`UniFi API error: ${healthResponse.status} ${healthResponse.statusText}`);
+      const errorText = await healthResponse.text();
       console.error(`Response body: ${errorText}`);
       
       // Clear cache on auth errors
-      if (statsResponse.status === 401) {
+      if (healthResponse.status === 401) {
         unifiSessionCache.delete(cacheKey);
       }
       
-      return res.status(statsResponse.status).json({ 
-        error: `UniFi API returned ${statsResponse.status}: ${statsResponse.statusText}`,
+      return res.status(healthResponse.status).json({ 
+        error: `UniFi API returned ${healthResponse.status}: ${healthResponse.statusText}`,
         details: errorText
       });
     }
     
-    const data = await statsResponse.json();
+    const healthData = await healthResponse.json();
+    const devicesData = devicesResponse && devicesResponse.ok ? await devicesResponse.json() : { data: [] };
+    const clientsData = clientsResponse && clientsResponse.ok ? await clientsResponse.json() : { data: [] };
+    const alarmsData = alarmsResponse && alarmsResponse.ok ? await alarmsResponse.json() : { data: [] };
     
-    // UniFi wraps data in a { meta: {}, data: [] } structure
-    if (data.data && Array.isArray(data.data)) {
-      // Aggregate stats from all subsystems
-      const stats = {
-        site_name: site,
-        num_user: 0,
-        num_guest: 0,
-        num_iot: 0,
-        gateways: 0,
-        switches: 0,
-        access_points: 0
-      };
-      
-      data.data.forEach(item => {
+    // Aggregate stats from all subsystems
+    const stats = {
+      site_name: site,
+      num_user: 0,
+      num_guest: 0,
+      num_iot: 0,
+      gateways: 0,
+      switches: 0,
+      access_points: 0,
+      devices: [],
+      clients: [],
+      alarms: [],
+      traffic: {
+        tx_bytes: 0,
+        rx_bytes: 0,
+        tx_packets: 0,
+        rx_packets: 0
+      }
+    };
+    
+    // Process health data
+    if (healthData.data && Array.isArray(healthData.data)) {
+      healthData.data.forEach(item => {
         if (item.subsystem === 'wlan') {
           stats.num_user = item.num_user || 0;
           stats.num_guest = item.num_guest || 0;
           stats.num_iot = item.num_iot || 0;
+          stats.access_points = item.num_ap || 0;
+          if (item.tx_bytes) stats.traffic.tx_bytes += item.tx_bytes;
+          if (item.rx_bytes) stats.traffic.rx_bytes += item.rx_bytes;
         } else if (item.subsystem === 'wan') {
           stats.wan_ip = item.wan_ip;
           stats.uptime = item.uptime;
+          stats.wan_uptime = item.uptime;
+          stats.latency = item.latency;
+          stats.speedtest_ping = item.speedtest_ping;
+          stats.xput_up = item.xput_up;
+          stats.xput_down = item.xput_down;
         } else if (item.subsystem === 'www') {
-          // Gateway info
           stats.gateways = (item.num_gw || 0);
+          stats.gateway_status = item.status;
         } else if (item.subsystem === 'sw') {
-          // Switch info
           stats.switches = (item.num_sw || 0);
-        } else if (item.subsystem === 'wlan') {
-          // AP info
-          stats.access_points = (item.num_ap || 0);
+        } else if (item.subsystem === 'lan') {
+          stats.num_lan = item.num_user || 0;
         }
       });
-      
-      console.log('UniFi stats data:', JSON.stringify(stats));
-      
-      // Set CORS headers
-      res.set('Access-Control-Allow-Origin', '*');
-      res.set('Content-Type', 'application/json');
-      
-      res.json(stats);
-    } else {
-      console.warn('Unexpected UniFi response format:', data);
-      res.json(data);
     }
+    
+    // Process devices data (detailed device info)
+    if (devicesData.data && Array.isArray(devicesData.data)) {
+      devicesData.data.forEach(device => {
+        stats.devices.push({
+          name: device.name || device.hostname || 'Unknown',
+          model: device.model,
+          type: device.type,
+          ip: device.ip,
+          mac: device.mac,
+          state: device.state,
+          adopted: device.adopted,
+          uptime: device.uptime,
+          version: device.version,
+          upgradable: device.upgradable,
+          num_sta: device.num_sta || 0,
+          user_num_sta: device['user-num_sta'] || 0,
+          guest_num_sta: device['guest-num_sta'] || 0,
+          bytes: device.bytes || 0,
+          tx_bytes: device['tx_bytes'] || 0,
+          rx_bytes: device['rx_bytes'] || 0,
+          satisfaction: device.satisfaction,
+          cpu: device['system-stats']?.cpu,
+          mem: device['system-stats']?.mem,
+          uplink: device.uplink
+        });
+      });
+    }
+    
+    // Process clients data (active connections)
+    if (clientsData.data && Array.isArray(clientsData.data)) {
+      clientsData.data.forEach(client => {
+        stats.clients.push({
+          name: client.hostname || client.name || 'Unknown',
+          mac: client.mac,
+          ip: client.ip,
+          network: client.network,
+          essid: client.essid,
+          is_guest: client.is_guest,
+          is_wired: client.is_wired,
+          signal: client.signal,
+          rssi: client.rssi,
+          tx_bytes: client.tx_bytes || 0,
+          rx_bytes: client.rx_bytes || 0,
+          tx_rate: client.tx_rate,
+          rx_rate: client.rx_rate,
+          uptime: client.uptime,
+          last_seen: client.last_seen,
+          ap_mac: client.ap_mac,
+          channel: client.channel,
+          radio: client.radio
+        });
+      });
+    }
+    
+    // Process alarms/events
+    if (alarmsData.data && Array.isArray(alarmsData.data)) {
+      stats.alarms = alarmsData.data.slice(0, 10).map(alarm => ({
+        datetime: alarm.datetime,
+        msg: alarm.msg,
+        key: alarm.key,
+        subsystem: alarm.subsystem,
+        archived: alarm.archived
+      }));
+    }
+    
+    console.log('UniFi comprehensive stats:', {
+      clients: stats.clients.length,
+      devices: stats.devices.length,
+      alarms: stats.alarms.length
+    });
+    
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'application/json');
+    
+    res.json(stats);
     
   } catch (error) {
     console.error('UniFi proxy error:', error);

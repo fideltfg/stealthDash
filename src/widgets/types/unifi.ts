@@ -7,30 +7,89 @@ interface UnifiContent {
   password?: string; // UniFi controller password
   site?: string; // Site name (default: 'default')
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
-  displayMode?: 'compact' | 'detailed' | 'minimal'; // Display style
+  displayMode?: 'compact' | 'detailed' | 'minimal' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds'; // Display style
   showClients?: boolean; // Show connected clients count
   showAlerts?: boolean; // Show recent alerts/logs
 }
 
 // UniFi API response structures
+interface UnifiDevice {
+  name: string;
+  model: string;
+  type: string;
+  ip: string;
+  mac: string;
+  state: number;
+  adopted: boolean;
+  uptime: number;
+  version: string;
+  upgradable: boolean;
+  num_sta: number;
+  user_num_sta: number;
+  guest_num_sta: number;
+  bytes: number;
+  tx_bytes: number;
+  rx_bytes: number;
+  satisfaction: number;
+  cpu: number;
+  mem: number;
+}
+
+interface UnifiClient {
+  name: string;
+  mac: string;
+  ip: string;
+  network: string;
+  essid?: string;
+  is_guest: boolean;
+  is_wired: boolean;
+  signal?: number;
+  rssi?: number;
+  tx_bytes: number;
+  rx_bytes: number;
+  tx_rate?: number;
+  rx_rate?: number;
+  uptime: number;
+  last_seen: number;
+  ap_mac?: string;
+  channel?: number;
+  radio?: string;
+}
+
+interface UnifiAlarm {
+  datetime: number;
+  msg: string;
+  key: string;
+  subsystem?: string;
+  archived: boolean;
+}
+
 interface UnifiStats {
   site_name?: string;
-  num_user?: number; // Number of connected clients
-  num_guest?: number; // Number of guest clients
-  num_iot?: number; // Number of IoT clients
+  num_user?: number;
+  num_guest?: number;
+  num_iot?: number;
   wan_ip?: string;
   uptime?: number;
+  wan_uptime?: number;
   gateways?: number;
   switches?: number;
   access_points?: number;
-}
-
-interface UnifiAlert {
-  _id: string;
-  datetime: number;
-  key: string;
-  msg: string;
-  subsystem?: string;
+  latency?: number;
+  speedtest_ping?: number;
+  xput_up?: number;
+  xput_down?: number;
+  num_lan?: number;
+  gateway_status?: string;
+  devices?: UnifiDevice[];
+  clients?: UnifiClient[];
+  alarms?: UnifiAlarm[];
+  traffic?: {
+    tx_bytes: number;
+    rx_bytes: number;
+    tx_packets: number;
+    rx_packets: number;
+  };
 }
 
 class UnifiRenderer implements WidgetRenderer {
@@ -107,11 +166,23 @@ class UnifiRenderer implements WidgetRenderer {
         const mode = content.displayMode || 'compact';
         
         if (mode === 'minimal') {
-          this.renderMinimal(contentEl, data, content);
+          this.renderMinimal(contentEl, data);
         } else if (mode === 'detailed') {
-          this.renderDetailed(contentEl, data, content);
+          this.renderDetailed(contentEl, data);
+        } else if (mode === 'devices') {
+          this.renderDevices(contentEl, data);
+        } else if (mode === 'clients') {
+          this.renderClients(contentEl, data);
+        } else if (mode === 'full') {
+          this.renderFull(contentEl, data);
+        } else if (mode === 'active') {
+          this.renderMostActive(contentEl, data);
+        } else if (mode === 'throughput') {
+          this.renderThroughput(contentEl, data);
+        } else if (mode === 'speeds') {
+          this.renderNetworkSpeeds(contentEl, data);
         } else {
-          this.renderCompact(contentEl, data, content);
+          this.renderCompact(contentEl, data);
         }
         
       } catch (error: any) {
@@ -327,9 +398,15 @@ class UnifiRenderer implements WidgetRenderer {
               box-sizing: border-box;
             "
           >
-            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed</option>
+            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal - Client count only</option>
+            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact - Key stats</option>
+            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed - Infrastructure view</option>
+            <option value="devices" ${content.displayMode === 'devices' ? 'selected' : ''}>Devices - Full device list</option>
+            <option value="clients" ${content.displayMode === 'clients' ? 'selected' : ''}>Clients - Active connections</option>
+            <option value="active" ${content.displayMode === 'active' ? 'selected' : ''}>Most Active - Top clients by traffic</option>
+            <option value="throughput" ${content.displayMode === 'throughput' ? 'selected' : ''}>Throughput - Network traffic analysis</option>
+            <option value="speeds" ${content.displayMode === 'speeds' ? 'selected' : ''}>Network Speeds - WAN & client speeds</option>
+            <option value="full" ${content.displayMode === 'full' ? 'selected' : ''}>Full - Complete overview</option>
           </select>
         </div>
 
@@ -416,7 +493,7 @@ class UnifiRenderer implements WidgetRenderer {
       const newContent: UnifiContent = {
         host,
         site,
-        displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
+        displayMode: displayMode as 'minimal' | 'compact' | 'detailed' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds',
         refreshInterval,
         showClients: content.showClients ?? true,
         showAlerts: content.showAlerts ?? true
@@ -451,7 +528,7 @@ class UnifiRenderer implements WidgetRenderer {
     });
   }
 
-  private renderMinimal(container: HTMLElement, data: UnifiStats, content: UnifiContent): void {
+  private renderMinimal(container: HTMLElement, data: UnifiStats): void {
     const clients = (data.num_user || 0);
     
     container.innerHTML = `
@@ -466,7 +543,7 @@ class UnifiRenderer implements WidgetRenderer {
     `;
   }
 
-  private renderCompact(container: HTMLElement, data: UnifiStats, content: UnifiContent): void {
+  private renderCompact(container: HTMLElement, data: UnifiStats): void {
     const clients = (data.num_user || 0);
     const guests = (data.num_guest || 0);
     const devices = (data.gateways || 0) + (data.switches || 0) + (data.access_points || 0);
@@ -519,7 +596,7 @@ class UnifiRenderer implements WidgetRenderer {
     `;
   }
 
-  private renderDetailed(container: HTMLElement, data: UnifiStats, content: UnifiContent): void {
+  private renderDetailed(container: HTMLElement, data: UnifiStats): void {
     const clients = (data.num_user || 0);
     const guests = (data.num_guest || 0);
     const iot = (data.num_iot || 0);
@@ -601,6 +678,734 @@ class UnifiRenderer implements WidgetRenderer {
         </div>
       </div>
     `;
+  }
+
+  private renderDevices(container: HTMLElement, data: UnifiStats): void {
+    const devices = data.devices || [];
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; padding-bottom: 8px;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text);">Network Devices (${devices.length})</div>
+          <div style="font-size: 12px; color: var(--muted);">${(data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
+        </div>
+        
+        ${devices.length === 0 ? `
+          <div style="text-align: center; padding: 40px; color: var(--muted);">
+            No devices found
+          </div>
+        ` : devices.map(device => {
+          const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
+          const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : device.type === 'ugw' ? '🌐' : '📟';
+          
+          return `
+            <div style="background: var(--bg); padding: 12px; border-radius: 8px; border-left: 3px solid ${statusColor};">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 20px;">${typeIcon}</span>
+                  <div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text);">${device.name}</div>
+                    <div style="font-size: 11px; color: var(--muted); font-family: monospace;">${device.ip}</div>
+                  </div>
+                </div>
+                ${device.upgradable ? '<span style="font-size: 11px; background: #ff9500; color: white; padding: 2px 6px; border-radius: 4px;">Update</span>' : ''}
+              </div>
+              
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Model:</span>
+                  <span style="color: var(--text); font-weight: 500;">${device.model || 'N/A'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Clients:</span>
+                  <span style="color: var(--text); font-weight: 500;">${device.num_sta || 0}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Uptime:</span>
+                  <span style="color: var(--text); font-weight: 500;">${this.formatUptime(device.uptime || 0)}</span>
+                </div>
+                ${device.satisfaction !== undefined ? `
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Score:</span>
+                    <span style="color: var(--text); font-weight: 500;">${device.satisfaction}%</span>
+                  </div>
+                ` : ''}
+                ${device.cpu !== undefined ? `
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">CPU:</span>
+                    <span style="color: var(--text); font-weight: 500;">${device.cpu}%</span>
+                  </div>
+                ` : ''}
+                ${device.mem !== undefined ? `
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Memory:</span>
+                    <span style="color: var(--text); font-weight: 500;">${device.mem}%</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  private renderClients(container: HTMLElement, data: UnifiStats): void {
+    const clients = data.clients || [];
+    const sortedClients = [...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes));
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; padding-bottom: 8px;">
+          <div style="font-size: 14px; font-weight: 600; color: var(--text);">Active Clients (${clients.length})</div>
+          <div style="font-size: 12px; color: var(--muted);">
+            ${clients.filter(c => c.is_wired).length} wired | ${clients.filter(c => !c.is_wired).length} wireless
+          </div>
+        </div>
+        
+        ${sortedClients.length === 0 ? `
+          <div style="text-align: center; padding: 40px; color: var(--muted);">
+            No active clients
+          </div>
+        ` : sortedClients.map(client => {
+          const isWired = client.is_wired;
+          const connIcon = isWired ? '🔌' : '📶';
+          const totalBytes = client.tx_bytes + client.rx_bytes;
+          const signalBars = client.signal ? 
+            (client.signal >= -50 ? '▂▃▅▆█' : client.signal >= -60 ? '▂▃▅▆▁' : client.signal >= -70 ? '▂▃▅▁▁' : '▂▃▁▁▁') : '';
+          
+          return `
+            <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 16px;">${connIcon}</span>
+                  <div>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text);">${client.name}</div>
+                    <div style="font-size: 10px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
+                  </div>
+                </div>
+                ${client.is_guest ? '<span style="font-size: 10px; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px;">Guest</span>' : ''}
+              </div>
+              
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 10px;">
+                ${!isWired && client.essid ? `
+                  <div style="display: flex; justify-content: space-between; grid-column: 1 / -1;">
+                    <span style="color: var(--muted);">Network:</span>
+                    <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
+                  </div>
+                ` : ''}
+                ${!isWired && client.signal ? `
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Signal:</span>
+                    <span style="color: var(--text); font-weight: 500; font-family: monospace;">${signalBars} ${client.signal}dBm</span>
+                  </div>
+                ` : ''}
+                ${!isWired && client.channel ? `
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Channel:</span>
+                    <span style="color: var(--text); font-weight: 500;">${client.channel} ${client.radio || ''}</span>
+                  </div>
+                ` : ''}
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">↑ TX:</span>
+                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">↓ RX:</span>
+                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Total:</span>
+                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Uptime:</span>
+                  <span style="color: var(--text); font-weight: 500;">${this.formatUptime(client.uptime || 0)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  private renderFull(container: HTMLElement, data: UnifiStats): void {
+    const clients = data.clients || [];
+    const devices = data.devices || [];
+    const alarms = data.alarms || [];
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+        <!-- Summary Stats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--accent);">${data.num_user || 0}</div>
+            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Clients</div>
+          </div>
+          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${devices.length}</div>
+            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Devices</div>
+          </div>
+          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${data.num_guest || 0}</div>
+            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Guests</div>
+          </div>
+        </div>
+
+        <!-- WAN Info -->
+        ${data.wan_ip || data.xput_down ? `
+          <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+            <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">WAN</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              ${data.wan_ip ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">IP:</span>
+                  <span style="color: var(--text); font-family: monospace;">${data.wan_ip}</span>
+                </div>
+              ` : ''}
+              ${data.xput_down ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">↓ Download:</span>
+                  <span style="color: var(--text); font-weight: 500;">${(data.xput_down / 1000000).toFixed(1)} Mbps</span>
+                </div>
+              ` : ''}
+              ${data.xput_up ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">↑ Upload:</span>
+                  <span style="color: var(--text); font-weight: 500;">${(data.xput_up / 1000000).toFixed(1)} Mbps</span>
+                </div>
+              ` : ''}
+              ${data.latency ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Latency:</span>
+                  <span style="color: var(--text); font-weight: 500;">${data.latency}ms</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Devices Section -->
+        ${devices.length > 0 ? `
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Devices (${devices.length})</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${devices.slice(0, 5).map(device => {
+                const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
+                const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : '🌐';
+                
+                return `
+                  <div style="background: var(--bg); padding: 8px; border-radius: 6px; border-left: 2px solid ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 14px;">${typeIcon}</span>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--text);">${device.name}</span>
+                      </div>
+                      <span style="font-size: 10px; color: var(--muted);">${device.num_sta || 0} clients</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+              ${devices.length > 5 ? `<div style="text-align: center; font-size: 11px; color: var(--muted);">+${devices.length - 5} more devices</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Top Clients -->
+        ${clients.length > 0 ? `
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Top Clients</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${[...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes)).slice(0, 5).map(client => {
+                const connIcon = client.is_wired ? '🔌' : '📶';
+                const totalBytes = client.tx_bytes + client.rx_bytes;
+                
+                return `
+                  <div style="background: var(--bg); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-size: 12px;">${connIcon}</span>
+                      <span style="font-size: 11px; font-weight: 500; color: var(--text);">${client.name}</span>
+                    </div>
+                    <span style="font-size: 10px; color: var(--muted); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Recent Alarms -->
+        ${alarms.length > 0 ? `
+          <div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Recent Alerts</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${alarms.slice(0, 3).map(alarm => {
+                const date = new Date(alarm.datetime * 1000);
+                const timeAgo = this.getTimeAgo(date);
+                
+                return `
+                  <div style="background: var(--bg); padding: 8px; border-radius: 6px;">
+                    <div style="font-size: 11px; color: var(--text); margin-bottom: 2px;">${alarm.msg}</div>
+                    <div style="font-size: 9px; color: var(--muted);">${timeAgo}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private renderMostActive(container: HTMLElement, data: UnifiStats): void {
+    const clients = data.clients || [];
+    const sortedByTotal = [...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes));
+    const sortedByTx = [...clients].sort((a, b) => b.tx_bytes - a.tx_bytes);
+    const sortedByRx = [...clients].sort((a, b) => b.rx_bytes - a.rx_bytes);
+    
+    const totalTraffic = clients.reduce((sum, c) => sum + c.tx_bytes + c.rx_bytes, 0);
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+        <!-- Summary -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${clients.length}</div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Active Clients</div>
+          </div>
+          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${this.formatBytes(totalTraffic)}</div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Total Traffic</div>
+          </div>
+        </div>
+
+        <!-- Top by Total Traffic -->
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>📊</span>
+            <span>Most Active (Total Traffic)</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${sortedByTotal.slice(0, 10).map((client, index) => {
+              const totalBytes = client.tx_bytes + client.rx_bytes;
+              const percentage = totalTraffic > 0 ? (totalBytes / totalTraffic * 100) : 0;
+              const connIcon = client.is_wired ? '🔌' : '📶';
+              const signalColor = !client.is_wired && client.signal ? 
+                (client.signal >= -50 ? '#34c759' : client.signal >= -60 ? '#ffcc00' : client.signal >= -70 ? '#ff9500' : '#ff3b30') : 'var(--muted)';
+              
+              return `
+                <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 14px; color: var(--muted); font-weight: 600; min-width: 20px;">#${index + 1}</span>
+                      <span style="font-size: 14px;">${connIcon}</span>
+                      <div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text);">${client.name}</div>
+                        <div style="font-size: 10px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 14px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalBytes)}</div>
+                      <div style="font-size: 10px; color: var(--muted);">${percentage.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Progress bar -->
+                  <div style="background: var(--surface); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 8px;">
+                    <div style="background: var(--accent); height: 100%; width: ${percentage}%; transition: width 0.3s;"></div>
+                  </div>
+                  
+                  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: var(--muted);">↑ Upload:</span>
+                      <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: var(--muted);">↓ Download:</span>
+                      <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
+                    </div>
+                    ${!client.is_wired && client.signal ? `
+                      <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">Signal:</span>
+                        <span style="color: ${signalColor}; font-weight: 600;">${client.signal}dBm</span>
+                      </div>
+                      ${client.essid ? `
+                        <div style="display: flex; justify-content: space-between;">
+                          <span style="color: var(--muted);">SSID:</span>
+                          <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
+                        </div>
+                      ` : ''}
+                    ` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Top Uploaders -->
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>↑</span>
+            <span>Top Uploaders</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${sortedByTx.slice(0, 5).map((client, index) => {
+              const connIcon = client.is_wired ? '🔌' : '📶';
+              return `
+                <div style="background: var(--bg); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; color: var(--muted); font-weight: 600; min-width: 18px;">#${index + 1}</span>
+                    <span style="font-size: 12px;">${connIcon}</span>
+                    <span style="font-size: 12px; font-weight: 500; color: var(--text);">${client.name}</span>
+                  </div>
+                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${this.formatBytes(client.tx_bytes)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Top Downloaders -->
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>↓</span>
+            <span>Top Downloaders</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${sortedByRx.slice(0, 5).map((client, index) => {
+              const connIcon = client.is_wired ? '🔌' : '📶';
+              return `
+                <div style="background: var(--bg); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; color: var(--muted); font-weight: 600; min-width: 18px;">#${index + 1}</span>
+                    <span style="font-size: 12px;">${connIcon}</span>
+                    <span style="font-size: 12px; font-weight: 500; color: var(--text);">${client.name}</span>
+                  </div>
+                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${this.formatBytes(client.rx_bytes)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderThroughput(container: HTMLElement, data: UnifiStats): void {
+    const traffic = data.traffic || { tx_bytes: 0, rx_bytes: 0, tx_packets: 0, rx_packets: 0 };
+    const clients = data.clients || [];
+    const devices = data.devices || [];
+    
+    // Calculate per-device throughput
+    const deviceTraffic = devices.map(device => ({
+      name: device.name,
+      type: device.type,
+      tx: device.tx_bytes || 0,
+      rx: device.rx_bytes || 0,
+      total: (device.tx_bytes || 0) + (device.rx_bytes || 0),
+      clients: device.num_sta || 0
+    })).sort((a, b) => b.total - a.total);
+    
+    const totalDeviceTraffic = deviceTraffic.reduce((sum, d) => sum + d.total, 0);
+    const totalClientTraffic = clients.reduce((sum, c) => sum + c.tx_bytes + c.rx_bytes, 0);
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+        <!-- Network Totals -->
+        <div style="background: linear-gradient(135deg, var(--accent) 0%, #0077ff 100%); padding: 20px; border-radius: 12px; color: white;">
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">Network Throughput</div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div>
+              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↑ UPLOAD</div>
+              <div style="font-size: 28px; font-weight: 700;">${this.formatBytes(traffic.tx_bytes)}</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↓ DOWNLOAD</div>
+              <div style="font-size: 28px; font-weight: 700;">${this.formatBytes(traffic.rx_bytes)}</div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; font-size: 12px;">
+            <span>Total: <strong>${this.formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
+            <span>Packets: <strong>${this.formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>
+          </div>
+        </div>
+
+        <!-- Traffic Distribution -->
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Traffic Distribution</div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY DEVICES</div>
+              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalDeviceTraffic)}</div>
+              <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${devices.length} devices</div>
+            </div>
+            <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY CLIENTS</div>
+              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalClientTraffic)}</div>
+              <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${clients.length} clients</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device Throughput -->
+        ${deviceTraffic.length > 0 ? `
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Device Throughput</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${deviceTraffic.slice(0, 8).map(device => {
+                const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : '🌐';
+                const percentage = totalDeviceTraffic > 0 ? (device.total / totalDeviceTraffic * 100) : 0;
+                
+                return `
+                  <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">${typeIcon}</span>
+                        <div>
+                          <div style="font-size: 12px; font-weight: 600; color: var(--text);">${device.name}</div>
+                          <div style="font-size: 10px; color: var(--muted);">${device.clients} clients</div>
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--accent);">${this.formatBytes(device.total)}</div>
+                        <div style="font-size: 9px; color: var(--muted);">${percentage.toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    
+                    <div style="background: var(--surface); height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 6px;">
+                      <div style="background: var(--accent); height: 100%; width: ${percentage}%;"></div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                      <span style="color: var(--muted);">↑ ${this.formatBytes(device.tx)}</span>
+                      <span style="color: var(--muted);">↓ ${this.formatBytes(device.rx)}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Upload/Download Ratio -->
+        <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
+          <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Upload/Download Ratio</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="flex: ${traffic.tx_bytes}; background: #ff9500; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              ${traffic.tx_bytes > 0 ? this.formatBytes(traffic.tx_bytes) : '0'}
+            </div>
+            <div style="flex: ${traffic.rx_bytes}; background: #34c759; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              ${traffic.rx_bytes > 0 ? this.formatBytes(traffic.rx_bytes) : '0'}
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 8px;">
+            <span>Upload: ${traffic.rx_bytes > 0 ? ((traffic.tx_bytes / traffic.rx_bytes) * 100).toFixed(1) : 0}%</span>
+            <span>Download: 100%</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderNetworkSpeeds(container: HTMLElement, data: UnifiStats): void {
+    const hasSpeedtest = data.xput_up !== undefined || data.xput_down !== undefined;
+    const clients = data.clients || [];
+    
+    // Calculate average rates for active clients
+    const clientsWithRates = clients.filter(c => c.tx_rate || c.rx_rate);
+    const avgTxRate = clientsWithRates.length > 0 
+      ? clientsWithRates.reduce((sum, c) => sum + (c.tx_rate || 0), 0) / clientsWithRates.length 
+      : 0;
+    const avgRxRate = clientsWithRates.length > 0 
+      ? clientsWithRates.reduce((sum, c) => sum + (c.rx_rate || 0), 0) / clientsWithRates.length 
+      : 0;
+    
+    // Sort clients by speed
+    const fastestClients = [...clients]
+      .filter(c => c.tx_rate || c.rx_rate)
+      .sort((a, b) => (b.tx_rate || 0) + (b.rx_rate || 0) - (a.tx_rate || 0) - (a.rx_rate || 0));
+    
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+        <!-- WAN Speed (Speedtest Results) -->
+        ${hasSpeedtest ? `
+          <div style="background: linear-gradient(135deg, #0077ff 0%, #00d4ff 100%); padding: 20px; border-radius: 12px; color: white;">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
+              <span>🚀</span>
+              <span>WAN Speed (Speedtest)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+              <div>
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↑ UPLOAD</div>
+                <div style="font-size: 32px; font-weight: 700;">${((data.xput_up || 0) / 1000000).toFixed(1)}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↓ DOWNLOAD</div>
+                <div style="font-size: 32px; font-weight: 700;">${((data.xput_down || 0) / 1000000).toFixed(1)}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
+              </div>
+            </div>
+            ${data.speedtest_ping ? `
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 12px;">
+                <span style="opacity: 0.8;">Latency:</span> <strong>${data.speedtest_ping}ms</strong>
+              </div>
+            ` : ''}
+          </div>
+        ` : `
+          <div style="background: var(--bg); padding: 20px; border-radius: 12px; text-align: center; border: 2px dashed var(--border);">
+            <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+            <div style="font-size: 13px; color: var(--muted);">No speedtest data available</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Run a speedtest from your UniFi controller</div>
+          </div>
+        `}
+
+        <!-- Average Client Speeds -->
+        ${clientsWithRates.length > 0 ? `
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Average Client Speeds</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">↑ AVG UPLOAD</div>
+                <div style="font-size: 24px; font-weight: 700; color: #ff9500;">${(avgTxRate / 1000).toFixed(1)}</div>
+                <div style="font-size: 11px; color: var(--muted);">Mbps</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">↓ AVG DOWNLOAD</div>
+                <div style="font-size: 24px; font-weight: 700; color: #34c759;">${(avgRxRate / 1000).toFixed(1)}</div>
+                <div style="font-size: 11px; color: var(--muted);">Mbps</div>
+              </div>
+            </div>
+            <div style="background: var(--bg); padding: 12px; border-radius: 8px; margin-top: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--muted);">Clients with active rates</div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--accent); margin-top: 4px;">${clientsWithRates.length} / ${clients.length}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Fastest Clients -->
+        ${fastestClients.length > 0 ? `
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+              <span>⚡</span>
+              <span>Fastest Clients</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${fastestClients.slice(0, 10).map((client, index) => {
+                const connIcon = client.is_wired ? '🔌' : '📶';
+                const txSpeed = (client.tx_rate || 0) / 1000;
+                const rxSpeed = (client.rx_rate || 0) / 1000;
+                const maxSpeed = Math.max(txSpeed, rxSpeed);
+                const speedColor = maxSpeed > 100 ? '#34c759' : maxSpeed > 50 ? '#ffcc00' : maxSpeed > 10 ? '#ff9500' : 'var(--muted)';
+                
+                return `
+                  <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 12px; color: var(--muted); font-weight: 600; min-width: 18px;">#${index + 1}</span>
+                        <span style="font-size: 14px;">${connIcon}</span>
+                        <div>
+                          <div style="font-size: 12px; font-weight: 600; color: var(--text);">${client.name}</div>
+                          <div style="font-size: 9px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 14px; font-weight: 700; color: ${speedColor};">${maxSpeed.toFixed(1)}</div>
+                        <div style="font-size: 9px; color: var(--muted);">Mbps</div>
+                      </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
+                      <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">↑ TX:</span>
+                        <span style="color: #ff9500; font-weight: 600;">${txSpeed.toFixed(1)} Mbps</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">↓ RX:</span>
+                        <span style="color: #34c759; font-weight: 600;">${rxSpeed.toFixed(1)} Mbps</span>
+                      </div>
+                      ${!client.is_wired && client.essid ? `
+                        <div style="display: flex; justify-content: space-between; grid-column: 1 / -1;">
+                          <span style="color: var(--muted);">Network:</span>
+                          <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
+                        </div>
+                      ` : ''}
+                      ${!client.is_wired && client.channel && client.radio ? `
+                        <div style="display: flex; justify-content: space-between;">
+                          <span style="color: var(--muted);">Band:</span>
+                          <span style="color: var(--text); font-weight: 500;">${client.radio.toUpperCase()} Ch${client.channel}</span>
+                        </div>
+                      ` : ''}
+                      ${!client.is_wired && client.signal ? `
+                        <div style="display: flex; justify-content: space-between;">
+                          <span style="color: var(--muted);">Signal:</span>
+                          <span style="color: ${client.signal >= -50 ? '#34c759' : client.signal >= -60 ? '#ffcc00' : '#ff9500'}; font-weight: 600;">${client.signal}dBm</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : `
+          <div style="background: var(--bg); padding: 20px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">📡</div>
+            <div style="font-size: 13px; color: var(--muted);">No client rate data available</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Client speeds will appear when data transfer is active</div>
+          </div>
+        `}
+
+        <!-- Connection Type Distribution -->
+        ${clients.length > 0 ? `
+          <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
+            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Connection Types</div>
+            <div style="display: flex; gap: 8px;">
+              ${(() => {
+                const wired = clients.filter(c => c.is_wired).length;
+                const wireless = clients.filter(c => !c.is_wired).length;
+                const wiredPct = clients.length > 0 ? (wired / clients.length * 100) : 0;
+                const wirelessPct = clients.length > 0 ? (wireless / clients.length * 100) : 0;
+                
+                return `
+                  <div style="flex: ${wired}; background: #0077ff; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; min-width: 60px;">
+                    🔌 ${wired} (${wiredPct.toFixed(0)}%)
+                  </div>
+                  <div style="flex: ${wireless}; background: var(--accent); height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; min-width: 60px;">
+                    📶 ${wireless} (${wirelessPct.toFixed(0)}%)
+                  </div>
+                `;
+              })()}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private formatNumber(num: number): string {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  private getTimeAgo(date: Date): string {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
   }
 
   private formatUptime(seconds: number): string {
