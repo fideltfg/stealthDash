@@ -3,10 +3,32 @@ const router = express.Router();
 const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
 const snmp = require('net-snmp');
+const db = require('../db');
+const { authMiddleware } = require('../auth');
+const { decryptCredentials } = require('../crypto-utils');
 
 // Session caches to avoid rate limiting
 const piholeSessionCache = new Map();
 const unifiSessionCache = new Map();
+
+/**
+ * Helper function to fetch and decrypt credentials
+ * @param {number} credentialId - The credential ID
+ * @param {number} userId - The user ID (for security check)
+ * @returns {Promise<object>} - Decrypted credential data
+ */
+async function getCredentials(credentialId, userId) {
+  const result = await db.query(
+    'SELECT credential_data FROM credentials WHERE id = $1 AND user_id = $2',
+    [credentialId, userId]
+  );
+  
+  if (result.rows.length === 0) {
+    throw new Error('Credential not found or access denied');
+  }
+  
+  return decryptCredentials(result.rows[0].credential_data);
+}
 
 // ==================== MODBUS ROUTES ====================
 
@@ -83,8 +105,8 @@ router.get('/modbus/read', async (req, res) => {
 // ==================== SNMP ROUTES ====================
 
 // SNMP Read Endpoint
-router.get('/snmp/get', (req, res) => {
-  const { host, community = 'public', oids } = req.query;
+router.get('/snmp/get', async (req, res) => {
+  const { host, community = 'public', credentialId, oids } = req.query;
   
   if (!host || !oids) {
     return res.status(400).json({ 
@@ -93,14 +115,39 @@ router.get('/snmp/get', (req, res) => {
     });
   }
   
+  let snmpCommunity = community;
+  
+  // If credentialId is provided, fetch credentials from database
+  if (credentialId) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required when using credentialId' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const credentials = await getCredentials(credentialId, decoded.userId);
+      
+      if (!credentials.community) {
+        return res.status(400).json({ error: 'Credential does not contain community field' });
+      }
+      
+      snmpCommunity = credentials.community;
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+  }
+  
   try {
     // Parse OIDs (can be comma-separated)
     const oidArray = oids.split(',').map(oid => oid.trim());
     
-    console.log(`SNMP GET request: host=${host}, community=${community}, oids=${oidArray.join(',')}`);
+    console.log(`SNMP GET request: host=${host}, community=${snmpCommunity}, oids=${oidArray.join(',')}`);
     
     // Create SNMP session with default options (they work better!)
-    const session = snmp.createSession(host, community);
+    const session = snmp.createSession(host, snmpCommunity);
     
     console.log('SNMP session created, sending request...');
     
@@ -282,11 +329,43 @@ router.post('/ping-batch', async (req, res) => {
 
 // Home Assistant proxy endpoints
 router.post('/home-assistant/states', async (req, res) => {
-  const { url, token } = req.body;
+  const { url, token, credentialId } = req.body;
   
-  if (!url || !token) {
+  if (!url) {
     return res.status(400).json({ 
-      error: 'url and token are required',
+      error: 'url is required',
+      success: false 
+    });
+  }
+  
+  let haToken = token;
+  
+  // If credentialId is provided, fetch credentials from database
+  if (credentialId) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required when using credentialId' });
+    }
+    
+    const authToken = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    try {
+      const decoded = jwt.verify(authToken, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const credentials = await getCredentials(credentialId, decoded.userId);
+      
+      if (!credentials.token) {
+        return res.status(400).json({ error: 'Credential does not contain token field' });
+      }
+      
+      haToken = credentials.token;
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+  }
+  
+  if (!haToken) {
+    return res.status(400).json({ 
+      error: 'token or credentialId is required',
       success: false 
     });
   }
@@ -295,7 +374,7 @@ router.post('/home-assistant/states', async (req, res) => {
     const fetch = (await import('node-fetch')).default;
     const response = await fetch(`${url}/api/states`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${haToken}`,
         'Content-Type': 'application/json'
       }
     });
@@ -312,11 +391,43 @@ router.post('/home-assistant/states', async (req, res) => {
 });
 
 router.post('/home-assistant/service', async (req, res) => {
-  const { url, token, domain, service, entity_id } = req.body;
+  const { url, token, credentialId, domain, service, entity_id } = req.body;
   
-  if (!url || !token || !domain || !service || !entity_id) {
+  if (!url || !domain || !service || !entity_id) {
     return res.status(400).json({ 
-      error: 'url, token, domain, service, and entity_id are required',
+      error: 'url, domain, service, and entity_id are required',
+      success: false 
+    });
+  }
+  
+  let haToken = token;
+  
+  // If credentialId is provided, fetch credentials from database
+  if (credentialId) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required when using credentialId' });
+    }
+    
+    const authToken = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    try {
+      const decoded = jwt.verify(authToken, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const credentials = await getCredentials(credentialId, decoded.userId);
+      
+      if (!credentials.token) {
+        return res.status(400).json({ error: 'Credential does not contain token field' });
+      }
+      
+      haToken = credentials.token;
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+  }
+  
+  if (!haToken) {
+    return res.status(400).json({ 
+      error: 'token or credentialId is required',
       success: false 
     });
   }
@@ -326,7 +437,7 @@ router.post('/home-assistant/service', async (req, res) => {
     const response = await fetch(`${url}/api/services/${domain}/${service}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${haToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ entity_id })
@@ -386,21 +497,47 @@ router.get('/proxy', async (req, res) => {
 // Pi-hole API proxy endpoint
 router.get('/api/pihole', async (req, res) => {
   try {
-    const { host, password } = req.query;
+    const { host, password, credentialId } = req.query;
     
     if (!host) {
       return res.status(400).json({ error: 'Missing host parameter' });
     }
     
-    if (!password) {
-      return res.status(400).json({ error: 'Missing password parameter. Pi-hole v6+ requires authentication.' });
+    let piholePassword = password;
+    
+    // If credentialId is provided, fetch credentials from database
+    if (credentialId) {
+      // Extract userId from auth token if available
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authentication required when using credentialId' });
+      }
+      
+      const token = authHeader.substring(7);
+      const jwt = require('jsonwebtoken');
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+        const credentials = await getCredentials(credentialId, decoded.userId);
+        
+        if (!credentials.password) {
+          return res.status(400).json({ error: 'Credential does not contain password field' });
+        }
+        
+        piholePassword = credentials.password;
+      } catch (err) {
+        return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+      }
+    }
+    
+    if (!piholePassword) {
+      return res.status(400).json({ error: 'Missing password parameter or credentialId. Pi-hole v6+ requires authentication.' });
     }
 
     // Use node-fetch to make requests
     const fetch = (await import('node-fetch')).default;
     
     // Create cache key from host+password
-    const cacheKey = `${host}:${password}`;
+    const cacheKey = `${host}:${piholePassword}`;
     
     let sid;
     const cachedSession = piholeSessionCache.get(cacheKey);
@@ -420,7 +557,7 @@ router.get('/api/pihole', async (req, res) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: piholePassword }),
         timeout: 5000
       });
       
@@ -496,14 +633,41 @@ router.get('/api/pihole', async (req, res) => {
 // UniFi Controller API proxy endpoint
 router.get('/api/unifi/stats', async (req, res) => {
   try {
-    const { host, username, password, site = 'default' } = req.query;
+    const { host, username, password, credentialId, site = 'default' } = req.query;
     
     if (!host) {
       return res.status(400).json({ error: 'Missing host parameter' });
     }
     
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Missing username or password parameter' });
+    let unifiUsername = username;
+    let unifiPassword = password;
+    
+    // If credentialId is provided, fetch credentials from database
+    if (credentialId) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authentication required when using credentialId' });
+      }
+      
+      const token = authHeader.substring(7);
+      const jwt = require('jsonwebtoken');
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+        const credentials = await getCredentials(credentialId, decoded.userId);
+        
+        if (!credentials.username || !credentials.password) {
+          return res.status(400).json({ error: 'Credential does not contain username and password fields' });
+        }
+        
+        unifiUsername = credentials.username;
+        unifiPassword = credentials.password;
+      } catch (err) {
+        return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+      }
+    }
+    
+    if (!unifiUsername || !unifiPassword) {
+      return res.status(400).json({ error: 'Missing username/password or credentialId parameter' });
     }
 
     // Use node-fetch to make requests
@@ -516,7 +680,7 @@ router.get('/api/unifi/stats', async (req, res) => {
     });
     
     // Create cache key from host+username+password
-    const cacheKey = `${host}:${username}:${password}`;
+    const cacheKey = `${host}:${unifiUsername}:${unifiPassword}`;
     
     let cookies;
     const cachedSession = unifiSessionCache.get(cacheKey);
@@ -537,8 +701,8 @@ router.get('/api/unifi/stats', async (req, res) => {
           'Accept': 'application/json'
         },
         body: JSON.stringify({ 
-          username,
-          password,
+          username: unifiUsername,
+          password: unifiPassword,
           remember: false
         }),
         agent: httpsAgent,

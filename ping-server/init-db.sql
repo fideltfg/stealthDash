@@ -28,10 +28,24 @@ CREATE TABLE IF NOT EXISTS password_recovery_tokens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create credentials table for storing encrypted API keys, passwords, etc.
+CREATE TABLE IF NOT EXISTS credentials (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    service_type VARCHAR(50) NOT NULL, -- 'pihole', 'unifi', 'home_assistant', 'snmp', 'custom', etc.
+    credential_data TEXT NOT NULL, -- Encrypted JSON containing credentials
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_dashboards_user_id ON dashboards(user_id);
 CREATE INDEX IF NOT EXISTS idx_recovery_tokens_token ON password_recovery_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_recovery_tokens_user_id ON password_recovery_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_credentials_user_id ON credentials(user_id);
+CREATE INDEX IF NOT EXISTS idx_credentials_service_type ON credentials(service_type);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -47,6 +61,9 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_dashboards_updated_at BEFORE UPDATE ON dashboards
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_credentials_updated_at BEFORE UPDATE ON credentials
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert default admin user if no users exist

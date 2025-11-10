@@ -101,6 +101,7 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
+const credentialsRoutes = require('./routes/credentials');
 const widgetRoutes = require('./routes/widgets');
 
 // Initialize auth routes with email function
@@ -111,6 +112,7 @@ app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
+app.use('/user', credentialsRoutes);  // Credentials are under /user/credentials
 
 // Widget routes are mounted at root level to preserve existing API paths
 app.use('/', widgetRoutes);
