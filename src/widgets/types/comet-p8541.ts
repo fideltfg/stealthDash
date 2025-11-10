@@ -110,8 +110,11 @@ export class CometP8541Renderer implements WidgetRenderer {
       const style = document.createElement('style');
       style.id = 'comet-flash-styles';
       style.textContent = `
- 
-          `;
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
+        }
+      `;
       document.head.appendChild(style);
     }
   }
@@ -145,8 +148,8 @@ export class CometP8541Renderer implements WidgetRenderer {
       const controller = new AbortController();
       this.abortControllers.set(widget.id, controller);
 
-      // Set timeout for the fetch operation (15 seconds - enough time for SNMP retries)
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      // Set timeout for the fetch operation (30 seconds - enough time for SNMP retries and slow networks)
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const enabled = content.enabledChannels || {};
@@ -604,7 +607,61 @@ export class CometP8541Renderer implements WidgetRenderer {
         // Clear the timeout on error as well
         clearTimeout(timeoutId);
 
-        // Clear existing content
+        console.error('Comet P8541 error:', error);
+
+        // Check if we already have a display - if so, just show error overlay instead of destroying everything
+        const existingDisplayContainer = wrapper.querySelector('.display-container');
+        
+        if (existingDisplayContainer) {
+          // We have existing gauges - just show a temporary error overlay
+          let errorOverlay = wrapper.querySelector('.error-overlay') as HTMLElement;
+          
+          if (!errorOverlay) {
+            errorOverlay = document.createElement('div');
+            errorOverlay.className = 'error-overlay';
+            errorOverlay.style.cssText = `
+              position: absolute;
+              top: 40px;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.85);
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              color: #f44336;
+              font-size: 14px;
+              padding: 20px;
+              z-index: 10;
+              border-radius: 8px;
+            `;
+            wrapper.appendChild(errorOverlay);
+          }
+          
+          // Update error message
+          const errorMessage = error.name === 'AbortError' 
+            ? 'Connection timeout - device not responding' 
+            : (error.message || 'Failed to read sensor');
+          
+          errorOverlay.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px; animation: pulse 2s infinite;">⚠️</div>
+            <div style="font-weight: 600; margin-bottom: 8px;">Temporary Connection Error</div>
+            <div style="opacity: 0.8; text-align: center;">${errorMessage}</div>
+            <div style="font-size: 12px; opacity: 0.6; margin-top: 12px;">Retrying in ${content.refreshInterval || 10} seconds...</div>
+          `;
+          
+          // Remove error overlay after a delay to show the next attempt
+          setTimeout(() => {
+            if (errorOverlay && errorOverlay.parentNode) {
+              errorOverlay.remove();
+            }
+          }, Math.min((content.refreshInterval || 10) * 1000 - 1000, 9000));
+          
+          return; // Keep existing gauges and header
+        }
+
+        // No existing display - this is first load error, so show full error screen
         wrapper.innerHTML = '';
 
         // Recreate header
@@ -1046,6 +1103,7 @@ export class CometP8541Renderer implements WidgetRenderer {
       padding: 5px;
       box-sizing: border-box;
       overflow-y: auto;
+      position: relative;
     `;
     return wrapper;
   }
