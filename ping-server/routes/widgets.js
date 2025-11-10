@@ -932,4 +932,93 @@ router.get('/api/unifi/stats', async (req, res) => {
   }
 });
 
+// ==================== GOOGLE CALENDAR ROUTES ====================
+
+// Google Calendar Events Endpoint
+router.get('/api/google-calendar/events', async (req, res) => {
+  try {
+    const { credentialId, timeMin, timeMax, maxResults = '10' } = req.query;
+    
+    if (!credentialId) {
+      return res.status(400).json({ error: 'Missing credentialId parameter' });
+    }
+    
+    // Extract userId from auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    let credentials;
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      credentials = await getCredentials(credentialId, decoded.userId);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+    
+    // Validate credential fields
+    if (!credentials.calendar_id || !credentials.api_key) {
+      return res.status(400).json({ 
+        error: 'Credential must contain calendar_id and api_key fields' 
+      });
+    }
+    
+    // Use node-fetch to make requests
+    const fetch = (await import('node-fetch')).default;
+    
+    // Construct Google Calendar API URL
+    const calendarUrl = new URL(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(credentials.calendar_id)}/events`
+    );
+    
+    calendarUrl.searchParams.set('key', credentials.api_key);
+    if (timeMin) calendarUrl.searchParams.set('timeMin', timeMin);
+    if (timeMax) calendarUrl.searchParams.set('timeMax', timeMax);
+    calendarUrl.searchParams.set('maxResults', maxResults);
+    calendarUrl.searchParams.set('orderBy', 'startTime');
+    calendarUrl.searchParams.set('singleEvents', 'true');
+    
+    console.log(`Fetching Google Calendar events for calendar: ${credentials.calendar_id}`);
+    
+    const response = await fetch(calendarUrl.toString(), {
+      headers: {
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ 
+        error: { message: response.statusText } 
+      }));
+      console.error(`Google Calendar API error: ${response.status}`, errorData);
+      
+      return res.status(response.status).json({ 
+        error: errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`
+      });
+    }
+    
+    const data = await response.json();
+    
+    console.log(`Google Calendar events retrieved: ${data.items?.length || 0} events`);
+    
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'application/json');
+    
+    res.json(data);
+    
+  } catch (error) {
+    console.error('Google Calendar proxy error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to fetch Google Calendar data. Check credentials and API key.'
+    });
+  }
+});
+
 module.exports = router;

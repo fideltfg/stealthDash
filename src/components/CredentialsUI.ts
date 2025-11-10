@@ -282,6 +282,7 @@ export class CredentialsUI {
               <option value="pihole" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🛡️ Pi-hole</option>
               <option value="unifi" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📡 UniFi Controller</option>
               <option value="home_assistant" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🏠 Home Assistant</option>
+              <option value="google_calendar" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📅 Google Calendar</option>
               <option value="snmp" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📊 SNMP</option>
               <option value="api" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🔌 Generic API</option>
               <option value="custom" style="background: var(--surface, #2a2a2a); color: var(--text, white);">⭐ Custom</option>

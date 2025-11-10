@@ -147,72 +147,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     container.appendChild(grid);
 
     // Add floating settings button (only visible when widget is selected)
-    const settingsBtn = document.createElement('button');
-    settingsBtn.className = 'ha-settings-btn';
-    settingsBtn.innerHTML = '⚙️';
-    settingsBtn.title = 'Manage Entities';
-    settingsBtn.style.cssText = `
-      position: absolute;
-      top: 35px;
-      right: 8px;
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      color: white;
-      cursor: pointer;
-      font-size: 18px;
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
-      transition: all 0.2s;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-    settingsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showManageEntitiesDialog(widget);
-    });
-    settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    settingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
 
     container.style.position = 'relative';
-    container.appendChild(settingsBtn);
 
-    // Show settings button when widget is selected
-    const updateButtonVisibility = () => {
-      const widgetElement = container.closest('.widget');
-      if (widgetElement && widgetElement.classList.contains('selected')) {
-        settingsBtn.style.opacity = '1';
-        settingsBtn.style.pointerEvents = 'auto';
-      } else {
-        settingsBtn.style.opacity = '0';
-        settingsBtn.style.pointerEvents = 'none';
-      }
-    };
+  
+ 
 
-    // Initial check
-    updateButtonVisibility();
-
-    // Watch for class changes on the widget element
-    const widgetElement = container.closest('.widget');
-    if (widgetElement) {
-      const observer = new MutationObserver(updateButtonVisibility);
-      observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
-    }
-
-    // Also listen for global clicks to catch widget selection changes
-    const globalClickHandler = () => {
-      setTimeout(updateButtonVisibility, 10);
-    };
-    document.addEventListener('click', globalClickHandler);
-    
-    // Clean up the listener when widget is removed (store in a cleanup map)
-    if (!this.intervals.has(`${widget.id}-click`)) {
-      this.intervals.set(`${widget.id}-click`, globalClickHandler as any);
-    }
+ 
+ 
 
     // Render each entity with loading state
     const entities = content.entities || [];

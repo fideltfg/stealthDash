@@ -1,9 +1,12 @@
 import type { Widget } from '../../types';
 import type { WidgetRenderer } from './base';
+import { credentialsService } from '../../services/credentials';
+import { authService } from '../../services/auth';
 
 interface GoogleCalendarContent {
-  calendarId: string; // Google Calendar ID (usually your email or calendar@group.calendar.google.com)
-  apiKey: string; // Google API key with Calendar API enabled
+  calendarId?: string; // Google Calendar ID (deprecated - use credentialId)
+  apiKey?: string; // Google API key (deprecated - use credentialId)
+  credentialId?: number; // ID of saved credential to use
   maxEvents?: number; // Maximum number of events to display (default: 10)
   daysAhead?: number; // Number of days ahead to fetch events (default: 30)
   refreshInterval?: number; // Refresh interval in seconds (default: 300 = 5 minutes)
@@ -58,7 +61,8 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     const content = widget.content as unknown as GoogleCalendarContent;
 
     // Check if configured
-    if (!content.calendarId || !content.apiKey) {
+    if (!content.credentialId) {
+      console.log('Google Calendar widget not configured - showing config prompt');
       this.renderConfigPrompt(container, widget);
       return;
     }
@@ -84,6 +88,11 @@ class GoogleCalendarRenderer implements WidgetRenderer {
  
     const fetchAndRender = async () => {
       try {
+        // Verify credentialId is present
+        if (!content.credentialId) {
+          throw new Error('No credential configured for Google Calendar');
+        }
+
         const maxEvents = content.maxEvents || 10;
         const daysAhead = content.daysAhead || 30;
         
@@ -91,20 +100,21 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         const timeMin = new Date().toISOString();
         const timeMax = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
         
-        // Construct Google Calendar API URL
-        const calendarUrl = new URL('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(content.calendarId) + '/events');
-        calendarUrl.searchParams.set('key', content.apiKey);
-        calendarUrl.searchParams.set('timeMin', timeMin);
-        calendarUrl.searchParams.set('timeMax', timeMax);
-        calendarUrl.searchParams.set('maxResults', maxEvents.toString());
-        calendarUrl.searchParams.set('orderBy', 'startTime');
-        calendarUrl.searchParams.set('singleEvents', 'true');
+        // Use backend API endpoint with credentialId
+        const token = authService.getToken();
+        const apiUrl = new URL(`${window.location.protocol}//${window.location.hostname}:3001/api/google-calendar/events`);
+        apiUrl.searchParams.set('credentialId', content.credentialId.toString());
+        apiUrl.searchParams.set('timeMin', timeMin);
+        apiUrl.searchParams.set('timeMax', timeMax);
+        apiUrl.searchParams.set('maxResults', maxEvents.toString());
         
-        console.log('Fetching Google Calendar events...');
-        console.log('Calendar ID:', content.calendarId);
-        console.log('API URL:', calendarUrl.toString().replace(content.apiKey, '***'));
+        console.log('Fetching Google Calendar events via backend...');
         
-        const response = await fetch(calendarUrl.toString());
+        const response = await fetch(apiUrl.toString(), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
@@ -141,7 +151,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
             <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Error loading calendar</div>
             <div style="font-size: 12px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check your Calendar ID (Settings → Calendar Settings in Google Calendar) and API key</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check your credentials in the user menu (🔐 Credentials)</div>
           </div>
         `;
       }
@@ -168,8 +178,11 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         <div style="text-align: center; max-width: 400px;">
           <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
           <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">Configure Google Calendar</h3>
-          <p style="margin: 0 0 24px 0; font-size: 14px; color: var(--muted);">
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--muted);">
             Connect your Google Calendar to display upcoming events
+          </p>
+          <p style="margin: 0 0 24px 0; font-size: 12px; color: var(--muted);">
+            💡 Tip: Create credentials first from the user menu (🔐 Credentials)
           </p>
           <button id="configure-calendar-btn" style="
             padding: 12px 24px;
@@ -194,7 +207,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     });
   }
 
-  private showConfigDialog(widget: Widget): void {
+  private async showConfigDialog(widget: Widget): Promise<void> {
     const content = widget.content as unknown as GoogleCalendarContent;
     
     const overlay = document.createElement('div');
@@ -225,6 +238,16 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       box-shadow: 0 8px 32px var(--shadow);
     `;
 
+    // Load credentials for dropdown
+    const credentials = await credentialsService.getAll();
+    const calendarCredentials = credentials.filter((c: any) => c.service_type === 'google_calendar');
+    
+    const credentialOptions = calendarCredentials.length > 0
+      ? calendarCredentials.map((c: any) => 
+          `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''} style="background: var(--surface); color: var(--text);">${c.name}</option>`
+        ).join('')
+      : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
+
     modal.innerHTML = `
       <div style="margin-bottom: 20px;">
         <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: var(--text);">
@@ -238,13 +261,10 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       <form id="calendar-config-form" style="display: flex; flex-direction: column; gap: 16px;">
         <div>
           <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Calendar ID *
+            Credentials *
           </label>
-          <input 
-            type="text" 
-            id="calendar-id" 
-            value="${content.calendarId || ''}"
-            placeholder="your.email@gmail.com"
+          <select 
+            id="calendar-credential"
             required
             style="
               width: 100%;
@@ -256,36 +276,12 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               color: var(--text);
               box-sizing: border-box;
             "
-          />
+          >
+            <option value="" style="background: var(--surface); color: var(--muted);">Select credentials...</option>
+            ${credentialOptions}
+          </select>
           <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Your Google Calendar ID (usually your Gmail address or calendar@group.calendar.google.com)<br/>
-            <strong>How to find:</strong> Google Calendar → Settings → Select your calendar → Scroll to "Integrate calendar" → Copy "Calendar ID"
-          </small>
-        </div>
-
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Google API Key *
-          </label>
-          <input 
-            type="text" 
-            id="calendar-apikey" 
-            value="${content.apiKey || ''}"
-            placeholder="AIza..."
-            required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
-          />
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Get an API key from <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: var(--accent);">Google Cloud Console</a> with Calendar API enabled
+            Create Google Calendar credentials from the user menu (🔐 Credentials). Include Calendar ID and API Key.
           </small>
         </div>
 
@@ -306,9 +302,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               box-sizing: border-box;
             "
           >
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed</option>
-            <option value="agenda" ${content.displayMode === 'agenda' ? 'selected' : ''}>Agenda</option>
+            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Compact</option>
+            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Detailed</option>
+            <option value="agenda" ${content.displayMode === 'agenda' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Agenda</option>
           </select>
         </div>
 
@@ -431,17 +427,22 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const calendarId = (document.getElementById('calendar-id') as HTMLInputElement).value.trim();
-      const apiKey = (document.getElementById('calendar-apikey') as HTMLInputElement).value.trim();
+      const credentialSelect = document.getElementById('calendar-credential') as HTMLSelectElement;
+      const credentialId = parseInt(credentialSelect.value);
       const displayMode = (document.getElementById('calendar-display-mode') as HTMLSelectElement).value;
       const maxEvents = parseInt((document.getElementById('calendar-max-events') as HTMLInputElement).value);
       const daysAhead = parseInt((document.getElementById('calendar-days-ahead') as HTMLInputElement).value);
       const refreshInterval = parseInt((document.getElementById('calendar-refresh') as HTMLInputElement).value);
 
+      // Validate credential selection
+      if (!credentialId) {
+        alert('Please select credentials for Google Calendar authentication');
+        return;
+      }
+
       // Update widget content
       const newContent: GoogleCalendarContent = {
-        calendarId,
-        apiKey,
+        credentialId,
         displayMode: displayMode as 'compact' | 'detailed' | 'agenda',
         maxEvents,
         daysAhead,

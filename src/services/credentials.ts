@@ -194,6 +194,10 @@ class CredentialsService {
       home_assistant: [
         { name: 'token', label: 'Long-Lived Access Token', type: 'password', placeholder: 'Long-lived access token' }
       ],
+      google_calendar: [
+        { name: 'calendar_id', label: 'Calendar ID', type: 'text', placeholder: 'your.email@gmail.com' },
+        { name: 'api_key', label: 'Google API Key', type: 'password', placeholder: 'AIza...' }
+      ],
       snmp: [
         { name: 'community', label: 'Community String', type: 'text', placeholder: 'e.g., public or private' }
       ],
@@ -211,6 +215,7 @@ class CredentialsService {
       pihole: 'Pi-hole',
       unifi: 'UniFi Controller',
       home_assistant: 'Home Assistant',
+      google_calendar: 'Google Calendar',
       snmp: 'SNMP',
       modbus: 'Modbus',
       api: 'Generic API',
@@ -225,6 +230,7 @@ class CredentialsService {
       pihole: '🛡️',
       unifi: '📡',
       home_assistant: '🏠',
+      google_calendar: '📅',
       snmp: '📊',
       modbus: '⚙️',
       api: '🔌',
