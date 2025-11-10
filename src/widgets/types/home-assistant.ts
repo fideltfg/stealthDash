@@ -193,40 +193,9 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     });
     entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-    // Settings button
-    const settingsBtn = document.createElement('button');
-    settingsBtn.className = 'ha-settings-btn';
-    settingsBtn.innerHTML = '⚙️';
-    settingsBtn.title = 'Settings';
-    settingsBtn.style.cssText = `
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      transition: background 0.2s;
-      backdrop-filter: blur(10px);
-    `;
-    settingsBtn.addEventListener('mouseenter', () => {
-      settingsBtn.style.background = 'rgba(0, 0, 0, 0.9)';
-    });
-    settingsBtn.addEventListener('mouseleave', () => {
-      settingsBtn.style.background = 'rgba(0, 0, 0, 0.7)';
-    });
-    settingsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showSettingsDialog(widget);
-    });
-    settingsBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+ 
 
     buttonContainer.appendChild(entitiesBtn);
-    buttonContainer.appendChild(settingsBtn);
     container.appendChild(buttonContainer);
 
     // Render each entity with loading state
@@ -593,6 +562,177 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     });
   }
 
+  private showEditEntityDialog(widget: Widget, entityIndex: number): void {
+    const content = widget.content as HomeAssistantContent;
+    const entities = content.entities || [];
+    const entity = entities[entityIndex];
+    
+    if (!entity) {
+      alert('Entity not found');
+      return;
+    }
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      min-width: 400px;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      color: var(--text);
+    `;
+
+    dialog.innerHTML = `
+      <h3 style="margin-top: 0; color: var(--text);">Edit Entity</h3>
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Entity ID:</label>
+        <input type="text" id="edit-entity-id" placeholder="light.living_room" 
+               value="${entity.entity_id}"
+               style="
+                 width: 100%; 
+                 padding: 10px; 
+                 box-sizing: border-box;
+                 background: var(--background);
+                 color: var(--text);
+                 border: 1px solid var(--border);
+                 border-radius: 6px;
+                 font-size: 14px;
+               ">
+        <small style="opacity: 0.7; color: var(--muted); font-size: 12px;">Example: light.kitchen, switch.fan, sensor.temperature</small>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Display Name (optional):</label>
+        <input type="text" id="edit-display-name" placeholder="Living Room Light" 
+               value="${entity.display_name || ''}"
+               style="
+                 width: 100%; 
+                 padding: 10px; 
+                 box-sizing: border-box;
+                 background: var(--background);
+                 color: var(--text);
+                 border: 1px solid var(--border);
+                 border-radius: 6px;
+                 font-size: 14px;
+               ">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Type:</label>
+        <select id="edit-entity-type" style="
+          width: 100%; 
+          padding: 10px;
+          background: var(--background);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">
+          <option value="light" ${entity.type === 'light' ? 'selected' : ''}>Light</option>
+          <option value="switch" ${entity.type === 'switch' ? 'selected' : ''}>Switch</option>
+          <option value="sensor" ${entity.type === 'sensor' ? 'selected' : ''}>Sensor</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button id="cancel-edit-entity" style="
+          padding: 10px 20px; 
+          cursor: pointer;
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          font-size: 14px;
+        ">Cancel</button>
+        <button id="save-edit-entity" style="
+          padding: 10px 20px; 
+          cursor: pointer; 
+          background: var(--accent); 
+          color: white; 
+          border: none; 
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+        ">
+          Save Changes
+        </button>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    const entityIdInput = dialog.querySelector('#edit-entity-id') as HTMLInputElement;
+    const displayNameInput = dialog.querySelector('#edit-display-name') as HTMLInputElement;
+    const entityTypeSelect = dialog.querySelector('#edit-entity-type') as HTMLSelectElement;
+    const cancelBtn = dialog.querySelector('#cancel-edit-entity') as HTMLButtonElement;
+    const saveBtn = dialog.querySelector('#save-edit-entity') as HTMLButtonElement;
+
+    // Stop propagation for all inputs
+    [entityIdInput, displayNameInput, entityTypeSelect, cancelBtn, saveBtn].forEach(el => {
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+    });
+
+    // Cancel button
+    cancelBtn.addEventListener('click', () => {
+      overlay.remove();
+      // Return to manage entities dialog
+      this.showManageEntitiesDialog(widget);
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        this.showManageEntitiesDialog(widget);
+      }
+    });
+
+    // Save button
+    saveBtn.addEventListener('click', () => {
+      const entityId = entityIdInput.value.trim();
+      const displayName = displayNameInput.value.trim();
+      const type = entityTypeSelect.value as 'light' | 'switch' | 'sensor';
+
+      if (!entityId) {
+        alert('Please enter an entity ID');
+        return;
+      }
+
+      // Update the entity at the specified index
+      entities[entityIndex] = {
+        entity_id: entityId,
+        display_name: displayName || undefined,
+        type: type
+      };
+
+      overlay.remove();
+
+      // Trigger widget update
+      const event = new CustomEvent('widget-update', { 
+        detail: { id: widget.id, content: { ...content, entities } }
+      });
+      document.dispatchEvent(event);
+      
+      // Return to manage entities dialog to show updated list
+      this.showManageEntitiesDialog(widget);
+    });
+  }
+
   private showSettingsDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
     
@@ -854,6 +994,20 @@ export class HomeAssistantRenderer implements WidgetRenderer {
               <div style="font-size: 12px; opacity: 0.7; color: var(--muted);">${entity.entity_id} (${entity.type})</div>
             </div>
             <button 
+              class="edit-entity-btn" 
+              data-index="${index}"
+              style="
+                padding: 8px 14px;
+                background: var(--accent);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 500;
+              "
+            >Edit</button>
+            <button 
               class="remove-entity-btn" 
               data-index="${index}"
               style="
@@ -927,6 +1081,17 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       this.showAddEntityDialog(widget);
     });
     addBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    // Edit entity buttons
+    const editButtons = dialog.querySelectorAll('.edit-entity-btn');
+    editButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt((e.target as HTMLElement).getAttribute('data-index') || '0');
+        overlay.remove();
+        this.showEditEntityDialog(widget, index);
+      });
+      btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    });
 
     // Remove entity buttons
     const removeButtons = dialog.querySelectorAll('.remove-entity-btn');
