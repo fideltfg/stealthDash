@@ -28,6 +28,7 @@ services:
       - ./ping-server/server.js:/app/server.js
       - ./ping-server/auth.js:/app/auth.js
       - ./ping-server/db.js:/app/db.js
+      - ./ping-server/routes:/app/routes
       # Prevent node_modules from being overwritten
       - /app/node_modules
     environment:
