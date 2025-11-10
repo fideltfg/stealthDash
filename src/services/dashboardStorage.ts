@@ -1,10 +1,9 @@
-import type { MultiDashboardState, Dashboard, DashboardState } from './types';
-import { authService } from './services/auth';
+import type { MultiDashboardState } from '../types';
+import { authService } from './auth';
 import { 
   loadMultiDashboardState as loadFromLocalStorage,
-  saveMultiDashboardState as saveToLocalStorage,
-  getDefaultMultiDashboardState
-} from './storage';
+  saveMultiDashboardState as saveToLocalStorage
+} from '../storage';
 
 /**
  * Unified dashboard storage service that manages both server and local storage.

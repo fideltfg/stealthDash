@@ -1,9 +1,10 @@
 import type { DashboardState, Widget, Vec2, Size, WidgetType } from './types';
 import { DEFAULT_WIDGET_SIZE } from './types';
-import { loadState, saveState, debouncedSave, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './storage';
+import { loadState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId, loadMultiDashboardState, saveMultiDashboardState } from './storage';
 import { createHistoryManager, shouldCoalesceAction } from './history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
 import { authService, type User } from './services/auth';
+import { dashboardStorage } from './services/dashboardStorage';
 import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
@@ -78,30 +79,20 @@ class Dashboard {
       await authService.getProfile();
       this.currentUser = authService.getUser();
 
-      // Load dashboard from server
-      // NOTE: Server dashboard may not include sensitive widget data like passwords
-      // for security reasons. We keep using localStorage which has complete widget configs.
-      console.log('Attempting to load dashboard from server...');
-      const serverDashboard = await authService.loadDashboard();
-      console.log('Server dashboard response:', serverDashboard ? 'received' : 'null/failed');
+      // Load dashboards from server (primary source of truth)
+      console.log('🔄 Loading dashboards from server...');
+      const multiState = await dashboardStorage.loadDashboards();
       
-      // For now, we prefer localStorage over server dashboard to preserve widget passwords
-      // TODO: Implement secure server-side storage for widget credentials
-      if (serverDashboard && false) { // Disabled - use localStorage instead
-        console.log('Using server dashboard state');
-        this.state = serverDashboard;
+      // Get the active dashboard's state
+      const activeDashboard = multiState.dashboards.find(
+        (d: any) => d.id === multiState.activeDashboardId
+      );
+      
+      if (activeDashboard) {
+        this.state = activeDashboard.state;
+        console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
       } else {
-        console.log('Using localStorage state (preserves widget passwords)');
-      }
-
-      console.log('Final state has', this.state.widgets.length, 'widgets');
-      const piholeWidget = this.state.widgets.find((w: Widget) => w.type === 'pihole');
-      if (piholeWidget) {
-        const content = piholeWidget.content as any;
-        console.log('Pi-hole widget in final state:', {
-          ...content,
-          password: content.password ? '***' : '(none)'
-        });
+        console.warn('⚠️  No active dashboard found, using current state');
       }
 
       this.setupDOM();
@@ -141,9 +132,20 @@ class Dashboard {
 
   private startAutoSave(): void {
     // Auto-save to server every 30 seconds
-    this.autoSaveInterval = window.setInterval(() => {
+    this.autoSaveInterval = window.setInterval(async () => {
       if (authService.isAuthenticated()) {
-        authService.saveDashboard(this.state);
+        const multiState = loadMultiDashboardState();
+        
+        // Update the active dashboard's state
+        const activeDashboard = multiState.dashboards.find(
+          (d: any) => d.id === multiState.activeDashboardId
+        );
+        if (activeDashboard) {
+          activeDashboard.state = this.state;
+          activeDashboard.updatedAt = Date.now();
+          saveMultiDashboardState(multiState); // Save to localStorage
+          await dashboardStorage.saveDashboards(multiState); // Save to server (debounced)
+        }
       }
     }, 30000);
   }
@@ -1437,6 +1439,13 @@ class Dashboard {
         const newName = prompt('Enter new dashboard name:', dashboard.name);
         if (newName && newName.trim()) {
           renameDashboard(dashboard.id, newName.trim());
+          
+          // Sync to server if authenticated
+          if (authService.isAuthenticated()) {
+            const multiState = loadMultiDashboardState();
+            dashboardStorage.saveDashboards(multiState, true); // Immediate save
+          }
+          
           overlay.remove();
           this.showDashboardManager();
         }
@@ -1465,7 +1474,22 @@ class Dashboard {
           
           if (confirm(message)) {
             const wasActive = dashboard.id === activeDashboardId;
+            
+            // Get multi-state before deletion
+            const multiStateBefore = loadMultiDashboardState();
+            const oldLength = multiStateBefore.dashboards.length;
+            
+            // Delete locally
             deleteDashboard(dashboard.id);
+            
+            // Get updated state after deletion
+            const multiStateAfter = loadMultiDashboardState();
+            
+            // Delete from server if authenticated
+            if (authService.isAuthenticated() && multiStateAfter.dashboards.length < oldLength) {
+              dashboardStorage.deleteDashboard(dashboard.id, multiStateAfter);
+            }
+            
             overlay.remove();
             
             if (wasActive) {
@@ -1509,6 +1533,13 @@ class Dashboard {
       const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
       if (name && name.trim()) {
         const newDashboard = createDashboard(name.trim());
+        
+        // Sync to server if authenticated
+        if (authService.isAuthenticated()) {
+          const multiState = loadMultiDashboardState();
+          dashboardStorage.saveDashboards(multiState, true); // Immediate save
+        }
+        
         overlay.remove();
         // Switch to the new dashboard
         this.switchToDashboard(newDashboard.id);
@@ -1550,7 +1581,12 @@ class Dashboard {
       this.render();
       this.setupTheme();
       this.setupBackground();
-      this.save();
+      
+      // Sync to server immediately
+      if (authService.isAuthenticated()) {
+        const multiState = loadMultiDashboardState();
+        dashboardStorage.saveDashboards(multiState, true); // Immediate save
+      }
     }
   }
 
@@ -1591,12 +1627,22 @@ class Dashboard {
   }
 
   private save(): void {
-    debouncedSave(this.state);
-    // Also save to server if authenticated
-    if (authService.isAuthenticated()) {
-      authService.saveDashboard(this.state).catch(err => {
-        console.error('Failed to save dashboard to server:', err);
-      });
+    // Update current dashboard in multi-state
+    const multiState = loadMultiDashboardState();
+    const activeDashboard = multiState.dashboards.find(
+      (d: any) => d.id === multiState.activeDashboardId
+    );
+    if (activeDashboard) {
+      activeDashboard.state = this.state;
+      activeDashboard.updatedAt = Date.now();
+      saveMultiDashboardState(multiState); // Save to localStorage
+      
+      // Save to server if authenticated (debounced)
+      if (authService.isAuthenticated()) {
+        dashboardStorage.saveDashboards(multiState).catch((err: any) => {
+          console.error('Failed to save dashboard to server:', err);
+        });
+      }
     }
   }
 
@@ -1605,7 +1651,21 @@ class Dashboard {
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
       this.render();
-      saveState(this.state);
+      
+      // Update multi-state
+      const multiState = loadMultiDashboardState();
+      const activeDashboard = multiState.dashboards.find(
+        (d: any) => d.id === multiState.activeDashboardId
+      );
+      if (activeDashboard) {
+        activeDashboard.state = this.state;
+        activeDashboard.updatedAt = Date.now();
+        saveMultiDashboardState(multiState);
+        
+        if (authService.isAuthenticated()) {
+          dashboardStorage.saveDashboards(multiState);
+        }
+      }
     }
   }
 
@@ -1614,7 +1674,21 @@ class Dashboard {
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
       this.render();
-      saveState(this.state);
+      
+      // Update multi-state
+      const multiState = loadMultiDashboardState();
+      const activeDashboard = multiState.dashboards.find(
+        (d: any) => d.id === multiState.activeDashboardId
+      );
+      if (activeDashboard) {
+        activeDashboard.state = this.state;
+        activeDashboard.updatedAt = Date.now();
+        saveMultiDashboardState(multiState);
+        
+        if (authService.isAuthenticated()) {
+          dashboardStorage.saveDashboards(multiState);
+        }
+      }
     }
   }
 }
