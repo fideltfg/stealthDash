@@ -231,25 +231,81 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Control based on type
     if (entity.type === 'switch' || entity.type === 'light') {
-      const toggleBtn = document.createElement('button');
-      toggleBtn.style.cssText = `
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        border: none;
-        background: ${state?.state === 'on' ? '#4CAF50' : '#666'};
-        color: white;
-        transition: background 0.3s;
+      // Create toggle switch container
+      const toggleContainer = document.createElement('div');
+      toggleContainer.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
       `;
-      toggleBtn.textContent = state?.state === 'on' ? 'Turn Off' : 'Turn On';
-      toggleBtn.addEventListener('click', async () => {
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size: 12px; opacity: 0.8;';
+      label.textContent = state?.state === 'on' ? 'On' : 'Off';
+      
+      // Toggle switch wrapper
+      const toggleWrapper = document.createElement('label');
+      toggleWrapper.className = 'ha-toggle-wrapper';
+      toggleWrapper.style.cssText = `
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+        cursor: pointer;
+      `;
+
+      // Hidden checkbox for state
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = state?.state === 'on';
+      checkbox.style.cssText = 'opacity: 0; width: 0; height: 0;';
+
+      // Slider
+      const slider = document.createElement('span');
+      slider.className = 'ha-toggle-slider';
+      slider.style.cssText = `
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: ${state?.state === 'on' ? '#4CAF50' : '#666'};
+        transition: 0.3s;
+        border-radius: 24px;
+      `;
+
+      // Slider button
+      const sliderButton = document.createElement('span');
+      sliderButton.style.cssText = `
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: ${state?.state === 'on' ? '27px' : '3px'};
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      `;
+      slider.appendChild(sliderButton);
+
+      toggleWrapper.appendChild(checkbox);
+      toggleWrapper.appendChild(slider);
+
+      toggleContainer.appendChild(label);
+      toggleContainer.appendChild(toggleWrapper);
+
+      // Click handler
+      toggleWrapper.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
         // Show loading state
-        const originalBg = toggleBtn.style.background;
-        const originalText = toggleBtn.textContent;
-        toggleBtn.style.background = '#FF9800';
-        toggleBtn.textContent = '⏳ Please wait...';
-        toggleBtn.disabled = true;
-        toggleBtn.style.cursor = 'not-allowed';
+        const isCurrentlyOn = checkbox.checked;
+        slider.style.opacity = '0.6';
+        slider.style.cursor = 'not-allowed';
+        toggleWrapper.style.pointerEvents = 'none';
 
         try {
           await this.toggleEntity(entity.entity_id, widget);
@@ -261,14 +317,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           }
         } catch (error) {
           // Restore original state on error
-          toggleBtn.style.background = originalBg;
-          toggleBtn.textContent = originalText;
-          toggleBtn.disabled = false;
-          toggleBtn.style.cursor = 'pointer';
+          checkbox.checked = isCurrentlyOn;
+          slider.style.background = isCurrentlyOn ? '#4CAF50' : '#666';
+          sliderButton.style.left = isCurrentlyOn ? '27px' : '3px';
+          label.textContent = isCurrentlyOn ? 'On' : 'Off';
+          slider.style.opacity = '1';
+          slider.style.cursor = 'pointer';
+          toggleWrapper.style.pointerEvents = 'auto';
         }
       });
-      toggleBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-      card.appendChild(toggleBtn);
+      toggleWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+      card.appendChild(toggleContainer);
     }
 
     return card;
@@ -299,13 +359,29 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           stateDiv.textContent = state ? `State: ${state.state}` : 'Unavailable';
         }
 
-        // Update button color and text for switches/lights
-        const button = card.querySelector('button') as HTMLButtonElement;
-        if (button && state && (entity.type === 'switch' || entity.type === 'light')) {
-          button.style.background = state.state === 'on' ? '#4CAF50' : '#666';
-          button.textContent = state.state === 'on' ? 'Turn Off' : 'Turn On';
-          button.disabled = false;
-          button.style.cursor = 'pointer';
+        // Update toggle switch for switches/lights
+        if (state && (entity.type === 'switch' || entity.type === 'light')) {
+          const checkbox = card.querySelector('input[type="checkbox"]') as HTMLInputElement;
+          const slider = card.querySelector('.ha-toggle-slider') as HTMLElement;
+          const sliderButton = slider?.querySelector('span') as HTMLElement;
+          const label = card.querySelector('.ha-toggle-wrapper')?.previousElementSibling as HTMLElement;
+          const toggleWrapper = card.querySelector('.ha-toggle-wrapper') as HTMLElement;
+
+          if (checkbox && slider && sliderButton) {
+            const isOn = state.state === 'on';
+            checkbox.checked = isOn;
+            slider.style.background = isOn ? '#4CAF50' : '#666';
+            sliderButton.style.left = isOn ? '27px' : '3px';
+            if (label) {
+              label.textContent = isOn ? 'On' : 'Off';
+            }
+            // Restore interactive state
+            slider.style.opacity = '1';
+            slider.style.cursor = 'pointer';
+            if (toggleWrapper) {
+              toggleWrapper.style.pointerEvents = 'auto';
+            }
+          }
         }
       }
     });
