@@ -390,7 +390,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     return `${protocol}//${hostname}:3001`;
   }
 
-  private showAddEntityDialog(widget: Widget): void {
+  private async showAddEntityDialog(widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
 
     // Create overlay
@@ -414,8 +414,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 24px;
-      min-width: 400px;
-      max-width: 500px;
+      min-width: 500px;
+      max-width: 600px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       color: var(--text);
     `;
@@ -423,8 +426,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     dialog.innerHTML = `
       <h3 style="margin-top: 0; color: var(--text);">Add Entity</h3>
       <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Entity ID:</label>
-        <input type="text" id="entity-id" placeholder="light.living_room" 
+        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Search Entity:</label>
+        <input type="text" id="entity-search" placeholder="Search entities..." 
                style="
                  width: 100%; 
                  padding: 10px; 
@@ -435,11 +438,22 @@ export class HomeAssistantRenderer implements WidgetRenderer {
                  border-radius: 6px;
                  font-size: 14px;
                ">
-        <small style="opacity: 0.7; color: var(--muted); font-size: 12px;">Example: light.kitchen, switch.fan, sensor.temperature</small>
+      </div>
+      <div id="entity-list-container" style="
+        margin-bottom: 15px;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--background);
+      ">
+        <div style="padding: 20px; text-align: center; opacity: 0.7;">
+          Loading entities...
+        </div>
       </div>
       <div style="margin-bottom: 15px;">
         <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Display Name (optional):</label>
-        <input type="text" id="display-name" placeholder="Living Room Light" 
+        <input type="text" id="display-name" placeholder="Custom display name" 
                style="
                  width: 100%; 
                  padding: 10px; 
@@ -450,22 +464,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
                  border-radius: 6px;
                  font-size: 14px;
                ">
-      </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Type:</label>
-        <select id="entity-type" style="
-          width: 100%; 
-          padding: 10px;
-          background: var(--background);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">
-          <option value="light">Light</option>
-          <option value="switch">Switch</option>
-          <option value="sensor">Sensor</option>
-        </select>
       </div>
       <div style="display: flex; gap: 12px; justify-content: flex-end;">
         <button id="cancel-entity" style="
@@ -477,7 +475,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           border-radius: 6px;
           font-size: 14px;
         ">Cancel</button>
-        <button id="save-entity" style="
+        <button id="save-entity" disabled style="
           padding: 10px 20px; 
           cursor: pointer; 
           background: var(--accent); 
@@ -486,6 +484,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
+          opacity: 0.5;
         ">
           Add Entity
         </button>
@@ -495,14 +494,121 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    const entityIdInput = dialog.querySelector('#entity-id') as HTMLInputElement;
+    const searchInput = dialog.querySelector('#entity-search') as HTMLInputElement;
+    const entityListContainer = dialog.querySelector('#entity-list-container') as HTMLElement;
     const displayNameInput = dialog.querySelector('#display-name') as HTMLInputElement;
-    const entityTypeSelect = dialog.querySelector('#entity-type') as HTMLSelectElement;
     const cancelBtn = dialog.querySelector('#cancel-entity') as HTMLButtonElement;
     const saveBtn = dialog.querySelector('#save-entity') as HTMLButtonElement;
 
+    let selectedEntity: HomeAssistantEntity | null = null;
+    let allEntities: HomeAssistantEntity[] = [];
+
+    // Fetch entities
+    try {
+      await this.fetchEntityStates(widget);
+      const widgetStates = this.entityStates.get(widget.id) || new Map();
+      allEntities = Array.from(widgetStates.values());
+
+      if (allEntities.length === 0) {
+        entityListContainer.innerHTML = `
+          <div style="padding: 20px; text-align: center; opacity: 0.7;">
+            No entities found in Home Assistant
+          </div>
+        `;
+      } else {
+        renderEntityList(allEntities);
+      }
+    } catch (error) {
+      entityListContainer.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #f44336;">
+          Failed to load entities: ${error}
+        </div>
+      `;
+    }
+
+    function renderEntityList(entities: HomeAssistantEntity[]) {
+      if (entities.length === 0) {
+        entityListContainer.innerHTML = `
+          <div style="padding: 20px; text-align: center; opacity: 0.7;">
+            No matching entities found
+          </div>
+        `;
+        return;
+      }
+
+      entityListContainer.innerHTML = '';
+      entities.forEach(entity => {
+        const item = document.createElement('div');
+        item.className = 'entity-list-item';
+        item.style.cssText = `
+          padding: 12px;
+          cursor: pointer;
+          border-bottom: 1px solid var(--border);
+          transition: background 0.2s;
+        `;
+        
+        const domain = entity.entity_id.split('.')[0];
+        const icon = domain === 'light' ? '💡' : domain === 'switch' ? '🔌' : domain === 'sensor' ? '📊' : '🏠';
+        
+        item.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 20px;">${icon}</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 500;">${entity.attributes.friendly_name || entity.entity_id}</div>
+              <div style="font-size: 12px; opacity: 0.7;">${entity.entity_id}</div>
+            </div>
+            <div style="font-size: 12px; opacity: 0.7; text-transform: capitalize;">${domain}</div>
+          </div>
+        `;
+
+        item.addEventListener('mouseenter', () => {
+          item.style.background = 'rgba(255, 255, 255, 0.1)';
+        });
+
+        item.addEventListener('mouseleave', () => {
+          if (selectedEntity?.entity_id !== entity.entity_id) {
+            item.style.background = '';
+          }
+        });
+
+        item.addEventListener('click', () => {
+          // Deselect all
+          entityListContainer.querySelectorAll('.entity-list-item').forEach(el => {
+            (el as HTMLElement).style.background = '';
+          });
+
+          // Select this one
+          item.style.background = 'var(--accent)';
+          selectedEntity = entity;
+          
+          // Auto-fill display name if empty
+          if (!displayNameInput.value) {
+            displayNameInput.value = entity.attributes.friendly_name || entity.entity_id;
+          }
+
+          // Enable save button
+          saveBtn.disabled = false;
+          saveBtn.style.opacity = '1';
+          saveBtn.style.cursor = 'pointer';
+        });
+
+        item.addEventListener('pointerdown', (e) => e.stopPropagation());
+        entityListContainer.appendChild(item);
+      });
+    }
+
+    // Search filter
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      const filtered = allEntities.filter(entity => 
+        entity.entity_id.toLowerCase().includes(query) ||
+        (entity.attributes.friendly_name?.toLowerCase().includes(query))
+      );
+      renderEntityList(filtered);
+    });
+
     // Stop propagation for all inputs
-    [entityIdInput, displayNameInput, entityTypeSelect, cancelBtn, saveBtn].forEach(el => {
+    [searchInput, displayNameInput, cancelBtn, saveBtn].forEach(el => {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
     });
 
@@ -520,18 +626,29 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Save button
     saveBtn.addEventListener('click', () => {
-      const entityId = entityIdInput.value.trim();
-      const displayName = displayNameInput.value.trim();
-      const type = entityTypeSelect.value as 'light' | 'switch' | 'sensor';
-
-      if (!entityId) {
-        alert('Please enter an entity ID');
+      if (!selectedEntity) {
+        alert('Please select an entity');
         return;
       }
 
+      const displayName = displayNameInput.value.trim();
+      const domain = selectedEntity.entity_id.split('.')[0];
+      
+      // Determine type based on domain
+      let type: 'light' | 'switch' | 'sensor' = 'sensor';
+      if (domain === 'light') type = 'light';
+      else if (domain === 'switch') type = 'switch';
+
       const entities = content.entities || [];
+      
+      // Check if entity already exists
+      if (entities.some(e => e.entity_id === selectedEntity!.entity_id)) {
+        alert('This entity has already been added');
+        return;
+      }
+
       entities.push({
-        entity_id: entityId,
+        entity_id: selectedEntity.entity_id,
         display_name: displayName || undefined,
         type: type
       });
@@ -544,6 +661,9 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       });
       document.dispatchEvent(event);
     });
+
+    // Prevent dialog from being dragged
+    dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
   }
 
   private showEditEntityDialog(widget: Widget, entityIndex: number): void {
