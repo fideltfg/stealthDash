@@ -235,9 +235,14 @@ class AuthService {
       });
 
       const data = await response.json();
-      return data.success === true;
+      if (data.success) {
+        console.log('✅ Dashboard saved to server successfully');
+        return true;
+      }
+      console.error('❌ Failed to save dashboard:', data.error);
+      return false;
     } catch (error) {
-      console.error('Save dashboard error:', error);
+      console.error('❌ Save dashboard error:', error);
       return false;
     }
   }
@@ -251,10 +256,54 @@ class AuthService {
       });
 
       const data = await response.json();
-      return data.success ? data.dashboard : null;
-    } catch (error) {
-      console.error('Load dashboard error:', error);
+      if (data.success && data.data) {
+        console.log('✅ Dashboard loaded from server:', data.data.dashboards.length, 'dashboards');
+        return data.data;
+      }
       return null;
+    } catch (error) {
+      console.error('❌ Load dashboard error:', error);
+      return null;
+    }
+  }
+
+  async saveSingleDashboard(dashboardId: string, name: string, state: any, isActive: boolean): Promise<boolean> {
+    if (!this.token) return false;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/dashboard/save-single`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`
+        },
+        body: JSON.stringify({ dashboardId, name, state, isActive })
+      });
+
+      const data = await response.json();
+      return data.success === true;
+    } catch (error) {
+      console.error('❌ Save single dashboard error:', error);
+      return false;
+    }
+  }
+
+  async deleteDashboard(dashboardId: string): Promise<boolean> {
+    if (!this.token) return false;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/dashboard/${dashboardId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      });
+
+      const data = await response.json();
+      return data.success === true;
+    } catch (error) {
+      console.error('❌ Delete dashboard error:', error);
+      return false;
     }
   }
 

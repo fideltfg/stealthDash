@@ -3,62 +3,180 @@ const router = express.Router();
 const db = require('../db');
 const { authMiddleware } = require('../auth');
 
-// Save dashboard
+// Save entire multi-dashboard state
 router.post('/save', authMiddleware, async (req, res) => {
   const { dashboardData } = req.body;
   
-  if (!dashboardData) {
-    return res.status(400).json({ error: 'Dashboard data is required' });
+  if (!dashboardData || !dashboardData.dashboards || !dashboardData.activeDashboardId) {
+    return res.status(400).json({ error: 'Invalid dashboard data format' });
   }
   
   try {
-    // Check if user already has a dashboard
+    // Begin transaction
+    await db.query('BEGIN');
+    
+    // Get existing dashboards for this user
     const existing = await db.query(
-      'SELECT id FROM dashboards WHERE user_id = $1',
+      'SELECT dashboard_id FROM dashboards WHERE user_id = $1',
       [req.user.userId]
     );
     
-    if (existing.rows.length > 0) {
-      // Update existing dashboard
+    const existingIds = new Set(existing.rows.map(row => row.dashboard_id));
+    const newDashboardIds = new Set(dashboardData.dashboards.map(d => d.id));
+    
+    // Delete dashboards that no longer exist in the new data
+    const toDelete = [...existingIds].filter(id => !newDashboardIds.has(id));
+    if (toDelete.length > 0) {
       await db.query(
-        'UPDATE dashboards SET dashboard_data = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
-        [JSON.stringify(dashboardData), req.user.userId]
-      );
-    } else {
-      // Create new dashboard
-      await db.query(
-        'INSERT INTO dashboards (user_id, dashboard_data) VALUES ($1, $2)',
-        [req.user.userId, JSON.stringify(dashboardData)]
+        'DELETE FROM dashboards WHERE user_id = $1 AND dashboard_id = ANY($2)',
+        [req.user.userId, toDelete]
       );
     }
     
-    res.json({ success: true, message: 'Dashboard saved successfully' });
+    // Upsert each dashboard
+    for (const dashboard of dashboardData.dashboards) {
+      const isActive = dashboard.id === dashboardData.activeDashboardId;
+      
+      await db.query(`
+        INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (user_id, dashboard_id) 
+        DO UPDATE SET 
+          name = EXCLUDED.name,
+          dashboard_data = EXCLUDED.dashboard_data,
+          is_active = EXCLUDED.is_active,
+          updated_at = CURRENT_TIMESTAMP
+      `, [
+        req.user.userId,
+        dashboard.id,
+        dashboard.name,
+        JSON.stringify(dashboard.state),
+        isActive
+      ]);
+    }
+    
+    await db.query('COMMIT');
+    res.json({ success: true, message: 'Dashboards saved successfully' });
   } catch (error) {
+    await db.query('ROLLBACK');
     console.error('Save dashboard error:', error);
-    res.status(500).json({ error: 'Failed to save dashboard' });
+    res.status(500).json({ error: 'Failed to save dashboards' });
   }
 });
 
-// Load dashboard
+// Load all dashboards for the user
 router.get('/load', authMiddleware, async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT dashboard_data, updated_at FROM dashboards WHERE user_id = $1',
+      `SELECT dashboard_id, name, dashboard_data, is_active, updated_at, created_at 
+       FROM dashboards 
+       WHERE user_id = $1 
+       ORDER BY created_at ASC`,
       [req.user.userId]
     );
     
     if (result.rows.length === 0) {
-      return res.json({ success: true, dashboard: null });
+      return res.json({ success: true, dashboards: [] });
     }
+    
+    // Reconstruct the multi-dashboard state
+    const dashboards = result.rows.map(row => ({
+      id: row.dashboard_id,
+      name: row.name,
+      state: row.dashboard_data,
+      createdAt: new Date(row.created_at).getTime(),
+      updatedAt: new Date(row.updated_at).getTime()
+    }));
+    
+    const activeDashboard = result.rows.find(row => row.is_active);
+    const activeDashboardId = activeDashboard ? activeDashboard.dashboard_id : dashboards[0].id;
     
     res.json({
       success: true,
-      dashboard: result.rows[0].dashboard_data,
-      updatedAt: result.rows[0].updated_at
+      data: {
+        dashboards,
+        activeDashboardId,
+        version: 1
+      }
     });
   } catch (error) {
     console.error('Load dashboard error:', error);
-    res.status(500).json({ error: 'Failed to load dashboard' });
+    res.status(500).json({ error: 'Failed to load dashboards' });
+  }
+});
+
+// Save a single dashboard (for incremental updates)
+router.post('/save-single', authMiddleware, async (req, res) => {
+  const { dashboardId, name, state, isActive } = req.body;
+  
+  if (!dashboardId || !state) {
+    return res.status(400).json({ error: 'Dashboard ID and state are required' });
+  }
+  
+  try {
+    await db.query(`
+      INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (user_id, dashboard_id) 
+      DO UPDATE SET 
+        name = EXCLUDED.name,
+        dashboard_data = EXCLUDED.dashboard_data,
+        is_active = EXCLUDED.is_active,
+        updated_at = CURRENT_TIMESTAMP
+    `, [
+      req.user.userId,
+      dashboardId,
+      name || 'Dashboard',
+      JSON.stringify(state),
+      isActive || false
+    ]);
+    
+    res.json({ success: true, message: 'Dashboard saved successfully' });
+  } catch (error) {
+    console.error('Save single dashboard error:', error);
+    res.status(500).json({ error: 'Failed to save dashboard' });
+  }
+});
+
+// Delete a dashboard
+router.delete('/:dashboardId', authMiddleware, async (req, res) => {
+  const { dashboardId } = req.params;
+  
+  try {
+    // Check if this is the last dashboard
+    const count = await db.query(
+      'SELECT COUNT(*) FROM dashboards WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
+    if (parseInt(count.rows[0].count) <= 1) {
+      return res.status(400).json({ error: 'Cannot delete the last dashboard' });
+    }
+    
+    // Delete the dashboard
+    const result = await db.query(
+      'DELETE FROM dashboards WHERE user_id = $1 AND dashboard_id = $2 RETURNING is_active',
+      [req.user.userId, dashboardId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Dashboard not found' });
+    }
+    
+    // If we deleted the active dashboard, activate the first remaining one
+    if (result.rows[0].is_active) {
+      await db.query(`
+        UPDATE dashboards 
+        SET is_active = true 
+        WHERE user_id = $1 
+        AND id = (SELECT MIN(id) FROM dashboards WHERE user_id = $1)
+      `, [req.user.userId]);
+    }
+    
+    res.json({ success: true, message: 'Dashboard deleted successfully' });
+  } catch (error) {
+    console.error('Delete dashboard error:', error);
+    res.status(500).json({ error: 'Failed to delete dashboard' });
   }
 });
 
