@@ -30,6 +30,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
     this.showSettingsDialog(widget);
   }
+  
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;

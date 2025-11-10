@@ -31,9 +31,19 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   const headerButtons = document.createElement('div');
   headerButtons.className = 'widget-header-buttons';
   
-  // Settings button (if widget has configuration)
+  // Get plugin and renderer for later use
   const plugin = getWidgetPlugin(widget.type);
   const renderer = getWidgetRenderer(widget.type);
+  
+  // Add custom buttons from widget renderer (if provided)
+  if (renderer?.getHeaderButtons) {
+    const customButtons = renderer.getHeaderButtons(widget);
+    customButtons.forEach((btn: HTMLElement) => {
+      headerButtons.appendChild(btn);
+    });
+  }
+  
+  // Settings button (if widget has configuration)
   if (plugin?.hasSettings !== false && renderer?.configure) {
     const settingsBtn = document.createElement('button');
     settingsBtn.className = 'widget-settings-btn';

@@ -3,6 +3,7 @@ import type { Widget } from '../../types';
 export interface WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void;
   configure?(widget: Widget): void; // Optional configuration method
+  getHeaderButtons?(widget: Widget): HTMLElement[]; // Optional method to provide custom header buttons
 }
 
 // Plugin interface for self-registering widgets
