@@ -212,37 +212,19 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       border-radius: 8px;
       padding: 15px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
     `;
 
     // Entity name
     const name = document.createElement('div');
-    name.style.cssText = 'font-weight: bold; font-size: 14px;';
+    name.style.cssText = 'font-weight: 500; font-size: 14px; flex: 1;';
     name.textContent = entity.display_name || state?.attributes.friendly_name || entity.entity_id;
     card.appendChild(name);
 
-    // State display
-    const stateDiv = document.createElement('div');
-    stateDiv.className = 'ha-entity-state';
-    stateDiv.style.cssText = 'font-size: 12px; opacity: 0.8;';
-    stateDiv.textContent = state ? `State: ${state.state}` : 'Loading...';
-    card.appendChild(stateDiv);
-
     // Control based on type
     if (entity.type === 'switch' || entity.type === 'light') {
-      // Create toggle switch container
-      const toggleContainer = document.createElement('div');
-      toggleContainer.style.cssText = `
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 8px;
-      `;
-
-      const label = document.createElement('span');
-      label.style.cssText = 'font-size: 12px; opacity: 0.8;';
-      label.textContent = state?.state === 'on' ? 'On' : 'Off';
       
       // Toggle switch wrapper
       const toggleWrapper = document.createElement('label');
@@ -294,9 +276,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       toggleWrapper.appendChild(checkbox);
       toggleWrapper.appendChild(slider);
 
-      toggleContainer.appendChild(label);
-      toggleContainer.appendChild(toggleWrapper);
-
       // Click handler
       toggleWrapper.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -320,7 +299,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           checkbox.checked = isCurrentlyOn;
           slider.style.background = isCurrentlyOn ? '#4CAF50' : '#666';
           sliderButton.style.left = isCurrentlyOn ? '27px' : '3px';
-          label.textContent = isCurrentlyOn ? 'On' : 'Off';
           slider.style.opacity = '1';
           slider.style.cursor = 'pointer';
           toggleWrapper.style.pointerEvents = 'auto';
@@ -328,7 +306,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       });
       toggleWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-      card.appendChild(toggleContainer);
+      card.appendChild(toggleWrapper);
     }
 
     return card;
@@ -353,18 +331,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           }
         }
 
-        // Update state display
-        const stateDiv = card.querySelector('.ha-entity-state') as HTMLElement;
-        if (stateDiv) {
-          stateDiv.textContent = state ? `State: ${state.state}` : 'Unavailable';
-        }
-
         // Update toggle switch for switches/lights
         if (state && (entity.type === 'switch' || entity.type === 'light')) {
           const checkbox = card.querySelector('input[type="checkbox"]') as HTMLInputElement;
           const slider = card.querySelector('.ha-toggle-slider') as HTMLElement;
           const sliderButton = slider?.querySelector('span') as HTMLElement;
-          const label = card.querySelector('.ha-toggle-wrapper')?.previousElementSibling as HTMLElement;
           const toggleWrapper = card.querySelector('.ha-toggle-wrapper') as HTMLElement;
 
           if (checkbox && slider && sliderButton) {
@@ -372,9 +343,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
             checkbox.checked = isOn;
             slider.style.background = isOn ? '#4CAF50' : '#666';
             sliderButton.style.left = isOn ? '27px' : '3px';
-            if (label) {
-              label.textContent = isOn ? 'On' : 'Off';
-            }
             // Restore interactive state
             slider.style.opacity = '1';
             slider.style.cursor = 'pointer';
