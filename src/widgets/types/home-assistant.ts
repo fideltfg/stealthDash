@@ -30,7 +30,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
     this.showSettingsDialog(widget);
   }
-  
+
+  getHeaderButtons(widget: Widget): HTMLElement[] {
+    const entitiesBtn = document.createElement('button');
+    entitiesBtn.innerHTML = '👻';
+    entitiesBtn.className = 'widget-settings-btn';
+    entitiesBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.showManageEntitiesDialog(widget);
+    };
+    entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    return [entitiesBtn];
+  }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
@@ -88,23 +99,23 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const saveBtn = prompt.querySelector('#save-ha-config') as HTMLButtonElement;
     const urlInput = prompt.querySelector('#ha-url') as HTMLInputElement;
     const tokenInput = prompt.querySelector('#ha-token') as HTMLInputElement;
-    
+
     saveBtn.addEventListener('click', () => {
       const url = urlInput.value.trim();
       const token = tokenInput.value.trim();
-      
+
       if (!url || !token) {
         alert('Please enter both URL and token');
         return;
       }
 
       // Trigger widget update
-      const event = new CustomEvent('widget-update', { 
+      const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content: { ...content, url, token } }
       });
       document.dispatchEvent(event);
     });
-    
+
     // Stop propagation so widget isn't dragged
     urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
     tokenInput.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -163,41 +174,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     `;
 
     // Entities button
-    const entitiesBtn = document.createElement('button');
-    entitiesBtn.className = 'ha-entities-btn';
-    entitiesBtn.innerHTML = '📋';
-    entitiesBtn.title = 'Manage Entities';
-    entitiesBtn.style.cssText = `
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      transition: background 0.2s;
-      backdrop-filter: blur(10px);
-    `;
-    entitiesBtn.addEventListener('mouseenter', () => {
-      entitiesBtn.style.background = 'rgba(0, 0, 0, 0.9)';
-    });
-    entitiesBtn.addEventListener('mouseleave', () => {
-      entitiesBtn.style.background = 'rgba(0, 0, 0, 0.7)';
-    });
-    entitiesBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.showManageEntitiesDialog(widget);
-    });
-    entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    // get the entitiesBtn 
 
- 
 
-    buttonContainer.appendChild(entitiesBtn);
-    container.appendChild(buttonContainer);
+
+
+    // buttonContainer.appendChild(entitiesBtn);
+    // container.appendChild(buttonContainer);
 
     // Render each entity with loading state
     const entities = content.entities || [];
@@ -267,7 +250,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         toggleBtn.textContent = '⏳ Please wait...';
         toggleBtn.disabled = true;
         toggleBtn.style.cursor = 'not-allowed';
-        
+
         try {
           await this.toggleEntity(entity.entity_id, widget);
           // Refresh state and update cards (don't re-render everything)
@@ -295,7 +278,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const content = widget.content as HomeAssistantContent;
     const entities = content.entities || [];
     const widgetStates = this.entityStates.get(widget.id) || new Map();
-    
+
     // Update entity cards
     const cards = grid.querySelectorAll('.ha-entity-card');
     entities.forEach((entity, index) => {
@@ -331,7 +314,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private async fetchEntityStates(widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
     if (!content.url || !content.token) return;
-    
+
     try {
       // Use ping-server proxy to avoid CORS issues
       const pingServerUrl = this.getPingServerUrl();
@@ -351,7 +334,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
 
       const allStates: HomeAssistantEntity[] = await response.json();
-      
+
       // Store states for this widget
       const widgetStates = new Map<string, HomeAssistantEntity>();
       const entities = content.entities || [];
@@ -370,12 +353,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private async toggleEntity(entityId: string, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
     if (!content.url || !content.token) return;
-    
+
     try {
       const widgetStates = this.entityStates.get(widget.id) || new Map();
       const domain = entityId.split('.')[0];
       const service = widgetStates.get(entityId)?.state === 'on' ? 'turn_off' : 'turn_on';
-      
+
       // Use ping-server proxy to avoid CORS issues
       const pingServerUrl = this.getPingServerUrl();
       const response = await fetch(`${pingServerUrl}/home-assistant/service`, {
@@ -409,7 +392,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private showAddEntityDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
-    
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -424,7 +407,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       justify-content: center;
       z-index: 10000;
     `;
-    
+
     const dialog = document.createElement('div');
     dialog.style.cssText = `
       background: var(--surface);
@@ -556,7 +539,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       overlay.remove();
 
       // Trigger widget update
-      const event = new CustomEvent('widget-update', { 
+      const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content: { ...content, entities } }
       });
       document.dispatchEvent(event);
@@ -567,12 +550,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const content = widget.content as HomeAssistantContent;
     const entities = content.entities || [];
     const entity = entities[entityIndex];
-    
+
     if (!entity) {
       alert('Entity not found');
       return;
     }
-    
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -587,7 +570,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       justify-content: center;
       z-index: 10000;
     `;
-    
+
     const dialog = document.createElement('div');
     dialog.style.cssText = `
       background: var(--surface);
@@ -724,11 +707,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       overlay.remove();
 
       // Trigger widget update
-      const event = new CustomEvent('widget-update', { 
+      const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content: { ...content, entities } }
       });
       document.dispatchEvent(event);
-      
+
       // Return to manage entities dialog to show updated list
       this.showManageEntitiesDialog(widget);
     });
@@ -736,7 +719,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private showSettingsDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
-    
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -751,7 +734,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       justify-content: center;
       z-index: 10000;
     `;
-    
+
     const dialog = document.createElement('div');
     dialog.style.cssText = `
       background: var(--surface);
@@ -900,14 +883,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Trigger widget update
       const event = new CustomEvent('widget-update', {
-        detail: { 
-          id: widget.id, 
-          content: { 
-            ...content, 
-            url, 
-            token, 
-            refreshInterval 
-          } 
+        detail: {
+          id: widget.id,
+          content: {
+            ...content,
+            url,
+            token,
+            refreshInterval
+          }
         }
       });
       document.dispatchEvent(event);
@@ -938,7 +921,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private showManageEntitiesDialog(widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
-    
+
     // Create overlay
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -953,7 +936,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       justify-content: center;
       z-index: 10000;
     `;
-    
+
     const dialog = document.createElement('div');
     dialog.style.cssText = `
       background: var(--surface);
@@ -969,7 +952,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     `;
 
     const entities = content.entities || [];
-    
+
     let dialogHTML = `
       <h3 style="margin-top: 0; color: var(--text);">Manage Entities</h3>
       <div style="margin-bottom: 20px;">
@@ -1099,16 +1082,16 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     removeButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = parseInt((e.target as HTMLElement).getAttribute('data-index') || '0');
-        
+
         if (confirm(`Remove ${entities[index].display_name || entities[index].entity_id}?`)) {
           entities.splice(index, 1);
-          
+
           // Trigger widget update
-          const event = new CustomEvent('widget-update', { 
+          const event = new CustomEvent('widget-update', {
             detail: { id: widget.id, content: { ...content, entities } }
           });
           document.dispatchEvent(event);
-          
+
           overlay.remove();
         }
       });
@@ -1121,7 +1104,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private startAutoRefresh(widget: Widget, grid: HTMLElement): void {
     const content = widget.content as HomeAssistantContent;
-    
+
     // Clear existing interval
     const existingInterval = this.intervals.get(widget.id);
     if (existingInterval) {
