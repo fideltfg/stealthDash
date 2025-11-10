@@ -390,6 +390,35 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     return `${protocol}//${hostname}:3001`;
   }
 
+  private async fetchAllEntities(widget: Widget): Promise<HomeAssistantEntity[]> {
+    const content = widget.content as HomeAssistantContent;
+    if (!content.url || !content.token) return [];
+
+    try {
+      const pingServerUrl = this.getPingServerUrl();
+      const response = await fetch(`${pingServerUrl}/home-assistant/states`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: content.url,
+          token: content.token
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const allStates: HomeAssistantEntity[] = await response.json();
+      return allStates;
+    } catch (error) {
+      console.error('Failed to fetch all entities:', error);
+      throw error;
+    }
+  }
+
   private async showAddEntityDialog(widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
 
@@ -505,9 +534,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Fetch entities
     try {
-      await this.fetchEntityStates(widget);
-      const widgetStates = this.entityStates.get(widget.id) || new Map();
-      allEntities = Array.from(widgetStates.values());
+      allEntities = await this.fetchAllEntities(widget);
 
       if (allEntities.length === 0) {
         entityListContainer.innerHTML = `
