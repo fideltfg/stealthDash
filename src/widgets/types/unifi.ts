@@ -1,10 +1,13 @@
 import type { Widget } from '../../types';
 import type { WidgetRenderer } from './base';
+import { credentialsService } from '../../services/credentials';
+import { authService } from '../../services/auth';
 
 interface UnifiContent {
   host: string; // UniFi Controller host (e.g., 'https://192.168.1.1:8443')
-  username?: string; // UniFi controller username
-  password?: string; // UniFi controller password
+  username?: string; // UniFi controller username (deprecated - use credentialId)
+  password?: string; // UniFi controller password (deprecated - use credentialId)
+  credentialId?: number; // ID of saved credential to use
   site?: string; // Site name (default: 'default')
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
   displayMode?: 'compact' | 'detailed' | 'minimal' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds'; // Display style
@@ -103,10 +106,10 @@ class UnifiRenderer implements WidgetRenderer {
     const content = widget.content as UnifiContent;
     
     console.log('UniFi widget render - Full content:', content);
-    console.log('UniFi widget render - Has credentials?', !!content.username && !!content.password);
+    console.log('UniFi widget render - Has credentialId?', !!content.credentialId);
     
-    // If widget has no host configured, show configuration prompt
-    if (!content.host) {
+    // If widget has no host or credential configured, show configuration prompt
+    if (!content.host || !content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
     }
@@ -138,20 +141,25 @@ class UnifiRenderer implements WidgetRenderer {
     
     const fetchAndRender = async () => {
       try {
+        // Check if credentialId exists
+        if (!content.credentialId) {
+          throw new Error('No credential configured. Please edit widget and select a saved credential.');
+        }
+
         // Use the ping-server proxy to avoid CORS issues
         const proxyUrl = new URL('/api/unifi/stats', window.location.origin.replace(':3000', ':3001'));
         proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('site', content.site || 'default');
-        if (content.username) {
-          proxyUrl.searchParams.set('username', content.username);
-        }
-        if (content.password) {
-          proxyUrl.searchParams.set('password', content.password);
-        }
+        proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        console.log('Fetching UniFi data via proxy:', proxyUrl.toString().replace(/password=[^&]+/, 'password=***'));
+        console.log('Using saved credential ID:', content.credentialId);
+        console.log('Fetching UniFi data via proxy:', proxyUrl.toString());
         
-        const response = await fetch(proxyUrl.toString());
+        const response = await fetch(proxyUrl.toString(), {
+          headers: {
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          }
+        });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: response.statusText }));
@@ -211,7 +219,8 @@ class UnifiRenderer implements WidgetRenderer {
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 16px;">📡</div>
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text);">UniFi Network Widget</div>
-        <div style="color: var(--muted); margin-bottom: 20px;">Configure your UniFi Controller connection</div>
+        <div style="color: var(--muted); margin-bottom: 8px;">Configure your UniFi Controller connection</div>
+        <div style="color: var(--muted); font-size: 12px; margin-bottom: 20px;">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
         <button 
           class="configure-btn"
           style="
@@ -236,7 +245,7 @@ class UnifiRenderer implements WidgetRenderer {
     });
   }
 
-  private showConfigDialog(widget: Widget): void {
+  private async showConfigDialog(widget: Widget): Promise<void> {
     const content = widget.content as UnifiContent;
     
     const overlay = document.createElement('div');
@@ -266,6 +275,16 @@ class UnifiRenderer implements WidgetRenderer {
       max-height: 80vh;
       overflow-y: auto;
     `;
+
+    // Load credentials for dropdown
+    const credentials = await credentialsService.getAll();
+    const unifiCredentials = credentials.filter((c: any) => c.service_type === 'unifi');
+    
+    const credentialOptions = unifiCredentials.length > 0
+      ? unifiCredentials.map((c: any) => 
+          `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''} style="background: var(--surface); color: var(--text);">${c.name}</option>`
+        ).join('')
+      : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
       <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
@@ -309,13 +328,10 @@ class UnifiRenderer implements WidgetRenderer {
 
         <div>
           <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Username *
+            Credentials *
           </label>
-          <input 
-            type="text" 
-            id="unifi-username" 
-            value="${content.username || ''}"
-            placeholder="admin"
+          <select 
+            id="unifi-credential"
             required
             style="
               width: 100%;
@@ -327,32 +343,12 @@ class UnifiRenderer implements WidgetRenderer {
               color: var(--text);
               box-sizing: border-box;
             "
-          />
-        </div>
-
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Password *
-          </label>
-          <input 
-            type="password" 
-            id="unifi-password" 
-            value="${content.password || ''}"
-            placeholder="Your UniFi controller password"
-            required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
-          />
+          >
+            <option value="" style="background: var(--surface); color: var(--muted);">Select credentials...</option>
+            ${credentialOptions}
+          </select>
           <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Local admin account credentials
+            Create credentials from the user menu (🔐 Credentials)
           </small>
         </div>
 
@@ -398,15 +394,15 @@ class UnifiRenderer implements WidgetRenderer {
               box-sizing: border-box;
             "
           >
-            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal - Client count only</option>
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact - Key stats</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed - Infrastructure view</option>
-            <option value="devices" ${content.displayMode === 'devices' ? 'selected' : ''}>Devices - Full device list</option>
-            <option value="clients" ${content.displayMode === 'clients' ? 'selected' : ''}>Clients - Active connections</option>
-            <option value="active" ${content.displayMode === 'active' ? 'selected' : ''}>Most Active - Top clients by traffic</option>
-            <option value="throughput" ${content.displayMode === 'throughput' ? 'selected' : ''}>Throughput - Network traffic analysis</option>
-            <option value="speeds" ${content.displayMode === 'speeds' ? 'selected' : ''}>Network Speeds - WAN & client speeds</option>
-            <option value="full" ${content.displayMode === 'full' ? 'selected' : ''}>Full - Complete overview</option>
+            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Minimal - Client count only</option>
+            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Compact - Key stats</option>
+            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Detailed - Infrastructure view</option>
+            <option value="devices" ${content.displayMode === 'devices' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Devices - Full device list</option>
+            <option value="clients" ${content.displayMode === 'clients' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Clients - Active connections</option>
+            <option value="active" ${content.displayMode === 'active' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Most Active - Top clients by traffic</option>
+            <option value="throughput" ${content.displayMode === 'throughput' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Throughput - Network traffic analysis</option>
+            <option value="speeds" ${content.displayMode === 'speeds' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Network Speeds - WAN & client speeds</option>
+            <option value="full" ${content.displayMode === 'full' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Full - Complete overview</option>
           </select>
         </div>
 
@@ -482,26 +478,29 @@ class UnifiRenderer implements WidgetRenderer {
       e.preventDefault();
       
       const host = (document.getElementById('unifi-host') as HTMLInputElement).value.trim();
-      const username = (document.getElementById('unifi-username') as HTMLInputElement).value.trim();
-      const password = (document.getElementById('unifi-password') as HTMLInputElement).value.trim();
+      const credentialSelect = document.getElementById('unifi-credential') as HTMLSelectElement;
+      const credentialId = parseInt(credentialSelect.value);
       const site = (document.getElementById('unifi-site') as HTMLInputElement).value.trim();
       const displayMode = (document.getElementById('unifi-display-mode') as HTMLSelectElement).value;
       const refreshInterval = parseInt((document.getElementById('unifi-refresh') as HTMLInputElement).value);
 
-      console.log('Saving UniFi config:', { host, username: username ? '***' : '(empty)', site, displayMode, refreshInterval });
+      // Validate credential selection
+      if (!credentialId) {
+        alert('Please select credentials for UniFi authentication');
+        return;
+      }
+
+      console.log('Saving UniFi config:', { host, credentialId, site, displayMode, refreshInterval });
 
       const newContent: UnifiContent = {
         host,
+        credentialId,
         site,
         displayMode: displayMode as 'minimal' | 'compact' | 'detailed' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds',
         refreshInterval,
         showClients: content.showClients ?? true,
         showAlerts: content.showAlerts ?? true
       };
-
-      // Only include credentials if provided
-      if (username) newContent.username = username;
-      if (password) newContent.password = password;
 
       console.log('New content being saved');
 
