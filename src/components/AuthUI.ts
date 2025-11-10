@@ -313,7 +313,7 @@ export class AuthUI {
     }
   }
 
-  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void): HTMLElement {
+  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void): HTMLElement {
     const container = document.createElement('div');
     container.className = 'user-menu';
     container.style.cssText = `
@@ -381,7 +381,24 @@ export class AuthUI {
             transition: background 0.2s;
           ">
             <span>🎛️</span>
-            <span>Manage Dashboards</span>
+            <span>My Dashboards</span>
+          </button>
+          <button id="credentials-btn" style="
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+          ">
+            <span>🔐</span>
+            <span>Credentials</span>
           </button>
           <button id="settings-btn" style="
             width: 100%;
@@ -493,6 +510,16 @@ export class AuthUI {
         dropdown.style.display = 'none';
         toggle.style.transform = 'scale(1)';
         onManageDashboardsClick();
+      });
+    }
+
+    // Credentials button
+    const credentialsBtn = dropdown.querySelector('#credentials-btn') as HTMLButtonElement;
+    if (credentialsBtn && onCredentialsClick) {
+      credentialsBtn.addEventListener('click', () => {
+        dropdown.style.display = 'none';
+        toggle.style.transform = 'scale(1)';
+        onCredentialsClick();
       });
     }
 

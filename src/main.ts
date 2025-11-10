@@ -7,6 +7,7 @@ import { authService, type User } from './services/auth';
 import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
+import { CredentialsUI } from './components/CredentialsUI';
 import './css/style.css';
 import './css/custom.css';
 
@@ -29,6 +30,7 @@ class Dashboard {
   private authUI: AuthUI;
   private userSettingsUI: UserSettingsUI;
   private adminDashboardUI: AdminDashboardUI;
+  private credentialsUI: CredentialsUI;
   private currentUser: User | null = null;
   private userMenuElement: HTMLElement | null = null;
   private autoSaveInterval: number | null = null;
@@ -37,6 +39,7 @@ class Dashboard {
     this.authUI = new AuthUI(this.handleAuthChange.bind(this));
     this.userSettingsUI = new UserSettingsUI();
     this.adminDashboardUI = new AdminDashboardUI();
+    this.credentialsUI = new CredentialsUI();
     this.state = loadState();
     this.init();
   }
@@ -129,7 +132,8 @@ class Dashboard {
         this.currentUser,
         () => this.userSettingsUI.showSettingsDialog(),
         () => this.adminDashboardUI.showAdminDashboard(),
-        () => this.showDashboardManager()
+        () => this.showDashboardManager(),
+        () => this.credentialsUI.showCredentialsDialog()
       );
       document.body.appendChild(this.userMenuElement);
     }
@@ -1355,7 +1359,7 @@ class Dashboard {
     
     const title = document.createElement('h2');
     title.className = 'modal-title';
-    title.textContent = 'Manage Dashboards';
+    title.textContent = 'My Dashboards';
     header.appendChild(title);
     
     const closeBtn = document.createElement('button');

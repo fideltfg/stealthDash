@@ -1,10 +1,13 @@
 import type { Widget } from '../../types';
 import type { WidgetRenderer } from './base';
+import { credentialsService } from '../../services/credentials';
+import { authService } from '../../services/auth';
 
 interface PiholeContent {
   host: string; // Pi-hole host (e.g., 'http://pi.hole' or 'http://192.168.1.100')
   apiKey?: string; // Pi-hole Application Password (recommended) or API key
   password?: string; // Deprecated: Legacy field for backward compatibility
+  credentialId?: number; // ID of saved credential to use
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
   displayMode?: 'compact' | 'detailed' | 'minimal'; // Display style
   showCharts?: boolean; // Show mini charts for blocked queries
@@ -42,10 +45,10 @@ class PiholeRenderer implements WidgetRenderer {
     const content = widget.content as PiholeContent;
     
     console.log('Pi-hole widget render - Full content:', content);
-    console.log('Pi-hole widget render - Has apiKey?', !!content.apiKey, 'Has legacy password?', !!content.password);
+    console.log('Pi-hole widget render - Has credentialId?', !!content.credentialId);
     
-    // If widget has no host configured, show configuration prompt
-    if (!content.host || content.host === 'http://pi.hole') {
+    // If widget has no host or credential configured, show configuration prompt
+    if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
     }
@@ -77,19 +80,24 @@ class PiholeRenderer implements WidgetRenderer {
     
     const fetchAndRender = async () => {
       try {
+        // Check if credentialId exists
+        if (!content.credentialId) {
+          throw new Error('No credential configured. Please edit widget and select a saved credential.');
+        }
+
         // Use the ping-server proxy to avoid CORS issues
         const proxyUrl = new URL('/api/pihole', window.location.origin.replace(':3000', ':3001'));
         proxyUrl.searchParams.set('host', content.host);
+        proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        // Use apiKey (preferred) or fall back to password for backward compatibility
-        const authKey = content.apiKey || content.password;
-        if (authKey) {
-          proxyUrl.searchParams.set('password', authKey);
-        }
+        console.log('Using saved credential ID:', content.credentialId);
+        console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString());
         
-        console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString().replace(/password=[^&]+/, 'password=***'));
-        
-        const response = await fetch(proxyUrl.toString());
+        const response = await fetch(proxyUrl.toString(), {
+          headers: {
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          }
+        });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: response.statusText }));
@@ -142,8 +150,11 @@ class PiholeRenderer implements WidgetRenderer {
             <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 64px; height: 64px;" />
           </div>
           <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">Configure Pi-hole</h3>
-          <p style="margin: 0 0 24px 0; font-size: 14px; color: var(--muted);">
-            Enter your Pi-hole server details to get started
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--muted);">
+            Configure your Pi-hole server connection
+          </p>
+          <p style="margin: 0 0 24px 0; font-size: 12px; color: var(--muted);">
+            💡 Tip: Create credentials first from the user menu (🔐 Credentials)
           </p>
           <button id="configure-pihole-btn" style="
             padding: 12px 24px;
@@ -213,6 +224,31 @@ class PiholeRenderer implements WidgetRenderer {
       <form id="pihole-config-form" style="display: flex; flex-direction: column; gap: 16px;";
         <div>
           <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+            Saved Credentials *
+          </label>
+          <select 
+            id="pihole-credential-id"
+            required
+            style="
+              width: 100%;
+              padding: 10px 12px;
+              background: var(--bg);
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              font-size: 14px;
+              color: var(--text);
+              box-sizing: border-box;
+            "
+          >
+            <option value="">Select a saved credential...</option>
+          </select>
+          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
+            Manage credentials from the user menu (🔐 Credentials)
+          </small>
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
             Pi-hole Host *
           </label>
           <input 
@@ -234,33 +270,6 @@ class PiholeRenderer implements WidgetRenderer {
           />
           <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
             Example: http://192.168.1.100 or http://pi.hole
-          </small>
-        </div>
-
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Application Password / API Key *
-          </label>
-          <input 
-            type="password" 
-            id="pihole-apikey" 
-            value="${content.apiKey || content.password || ''}"
-            placeholder="Your Pi-hole application password"
-            required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
-          />
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            <strong>Recommended:</strong> Use an Application Password instead of your admin password.<br/>
-            Generate one in Pi-hole: Settings → API / Web interface → Application passwords
           </small>
         </div>
 
@@ -353,46 +362,63 @@ class PiholeRenderer implements WidgetRenderer {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
+    // Load and populate credentials
+    const credentialSelect = document.getElementById('pihole-credential-id') as HTMLSelectElement;
+
+    (async () => {
+      try {
+        const credentials = await credentialsService.getAll();
+        const piholeCredentials = credentials.filter(c => c.service_type === 'pihole');
+        
+        piholeCredentials.forEach(cred => {
+          const option = document.createElement('option');
+          option.value = cred.id.toString();
+          option.textContent = `🛡️ ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
+          credentialSelect.appendChild(option);
+        });
+
+        // Set current credential if exists
+        if (content.credentialId) {
+          credentialSelect.value = content.credentialId.toString();
+        }
+      } catch (error) {
+        console.error('Failed to load credentials:', error);
+      }
+    })();
+
     // Handle form submission
     const form = modal.querySelector('#pihole-config-form') as HTMLFormElement;
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
       const host = (document.getElementById('pihole-host') as HTMLInputElement).value.trim();
-      const apiKey = (document.getElementById('pihole-apikey') as HTMLInputElement).value.trim();
+      const credentialId = (document.getElementById('pihole-credential-id') as HTMLSelectElement).value;
       const displayMode = (document.getElementById('pihole-display-mode') as HTMLSelectElement).value;
       const refreshInterval = parseInt((document.getElementById('pihole-refresh') as HTMLInputElement).value);
 
-      console.log('Form values - apiKey field:', apiKey ? '***' : '(empty)', 'existing apiKey:', content.apiKey ? '***' : '(none)');
-
-      // Update widget content
-      // Store as apiKey (Application Password) instead of password for better security
-      const newContent: PiholeContent = {
-        host,
-        displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
-        refreshInterval,
-        showCharts: content.showCharts
-      };
-
-      // Set apiKey: use new value if entered, otherwise preserve existing (including legacy password)
-      if (apiKey) {
-        newContent.apiKey = apiKey;
-        // Remove legacy password field when updating
-        newContent.password = undefined;
-        console.log('Using newly entered API key');
-      } else if (content.apiKey) {
-        newContent.apiKey = content.apiKey;
-        console.log('Preserving existing API key');
-      } else if (content.password) {
-        // Migrate legacy password to apiKey field
-        newContent.apiKey = content.password;
-        newContent.password = undefined;
-        console.log('Migrating legacy password to API key field');
-      } else {
-        console.log('No API key available - widget will not authenticate');
+      if (!credentialId) {
+        alert('Please select a saved credential. You can create one from the user menu (🔐 Credentials).');
+        return;
       }
 
-      console.log('Final content being saved:', { ...newContent, apiKey: newContent.apiKey ? '***' : '(none)', password: '(removed)' });
+      console.log('Form values - credentialId:', credentialId);
+
+      // Update widget content - credentials are now required
+      const newContent: PiholeContent = {
+        host,
+        credentialId: parseInt(credentialId),
+        displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
+        refreshInterval,
+        showCharts: content.showCharts,
+        // Clear any legacy password fields
+        apiKey: undefined,
+        password: undefined
+      };
+
+      console.log('Final content being saved:', { 
+        ...newContent, 
+        credentialId: newContent.credentialId
+      });
 
       // Dispatch update event
       const event = new CustomEvent('widget-update', {
