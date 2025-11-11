@@ -100,7 +100,7 @@ class Dashboard {
       this.setupTheme();
       this.setupBackground();
       this.setupEventListeners();
-      this.render();
+      await this.render();
       this.saveHistory();
       this.showUserMenu();
       this.startAutoSave();
@@ -1069,7 +1069,11 @@ class Dashboard {
     }
   }
 
-  private addWidget(type: WidgetType, content: any): void {
+  private async addWidget(type: WidgetType, content: any): Promise<void> {
+    // Load the widget module if not already loaded
+    const { loadWidgetModule } = await import('./widgets/types');
+    await loadWidgetModule(type);
+    
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
     
     // Calculate viewport center based on canvas pan position and zoom
@@ -1266,8 +1270,9 @@ class Dashboard {
     const types = document.createElement('div');
     types.className = 'widget-types';
     
-    // Get all registered widgets from the plugin system
-    const { getAllWidgetPlugins } = await import('./widgets/types');
+    // Load all widget modules for the picker, then get all registered widgets
+    const { loadAllWidgetModules, getAllWidgetPlugins } = await import('./widgets/types');
+    await loadAllWidgetModules(); // Load all widgets before displaying picker
     const plugins = getAllWidgetPlugins();
     
     plugins.forEach((plugin: any) => {
@@ -1603,7 +1608,14 @@ class Dashboard {
     }
   }
 
-  private render(): void {
+  private async render(): Promise<void> {
+    // Load all widget modules needed for current dashboard
+    const widgetTypes = this.state.widgets.map(w => w.type);
+    if (widgetTypes.length > 0) {
+      const { loadWidgetModules } = await import('./widgets/types');
+      await loadWidgetModules(widgetTypes);
+    }
+    
     this.canvasContent.innerHTML = '';
     this.state.widgets.forEach(widget => this.renderWidget(widget));
     this.applyZoom();
@@ -1647,7 +1659,7 @@ class Dashboard {
     const previous = this.history.undo();
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
-      this.render();
+      this.render(); // No await needed - fire and forget
       
       // Update cached multi-state
       if (this.multiState) {
@@ -1670,7 +1682,7 @@ class Dashboard {
     const next = this.history.redo();
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
-      this.render();
+      this.render(); // No await needed - fire and forget
       
       // Update cached multi-state
       if (this.multiState) {
