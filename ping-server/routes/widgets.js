@@ -6,10 +6,28 @@ const snmp = require('net-snmp');
 const db = require('../db');
 const { authMiddleware } = require('../auth');
 const { decryptCredentials } = require('../crypto-utils');
+const { widgetMetadata } = require('../widgetMetadata');
 
 // Session caches to avoid rate limiting
 const piholeSessionCache = new Map();
 const unifiSessionCache = new Map();
+
+// ==================== WIDGET METADATA ROUTE ====================
+
+/**
+ * GET /widgets/metadata
+ * Returns metadata for all available widget types
+ * This allows the client to display the widget picker without loading all widget code
+ */
+router.get('/widgets/metadata', (req, res) => {
+  res.json({
+    success: true,
+    widgets: widgetMetadata,
+    timestamp: Date.now()
+  });
+});
+
+// ==================== CREDENTIALS HELPER ====================
 
 /**
  * Helper function to fetch and decrypt credentials

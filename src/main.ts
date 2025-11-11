@@ -1270,44 +1270,55 @@ class Dashboard {
     const types = document.createElement('div');
     types.className = 'widget-types';
     
-    // Load all widget modules for the picker, then get all registered widgets
-    const { loadAllWidgetModules, getAllWidgetPlugins } = await import('./widgets/types');
-    await loadAllWidgetModules(); // Load all widgets before displaying picker
-    const plugins = getAllWidgetPlugins();
-    
-    plugins.forEach((plugin: any) => {
-      const row = document.createElement('button');
-      row.className = 'widget-type-row';
-      row.tabIndex = 0;
+    // Fetch widget metadata from server (no need to load widget code)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/widgets/metadata`);
+      const data = await response.json();
       
-      const icon = document.createElement('div');
-      icon.className = 'widget-type-icon';
-      icon.textContent = plugin.icon;
+      if (!data.success) {
+        throw new Error('Failed to fetch widget metadata');
+      }
       
-      const content = document.createElement('div');
-      content.className = 'widget-type-content';
+      const widgets = data.widgets;
       
-      const name = document.createElement('div');
-      name.className = 'widget-type-name';
-      name.textContent = plugin.name;
-      
-      const description = document.createElement('div');
-      description.className = 'widget-type-description';
-      description.textContent = plugin.description || '';
-      
-      content.appendChild(name);
-      content.appendChild(description);
-      
-      row.appendChild(icon);
-      row.appendChild(content);
-      
-      row.addEventListener('click', () => {
-        // Check if this widget type needs configuration
-          this.addWidget(plugin.type as WidgetType, plugin.defaultContent || {});
+      widgets.forEach((widgetMeta: any) => {
+        const row = document.createElement('button');
+        row.className = 'widget-type-row';
+        row.tabIndex = 0;
+        
+        const icon = document.createElement('div');
+        icon.className = 'widget-type-icon';
+        icon.textContent = widgetMeta.icon;
+        
+        const content = document.createElement('div');
+        content.className = 'widget-type-content';
+        
+        const name = document.createElement('div');
+        name.className = 'widget-type-name';
+        name.textContent = widgetMeta.name;
+        
+        const description = document.createElement('div');
+        description.className = 'widget-type-description';
+        description.textContent = widgetMeta.description || '';
+        
+        content.appendChild(name);
+        content.appendChild(description);
+        
+        row.appendChild(icon);
+        row.appendChild(content);
+        
+        row.addEventListener('click', () => {
+          // Add widget with its default content (widget code will be lazy-loaded)
+          this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
           overlay.remove();
+        });
+        
+        types.appendChild(row);
       });
-      
-      types.appendChild(row);
+    } catch (error) {
+      console.error('Failed to load widget metadata:', error);
+      types.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
+    }
     });
     
     modal.appendChild(header);

@@ -77,12 +77,6 @@ export async function loadWidgetModules(types: string[]): Promise<void> {
   await Promise.all(unloadedTypes.map(type => loadWidgetModule(type)));
 }
 
-// Load all available widgets (for widget picker)
-export async function loadAllWidgetModules(): Promise<void> {
-  const allTypes = Object.keys(widgetModules);
-  await loadWidgetModules(allTypes);
-}
-
 // Get list of available widget types (without loading them)
 export function getAvailableWidgetTypes(): string[] {
   return Object.keys(widgetModules);

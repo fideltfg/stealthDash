@@ -12,7 +12,10 @@ RUN npm install --production
 COPY server.js ./
 COPY auth.js ./
 COPY db.js ./
+COPY crypto-utils.js ./
 COPY init-db.sql ./
+COPY widgetMetadata.js ./
+COPY routes ./routes
 
 EXPOSE 3001
 
