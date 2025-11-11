@@ -12,8 +12,24 @@ router.post('/save', authMiddleware, async (req, res) => {
   }
   
   try {
+    // Log incoming data for debugging
+    console.log('📥 Received save request with', dashboardData.dashboards.length, 'dashboards');
+    const dashboardIds = dashboardData.dashboards.map(d => d.id);
+    console.log('Dashboard IDs:', dashboardIds);
+    if (new Set(dashboardIds).size !== dashboardIds.length) {
+      console.warn('⚠️  DUPLICATES DETECTED in incoming data!');
+    }
+    
     // Begin transaction
     await db.query('BEGIN');
+    
+    // Deduplicate dashboards by ID (keep the last occurrence)
+    const dashboardMap = new Map();
+    for (const dashboard of dashboardData.dashboards) {
+      dashboardMap.set(dashboard.id, dashboard);
+    }
+    const uniqueDashboards = Array.from(dashboardMap.values());
+    console.log('After deduplication:', uniqueDashboards.length, 'dashboards');
     
     // Get existing dashboards for this user
     const existing = await db.query(
@@ -22,7 +38,7 @@ router.post('/save', authMiddleware, async (req, res) => {
     );
     
     const existingIds = new Set(existing.rows.map(row => row.dashboard_id));
-    const newDashboardIds = new Set(dashboardData.dashboards.map(d => d.id));
+    const newDashboardIds = new Set(uniqueDashboards.map(d => d.id));
     
     // Delete dashboards that no longer exist in the new data
     const toDelete = [...existingIds].filter(id => !newDashboardIds.has(id));
@@ -34,33 +50,45 @@ router.post('/save', authMiddleware, async (req, res) => {
     }
     
     // Upsert each dashboard
-    for (const dashboard of dashboardData.dashboards) {
+    for (const dashboard of uniqueDashboards) {
       const isActive = dashboard.id === dashboardData.activeDashboardId;
       
+      // Insert/Update dashboard data WITHOUT setting is_active yet
       await db.query(`
         INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active)
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, false)
         ON CONFLICT (user_id, dashboard_id) 
         DO UPDATE SET 
           name = EXCLUDED.name,
           dashboard_data = EXCLUDED.dashboard_data,
-          is_active = EXCLUDED.is_active,
           updated_at = CURRENT_TIMESTAMP
       `, [
         req.user.userId,
         dashboard.id,
         dashboard.name,
-        JSON.stringify(dashboard.state),
-        isActive
+        JSON.stringify(dashboard.state)
       ]);
     }
     
+    // Now set the active dashboard separately (avoiding trigger conflicts)
+    await db.query(`
+      UPDATE dashboards 
+      SET is_active = true 
+      WHERE user_id = $1 AND dashboard_id = $2
+    `, [req.user.userId, dashboardData.activeDashboardId]);
+    
     await db.query('COMMIT');
+    console.log('✅ Successfully saved', uniqueDashboards.length, 'dashboards for user', req.user.userId);
     res.json({ success: true, message: 'Dashboards saved successfully' });
   } catch (error) {
     await db.query('ROLLBACK');
-    console.error('Save dashboard error:', error);
-    res.status(500).json({ error: 'Failed to save dashboards' });
+    console.error('❌ Save dashboard error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail
+    });
+    res.status(500).json({ error: 'Failed to save dashboards', details: error.message });
   }
 });
 

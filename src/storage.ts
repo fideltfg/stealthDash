@@ -50,66 +50,17 @@ export function getDefaultMultiDashboardState(): MultiDashboardState {
   };
 }
 
-// Load multi-dashboard state (v2) or migrate from old format (v1)
+// Load multi-dashboard state - this is now just a wrapper that returns default state
+// Actual loading happens in dashboardStorage.loadDashboards()
 export function loadMultiDashboardState(): MultiDashboardState {
-  try {
-    // Try to load new multi-dashboard format from localStorage
-    const stored = localStorage.getItem(MULTI_DASHBOARD_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as MultiDashboardState;
-      console.log('📂 Loaded dashboard from localStorage:', parsed.dashboards.length, 'dashboards');
-      return parsed;
-    }
-
-    // Try to migrate from old single-dashboard format
-    const oldStored = localStorage.getItem(STORAGE_KEY);
-    if (oldStored) {
-      console.log('🔄 Migrating from v1 to v2 format...');
-      const oldState = JSON.parse(oldStored) as DashboardState;
-      const dashboard: Dashboard = {
-        id: generateUUID(),
-        name: 'Main Dashboard',
-        state: oldState,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      
-      const multiState: MultiDashboardState = {
-        dashboards: [dashboard],
-        activeDashboardId: dashboard.id,
-        version: CURRENT_VERSION
-      };
-      
-      // Save migrated state
-      saveMultiDashboardState(multiState);
-      
-      // Keep a backup of the old data instead of deleting it
-      localStorage.setItem(STORAGE_KEY + '.backup', oldStored);
-      
-      // Remove old storage key
-      localStorage.removeItem(STORAGE_KEY);
-      
-      console.log('✅ Migrated dashboard data from v1 to v2. Backup saved as dashboard.v1.backup');
-      
-      return multiState;
-    }
-
-    console.log('🆕 No existing dashboard found, creating default');
-    return getDefaultMultiDashboardState();
-  } catch (error) {
-    console.error('❌ Failed to load dashboard state:', error);
-    return getDefaultMultiDashboardState();
-  }
+  console.log('⚠️  loadMultiDashboardState called - this should only be used for initial state');
+  return getDefaultMultiDashboardState();
 }
 
+// saveMultiDashboardState is now a no-op - saving happens via dashboardStorage.saveDashboards()
 export function saveMultiDashboardState(state: MultiDashboardState): void {
-  try {
-    const toSave = { ...state, version: CURRENT_VERSION };
-    localStorage.setItem(MULTI_DASHBOARD_KEY, JSON.stringify(toSave));
-    console.log('💾 Saved dashboard to localStorage:', state.dashboards.length, 'dashboards');
-  } catch (error) {
-    console.error('❌ Failed to save dashboard state:', error);
-  }
+  console.log('⚠️  saveMultiDashboardState called - localStorage saving is disabled, use dashboardStorage.saveDashboards() instead');
+  // Do nothing - all saves should go through the server
 }
 
 // Legacy functions for backward compatibility

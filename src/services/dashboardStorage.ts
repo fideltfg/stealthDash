@@ -1,14 +1,10 @@
 import type { MultiDashboardState } from '../types';
 import { authService } from './auth';
-import { 
-  loadMultiDashboardState as loadFromLocalStorage,
-  saveMultiDashboardState as saveToLocalStorage
-} from '../storage';
+import { getDefaultMultiDashboardState } from '../storage';
 
 /**
- * Unified dashboard storage service that manages both server and local storage.
- * Server storage is the primary source of truth when authenticated.
- * Local storage is used as a fallback and for offline support.
+ * Dashboard storage service - server only (no localStorage).
+ * Server storage is the single source of truth when authenticated.
  */
 class DashboardStorageService {
   private saveTimeout: number | undefined;
@@ -17,7 +13,7 @@ class DashboardStorageService {
   private readonly MIN_SAVE_INTERVAL_MS = 5000; // Minimum 5 seconds between saves
 
   /**
-   * Load dashboard state from server if authenticated, otherwise from local storage
+   * Load dashboard state from server (no localStorage fallback)
    */
   async loadDashboards(): Promise<MultiDashboardState> {
     if (authService.isAuthenticated()) {
@@ -27,47 +23,54 @@ class DashboardStorageService {
         
         if (serverData && serverData.dashboards && serverData.dashboards.length > 0) {
           console.log('✅ Loaded', serverData.dashboards.length, 'dashboards from server');
-          
-          // Save to localStorage as backup
-          saveToLocalStorage(serverData);
-          
           return serverData;
         } else {
-          console.log('⚠️  No dashboards on server, checking localStorage...');
-          const localData = loadFromLocalStorage();
-          
-          // If we have local data, upload it to server
-          if (localData.dashboards.length > 0) {
-            console.log('📤 Uploading', localData.dashboards.length, 'dashboards from localStorage to server');
-            await this.saveDashboards(localData, true); // Force immediate save
-          }
-          
-          return localData;
+          console.log('⚠️  No dashboards on server, creating default');
+          const defaultState = getDefaultMultiDashboardState();
+          // Save the default to server
+          await this.saveDashboards(defaultState, true);
+          return defaultState;
         }
       } catch (error) {
-        console.error('❌ Failed to load from server, falling back to localStorage:', error);
-        return loadFromLocalStorage();
+        console.error('❌ Failed to load from server:', error);
+        return getDefaultMultiDashboardState();
       }
     } else {
-      console.log('📂 Loading dashboards from localStorage (not authenticated)');
-      return loadFromLocalStorage();
+      console.log('⚠️  Not authenticated, returning default state');
+      return getDefaultMultiDashboardState();
     }
   }
 
   /**
-   * Save dashboard state to both server (if authenticated) and local storage
+   * Save dashboard state to server only (no localStorage)
    */
   async saveDashboards(state: MultiDashboardState, immediate: boolean = false): Promise<void> {
-    // Always save to localStorage immediately
-    saveToLocalStorage(state);
+    // Deduplicate dashboards before saving
+    const dashboardMap = new Map();
+    for (const dashboard of state.dashboards) {
+      dashboardMap.set(dashboard.id, dashboard);
+    }
+    const uniqueDashboards = Array.from(dashboardMap.values());
+    
+    // Log if we found duplicates
+    if (uniqueDashboards.length !== state.dashboards.length) {
+      console.warn('⚠️  Found and removed', state.dashboards.length - uniqueDashboards.length, 'duplicate dashboards before saving');
+    }
+    
+    const cleanState = {
+      ...state,
+      dashboards: uniqueDashboards
+    };
     
     // Save to server if authenticated
     if (authService.isAuthenticated()) {
       if (immediate) {
-        await this.saveToServerNow(state);
+        await this.saveToServerNow(cleanState);
       } else {
-        this.debouncedSaveToServer(state);
+        this.debouncedSaveToServer(cleanState);
       }
+    } else {
+      console.warn('⚠️  Not authenticated, cannot save to server');
     }
   }
 
@@ -117,18 +120,15 @@ class DashboardStorageService {
   }
 
   /**
-   * Delete a dashboard from both server and local storage
+   * Delete a dashboard from server only (no localStorage)
    */
   async deleteDashboard(dashboardId: string, state: MultiDashboardState): Promise<boolean> {
-    // Save updated state locally first
-    saveToLocalStorage(state);
-    
     // Delete from server if authenticated
     if (authService.isAuthenticated()) {
       try {
         const success = await authService.deleteDashboard(dashboardId);
         if (!success) {
-          console.warn('⚠️  Failed to delete dashboard from server (deleted from localStorage only)');
+          console.warn('⚠️  Failed to delete dashboard from server');
         }
         return success;
       } catch (error) {
@@ -137,7 +137,7 @@ class DashboardStorageService {
       }
     }
     
-    return true; // Local-only mode
+    return false; // Cannot delete without authentication
   }
 
   /**
@@ -150,8 +150,8 @@ class DashboardStorageService {
 
     try {
       console.log('🔄 Syncing with server...');
-      const localState = loadFromLocalStorage();
-      await this.saveToServerNow(localState);
+      // Load fresh data from server
+      await this.loadDashboards();
       console.log('✅ Sync complete');
       return true;
     } catch (error) {
