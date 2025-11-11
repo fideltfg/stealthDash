@@ -1272,7 +1272,8 @@ class Dashboard {
     
     // Fetch widget metadata from server (no need to load widget code)
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/widgets/metadata`);
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/widgets/metadata`);
       const data = await response.json();
       
       if (!data.success) {
@@ -1319,7 +1320,6 @@ class Dashboard {
       console.error('Failed to load widget metadata:', error);
       types.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
     }
-    });
     
     modal.appendChild(header);
     modal.appendChild(types);
