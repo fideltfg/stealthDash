@@ -5,9 +5,120 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
   <meta name="description" content="A web-based dashboard with draggable, resizable widgets">
+  <style>
+    /* Loading screen styles */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid #4a9eff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .loading-dots {
+      display: inline-block;
+      width: 20px;
+      text-align: left;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+    
+    .loading-dots::after {
+      content: '.';
+      animation: dots 1.5s infinite;
+    }
+    
+    /* Hide app initially */
+    #app {
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+    
+    #app.loaded {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">Loading Dashboard<span class="loading-dots"></span></div>
+  </div>
+  
+  <!-- Main App -->
   <div id="app"></div>
+  
   <script type="module" src="/src/main.ts"></script>
+  
+  <script>
+    // Remove loading screen once app is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      // Wait for the app to signal it's ready, or timeout after 5 seconds
+      const maxLoadTime = 5000;
+      const checkInterval = 100;
+      let elapsed = 0;
+      
+      const checkLoaded = setInterval(() => {
+        const app = document.getElementById('app');
+        const loadingScreen = document.getElementById('loading-screen');
+        
+        // Check if app has content or timeout reached
+        if (app.children.length > 0 || elapsed >= maxLoadTime) {
+          clearInterval(checkLoaded);
+          
+          // Fade out loading screen
+          loadingScreen.classList.add('fade-out');
+          app.classList.add('loaded');
+          
+          // Remove loading screen from DOM after animation
+          setTimeout(() => {
+            loadingScreen.remove();
+          }, 500);
+        }
+        
+        elapsed += checkInterval;
+      }, checkInterval);
+    });
+  </script>
 </body>
 </html>
