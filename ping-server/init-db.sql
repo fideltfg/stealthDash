@@ -99,6 +99,21 @@ CREATE TRIGGER trigger_single_active_dashboard
     WHEN (NEW.is_active = true)
     EXECUTE FUNCTION ensure_single_active_dashboard();
 
+-- For any existing dashboards (in case of upgrades), ensure one is marked active per user
+-- This is safe for new installations as the table will be empty
+UPDATE dashboards d1
+SET is_active = true
+WHERE id = (
+    SELECT MIN(id) 
+    FROM dashboards d2 
+    WHERE d2.user_id = d1.user_id
+)
+AND NOT EXISTS (
+    SELECT 1 FROM dashboards d3 
+    WHERE d3.user_id = d1.user_id 
+    AND d3.is_active = true
+);
+
 -- Insert default admin user if no users exist
 -- Default credentials: username=admin, password=admin123
 -- IMPORTANT: Change this password immediately after first login!
