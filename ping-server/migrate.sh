@@ -30,9 +30,12 @@ echo "👤 User: $DB_USER"
 echo ""
 
 # Check if migration file exists
-MIGRATION_FILE="migrations/001_multi_dashboard_support.sql"
+MIGRATION_FILE="migrations/001_multi_dashboard_support.sql.applied"
 if [ ! -f "$MIGRATION_FILE" ]; then
     echo "❌ Error: Migration file not found: $MIGRATION_FILE"
+    echo ""
+    echo "ℹ️  Note: For new installations, use init-db.sql instead:"
+    echo "   psql -U $DB_USER -d $DB_NAME -f init-db.sql"
     exit 1
 fi
 

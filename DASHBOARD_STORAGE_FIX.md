@@ -69,15 +69,43 @@ Created `DashboardStorageService` that:
 
 ## Migration Steps
 
-### Server Side
+### For New Installations
 
-1. **Run Database Migration:**
+If you're setting up a fresh database, the migration is already included in `init-db.sql`:
+
+```bash
+cd /home/concordia/Dashboard/ping-server
+psql -U your_db_user -d your_db_name -f init-db.sql
+```
+
+This will create all tables with multi-dashboard support built-in.
+
+### For Existing Databases (Upgrade)
+
+If you have an existing database that needs to be upgraded:
+
+1. **Backup your database:**
    ```bash
-   cd /home/concordia/Dashboard/ping-server
-   psql -U your_db_user -d your_db_name -f migrations/001_multi_dashboard_support.sql
+   pg_dump -U your_db_user -d your_db_name > backup_$(date +%Y%m%d_%H%M%S).sql
    ```
 
-2. **Restart ping-server:**
+2. **Run the migration:**
+   ```bash
+   cd /home/concordia/Dashboard/ping-server
+   
+   # Option 1: Use the migration script
+   ./migrate.sh
+   
+   # Option 2: Run manually
+   psql -U your_db_user -d your_db_name -f migrations/001_multi_dashboard_support.sql.applied
+   ```
+
+3. **Verify the migration:**
+   ```bash
+   psql -U your_db_user -d your_db_name -c "\d dashboards"
+   ```
+
+4. **Restart ping-server:**
    ```bash
    pm2 restart ping-server
    # or
