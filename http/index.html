@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
   <meta name="description" content="A web-based dashboard with draggable, resizable widgets">
-  
+
   <!-- Load CSS files directly for faster initial render -->
   <link rel="stylesheet" href="/src/css/style.css">
-  <link rel="stylesheet" href="/src/css/custom.css">
-  
+
   <style>
     /* Loading screen styles - must load after main CSS to ensure animations work */
     #loading-screen {
@@ -26,12 +26,12 @@
       z-index: 9999;
       transition: opacity 0.5s ease-out;
     }
-    
+
     #loading-screen.fade-out {
       opacity: 0;
       pointer-events: none;
     }
-    
+
     .loader {
       width: 60px;
       height: 60px;
@@ -40,12 +40,17 @@
       border-radius: 50%;
       animation: spin 1s linear infinite !important;
     }
-    
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
-    
+
     .loading-text {
       margin-top: 20px;
       color: #ffffff;
@@ -54,65 +59,77 @@
       font-weight: 500;
       letter-spacing: 0.5px;
     }
-    
+
     .loading-dots {
       display: inline-block;
       width: 20px;
       text-align: left;
     }
-    
+
     @keyframes dots {
-      0%, 20% { content: '.'; }
-      40% { content: '..'; }
-      60%, 100% { content: '...'; }
+
+      0%,
+      20% {
+        content: '.';
+      }
+
+      40% {
+        content: '..';
+      }
+
+      60%,
+      100% {
+        content: '...';
+      }
     }
-    
+
     .loading-dots::after {
       content: '.';
       animation: dots 1.5s infinite;
     }
-    
+
     /* Hide app initially */
     #app {
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
-    
+
     #app.loaded {
       opacity: 1;
     }
   </style>
 </head>
+
 <body>
   <!-- Loading Screen -->
   <div id="loading-screen">
     <div class="loader"></div>
     <div class="loading-text">Loading Dashboard<span class="loading-dots"></span></div>
   </div>
-  
+
   <!-- Main App -->
   <div id="app"></div>
-  
+
   <script type="module" src="/src/main.ts"></script>
-  
+
   <script>
     // Global function to hide loading screen - called by dashboard when ready
-    window.hideLoadingScreen = function() {
+    window.hideLoadingScreen = function () {
       const loadingScreen = document.getElementById('loading-screen');
       const app = document.getElementById('app');
-      
+
       if (loadingScreen) {
         // Fade out loading screen
         loadingScreen.classList.add('fade-out');
         app.classList.add('loaded');
-        
+
         // Remove loading screen from DOM after animation
         setTimeout(() => {
           loadingScreen.remove();
         }, 500);
       }
     };
-    
+
     // Fallback timeout in case dashboard fails to load
     setTimeout(() => {
       if (document.getElementById('loading-screen')) {
@@ -122,4 +139,5 @@
     }, 10000); // 10 second timeout
   </script>
 </body>
+
 </html>

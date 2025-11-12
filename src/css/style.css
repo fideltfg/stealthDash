@@ -532,6 +532,703 @@ body {
   pointer-events: none !important;
 }
 
+/* ==================== AUTH UI STYLES ==================== */
+
+#auth-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.auth-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  min-width: 400px;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.auth-title {
+  margin: 0 0 30px 0;
+  text-align: center;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 12px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition-speed);
+}
+
+.auth-tab.active {
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-weight: bold;
+}
+
+.auth-tab:hover:not(.active) {
+  background: var(--hover);
+  transform: translateY(-1px);
+}
+
+.auth-form {
+  display: block;
+}
+
+.auth-form.hidden {
+  display: none;
+}
+
+.auth-form-group {
+  margin-bottom: 20px;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 16px;
+  transition: border-color var(--transition-speed);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+
+.auth-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity var(--transition-speed);
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all var(--transition-speed);
+}
+
+.auth-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.auth-button:active {
+  transform: translateY(0);
+}
+
+.auth-error {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid #f44336;
+  color: #f44336;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: none;
+}
+
+.auth-error.visible {
+  display: block;
+}
+
+/* ==================== USER MENU STYLES ==================== */
+
+.user-menu {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: calc(var(--z-fab) + 3);
+}
+
+.user-avatar-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--border);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all var(--transition-speed);
+  position: relative;
+}
+
+.user-avatar-button:hover {
+  transform: scale(1.1);
+}
+
+.user-dropdown {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  min-width: 200px;
+  display: none;
+  z-index: 1000;
+}
+
+.user-dropdown.visible {
+  display: block;
+}
+
+.user-dropdown-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background var(--transition-speed);
+}
+
+.user-dropdown-button:hover {
+  background: var(--hover);
+}
+
+.user-dropdown-button:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.user-dropdown-button:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.user-dropdown-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ==================== SETTINGS DIALOG STYLES ==================== */
+
+.settings-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100001;
+}
+
+.settings-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 30px;
+  min-width: 500px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.settings-title {
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  color: var(--text);
+}
+
+.settings-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 28px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all var(--transition-speed);
+}
+
+.settings-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.settings-section {
+  margin-bottom: 25px;
+}
+
+.settings-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--text);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-field {
+  margin-bottom: 15px;
+}
+
+.settings-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.settings-input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color var(--transition-speed);
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-button {
+  padding: 10px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-speed);
+}
+
+.settings-button:hover {
+  filter: brightness(1.1);
+}
+
+.settings-button:active {
+  transform: scale(0.98);
+}
+
+.settings-button-secondary {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.settings-message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  display: none;
+}
+
+.settings-message.visible {
+  display: block;
+}
+
+.settings-message.success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid #4CAF50;
+  color: #4CAF50;
+}
+
+.settings-message.error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #f44336;
+}
+
+/* ==================== CREDENTIALS UI STYLES ==================== */
+
+.credentials-list-item {
+  padding: 15px;
+  background: var(--hover);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background var(--transition-speed);
+}
+
+.credentials-list-item:hover {
+  background: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.credential-info {
+  flex: 1;
+}
+
+.credential-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.credential-type {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.credential-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.credential-action-btn {
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all var(--transition-speed);
+}
+
+.credential-action-btn:hover {
+  background: var(--hover);
+  transform: translateY(-1px);
+}
+
+.credential-action-btn.delete:hover {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: #f44336;
+  color: #f44336;
+}
+
+/* ==================== NOTIFICATION STYLES ==================== */
+
+.notification {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px var(--shadow);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  border-left: 4px solid #4CAF50;
+}
+
+.notification.error {
+  border-left: 4px solid #f44336;
+}
+
+.notification-icon {
+  font-size: 24px;
+}
+
+.notification-message {
+  flex: 1;
+  color: var(--text);
+  font-size: 14px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+/* ==================== WIDGET-SPECIFIC STYLES ==================== */
+
+/* Text Widget */
+.text-widget-textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* Data Widget */
+.data-widget-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.data-widget-textarea {
+  width: 100%;
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* Image Widget */
+.image-widget img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ==================== CUSTOM.CSS STYLES (MERGED) ==================== */
+
+.loadingDiv {
+  opacity: 0.5;
+  font-size: 14px;
+  text-align: center;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.device-info {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 2px;
+}
+
+.errorDiv {
+  color: #f44336;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.gauge-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 10px 0;
+  width: 100%;
+}
+
+.text-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  width: 100%;
+}
+
+.gauge-container {
+  width: 100%;
+  max-width: 300px;
+  height: 150px;
+  min-height: 150px;
+}
+
+.gauge-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.alarm-div {
+  margin-top: 10px;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  margin-bottom: 10px;
+}
+
+.alarm-flash-hot {
+  animation: flash-hot 1s infinite;
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.alarm-flash-cold {
+  animation: flash-cold 1s infinite;
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+}
+
+.alarm-flash-error {
+  animation: flash-error 1s infinite;
+  background-color: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+@keyframes flash-hot {
+  0% {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+  }
+  50% {
+    background-color: rgba(244, 67, 54, 0.9);
+    color: white;
+  }
+  100% {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+  }
+}
+
+@keyframes flash-cold {
+  0% {
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+  }
+  50% {
+    background-color: rgba(33, 150, 243, 0.9);
+    color: white;
+  }
+  100% {
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+  }
+}
+
+@keyframes flash-error {
+  0% {
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+  50% {
+    background-color: rgba(244, 67, 54, 1);
+    color: white;
+  }
+  100% {
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+}
+
+/* ==================== LOCKED STATE ==================== */
+
 #app.locked .lock-toggle {
   display: flex !important;
 }
@@ -562,7 +1259,7 @@ body {
   pointer-events: auto;
 }
 
-/* Modal */
+/* ====================MODAL ==================== */
 .modal-overlay {
   position: fixed;
   top: 0;
