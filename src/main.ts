@@ -9,8 +9,6 @@ import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
 import { CredentialsUI } from './components/CredentialsUI';
-import './css/style.css';
-import './css/custom.css';
 
 class Dashboard {
   private state: DashboardState;
