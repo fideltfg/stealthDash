@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/src/css/custom.css">
   
   <style>
-    /* Loading screen styles */
+    /* Loading screen styles - must load after main CSS to ensure animations work */
     #loading-screen {
       position: fixed;
       top: 0;
@@ -38,7 +38,7 @@
       border: 4px solid rgba(255, 255, 255, 0.1);
       border-top: 4px solid #4a9eff;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 1s linear infinite !important;
     }
     
     @keyframes spin {
