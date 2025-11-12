@@ -13,10 +13,11 @@ export class AuthUI {
   showLoginDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'auth-dialog';
+    dialog.className = 'dialog';
 
     dialog.innerHTML = `
-      <div class="auth-container">
-        <h2 class="auth-title">
+      <div class="dialog-container auth-container">
+        <h2 class="dialog-title auth-title">
           🔐 Dashboard Login
         </h2>
         
@@ -27,39 +28,39 @@ export class AuthUI {
 
         <!-- Login Form -->
         <div id="login-form" class="auth-form">
-          <div class="auth-form-group">
-            <label class="auth-label">Username</label>
-            <input type="text" id="login-username" class="auth-input">
+          <div class="form-group auth-form-group">
+            <label class="form-label auth-label">Username</label>
+            <input type="text" id="login-username" class="form-input auth-input">
           </div>
-          <div class="auth-form-group">
-            <label class="auth-label">Password</label>
-            <input type="password" id="login-password" class="auth-input">
+          <div class="form-group auth-form-group">
+            <label class="form-label auth-label">Password</label>
+            <input type="password" id="login-password" class="form-input auth-input">
           </div>
-          <div class="auth-form-group auth-form-group-right">
+          <div class="form-group auth-form-group auth-form-group-right">
             <a href="#" id="forgot-password-link" class="auth-link">Forgot Password?</a>
           </div>
-          <button id="login-btn" class="auth-button">Login</button>
+          <button id="login-btn" class="btn btn-primary btn-full auth-button">Login</button>
         </div>
 
         <!-- Register Form -->
         <div id="register-form" class="auth-form hidden">
-          <div class="auth-form-group">
-            <label class="auth-label">Username</label>
-            <input type="text" id="register-username" class="auth-input">
+          <div class="form-group auth-form-group">
+            <label class="form-label auth-label">Username</label>
+            <input type="text" id="register-username" class="form-input auth-input">
           </div>
-          <div class="auth-form-group">
-            <label class="auth-label">Email</label>
-            <input type="email" id="register-email" class="auth-input">
+          <div class="form-group auth-form-group">
+            <label class="form-label auth-label">Email</label>
+            <input type="email" id="register-email" class="form-input auth-input">
           </div>
-          <div class="auth-form-group">
-            <label class="auth-label">Password</label>
-            <input type="password" id="register-password" class="auth-input">
-            <small class="auth-hint">Minimum 6 characters</small>
+          <div class="form-group auth-form-group">
+            <label class="form-label auth-label">Password</label>
+            <input type="password" id="register-password" class="form-input auth-input">
+            <small class="form-hint auth-hint">Minimum 6 characters</small>
           </div>
-          <button id="register-btn" class="auth-button">Create Account</button>
+          <button id="register-btn" class="btn btn-primary btn-full auth-button">Create Account</button>
         </div>
 
-        <div id="auth-error" class="auth-error"></div>
+        <div id="auth-error" class="message message-error auth-error"></div>
 
         <div class="auth-footer-note">
           Your dashboard data will be saved to your account
