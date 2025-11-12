@@ -2,6 +2,9 @@
 
 A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 15+ widget types.
 
+
+![Dashboard Screenshot](./media/dashboard.v1.png)
+
 ## Features
 
 - 🎯 **Zero-Chrome UI** - No sidebars or menus, just floating controls
