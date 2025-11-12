@@ -97,7 +97,6 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 
 **Delete Widget**
 - Click the ✕ button on widget header
-- Or select widget and press Delete/Backspace key
 
 ### Keyboard Shortcuts
 
@@ -109,7 +108,6 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 | `Shift + Arrow` | Move widget 10x faster |
 | `Alt + Arrow` | Resize selected widget |
 | `Escape` | Deselect widget |
-| `Delete` / `Backspace` | Delete selected widget |
 | `Tab` | Navigate UI controls |
 
 ### Themes & Backgrounds

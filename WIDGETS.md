@@ -13,32 +13,6 @@ Complete guide to configuring and using all available dashboard widgets.
 
 ## Core Widgets
 
-### Text Widget
-
-Markdown editor with live preview for notes and documentation.
-
-**Features:**
-- Full markdown support (headings, lists, links, code)
-- Live preview
-- Syntax highlighting for code blocks
-- Auto-save
-
-**Configuration:**
-- No additional setup required
-- Just start typing in the editor
-
-**Usage:**
-```markdown
-# My Notes
-
-- Task 1
-- Task 2
-
-**Important:** Remember to check logs
-```
-
----
-
 ### Image Widget
 
 Display images from URLs with various fit modes.
@@ -62,31 +36,6 @@ Display images from URLs with various fit modes.
 ```
 https://example.com/image.jpg
 https://picsum.photos/400/300
-```
-
----
-
-### Data Widget
-
-Display JSON data with syntax highlighting.
-
-**Features:**
-- Automatic JSON formatting
-- Syntax highlighting
-- Collapsible objects/arrays
-- Copy to clipboard
-
-**Configuration:**
-1. Paste or type JSON data
-2. Widget auto-formats
-
-**Example:**
-```json
-{
-  "status": "online",
-  "users": 42,
-  "uptime": "99.9%"
-}
 ```
 
 ---
@@ -580,9 +529,7 @@ Want to create your own widget? See the development guide:
 
 | Widget | Icon | Type |
 |--------|------|------|
-| Text | 📝 | Core |
 | Image | 🖼️ | Core |
-| Data | 📊 | Core |
 | Embed | 🌐 | Core |
 | Uptime | 🏓 | Monitoring |
 | Clock | 🕐 | Monitoring |

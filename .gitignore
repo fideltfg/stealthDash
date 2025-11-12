@@ -19,3 +19,4 @@ dist
 
 # Docker volumes (if any)
 volumes/
+copilot-instructions.md
