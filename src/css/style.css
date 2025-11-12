@@ -67,13 +67,11 @@
 }
 
 /* Custom Scrollbars */
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
 
-/* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -370,7 +368,6 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  /* Disabled auto scrolling - use drag to pan instead */
   position: relative;
   cursor: grab;
   transition: background 300ms ease;
@@ -531,7 +528,6 @@ body {
   opacity: 0;
   transition: opacity var(--transition-speed);
   z-index: 10;
-  /* Ensure handles are above widget content */
 }
 
 .widget.selected .resize-handle {
@@ -550,9 +546,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 60px;
-  /* Increased from 40px */
   height: 12px;
-  /* Increased from 8px */
   cursor: ns-resize;
 }
 
@@ -560,21 +554,16 @@ body {
   top: -6px;
 }
 
-/* Adjusted for larger size */
 .resize-s {
   bottom: -6px;
 }
-
-/* Adjusted for larger size */
 
 .resize-e,
 .resize-w {
   top: 50%;
   transform: translateY(-50%);
   width: 12px;
-  /* Increased from 8px */
   height: 60px;
-  /* Increased from 40px */
   cursor: ew-resize;
 }
 
@@ -582,52 +571,39 @@ body {
   right: -6px;
 }
 
-/* Adjusted for larger size */
 .resize-w {
   left: -6px;
 }
-
-/* Adjusted for larger size */
 
 .resize-ne,
 .resize-nw,
 .resize-se,
 .resize-sw {
   width: 16px;
-  /* Increased from 12px */
   height: 16px;
-  /* Increased from 12px */
 }
 
 .resize-ne {
   top: -8px;
-  /* Adjusted for larger size */
   right: -8px;
-  /* Adjusted for larger size */
   cursor: nesw-resize;
 }
 
 .resize-nw {
   top: -8px;
-  /* Adjusted for larger size */
   left: -8px;
-  /* Adjusted for larger size */
   cursor: nwse-resize;
 }
 
 .resize-se {
   bottom: -8px;
-  /* Adjusted for larger size */
   right: -8px;
-  /* Adjusted for larger size */
   cursor: nwse-resize;
 }
 
 .resize-sw {
   bottom: -8px;
-  /* Adjusted for larger size */
   left: -8px;
-  /* Adjusted for larger size */
   cursor: nesw-resize;
 }
 
@@ -657,13 +633,11 @@ body {
   left: 0;
 }
 
-/* FAB (Floating Action Button) */
-/* Menu Button (Hamburger) */
+/* FAB and Menu Controls */
 .menu-button {
   position: fixed;
   bottom: 24px;
   left: 72px;
-  /* Position to the right of user avatar button (24px + 40px + 8px gap) */
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -704,13 +678,11 @@ body {
   z-index: calc(var(--z-fab) + 1);
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: 40px;
-  /* Match button height */
   align-items: center;
 }
 
 .controls-container.open {
   left: 120px;
-  /* Position to the right of menu button (72px + 40px + 8px gap) */
 }
 
 /* Lock Toggle (top-right, replaces user button when locked) */
@@ -771,7 +743,6 @@ body {
   outline-offset: 2px;
 }
 
-/* Individual button adjustments */
 .fab {
   font-size: 20px !important;
   background: var(--accent) !important;
@@ -1141,7 +1112,6 @@ body {
   margin: 10px 0 0 0;
 }
 
-/* Credential Form Dialog */
 .credential-form-container {
   min-width: 600px;
   max-width: 700px;
@@ -1369,7 +1339,6 @@ body {
 
 /* ==================== WIDGET-SPECIFIC STYLES ==================== */
 
-/* Text Widget */
 .text-widget-textarea {
   width: 100%;
   height: 100%;
@@ -1383,7 +1352,6 @@ body {
   padding: 0;
 }
 
-/* Data Widget */
 .data-widget-container {
   height: 100%;
   display: flex;
@@ -1403,7 +1371,6 @@ body {
   padding: 0;
 }
 
-/* Image Widget */
 .image-widget img {
   width: 100%;
   height: 100%;
@@ -1658,7 +1625,6 @@ body {
   outline: 2px solid var(--ring);
 }
 
-/* Widget Type List (Table Style) */
 .widget-types {
   display: flex;
   flex-direction: column;
@@ -1729,7 +1695,6 @@ body {
   line-height: 1.4;
 }
 
-/* Widget Content Types */
 .text-widget {
   line-height: 1.6;
 }
@@ -1787,7 +1752,6 @@ body {
   border: none;
 }
 
-/* Editable Content */
 .editable {
   outline: none;
   min-height: 40px;
@@ -1798,13 +1762,11 @@ body {
   border-radius: 4px;
 }
 
-/* Focus Visible */
 *:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1839,7 +1801,6 @@ body {
   }
 }
 
-/* Utility Classes */
 .sr-only {
   position: absolute;
   width: 1px;
