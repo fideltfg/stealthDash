@@ -1,7 +1,7 @@
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 import type { WidgetRenderer } from './base';
-import { credentialsService } from '../../services/credentials';
-import { authService } from '../../services/auth';
+import { credentialsService } from '../services/credentials';
+import { authService } from '../services/auth';
 
 interface GoogleCalendarContent {
   calendarId?: string; // Google Calendar ID (deprecated - use credentialId)

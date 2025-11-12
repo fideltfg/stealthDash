@@ -110,10 +110,7 @@ body {
 /* Shared Dialog Styles */
 .dialog {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
@@ -352,7 +349,7 @@ body {
 }
 
 .section-title {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   font-size: 18px;
   font-weight: 600;
   color: var(--text);
@@ -441,9 +438,7 @@ body {
 
 .widget-header {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   padding: 8px 12px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -492,9 +487,13 @@ body {
   opacity: 0.6;
 }
 
+.widget-settings-btn:hover,
+.widget-delete-btn:hover {
+  opacity: 1;
+}
+
 .widget-settings-btn:hover {
   background: var(--hover);
-  opacity: 1;
 }
 
 .widget-delete-btn {
@@ -504,7 +503,6 @@ body {
 .widget-delete-btn:hover {
   background: rgba(255, 59, 48, 0.1);
   color: #ff3b30;
-  opacity: 1;
 }
 
 .widget-settings-btn:active,
@@ -634,10 +632,9 @@ body {
 }
 
 /* FAB and Menu Controls */
-.menu-button {
+.menu-button,
+.lock-toggle {
   position: fixed;
-  bottom: 24px;
-  left: 72px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -649,16 +646,29 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  z-index: calc(var(--z-fab) + 2);
   box-shadow: 0 2px 8px var(--shadow);
   transition: transform var(--transition-speed);
 }
 
-.menu-button:hover {
+.menu-button {
+  bottom: 24px;
+  left: 72px;
+  z-index: calc(var(--z-fab) + 2);
+}
+
+.lock-toggle {
+  top: 24px;
+  right: 24px;
+  z-index: var(--z-fab);
+}
+
+.menu-button:hover,
+.lock-toggle:hover {
   transform: scale(1.1);
 }
 
-.menu-button:focus {
+.menu-button:focus,
+.lock-toggle:focus {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -683,36 +693,6 @@ body {
 
 .controls-container.open {
   left: 120px;
-}
-
-/* Lock Toggle (top-right, replaces user button when locked) */
-.lock-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  z-index: var(--z-fab);
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: transform var(--transition-speed);
-}
-
-.lock-toggle:hover {
-  transform: scale(1.1);
-}
-
-.lock-toggle:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 
 /* Shared button styles for controls */
@@ -775,17 +755,13 @@ body {
   font-size: 18px;
 }
 
-/* Locked State - Hide menu button and user menu, show lock button */
+/* Locked State */
 #app.locked .menu-button,
 #app.locked .controls-container,
 #app.locked .resize-handle,
 #app.locked .widget-header,
 #app.locked .widget-settings-btn,
-#app.locked .widget-delete-btn {
-  display: none !important;
-}
-
-/* Hide user menu when locked, show lock button */
+#app.locked .widget-delete-btn,
 #app.locked .user-menu {
   display: none !important;
   pointer-events: none !important;
@@ -871,8 +847,7 @@ body {
 
 .user-menu {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
+  inset: auto auto 24px 24px;
   z-index: calc(var(--z-fab) + 3);
 }
 
@@ -935,13 +910,11 @@ body {
 }
 
 .user-dropdown-button:first-child {
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  border-radius: 8px 8px 0 0;
 }
 
 .user-dropdown-button:last-child {
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-radius: 0 0 8px 8px;
 }
 
 .user-dropdown-separator {
@@ -1153,8 +1126,7 @@ body {
 
 .credential-notification {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  inset: 20px 20px auto auto;
   padding: 16px 24px;
   border-radius: 8px;
   font-size: 16px;
@@ -1179,7 +1151,7 @@ body {
 }
 
 .recovery-title-error {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: #f44336;
 }
 
@@ -1188,7 +1160,7 @@ body {
 }
 
 .recovery-description {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
 }
@@ -1207,7 +1179,7 @@ body {
 }
 
 .recovery-error-text {
-  margin: 0 0 30px 0;
+  margin: 0 0 30px;
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -1435,7 +1407,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0);
+  background: transparent;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   width: 100%;
@@ -1567,10 +1539,7 @@ body {
 /* ====================MODAL & WIDGET CONTENT ==================== */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;

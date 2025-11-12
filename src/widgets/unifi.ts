@@ -1,7 +1,7 @@
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 import type { WidgetRenderer } from './base';
-import { credentialsService } from '../../services/credentials';
-import { authService } from '../../services/auth';
+import { credentialsService } from '../services/credentials';
+import { authService } from '../services/auth';
 
 interface UnifiContent {
   host: string; // UniFi Controller host (e.g., 'https://192.168.1.1:8443')

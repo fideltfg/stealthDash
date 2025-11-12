@@ -1,4 +1,4 @@
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 
 export interface WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void;

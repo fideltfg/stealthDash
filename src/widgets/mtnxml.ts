@@ -1,4 +1,4 @@
-import type { Widget, WidgetContent } from '../../types';
+import type { Widget, WidgetContent } from '../types';
 import type { WidgetRenderer } from './base';
 
 export interface MTNXMLContent extends WidgetContent {

@@ -7,32 +7,40 @@ This directory contains a modular, plugin-like architecture for dashboard widget
 ```
 widgets/
 ├── widget.ts              # Main widget utilities and orchestration
-└── types/                 # Widget type implementations
-    ├── index.ts           # Widget registry and plugin loader
-    ├── base.ts            # Base interface for widget renderers
-    ├── text.ts            # Text widget renderer
-    ├── image.ts           # Image widget renderer
-    ├── data.ts            # JSON data widget renderer
-    ├── embed.ts           # Embed (iframe) widget renderer
-    ├── weather.ts         # Weather widget renderer
-    ├── clock.ts           # Clock widget renderer
-    └── timezones.ts       # IANA timezone database
+├── index.ts               # Widget registry and plugin loader
+├── base.ts                # Base interface for widget renderers
+├── text.ts                # Text widget renderer
+├── image.ts               # Image widget renderer
+├── data.ts                # JSON data widget renderer
+├── embed.ts               # Embed (iframe) widget renderer
+├── uptime.ts              # Uptime monitoring widget
+├── weather.ts             # Weather widget renderer
+├── clock.ts               # Clock widget renderer
+├── chatgpt.ts             # ChatGPT integration widget
+├── rss.ts                 # RSS feed widget
+├── pihole.ts              # Pi-hole statistics widget
+├── unifi.ts               # UniFi network widget
+├── home-assistant.ts      # Home Assistant integration
+├── google-calendar.ts     # Google Calendar widget
+├── envcanada.ts           # Environment Canada weather
+├── mtnxml.ts              # MTN XML parser widget
+├── comet-p8541.ts         # Comet P8541 sensor widget
+└── timezones.ts           # Timezone clock widget
 ```
 
 ## How It Works
 
 ### Widget Registry
 
-All widget renderers are registered in `types/index.ts`:
+All widget renderers are registered in `index.ts`:
 
 ```typescript
-const widgetRenderers: Record<WidgetType, WidgetRenderer> = {
-  text: new TextWidgetRenderer(),
-  image: new ImageWidgetRenderer(),
-  data: new DataWidgetRenderer(),
-  embed: new EmbedWidgetRenderer(),
-  weather: new WeatherWidgetRenderer(),
-  clock: new ClockWidgetRenderer(),
+const widgetModules: Record<string, () => Promise<any>> = {
+  'image': () => import('./image'),
+  'embed': () => import('./embed'),
+  'weather': () => import('./weather'),
+  'clock': () => import('./clock'),
+  // ... more widgets
 };
 ```
 
@@ -48,11 +56,11 @@ export interface WidgetRenderer {
 
 ### Adding a New Widget Type
 
-1. Create a new file in `types/` (e.g., `chart.ts`)
+1. Create a new file in `widgets/` (e.g., `chart.ts`)
 2. Implement the `WidgetRenderer` interface:
 
 ```typescript
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 import type { WidgetRenderer } from './base';
 
 export class ChartWidgetRenderer implements WidgetRenderer {
@@ -62,14 +70,12 @@ export class ChartWidgetRenderer implements WidgetRenderer {
 }
 ```
 
-3. Register it in `types/index.ts`:
+3. Register it in `index.ts`:
 
 ```typescript
-import { ChartWidgetRenderer } from './chart';
-
-const widgetRenderers: Record<WidgetType, WidgetRenderer> = {
+const widgetModules: Record<string, () => Promise<any>> = {
   // ... existing widgets
-  chart: new ChartWidgetRenderer(),
+  'chart': () => import('./chart'),
 };
 ```
 

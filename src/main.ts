@@ -1108,7 +1108,7 @@ class Dashboard {
 
   private async addWidget(type: WidgetType, content: any): Promise<void> {
     // Load the widget module if not already loaded
-    const { loadWidgetModule } = await import('./widgets/types');
+    const { loadWidgetModule } = await import('./widgets');
     await loadWidgetModule(type);
 
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -1660,7 +1660,7 @@ class Dashboard {
     // Load all widget modules needed for current dashboard
     const widgetTypes = this.state.widgets.map(w => w.type);
     if (widgetTypes.length > 0) {
-      const { loadWidgetModules } = await import('./widgets/types');
+      const { loadWidgetModules } = await import('./widgets');
       await loadWidgetModules(widgetTypes);
     }
 

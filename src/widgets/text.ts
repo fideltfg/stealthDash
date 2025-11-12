@@ -1,4 +1,4 @@
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 import type { WidgetRenderer, WidgetPlugin } from './base';
 
 export class TextWidgetRenderer implements WidgetRenderer {

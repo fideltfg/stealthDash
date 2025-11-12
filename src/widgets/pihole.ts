@@ -1,7 +1,7 @@
-import type { Widget } from '../../types';
+import type { Widget } from '../types';
 import type { WidgetRenderer } from './base';
-import { credentialsService } from '../../services/credentials';
-import { authService } from '../../services/auth';
+import { credentialsService } from '../services/credentials';
+import { authService } from '../services/auth';
 
 interface PiholeContent {
   host: string; // Pi-hole host (e.g., 'http://pi.hole' or 'http://192.168.1.100')
