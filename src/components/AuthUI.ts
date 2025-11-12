@@ -13,171 +13,55 @@ export class AuthUI {
   showLoginDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'auth-dialog';
-    dialog.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100000;
-    `;
 
     dialog.innerHTML = `
-      <div style="
-        background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 40px;
-        min-width: 400px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      ">
-        <h2 style="margin: 0 0 30px 0; text-align: center; font-size: 28px;">
+      <div class="auth-container">
+        <h2 class="auth-title">
           🔐 Dashboard Login
         </h2>
         
-        <div id="auth-tabs" style="display: flex; gap: 10px; margin-bottom: 30px;">
-          <button id="login-tab" class="auth-tab active" style="
-            flex: 1;
-            padding: 12px;
-            background: #4CAF50;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-          ">Login</button>
-          <button id="register-tab" class="auth-tab" style="
-            flex: 1;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-          ">Register</button>
+        <div class="auth-tabs">
+          <button id="login-tab" class="auth-tab active">Login</button>
+          <button id="register-tab" class="auth-tab">Register</button>
         </div>
 
         <!-- Login Form -->
         <div id="login-form" class="auth-form">
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Username</label>
-            <input type="text" id="login-username" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            ">
+          <div class="auth-form-group">
+            <label class="auth-label">Username</label>
+            <input type="text" id="login-username" class="auth-input">
           </div>
-          <div style="margin-bottom: 25px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Password</label>
-            <input type="password" id="login-password" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            ">
+          <div class="auth-form-group">
+            <label class="auth-label">Password</label>
+            <input type="password" id="login-password" class="auth-input">
           </div>
-          <div style="margin-bottom: 20px; text-align: right;">
-            <a href="#" id="forgot-password-link" style="
-              color: #2196F3;
-              text-decoration: none;
-              font-size: 13px;
-              cursor: pointer;
-            ">Forgot Password?</a>
+          <div class="auth-form-group auth-form-group-right">
+            <a href="#" id="forgot-password-link" class="auth-link">Forgot Password?</a>
           </div>
-          <button id="login-btn" style="
-            width: 100%;
-            padding: 14px;
-            background: #4CAF50;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-          ">Login</button>
+          <button id="login-btn" class="auth-button">Login</button>
         </div>
 
         <!-- Register Form -->
-        <div id="register-form" class="auth-form" style="display: none;">
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Username</label>
-            <input type="text" id="register-username" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            ">
+        <div id="register-form" class="auth-form hidden">
+          <div class="auth-form-group">
+            <label class="auth-label">Username</label>
+            <input type="text" id="register-username" class="auth-input">
           </div>
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Email</label>
-            <input type="email" id="register-email" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            ">
+          <div class="auth-form-group">
+            <label class="auth-label">Email</label>
+            <input type="email" id="register-email" class="auth-input">
           </div>
-          <div style="margin-bottom: 25px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Password</label>
-            <input type="password" id="register-password" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            ">
-            <small style="opacity: 0.7; font-size: 12px;">Minimum 6 characters</small>
+          <div class="auth-form-group">
+            <label class="auth-label">Password</label>
+            <input type="password" id="register-password" class="auth-input">
+            <small class="auth-hint">Minimum 6 characters</small>
           </div>
-          <button id="register-btn" style="
-            width: 100%;
-            padding: 14px;
-            background: #4CAF50;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-          ">Create Account</button>
+          <button id="register-btn" class="auth-button">Create Account</button>
         </div>
 
-        <div id="auth-error" style="
-          margin-top: 20px;
-          padding: 12px;
-          background: rgba(244, 67, 54, 0.2);
-          border: 1px solid #f44336;
-          border-radius: 6px;
-          color: #f44336;
-          display: none;
-        "></div>
+        <div id="auth-error" class="auth-error"></div>
 
-        <div style="margin-top: 30px; text-align: center; font-size: 12px; opacity: 0.6;">
+        <div class="auth-footer-note">
           Your dashboard data will be saved to your account
         </div>
       </div>
@@ -200,22 +84,18 @@ export class AuthUI {
     const registerForm = dialog.querySelector('#register-form') as HTMLElement;
 
     loginTab.addEventListener('click', () => {
-      loginTab.style.background = '#4CAF50';
-      loginTab.style.border = 'none';
-      registerTab.style.background = 'rgba(255, 255, 255, 0.1)';
-      registerTab.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
+      loginTab.classList.add('active');
+      registerTab.classList.remove('active');
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
       this.hideError();
     });
 
     registerTab.addEventListener('click', () => {
-      registerTab.style.background = '#4CAF50';
-      registerTab.style.border = 'none';
-      loginTab.style.background = 'rgba(255, 255, 255, 0.1)';
-      loginTab.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-      registerForm.style.display = 'block';
-      loginForm.style.display = 'none';
+      registerTab.classList.add('active');
+      loginTab.classList.remove('active');
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
       this.hideError();
     });
 
@@ -302,155 +182,51 @@ export class AuthUI {
     const errorDiv = document.querySelector('#auth-error') as HTMLElement;
     if (errorDiv) {
       errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
+      errorDiv.classList.add('visible');
     }
   }
 
   private hideError(): void {
     const errorDiv = document.querySelector('#auth-error') as HTMLElement;
     if (errorDiv) {
-      errorDiv.style.display = 'none';
+      errorDiv.classList.remove('visible');
     }
   }
 
   createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void): HTMLElement {
     const container = document.createElement('div');
     container.className = 'user-menu';
-    container.style.cssText = `
-      position: fixed;
-      bottom: 24px;
-      left: 24px;
-      z-index: 10000;
-    `;
 
     container.innerHTML = `
-      <div id="user-menu-toggle" style="
-        width: 40px;
-        height: 40px;
-        background: var(--accent);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 18px;
-        cursor: pointer;
-        box-shadow: 0 2px 8px var(--shadow);
-        border: 1px solid var(--border);
-        transition: transform 0.2s;
-        color: white;
-      " title="${user.username}">
+      <div id="user-menu-toggle" class="user-avatar-button" title="${user.username}">
         ${user.username.charAt(0).toUpperCase()}
       </div>
-      <div id="user-dropdown" style="
-        position: absolute;
-        bottom: 52px;
-        left: 0;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        min-width: 200px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 16px var(--shadow);
-        display: none;
-        overflow: hidden;
-      ">
-        <div style="
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--border);
-          font-size: 14px;
-          color: var(--text);
-          opacity: 0.7;
-        ">
-          <div style="font-weight: bold; opacity: 1;">${user.username}</div>
-          ${user.isAdmin ? '<div style="color: #FFC107; font-size: 12px; margin-top: 4px;">👑 Administrator</div>' : ''}
+      <div id="user-dropdown" class="user-dropdown">
+        <div class="user-dropdown-header">
+          <div class="user-dropdown-username">${user.username}</div>
+          ${user.isAdmin ? '<div class="user-dropdown-admin-badge">👑 Administrator</div>' : ''}
         </div>
-        <div style="padding: 8px 0;">
-          <button id="manage-dashboards-btn" style="
-            width: 100%;
-            padding: 12px 16px;
-            background: none;
-            border: none;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background 0.2s;
-          ">
+        <div class="user-dropdown-body">
+          <button id="manage-dashboards-btn" class="user-dropdown-button">
             <span>🎛️</span>
             <span>My Dashboards</span>
           </button>
-          <button id="credentials-btn" style="
-            width: 100%;
-            padding: 12px 16px;
-            background: none;
-            border: none;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background 0.2s;
-          ">
+          <button id="credentials-btn" class="user-dropdown-button">
             <span>🔐</span>
             <span>Credentials</span>
           </button>
-          <button id="settings-btn" style="
-            width: 100%;
-            padding: 12px 16px;
-            background: none;
-            border: none;
-            color: #2196F3;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background 0.2s;
-          ">
+          <button id="settings-btn" class="user-dropdown-button user-dropdown-button-primary">
             <span>⚙️</span>
             <span>Settings</span>
           </button>
           ${user.isAdmin ? `
-            <button id="admin-btn" style="
-              width: 100%;
-              padding: 12px 16px;
-              background: none;
-              border: none;
-              color: #FFC107;
-              cursor: pointer;
-              font-size: 14px;
-              text-align: left;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              transition: background 0.2s;
-            ">
+            <button id="admin-btn" class="user-dropdown-button user-dropdown-button-warning">
               <span>👑</span>
               <span>Admin</span>
             </button>
           ` : ''}
-          <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
-          <button id="logout-btn" style="
-            width: 100%;
-            padding: 12px 16px;
-            background: none;
-            border: none;
-            color: #f44336;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background 0.2s;
-          ">
+          <div class="user-dropdown-separator"></div>
+          <button id="logout-btn" class="user-dropdown-button user-dropdown-button-danger">
             <span>🚪</span>
             <span>Logout</span>
           </button>
@@ -471,8 +247,8 @@ export class AuthUI {
         return;
       }
       
-      const isVisible = dropdown.style.display === 'block';
-      dropdown.style.display = isVisible ? 'none' : 'block';
+      const isVisible = dropdown.classList.contains('visible');
+      dropdown.classList.toggle('visible');
       toggle.style.transform = isVisible ? 'scale(1)' : 'scale(1.1)';
       
       // Close the controls menu when user menu is opened
@@ -487,27 +263,16 @@ export class AuthUI {
     // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
       if (!container.contains(e.target as Node)) {
-        dropdown.style.display = 'none';
+        dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
       }
-    });
-
-    // Hover effects for buttons
-    const buttons = dropdown.querySelectorAll('button');
-    buttons.forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        (btn as HTMLElement).style.background = 'var(--surface-hover)';
-      });
-      btn.addEventListener('mouseleave', () => {
-        (btn as HTMLElement).style.background = 'none';
-      });
     });
 
     // Manage Dashboards button
     const manageDashboardsBtn = dropdown.querySelector('#manage-dashboards-btn') as HTMLButtonElement;
     if (manageDashboardsBtn && onManageDashboardsClick) {
       manageDashboardsBtn.addEventListener('click', () => {
-        dropdown.style.display = 'none';
+        dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onManageDashboardsClick();
       });
@@ -517,7 +282,7 @@ export class AuthUI {
     const credentialsBtn = dropdown.querySelector('#credentials-btn') as HTMLButtonElement;
     if (credentialsBtn && onCredentialsClick) {
       credentialsBtn.addEventListener('click', () => {
-        dropdown.style.display = 'none';
+        dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onCredentialsClick();
       });
@@ -527,7 +292,7 @@ export class AuthUI {
     const settingsBtn = dropdown.querySelector('#settings-btn') as HTMLButtonElement;
     if (settingsBtn && onSettingsClick) {
       settingsBtn.addEventListener('click', () => {
-        dropdown.style.display = 'none';
+        dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onSettingsClick();
       });
@@ -537,7 +302,7 @@ export class AuthUI {
     const adminBtn = dropdown.querySelector('#admin-btn') as HTMLButtonElement;
     if (adminBtn && onAdminClick) {
       adminBtn.addEventListener('click', () => {
-        dropdown.style.display = 'none';
+        dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onAdminClick();
       });
