@@ -14,13 +14,13 @@ export class AdminDashboardUI {
 
     const dialog = document.createElement('div');
     dialog.id = 'admin-dashboard';
-    dialog.className = 'admin-dialog';
+    dialog.className = 'dialog admin-dialog';
 
     dialog.innerHTML = `
-      <div class="admin-container">
-        <div class="admin-header">
-          <h2 class="admin-title">👑 Admin Dashboard</h2>
-          <button id="close-admin" class="admin-close-button">×</button>
+      <div class="dialog-container admin-container">
+        <div class="dialog-header admin-header">
+          <h2 class="dialog-title admin-title">👑 Admin Dashboard</h2>
+          <button id="close-admin" class="dialog-close-button admin-close-button">×</button>
         </div>
 
         <!-- Stats -->
@@ -42,8 +42,8 @@ export class AdminDashboardUI {
         ` : ''}
 
         <!-- Users Table -->
-        <div class="admin-table-section">
-          <h3 class="admin-section-title">User Management</h3>
+        <div class="section admin-table-section">
+          <h3 class="section-title admin-section-title">User Management</h3>
           
           <div class="admin-table-wrapper">
             <table class="admin-table">
@@ -64,7 +64,7 @@ export class AdminDashboardUI {
           </div>
         </div>
 
-        <div id="admin-message" class="admin-message"></div>
+        <div id="admin-message" class="message admin-message"></div>
       </div>
     `;
 
@@ -103,15 +103,15 @@ export class AdminDashboardUI {
         <td class="admin-table-td">
           <div class="admin-actions">
             ${!user.is_admin ? `
-              <button class="admin-action-btn make-admin-btn admin-action-btn-success" data-user-id="${user.id}" data-username="${user.username}">Make Admin</button>
+              <button class="action-btn action-btn-success admin-action-btn make-admin-btn admin-action-btn-success" data-user-id="${user.id}" data-username="${user.username}">Make Admin</button>
             ` : user.id !== currentUser?.id ? `
-              <button class="admin-action-btn remove-admin-btn admin-action-btn-warning" data-user-id="${user.id}" data-username="${user.username}">Remove Admin</button>
+              <button class="action-btn action-btn-warning admin-action-btn remove-admin-btn admin-action-btn-warning" data-user-id="${user.id}" data-username="${user.username}">Remove Admin</button>
             ` : ''}
             
-            <button class="admin-action-btn reset-password-btn admin-action-btn-info" data-user-id="${user.id}" data-username="${user.username}">Reset Password</button>
+            <button class="action-btn action-btn-info admin-action-btn reset-password-btn admin-action-btn-info" data-user-id="${user.id}" data-username="${user.username}">Reset Password</button>
             
             ${user.id !== currentUser?.id ? `
-              <button class="admin-action-btn delete-user-btn admin-action-btn-danger" data-user-id="${user.id}" data-username="${user.username}">Delete</button>
+              <button class="action-btn action-btn-danger admin-action-btn delete-user-btn admin-action-btn-danger" data-user-id="${user.id}" data-username="${user.username}">Delete</button>
             ` : ''}
           </div>
         </td>
@@ -212,8 +212,8 @@ export class AdminDashboardUI {
   private showMessage(dialog: HTMLElement, message: string, success: boolean): void {
     const messageDiv = dialog.querySelector('#admin-message') as HTMLElement;
     messageDiv.textContent = message;
-    messageDiv.classList.remove('admin-message-success', 'admin-message-error');
-    messageDiv.classList.add(success ? 'admin-message-success' : 'admin-message-error', 'visible');
+    messageDiv.classList.remove('message-success', 'message-error', 'admin-message-success', 'admin-message-error');
+    messageDiv.classList.add(success ? 'message-success admin-message-success' : 'message-error admin-message-error', 'visible');
 
     setTimeout(() => {
       messageDiv.classList.remove('visible');

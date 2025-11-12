@@ -5,13 +5,13 @@ export class PasswordRecoveryUI {
   showRequestRecoveryDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'request-recovery-dialog';
-    dialog.className = 'recovery-dialog';
+    dialog.className = 'dialog recovery-dialog';
 
     dialog.innerHTML = `
-      <div class="recovery-container">
-        <div class="recovery-header">
-          <h2 class="recovery-title">🔐 Password Recovery</h2>
-          <button id="close-recovery" class="recovery-close-button">×</button>
+      <div class="dialog-container recovery-container">
+        <div class="dialog-header recovery-header">
+          <h2 class="dialog-title recovery-title">🔐 Password Recovery</h2>
+          <button id="close-recovery" class="dialog-close-button recovery-close-button">×</button>
         </div>
 
         <p class="recovery-description">
@@ -22,12 +22,12 @@ export class PasswordRecoveryUI {
           type="text"
           id="recovery-input"
           placeholder="Username or Email"
-          class="recovery-input"
+          class="form-input recovery-input"
         />
 
-        <button id="send-recovery-btn" class="recovery-button recovery-button-primary">Send Recovery Link</button>
+        <button id="send-recovery-btn" class="btn btn-success btn-full recovery-button recovery-button-primary">Send Recovery Link</button>
 
-        <div id="recovery-message" class="recovery-message"></div>
+        <div id="recovery-message" class="message recovery-message"></div>
       </div>
     `;
 
@@ -88,18 +88,18 @@ export class PasswordRecoveryUI {
     
     const dialog = document.createElement('div');
     dialog.id = 'reset-password-dialog';
-    dialog.className = 'recovery-dialog';
+    dialog.className = 'dialog recovery-dialog';
 
     if (!validation.valid) {
       // Show error dialog
       dialog.innerHTML = `
-        <div class="recovery-container recovery-container-error">
+        <div class="dialog-container recovery-container recovery-container-error">
           <div class="recovery-error-icon">⚠️</div>
-          <h2 class="recovery-title recovery-title-error">Invalid Recovery Link</h2>
+          <h2 class="dialog-title recovery-title recovery-title-error">Invalid Recovery Link</h2>
           <p class="recovery-error-text">
             ${validation.error || 'This recovery link is invalid or has expired.'}
           </p>
-          <button id="close-btn" class="recovery-button recovery-button-primary">Close</button>
+          <button id="close-btn" class="btn btn-success btn-full recovery-button recovery-button-primary">Close</button>
         </div>
       `;
       
@@ -123,10 +123,10 @@ export class PasswordRecoveryUI {
 
     // Show password reset form
     dialog.innerHTML = `
-      <div class="recovery-container">
+      <div class="dialog-container recovery-container">
         <div class="recovery-reset-header">
           <div class="recovery-reset-icon">🔐</div>
-          <h2 class="recovery-title">Reset Your Password</h2>
+          <h2 class="dialog-title recovery-title">Reset Your Password</h2>
           <p class="recovery-username">
             ${validation.username ? `Account: <strong>${validation.username}</strong>` : ''}
           </p>
@@ -136,19 +136,19 @@ export class PasswordRecoveryUI {
           type="password"
           id="new-password"
           placeholder="New Password (min 6 characters)"
-          class="recovery-input recovery-input-space"
+          class="form-input recovery-input recovery-input-space"
         />
 
         <input
           type="password"
           id="confirm-password"
           placeholder="Confirm New Password"
-          class="recovery-input recovery-input-space-large"
+          class="form-input recovery-input recovery-input-space-large"
         />
 
-        <button id="reset-btn" class="recovery-button recovery-button-primary recovery-button-large">Reset Password</button>
+        <button id="reset-btn" class="btn btn-success btn-full recovery-button recovery-button-primary recovery-button-large">Reset Password</button>
 
-        <div id="message" class="recovery-message"></div>
+        <div id="message" class="message recovery-message"></div>
       </div>
     `;
 
@@ -216,8 +216,8 @@ export class PasswordRecoveryUI {
     if (!messageDiv) return;
     
     messageDiv.textContent = message;
-    messageDiv.classList.remove('recovery-message-success', 'recovery-message-error');
-    messageDiv.classList.add(success ? 'recovery-message-success' : 'recovery-message-error', 'visible');
+    messageDiv.classList.remove('message-success', 'message-error', 'recovery-message-success', 'recovery-message-error');
+    messageDiv.classList.add(success ? 'message-success recovery-message-success' : 'message-error recovery-message-error', 'visible');
 
     setTimeout(() => {
       messageDiv.classList.remove('visible');
