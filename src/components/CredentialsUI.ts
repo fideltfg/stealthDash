@@ -8,72 +8,28 @@ export class CredentialsUI {
 
     const dialog = document.createElement('div');
     dialog.id = 'credentials-dialog';
-    dialog.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100000;
-    `;
+    dialog.className = 'credentials-dialog';
 
     dialog.innerHTML = `
-      <div style="
-        background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 40px;
-        min-width: 700px;
-        max-width: 900px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      ">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-          <h2 style="margin: 0; font-size: 28px;">🔐 Credential Management</h2>
-          <button id="close-credentials" style="
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px 10px;
-          ">×</button>
+      <div class="credentials-container">
+        <div class="credentials-header">
+          <h2 class="credentials-title">🔐 Credential Management</h2>
+          <button id="close-credentials" class="credentials-close-button">×</button>
         </div>
 
-        <div style="margin-bottom: 20px;">
-          <button id="add-credential-btn" style="
-            padding: 12px 24px;
-            background: #4CAF50;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-          ">➕ Add New Credential</button>
+        <div class="credentials-add-section">
+          <button id="add-credential-btn" class="credentials-add-button">➕ Add New Credential</button>
         </div>
 
-        <div id="credentials-list" style="
-          display: grid;
-          gap: 15px;
-        ">
+        <div id="credentials-list" class="credentials-list">
           ${this.renderCredentialsList()}
         </div>
 
         ${this.credentials.length === 0 ? `
-          <div style="
-            text-align: center;
-            padding: 60px 20px;
-            color: rgba(255, 255, 255, 0.5);
-          ">
-            <div style="font-size: 48px; margin-bottom: 20px;">🔑</div>
-            <p style="font-size: 18px; margin: 0;">No credentials saved yet</p>
-            <p style="margin: 10px 0 0 0;">Add credentials to securely store API keys, passwords, and tokens</p>
+          <div class="credentials-empty">
+            <div class="credentials-empty-icon">🔑</div>
+            <p class="credentials-empty-title">No credentials saved yet</p>
+            <p class="credentials-empty-subtitle">Add credentials to securely store API keys, passwords, and tokens</p>
           </div>
         ` : ''}
       </div>
@@ -103,71 +59,30 @@ export class CredentialsUI {
 
   private renderCredentialsList(): string {
     return this.credentials.map(cred => `
-      <div style="
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.3s;
-      " onmouseover="this.style.background='rgba(255, 255, 255, 0.08)'" 
-         onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-            <span style="font-size: 24px;">${credentialsService.getServiceTypeIcon(cred.service_type)}</span>
-            <h3 style="margin: 0; font-size: 18px;">${this.escapeHtml(cred.name)}</h3>
-            <span style="
-              padding: 4px 12px;
-              background: rgba(76, 175, 80, 0.2);
-              border: 1px solid rgba(76, 175, 80, 0.4);
-              border-radius: 12px;
-              font-size: 12px;
-              color: #4CAF50;
-            ">${credentialsService.getServiceTypeLabel(cred.service_type)}</span>
+      <div class="credentials-list-item">
+        <div class="credentials-list-item-content">
+          <div class="credentials-list-item-header">
+            <span class="credentials-list-item-icon">${credentialsService.getServiceTypeIcon(cred.service_type)}</span>
+            <h3 class="credentials-list-item-title">${this.escapeHtml(cred.name)}</h3>
+            <span class="credentials-list-item-badge">${credentialsService.getServiceTypeLabel(cred.service_type)}</span>
           </div>
           ${cred.description ? `
-            <p style="margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.6);">
+            <p class="credentials-list-item-description">
               ${this.escapeHtml(cred.description)}
             </p>
           ` : ''}
-          <p style="margin: 8px 0 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.4);">
+          <p class="credentials-list-item-date">
             Created: ${new Date(cred.created_at).toLocaleDateString()}
           </p>
         </div>
-        <div style="display: flex; gap: 10px;">
-          <button class="test-credential-btn" data-id="${cred.id}" style="
-            padding: 8px 16px;
-            background: rgba(33, 150, 243, 0.2);
-            border: 1px solid rgba(33, 150, 243, 0.4);
-            border-radius: 6px;
-            color: #2196F3;
-            cursor: pointer;
-            font-size: 14px;
-          " title="Test credential">
+        <div class="credentials-list-item-actions">
+          <button class="test-credential-btn credential-action-btn credential-action-btn-test" data-id="${cred.id}" title="Test credential">
             🧪 Test
           </button>
-          <button class="edit-credential-btn" data-id="${cred.id}" style="
-            padding: 8px 16px;
-            background: rgba(255, 193, 7, 0.2);
-            border: 1px solid rgba(255, 193, 7, 0.4);
-            border-radius: 6px;
-            color: #FFC107;
-            cursor: pointer;
-            font-size: 14px;
-          " title="Edit credential">
+          <button class="edit-credential-btn credential-action-btn credential-action-btn-edit" data-id="${cred.id}" title="Edit credential">
             ✏️ Edit
           </button>
-          <button class="delete-credential-btn" data-id="${cred.id}" style="
-            padding: 8px 16px;
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.4);
-            border-radius: 6px;
-            color: #F44336;
-            cursor: pointer;
-            font-size: 14px;
-          " title="Delete credential">
+          <button class="delete-credential-btn credential-action-btn credential-action-btn-delete" data-id="${cred.id}" title="Delete credential">
             🗑️ Delete
           </button>
         </div>
@@ -210,135 +125,49 @@ export class CredentialsUI {
   private showCreateCredentialDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'create-credential-dialog';
-    dialog.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100001;
-    `;
+    dialog.className = 'credential-form-dialog';
 
     dialog.innerHTML = `
-      <div style="
-        background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 40px;
-        min-width: 600px;
-        max-width: 700px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      ">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-          <h2 style="margin: 0; font-size: 24px;">➕ Add New Credential</h2>
-          <button id="close-create-credential" style="
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px 10px;
-          ">×</button>
+      <div class="credential-form-container">
+        <div class="credential-form-header">
+          <h2 class="credential-form-title">➕ Add New Credential</h2>
+          <button id="close-create-credential" class="credential-form-close-button">×</button>
         </div>
 
         <form id="create-credential-form">
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Name *</label>
-            <input type="text" id="cred-name" required style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            " placeholder="e.g., My Pi-hole Server">
+          <div class="credential-form-group">
+            <label class="credential-form-label">Name *</label>
+            <input type="text" id="cred-name" required class="credential-form-input" placeholder="e.g., My Pi-hole Server">
           </div>
 
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Service Type *</label>
-            <select id="cred-service-type" required style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: var(--surface, rgba(255, 255, 255, 0.05));
-              border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
-              border-radius: 6px;
-              color: var(--text, white);
-              font-size: 16px;
-              cursor: pointer;
-              -webkit-appearance: none;
-              -moz-appearance: none;
-              appearance: none;
-            ">
-              <option value="" style="background: var(--surface, #2a2a2a); color: var(--muted, #999);">Select service type...</option>
-              <option value="pihole" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🛡️ Pi-hole</option>
-              <option value="unifi" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📡 UniFi Controller</option>
-              <option value="home_assistant" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🏠 Home Assistant</option>
-              <option value="google_calendar" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📅 Google Calendar</option>
-              <option value="snmp" style="background: var(--surface, #2a2a2a); color: var(--text, white);">📊 SNMP</option>
-              <option value="api" style="background: var(--surface, #2a2a2a); color: var(--text, white);">🔌 Generic API</option>
-              <option value="custom" style="background: var(--surface, #2a2a2a); color: var(--text, white);">⭐ Custom</option>
+          <div class="credential-form-group">
+            <label class="credential-form-label">Service Type *</label>
+            <select id="cred-service-type" required class="credential-form-select">
+              <option value="">Select service type...</option>
+              <option value="pihole">🛡️ Pi-hole</option>
+              <option value="unifi">📡 UniFi Controller</option>
+              <option value="home_assistant">🏠 Home Assistant</option>
+              <option value="google_calendar">📅 Google Calendar</option>
+              <option value="snmp">📊 SNMP</option>
+              <option value="api">🔌 Generic API</option>
+              <option value="custom">⭐ Custom</option>
             </select>
           </div>
 
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Description</label>
-            <textarea id="cred-description" style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-              min-height: 80px;
-              resize: vertical;
-            " placeholder="Optional description..."></textarea>
+          <div class="credential-form-group">
+            <label class="credential-form-label">Description</label>
+            <textarea id="cred-description" class="credential-form-textarea" placeholder="Optional description..."></textarea>
           </div>
 
-          <div id="credential-fields" style="margin-bottom: 20px;">
+          <div id="credential-fields" class="credential-dynamic-fields">
             <!-- Dynamic fields will be inserted here -->
           </div>
 
-          <div id="create-error" style="
-            display: none;
-            padding: 12px;
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.4);
-            border-radius: 6px;
-            color: #F44336;
-            margin-bottom: 20px;
-          "></div>
+          <div id="create-error" class="credential-form-error"></div>
 
-          <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" id="cancel-create" style="
-              padding: 12px 24px;
-              background: rgba(255, 255, 255, 0.1);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              cursor: pointer;
-              font-size: 16px;
-            ">Cancel</button>
-            <button type="submit" style="
-              padding: 12px 24px;
-              background: #4CAF50;
-              border: none;
-              border-radius: 6px;
-              color: white;
-              cursor: pointer;
-              font-size: 16px;
-              font-weight: bold;
-            ">Create Credential</button>
+          <div class="credential-form-actions">
+            <button type="button" id="cancel-create" class="credential-form-button credential-form-button-secondary">Cancel</button>
+            <button type="submit" class="credential-form-button credential-form-button-primary">Create Credential</button>
           </div>
         </form>
       </div>
@@ -382,52 +211,25 @@ export class CredentialsUI {
     
     if (fields.length === 0) {
       container.innerHTML = `
-        <div style="
-          padding: 20px;
-          background: rgba(255, 193, 7, 0.1);
-          border: 1px solid rgba(255, 193, 7, 0.3);
-          border-radius: 6px;
-          color: rgba(255, 255, 255, 0.7);
-        ">
-          <p style="margin: 0; font-size: 14px;">
+        <div class="credential-info-box">
+          <p class="credential-info-text">
             ℹ️ Custom credentials can store any key-value pairs. You'll need to manually enter the JSON data.
           </p>
         </div>
-        <div style="margin-top: 15px;">
-          <label style="display: block; margin-bottom: 8px; font-size: 14px;">Credential Data (JSON) *</label>
-          <textarea id="cred-custom-data" required style="
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: white;
-            font-size: 14px;
-            font-family: monospace;
-            min-height: 120px;
-            resize: vertical;
-          " placeholder='{\n  "key1": "value1",\n  "key2": "value2"\n}'></textarea>
+        <div class="credential-form-group">
+          <label class="credential-form-label">Credential Data (JSON) *</label>
+          <textarea id="cred-custom-data" required class="credential-form-textarea credential-form-textarea-code" placeholder='{\n  "key1": "value1",\n  "key2": "value2"\n}'></textarea>
         </div>
       `;
     } else {
       container.innerHTML = fields.map(field => `
-        <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 8px; font-size: 14px;">${field.label} *</label>
+        <div class="credential-form-group">
+          <label class="credential-form-label">${field.label} *</label>
           <input 
             type="${field.type}" 
             id="cred-field-${field.name}" 
             required 
-            style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              background: rgba(255, 255, 255, 0.05);
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 6px;
-              color: white;
-              font-size: 16px;
-            " 
+            class="credential-form-input" 
             placeholder="${field.placeholder || ''}">
         </div>
       `).join('');
@@ -440,11 +242,11 @@ export class CredentialsUI {
     const description = (dialog.querySelector('#cred-description') as HTMLTextAreaElement).value;
     const errorDiv = dialog.querySelector('#create-error') as HTMLDivElement;
 
-    errorDiv.style.display = 'none';
+    errorDiv.classList.remove('visible');
 
     if (!name || !serviceType) {
       errorDiv.textContent = 'Name and service type are required';
-      errorDiv.style.display = 'block';
+      errorDiv.classList.add('visible');
       return;
     }
 
@@ -460,7 +262,7 @@ export class CredentialsUI {
             data = JSON.parse(customData);
           } catch {
             errorDiv.textContent = 'Invalid JSON format';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.add('visible');
             return;
           }
         }
@@ -494,7 +296,7 @@ export class CredentialsUI {
       }
     } catch (error: any) {
       errorDiv.textContent = error.message || 'Failed to create credential';
-      errorDiv.style.display = 'block';
+      errorDiv.classList.add('visible');
     }
   }
 
@@ -504,163 +306,60 @@ export class CredentialsUI {
       
       const dialog = document.createElement('div');
       dialog.id = 'edit-credential-dialog';
-      dialog.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 100001;
-      `;
+      dialog.className = 'credential-form-dialog';
 
       const fields = credentialsService.getServiceTypeFields(credential.service_type);
       
       dialog.innerHTML = `
-        <div style="
-          background: #1e1e1e;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 12px;
-          padding: 40px;
-          min-width: 600px;
-          max-width: 700px;
-          max-height: 90vh;
-          overflow-y: auto;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        ">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2 style="margin: 0; font-size: 24px;">✏️ Edit Credential</h2>
-            <button id="close-edit-credential" style="
-              background: transparent;
-              border: none;
-              color: white;
-              font-size: 24px;
-              cursor: pointer;
-              padding: 5px 10px;
-            ">×</button>
+        <div class="credential-form-container">
+          <div class="credential-form-header">
+            <h2 class="credential-form-title">✏️ Edit Credential</h2>
+            <button id="close-edit-credential" class="credential-form-close-button">×</button>
           </div>
 
           <form id="edit-credential-form">
-            <div style="margin-bottom: 20px;">
-              <label style="display: block; margin-bottom: 8px; font-size: 14px;">Name *</label>
-              <input type="text" id="edit-cred-name" required value="${this.escapeHtml(credential.name)}" style="
-                width: 100%;
-                padding: 12px;
-                box-sizing: border-box;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 6px;
-                color: white;
-                font-size: 16px;
-              ">
+            <div class="credential-form-group">
+              <label class="credential-form-label">Name *</label>
+              <input type="text" id="edit-cred-name" required value="${this.escapeHtml(credential.name)}" class="credential-form-input">
             </div>
 
-            <div style="margin-bottom: 20px;">
-              <label style="display: block; margin-bottom: 8px; font-size: 14px;">Service Type</label>
-              <input type="text" value="${credentialsService.getServiceTypeLabel(credential.service_type)}" disabled style="
-                width: 100%;
-                padding: 12px;
-                box-sizing: border-box;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 6px;
-                color: rgba(255, 255, 255, 0.5);
-                font-size: 16px;
-              ">
-              <small style="opacity: 0.5; font-size: 12px;">Service type cannot be changed</small>
+            <div class="credential-form-group">
+              <label class="credential-form-label credential-form-label-disabled">Service Type</label>
+              <input type="text" value="${credentialsService.getServiceTypeLabel(credential.service_type)}" disabled class="credential-form-input credential-form-input-disabled">
+              <small class="credential-form-hint">Service type cannot be changed</small>
             </div>
 
-            <div style="margin-bottom: 20px;">
-              <label style="display: block; margin-bottom: 8px; font-size: 14px;">Description</label>
-              <textarea id="edit-cred-description" style="
-                width: 100%;
-                padding: 12px;
-                box-sizing: border-box;
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 6px;
-                color: white;
-                font-size: 16px;
-                min-height: 80px;
-                resize: vertical;
-              ">${this.escapeHtml(credential.description || '')}</textarea>
+            <div class="credential-form-group">
+              <label class="credential-form-label">Description</label>
+              <textarea id="edit-cred-description" class="credential-form-textarea">${this.escapeHtml(credential.description || '')}</textarea>
             </div>
 
-            <div style="margin-bottom: 20px;">
-              <h3 style="margin: 0 0 15px 0; font-size: 16px;">Update Credentials</h3>
+            <div class="credential-form-section">
+              <h3 class="credential-form-section-title">Update Credentials</h3>
               ${fields.length > 0 ? fields.map(field => `
-                <div style="margin-bottom: 15px;">
-                  <label style="display: block; margin-bottom: 8px; font-size: 14px;">${field.label}</label>
+                <div class="credential-form-group">
+                  <label class="credential-form-label">${field.label}</label>
                   <input 
                     type="${field.type}" 
                     id="edit-cred-field-${field.name}" 
                     value="${this.escapeHtml(credential.data?.[field.name] || '')}"
-                    style="
-                      width: 100%;
-                      padding: 12px;
-                      box-sizing: border-box;
-                      background: rgba(255, 255, 255, 0.05);
-                      border: 1px solid rgba(255, 255, 255, 0.2);
-                      border-radius: 6px;
-                      color: white;
-                      font-size: 16px;
-                    " 
+                    class="credential-form-input" 
                     placeholder="Leave empty to keep unchanged">
                 </div>
               `).join('') : `
-                <div>
-                  <label style="display: block; margin-bottom: 8px; font-size: 14px;">Credential Data (JSON)</label>
-                  <textarea id="edit-cred-custom-data" style="
-                    width: 100%;
-                    padding: 12px;
-                    box-sizing: border-box;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    border-radius: 6px;
-                    color: white;
-                    font-size: 14px;
-                    font-family: monospace;
-                    min-height: 120px;
-                    resize: vertical;
-                  " placeholder="Leave empty to keep unchanged">${JSON.stringify(credential.data || {}, null, 2)}</textarea>
-                  <small style="opacity: 0.5; font-size: 12px;">Leave empty to keep current credentials</small>
+                <div class="credential-form-group">
+                  <label class="credential-form-label">Credential Data (JSON)</label>
+                  <textarea id="edit-cred-custom-data" class="credential-form-textarea credential-form-textarea-code" placeholder="Leave empty to keep unchanged">${JSON.stringify(credential.data || {}, null, 2)}</textarea>
+                  <small class="credential-form-hint">Leave empty to keep current credentials</small>
                 </div>
               `}
             </div>
 
-            <div id="edit-error" style="
-              display: none;
-              padding: 12px;
-              background: rgba(244, 67, 54, 0.2);
-              border: 1px solid rgba(244, 67, 54, 0.4);
-              border-radius: 6px;
-              color: #F44336;
-              margin-bottom: 20px;
-            "></div>
+            <div id="edit-error" class="credential-form-error"></div>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-              <button type="button" id="cancel-edit" style="
-                padding: 12px 24px;
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 6px;
-                color: white;
-                cursor: pointer;
-                font-size: 16px;
-              ">Cancel</button>
-              <button type="submit" style="
-                padding: 12px 24px;
-                background: #FFC107;
-                border: none;
-                border-radius: 6px;
-                color: black;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-              ">Update Credential</button>
+            <div class="credential-form-actions">
+              <button type="button" id="cancel-edit" class="credential-form-button credential-form-button-secondary">Cancel</button>
+              <button type="submit" class="credential-form-button credential-form-button-warning">Update Credential</button>
             </div>
           </form>
         </div>
@@ -699,7 +398,7 @@ export class CredentialsUI {
     const description = (dialog.querySelector('#edit-cred-description') as HTMLTextAreaElement).value;
     const errorDiv = dialog.querySelector('#edit-error') as HTMLDivElement;
 
-    errorDiv.style.display = 'none';
+    errorDiv.classList.remove('visible');
 
     try {
       const updateData: any = {
@@ -717,7 +416,7 @@ export class CredentialsUI {
             updateData.data = JSON.parse(customData);
           } catch {
             errorDiv.textContent = 'Invalid JSON format';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.add('visible');
             return;
           }
         }
@@ -752,7 +451,7 @@ export class CredentialsUI {
       }
     } catch (error: any) {
       errorDiv.textContent = error.message || 'Failed to update credential';
-      errorDiv.style.display = 'block';
+      errorDiv.classList.add('visible');
     }
   }
 
@@ -797,35 +496,14 @@ export class CredentialsUI {
   }
 
   private showNotification(message: string, type: 'success' | 'error' | 'warning'): void {
-    const colors = {
-      success: { bg: 'rgba(76, 175, 80, 0.2)', border: 'rgba(76, 175, 80, 0.4)', text: '#4CAF50' },
-      error: { bg: 'rgba(244, 67, 54, 0.2)', border: 'rgba(244, 67, 54, 0.4)', text: '#F44336' },
-      warning: { bg: 'rgba(255, 193, 7, 0.2)', border: 'rgba(255, 193, 7, 0.4)', text: '#FFC107' }
-    };
-
-    const color = colors[type];
-    
     const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 16px 24px;
-      background: ${color.bg};
-      border: 1px solid ${color.border};
-      border-radius: 8px;
-      color: ${color.text};
-      font-size: 16px;
-      z-index: 100002;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-      animation: slideIn 0.3s ease-out;
-    `;
+    notification.className = `credential-notification credential-notification-${type}`;
     notification.textContent = message;
 
     document.body.appendChild(notification);
 
     setTimeout(() => {
-      notification.style.animation = 'slideOut 0.3s ease-out';
+      notification.classList.add('credential-notification-exit');
       setTimeout(() => notification.remove(), 300);
     }, 3000);
   }

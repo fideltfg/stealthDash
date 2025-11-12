@@ -995,6 +995,454 @@ body {
   color: #f44336;
 }
 
+/* ==================== CREDENTIALS UI STYLES ==================== */
+
+.credentials-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.credentials-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  min-width: 700px;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.credentials-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.credentials-title {
+  margin: 0;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.credentials-close-button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: all var(--transition-speed);
+}
+
+.credentials-close-button:hover {
+  background: var(--hover);
+  border-radius: 4px;
+}
+
+.credentials-add-section {
+  margin-bottom: 20px;
+}
+
+.credentials-add-button {
+  padding: 12px 24px;
+  background: #4CAF50;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all var(--transition-speed);
+}
+
+.credentials-add-button:hover {
+  filter: brightness(1.1);
+}
+
+.credentials-list {
+  display: grid;
+  gap: 15px;
+}
+
+.credentials-list-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.credentials-list-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.credentials-list-item-content {
+  flex: 1;
+}
+
+.credentials-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.credentials-list-item-icon {
+  font-size: 24px;
+}
+
+.credentials-list-item-title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.credentials-list-item-badge {
+  padding: 4px 12px;
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+  font-size: 12px;
+  color: #4CAF50;
+}
+
+.credentials-list-item-description {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.credentials-list-item-date {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.credentials-list-item-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.credential-action-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-speed);
+}
+
+.credential-action-btn-test {
+  background: rgba(33, 150, 243, 0.2);
+  border: 1px solid rgba(33, 150, 243, 0.4);
+  color: #2196F3;
+}
+
+.credential-action-btn-edit {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #FFC107;
+}
+
+.credential-action-btn-delete {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #F44336;
+}
+
+.credential-action-btn:hover {
+  filter: brightness(1.2);
+}
+
+.credentials-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.credentials-empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.credentials-empty-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.credentials-empty-subtitle {
+  margin: 10px 0 0 0;
+}
+
+/* Credential Form Dialog */
+.credential-form-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100001;
+}
+
+.credential-form-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  min-width: 600px;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.credential-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.credential-form-title {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text);
+}
+
+.credential-form-close-button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: all var(--transition-speed);
+}
+
+.credential-form-close-button:hover {
+  background: var(--hover);
+  border-radius: 4px;
+}
+
+.credential-form-group {
+  margin-bottom: 20px;
+}
+
+.credential-form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.credential-form-label-disabled {
+  opacity: 0.7;
+}
+
+.credential-form-input {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 16px;
+  transition: border-color var(--transition-speed);
+}
+
+.credential-form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.credential-form-input-disabled {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.credential-form-select {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.credential-form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.credential-form-textarea {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 16px;
+  min-height: 80px;
+  resize: vertical;
+}
+
+.credential-form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.credential-form-textarea-code {
+  font-family: monospace;
+  font-size: 14px;
+  min-height: 120px;
+}
+
+.credential-dynamic-fields {
+  margin-bottom: 20px;
+}
+
+.credential-info-box {
+  padding: 20px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 15px;
+}
+
+.credential-info-text {
+  margin: 0;
+  font-size: 14px;
+}
+
+.credential-form-section {
+  margin-bottom: 20px;
+}
+
+.credential-form-section-title {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.credential-form-hint {
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.credential-form-error {
+  display: none;
+  padding: 12px;
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-radius: 6px;
+  color: #F44336;
+  margin-bottom: 20px;
+}
+
+.credential-form-error.visible {
+  display: block;
+}
+
+.credential-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.credential-form-button {
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition-speed);
+}
+
+.credential-form-button-primary {
+  background: #4CAF50;
+  border: none;
+  color: white;
+  font-weight: bold;
+}
+
+.credential-form-button-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.credential-form-button-warning {
+  background: #FFC107;
+  border: none;
+  color: black;
+  font-weight: bold;
+}
+
+.credential-form-button:hover {
+  filter: brightness(1.1);
+}
+
+.credential-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  z-index: 100002;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.credential-notification-success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  color: #4CAF50;
+}
+
+.credential-notification-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #F44336;
+}
+
+.credential-notification-warning {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #FFC107;
+}
+
+.credential-notification-exit {
+  animation: slideOut 0.3s ease-out;
+}
+
 /* ==================== ADMIN DASHBOARD STYLES ==================== */
 
 .admin-container {.settings-message.error {
