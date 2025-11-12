@@ -102,9 +102,15 @@ class Dashboard {
       this.saveHistory();
       this.showUserMenu();
       this.startAutoSave();
+      
+      // Hide loading screen now that dashboard is fully loaded
+      this.hideLoadingScreen();
     } else {
       // Show login dialog
       this.authUI.showLoginDialog();
+      
+      // Hide loading screen even if not logged in
+      this.hideLoadingScreen();
     }
   }
 
@@ -144,6 +150,13 @@ class Dashboard {
         }
       }
     }, 30000);
+  }
+
+  private hideLoadingScreen(): void {
+    // Call the global function to hide the loading screen
+    if (typeof (window as any).hideLoadingScreen === 'function') {
+      (window as any).hideLoadingScreen();
+    }
   }
 
   private toggleFullscreen(): void {

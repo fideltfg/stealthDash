@@ -96,34 +96,30 @@
   <script type="module" src="/src/main.ts"></script>
   
   <script>
-    // Remove loading screen once app is ready
-    window.addEventListener('DOMContentLoaded', () => {
-      // Wait for the app to signal it's ready, or timeout after 5 seconds
-      const maxLoadTime = 5000;
-      const checkInterval = 100;
-      let elapsed = 0;
+    // Global function to hide loading screen - called by dashboard when ready
+    window.hideLoadingScreen = function() {
+      const loadingScreen = document.getElementById('loading-screen');
+      const app = document.getElementById('app');
       
-      const checkLoaded = setInterval(() => {
-        const app = document.getElementById('app');
-        const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        // Fade out loading screen
+        loadingScreen.classList.add('fade-out');
+        app.classList.add('loaded');
         
-        // Check if app has content or timeout reached
-        if (app.children.length > 0 || elapsed >= maxLoadTime) {
-          clearInterval(checkLoaded);
-          
-          // Fade out loading screen
-          loadingScreen.classList.add('fade-out');
-          app.classList.add('loaded');
-          
-          // Remove loading screen from DOM after animation
-          setTimeout(() => {
-            loadingScreen.remove();
-          }, 500);
-        }
-        
-        elapsed += checkInterval;
-      }, checkInterval);
-    });
+        // Remove loading screen from DOM after animation
+        setTimeout(() => {
+          loadingScreen.remove();
+        }, 500);
+      }
+    };
+    
+    // Fallback timeout in case dashboard fails to load
+    setTimeout(() => {
+      if (document.getElementById('loading-screen')) {
+        console.warn('Dashboard took too long to load, removing loading screen');
+        window.hideLoadingScreen();
+      }
+    }, 10000); // 10 second timeout
   </script>
 </body>
 </html>
