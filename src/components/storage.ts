@@ -1,8 +1,8 @@
-import type { DashboardState, Dashboard, MultiDashboardState } from './types';
-import { DEFAULT_GRID_SIZE, DEFAULT_ZOOM } from './types';
+import type { DashboardState, Dashboard, MultiDashboardState } from '../types/types';
+import { DEFAULT_GRID_SIZE, DEFAULT_ZOOM } from '../types/types';
 
-const STORAGE_KEY = 'dashboard.v1';
-const MULTI_DASHBOARD_KEY = 'dashboards.v2';
+// const STORAGE_KEY = 'dashboard.v1';
+// const MULTI_DASHBOARD_KEY = 'dashboards.v2';
 const CURRENT_VERSION = 1;
 
 // Generate UUID with fallback for older browsers

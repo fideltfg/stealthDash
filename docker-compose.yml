@@ -25,10 +25,7 @@ services:
       - "3001:3001"
     volumes:
       # Mount source files for hot reload
-      - ./ping-server/server.js:/app/server.js
-      - ./ping-server/auth.js:/app/auth.js
-      - ./ping-server/db.js:/app/db.js
-      - ./ping-server/crypto-utils.js:/app/crypto-utils.js
+      - ./ping-server/src:/app/src
       - ./ping-server/routes:/app/routes
       # Prevent node_modules from being overwritten
       - /app/node_modules

@@ -37,7 +37,7 @@ A minimalist web dashboard with draggable, resizable widgets. Built with TypeScr
 
 3. **Start the application**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Access the dashboard**
@@ -146,20 +146,10 @@ Many widgets require API keys or credentials. Store them securely:
 
 ### Core Widgets
 
-**Text Widget**
-- Markdown editor with live preview
-- Supports headings, lists, links, code blocks
-- Great for notes and documentation
-
 **Image Widget**
 - Display images from URL
 - Object-fit modes: contain, cover
 - Alt text support
-
-**Data Widget**
-- JSON data viewer with syntax highlighting
-- Display API responses or structured data
-- Auto-formatting
 
 **Embed Widget**
 - Embed external websites

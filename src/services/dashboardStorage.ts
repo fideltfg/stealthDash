@@ -1,6 +1,6 @@
-import type { MultiDashboardState } from '../types';
+import type { MultiDashboardState } from '../types/types';
 import { authService } from './auth';
-import { getDefaultMultiDashboardState } from '../storage';
+import { getDefaultMultiDashboardState } from '../components/storage';
 
 /**
  * Dashboard storage service - server only (no localStorage).

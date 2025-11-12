@@ -1,5 +1,5 @@
-import type { Widget, WidgetContent } from '../types';
-import type { WidgetRenderer } from './base';
+import type { Widget, WidgetContent } from '../types/types';
+import type { WidgetRenderer } from '../types/base-widget';
 
 export interface MTNXMLContent extends WidgetContent {
   feedUrl: string;

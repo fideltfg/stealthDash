@@ -1,5 +1,5 @@
-import type { Widget } from '../types';
-import type { WidgetRenderer } from './base';
+import type { Widget } from '../types/types';
+import type { WidgetRenderer } from '../types/base-widget';
 
 export class WeatherWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {

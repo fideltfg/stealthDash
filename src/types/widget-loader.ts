@@ -1,4 +1,4 @@
-import { registerWidget } from './base';
+import { registerWidget } from './base-widget';
 
 /**
  * Lazy-loading widget registry
@@ -22,20 +22,20 @@ import { registerWidget } from './base';
  * Just add the widget type to the widgetModules map below with its lazy import.
  */
 const widgetModules: Record<string, () => Promise<any>> = {
-  'image': () => import('./image'),
-  'embed': () => import('./embed'),
-  'weather': () => import('./weather'),
-  'clock': () => import('./clock'),
-  'rss': () => import('./rss'),
-  'uptime': () => import('./uptime'),
-  'comet-p8541': () => import('./comet-p8541'),
-  'home-assistant': () => import('./home-assistant'),
-  'chatgpt': () => import('./chatgpt'),
-  'mtnxml': () => import('./mtnxml'),
-  'envcanada': () => import('./envcanada'),
-  'pihole': () => import('./pihole'),
-  'google-calendar': () => import('./google-calendar'),
-  'unifi': () => import('./unifi'),
+  'image': () => import('../widgets/image'),
+  'embed': () => import('../widgets/embed'),
+  'weather': () => import('../widgets/weather'),
+  'clock': () => import('../widgets/clock'),
+  'rss': () => import('../widgets/rss'),
+  'uptime': () => import('../widgets/uptime'),
+  'comet-p8541': () => import('../widgets/comet-p8541'),
+  'home-assistant': () => import('../widgets/home-assistant'),
+  'chatgpt': () => import('../widgets/chatgpt'),
+  'mtnxml': () => import('../widgets/mtnxml'),
+  'envcanada': () => import('../widgets/envcanada'),
+  'pihole': () => import('../widgets/pihole'),
+  'google-calendar': () => import('../widgets/google-calendar'),
+  'unifi': () => import('../widgets/unifi'),
 };
 
 // Track which widgets have been loaded
@@ -83,5 +83,5 @@ export function getAvailableWidgetTypes(): string[] {
 }
 
 // Re-export for convenience
-export { registerWidget, getWidgetPlugin, getWidgetRenderer, getAllWidgetPlugins, getRegisteredWidgetTypes } from './base';
-export type { WidgetPlugin, WidgetRenderer } from './base';
+export { registerWidget, getWidgetPlugin, getWidgetRenderer, getAllWidgetPlugins, getRegisteredWidgetTypes } from './base-widget';
+export type { WidgetPlugin, WidgetRenderer } from './base-widget';

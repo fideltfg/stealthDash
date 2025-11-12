@@ -1,6 +1,6 @@
-import type { Widget, Vec2, Size } from '../types';
-import { MIN_WIDGET_SIZE } from '../types';
-import { getWidgetRenderer, getWidgetPlugin } from '.';
+import type { Widget, Vec2, Size } from './types';
+import { MIN_WIDGET_SIZE } from './types';
+import { getWidgetRenderer, getWidgetPlugin } from './widget-loader';
 
 export function snapToGrid(value: number, gridSize: number): number {
   return Math.round(value / gridSize) * gridSize;

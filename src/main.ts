@@ -1,8 +1,9 @@
-import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState } from './types';
-import { DEFAULT_WIDGET_SIZE } from './types';
-import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './storage';
-import { createHistoryManager, shouldCoalesceAction } from './history';
-import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './widgets/widget';
+import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState } from './types/types';
+import { DEFAULT_WIDGET_SIZE } from './types/types';
+import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './components/storage';
+import { createHistoryManager, shouldCoalesceAction } from './components/history';
+import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './types/widget';
+import { loadWidgetModule, loadWidgetModules } from './types/widget-loader';
 import { authService, type User } from './services/auth';
 import { dashboardStorage } from './services/dashboardStorage';
 import { AuthUI } from './components/AuthUI';
@@ -1108,7 +1109,6 @@ class Dashboard {
 
   private async addWidget(type: WidgetType, content: any): Promise<void> {
     // Load the widget module if not already loaded
-    const { loadWidgetModule } = await import('./widgets');
     await loadWidgetModule(type);
 
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -1660,7 +1660,6 @@ class Dashboard {
     // Load all widget modules needed for current dashboard
     const widgetTypes = this.state.widgets.map(w => w.type);
     if (widgetTypes.length > 0) {
-      const { loadWidgetModules } = await import('./widgets');
       await loadWidgetModules(widgetTypes);
     }
 

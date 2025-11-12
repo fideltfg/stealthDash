@@ -1,5 +1,5 @@
-import type { Widget } from '../types';
-import type { WidgetRenderer, WidgetPlugin } from './base';
+import type { Widget } from '../types/types';
+import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 
 export class TextWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
