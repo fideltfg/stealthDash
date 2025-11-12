@@ -11,55 +11,55 @@ export class UserSettingsUI {
 
     dialog.innerHTML = `
       <div class="dialog-container settings-container">
-        <div class="dialog-header settings-header">
-          <h2 class="dialog-title settings-title">⚙️ User Settings</h2>
-          <button id="close-settings" class="dialog-close-button settings-close-button">×</button>
+        <div class="dialog-header">
+          <h2 class="dialog-title">⚙️ User Settings</h2>
+          <button id="close-settings" class="dialog-close-button">×</button>
         </div>
 
         <!-- Profile Section -->
-        <div class="section settings-section">
-          <h3 class="section-title settings-section-title settings-section-title-success">👤 Profile Information</h3>
+        <div class="section">
+          <h3 class="section-title settings-section-title-success">👤 Profile Information</h3>
           
-          <div class="form-group settings-form-group">
-            <label class="form-label form-label-disabled settings-label settings-label-disabled">Username</label>
-            <input type="text" value="${user.username}" disabled class="form-input form-input-disabled settings-input settings-input-disabled">
-            <small class="form-hint settings-hint">Username cannot be changed</small>
+          <div class="form-group">
+            <label class="form-label form-label-disabled">Username</label>
+            <input type="text" value="${user.username}" disabled class="form-input form-input-disabled">
+            <small class="form-hint">Username cannot be changed</small>
           </div>
 
-          <div class="form-group settings-form-group">
-            <label class="form-label settings-label">Email</label>
-            <input type="email" id="profile-email" value="${user.email}" class="form-input settings-input">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="profile-email" value="${user.email}" class="form-input">
           </div>
 
-          <button id="update-profile-btn" class="btn btn-success settings-button settings-button-success">Update Profile</button>
+          <button id="update-profile-btn" class="btn btn-success">Update Profile</button>
         </div>
 
         <!-- Change Password Section -->
-        <div class="section settings-section">
-          <h3 class="section-title settings-section-title settings-section-title-warning">🔑 Change Password</h3>
+        <div class="section">
+          <h3 class="section-title settings-section-title-warning">🔑 Change Password</h3>
           
-          <div class="form-group settings-form-group">
-            <label class="form-label settings-label">Current Password</label>
-            <input type="password" id="current-password" class="form-input settings-input">
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" id="current-password" class="form-input">
           </div>
 
-          <div class="form-group settings-form-group">
-            <label class="form-label settings-label">New Password</label>
-            <input type="password" id="new-password" class="form-input settings-input">
-            <small class="form-hint settings-hint">Minimum 6 characters</small>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" id="new-password" class="form-input">
+            <small class="form-hint">Minimum 6 characters</small>
           </div>
 
-          <div class="form-group settings-form-group">
-            <label class="form-label settings-label">Confirm New Password</label>
-            <input type="password" id="confirm-password" class="form-input settings-input">
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" id="confirm-password" class="form-input">
           </div>
 
-          <button id="change-password-btn" class="btn btn-warning settings-button settings-button-warning">Change Password</button>
+          <button id="change-password-btn" class="btn btn-warning">Change Password</button>
         </div>
 
         <!-- Account Info -->
-        <div class="section settings-section">
-          <h3 class="section-title settings-section-title settings-section-title-info">ℹ️ Account Information</h3>
+        <div class="section">
+          <h3 class="section-title settings-section-title-info">ℹ️ Account Information</h3>
           <div class="settings-info-list">
             <div><strong>User ID:</strong> ${user.id}</div>
             <div><strong>Account Created:</strong> ${new Date(user.createdAt).toLocaleString()}</div>
@@ -67,7 +67,7 @@ export class UserSettingsUI {
           </div>
         </div>
 
-        <div id="settings-message" class="message settings-message"></div>
+        <div id="settings-message" class="message"></div>
       </div>
     `;
 

@@ -28,36 +28,36 @@ export class AuthUI {
 
         <!-- Login Form -->
         <div id="login-form" class="auth-form">
-          <div class="form-group auth-form-group">
-            <label class="form-label auth-label">Username</label>
-            <input type="text" id="login-username" class="form-input auth-input">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="login-username" class="form-input">
           </div>
-          <div class="form-group auth-form-group">
-            <label class="form-label auth-label">Password</label>
-            <input type="password" id="login-password" class="form-input auth-input">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-input">
           </div>
-          <div class="form-group auth-form-group auth-form-group-right">
+          <div class="form-group auth-form-group-right">
             <a href="#" id="forgot-password-link" class="auth-link">Forgot Password?</a>
           </div>
-          <button id="login-btn" class="btn btn-primary btn-full auth-button">Login</button>
+          <button id="login-btn" class="btn btn-primary btn-full">Login</button>
         </div>
 
         <!-- Register Form -->
         <div id="register-form" class="auth-form hidden">
-          <div class="form-group auth-form-group">
-            <label class="form-label auth-label">Username</label>
-            <input type="text" id="register-username" class="form-input auth-input">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="register-username" class="form-input">
           </div>
-          <div class="form-group auth-form-group">
-            <label class="form-label auth-label">Email</label>
-            <input type="email" id="register-email" class="form-input auth-input">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="register-email" class="form-input">
           </div>
-          <div class="form-group auth-form-group">
-            <label class="form-label auth-label">Password</label>
-            <input type="password" id="register-password" class="form-input auth-input">
-            <small class="form-hint auth-hint">Minimum 6 characters</small>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="register-password" class="form-input">
+            <small class="form-hint">Minimum 6 characters</small>
           </div>
-          <button id="register-btn" class="btn btn-primary btn-full auth-button">Create Account</button>
+          <button id="register-btn" class="btn btn-primary btn-full">Create Account</button>
         </div>
 
         <div id="auth-error" class="message message-error auth-error"></div>

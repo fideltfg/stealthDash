@@ -12,9 +12,9 @@ export class CredentialsUI {
 
     dialog.innerHTML = `
       <div class="dialog-container credentials-container">
-        <div class="dialog-header credentials-header">
-          <h2 class="dialog-title credentials-title">🔐 Credential Management</h2>
-          <button id="close-credentials" class="dialog-close-button credentials-close-button">×</button>
+        <div class="dialog-header">
+          <h2 class="dialog-title">🔐 Credential Management</h2>
+          <button id="close-credentials" class="dialog-close-button">×</button>
         </div>
 
         <div class="credentials-add-section">
@@ -76,13 +76,13 @@ export class CredentialsUI {
           </p>
         </div>
         <div class="credentials-list-item-actions">
-          <button class="test-credential-btn action-btn action-btn-info credential-action-btn credential-action-btn-test" data-id="${cred.id}" title="Test credential">
+          <button class="test-credential-btn action-btn action-btn-info credential-action-btn" data-id="${cred.id}" title="Test credential">
             🧪 Test
           </button>
-          <button class="edit-credential-btn action-btn action-btn-warning credential-action-btn credential-action-btn-edit" data-id="${cred.id}" title="Edit credential">
+          <button class="edit-credential-btn action-btn action-btn-warning credential-action-btn" data-id="${cred.id}" title="Edit credential">
             ✏️ Edit
           </button>
-          <button class="delete-credential-btn action-btn action-btn-danger credential-action-btn credential-action-btn-delete" data-id="${cred.id}" title="Delete credential">
+          <button class="delete-credential-btn action-btn action-btn-danger credential-action-btn" data-id="${cred.id}" title="Delete credential">
             🗑️ Delete
           </button>
         </div>
@@ -129,20 +129,20 @@ export class CredentialsUI {
 
     dialog.innerHTML = `
       <div class="dialog-container credential-form-container">
-        <div class="dialog-header credential-form-header">
-          <h2 class="dialog-title credential-form-title">➕ Add New Credential</h2>
-          <button id="close-create-credential" class="dialog-close-button credential-form-close-button">×</button>
+        <div class="dialog-header">
+          <h2 class="dialog-title">➕ Add New Credential</h2>
+          <button id="close-create-credential" class="dialog-close-button">×</button>
         </div>
 
         <form id="create-credential-form">
-          <div class="form-group credential-form-group">
-            <label class="form-label credential-form-label">Name *</label>
-            <input type="text" id="cred-name" required class="form-input credential-form-input" placeholder="e.g., My Pi-hole Server">
+          <div class="form-group">
+            <label class="form-label">Name *</label>
+            <input type="text" id="cred-name" required class="form-input" placeholder="e.g., My Pi-hole Server">
           </div>
 
-          <div class="form-group credential-form-group">
-            <label class="form-label credential-form-label">Service Type *</label>
-            <select id="cred-service-type" required class="form-select credential-form-select">
+          <div class="form-group">
+            <label class="form-label">Service Type *</label>
+            <select id="cred-service-type" required class="form-select">
               <option value="">Select service type...</option>
               <option value="pihole">🛡️ Pi-hole</option>
               <option value="unifi">📡 UniFi Controller</option>
@@ -154,20 +154,20 @@ export class CredentialsUI {
             </select>
           </div>
 
-          <div class="form-group credential-form-group">
-            <label class="form-label credential-form-label">Description</label>
-            <textarea id="cred-description" class="form-textarea credential-form-textarea" placeholder="Optional description..."></textarea>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="cred-description" class="form-textarea" placeholder="Optional description..."></textarea>
           </div>
 
           <div id="credential-fields" class="credential-dynamic-fields">
             <!-- Dynamic fields will be inserted here -->
           </div>
 
-          <div id="create-error" class="message message-error credential-form-error"></div>
+          <div id="create-error" class="message message-error"></div>
 
           <div class="credential-form-actions">
-            <button type="button" id="cancel-create" class="btn btn-secondary credential-form-button credential-form-button-secondary">Cancel</button>
-            <button type="submit" class="btn btn-success credential-form-button credential-form-button-primary">Create Credential</button>
+            <button type="button" id="cancel-create" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-success">Create Credential</button>
           </div>
         </form>
       </div>
@@ -216,20 +216,20 @@ export class CredentialsUI {
             ℹ️ Custom credentials can store any key-value pairs. You'll need to manually enter the JSON data.
           </p>
         </div>
-        <div class="form-group credential-form-group">
-          <label class="form-label credential-form-label">Credential Data (JSON) *</label>
-          <textarea id="cred-custom-data" required class="form-textarea credential-form-textarea credential-form-textarea-code" placeholder='{\n  "key1": "value1",\n  "key2": "value2"\n}'></textarea>
+        <div class="form-group">
+          <label class="form-label">Credential Data (JSON) *</label>
+          <textarea id="cred-custom-data" required class="form-textarea credential-form-textarea-code" placeholder='{\n  "key1": "value1",\n  "key2": "value2"\n}'></textarea>
         </div>
       `;
     } else {
       container.innerHTML = fields.map(field => `
-        <div class="form-group credential-form-group">
-          <label class="form-label credential-form-label">${field.label} *</label>
+        <div class="form-group">
+          <label class="form-label">${field.label} *</label>
           <input 
             type="${field.type}" 
             id="cred-field-${field.name}" 
             required 
-            class="form-input credential-form-input" 
+            class="form-input" 
             placeholder="${field.placeholder || ''}">
         </div>
       `).join('');
@@ -312,54 +312,54 @@ export class CredentialsUI {
       
       dialog.innerHTML = `
         <div class="dialog-container credential-form-container">
-          <div class="dialog-header credential-form-header">
-            <h2 class="dialog-title credential-form-title">✏️ Edit Credential</h2>
-            <button id="close-edit-credential" class="dialog-close-button credential-form-close-button">×</button>
+          <div class="dialog-header">
+            <h2 class="dialog-title">✏️ Edit Credential</h2>
+            <button id="close-edit-credential" class="dialog-close-button">×</button>
           </div>
 
           <form id="edit-credential-form">
-            <div class="form-group credential-form-group">
-              <label class="form-label credential-form-label">Name *</label>
-              <input type="text" id="edit-cred-name" required value="${this.escapeHtml(credential.name)}" class="form-input credential-form-input">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" id="edit-cred-name" required value="${this.escapeHtml(credential.name)}" class="form-input">
             </div>
 
-            <div class="form-group credential-form-group">
-              <label class="form-label form-label-disabled credential-form-label credential-form-label-disabled">Service Type</label>
-              <input type="text" value="${credentialsService.getServiceTypeLabel(credential.service_type)}" disabled class="form-input form-input-disabled credential-form-input credential-form-input-disabled">
-              <small class="form-hint credential-form-hint">Service type cannot be changed</small>
+            <div class="form-group">
+              <label class="form-label form-label-disabled">Service Type</label>
+              <input type="text" value="${credentialsService.getServiceTypeLabel(credential.service_type)}" disabled class="form-input form-input-disabled">
+              <small class="form-hint">Service type cannot be changed</small>
             </div>
 
-            <div class="form-group credential-form-group">
-              <label class="form-label credential-form-label">Description</label>
-              <textarea id="edit-cred-description" class="form-textarea credential-form-textarea">${this.escapeHtml(credential.description || '')}</textarea>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea id="edit-cred-description" class="form-textarea">${this.escapeHtml(credential.description || '')}</textarea>
             </div>
 
             <div class="section credential-form-section">
-              <h3 class="section-title credential-form-section-title">Update Credentials</h3>
+              <h3 class="section-title">Update Credentials</h3>
               ${fields.length > 0 ? fields.map(field => `
-                <div class="form-group credential-form-group">
-                  <label class="form-label credential-form-label">${field.label}</label>
+                <div class="form-group">
+                  <label class="form-label">${field.label}</label>
                   <input 
                     type="${field.type}" 
                     id="edit-cred-field-${field.name}" 
                     value="${this.escapeHtml(credential.data?.[field.name] || '')}"
-                    class="form-input credential-form-input" 
+                    class="form-input" 
                     placeholder="Leave empty to keep unchanged">
                 </div>
               `).join('') : `
-                <div class="form-group credential-form-group">
-                  <label class="form-label credential-form-label">Credential Data (JSON)</label>
-                  <textarea id="edit-cred-custom-data" class="form-textarea credential-form-textarea credential-form-textarea-code" placeholder="Leave empty to keep unchanged">${JSON.stringify(credential.data || {}, null, 2)}</textarea>
-                  <small class="form-hint credential-form-hint">Leave empty to keep current credentials</small>
+                <div class="form-group">
+                  <label class="form-label">Credential Data (JSON)</label>
+                  <textarea id="edit-cred-custom-data" class="form-textarea credential-form-textarea-code" placeholder="Leave empty to keep unchanged">${JSON.stringify(credential.data || {}, null, 2)}</textarea>
+                  <small class="form-hint">Leave empty to keep current credentials</small>
                 </div>
               `}
             </div>
 
-            <div id="edit-error" class="message message-error credential-form-error"></div>
+            <div id="edit-error" class="message message-error"></div>
 
             <div class="credential-form-actions">
-              <button type="button" id="cancel-edit" class="btn btn-secondary credential-form-button credential-form-button-secondary">Cancel</button>
-              <button type="submit" class="btn btn-warning credential-form-button credential-form-button-warning">Update Credential</button>
+              <button type="button" id="cancel-edit" class="btn btn-secondary">Cancel</button>
+              <button type="submit" class="btn btn-warning">Update Credential</button>
             </div>
           </form>
         </div>
@@ -497,7 +497,7 @@ export class CredentialsUI {
 
   private showNotification(message: string, type: 'success' | 'error' | 'warning'): void {
     const notification = document.createElement('div');
-    notification.className = `message message-${type} credential-notification credential-notification-${type}`;
+    notification.className = `message message-${type} credential-notification`;
     notification.textContent = message;
 
     document.body.appendChild(notification);

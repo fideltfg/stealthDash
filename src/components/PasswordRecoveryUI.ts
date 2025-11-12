@@ -9,9 +9,9 @@ export class PasswordRecoveryUI {
 
     dialog.innerHTML = `
       <div class="dialog-container recovery-container">
-        <div class="dialog-header recovery-header">
-          <h2 class="dialog-title recovery-title">🔐 Password Recovery</h2>
-          <button id="close-recovery" class="dialog-close-button recovery-close-button">×</button>
+        <div class="dialog-header">
+          <h2 class="dialog-title">🔐 Password Recovery</h2>
+          <button id="close-recovery" class="dialog-close-button">×</button>
         </div>
 
         <p class="recovery-description">
@@ -25,7 +25,7 @@ export class PasswordRecoveryUI {
           class="form-input recovery-input"
         />
 
-        <button id="send-recovery-btn" class="btn btn-success btn-full recovery-button recovery-button-primary">Send Recovery Link</button>
+        <button id="send-recovery-btn" class="btn btn-success btn-full recovery-button">Send Recovery Link</button>
 
         <div id="recovery-message" class="message recovery-message"></div>
       </div>
@@ -95,11 +95,11 @@ export class PasswordRecoveryUI {
       dialog.innerHTML = `
         <div class="dialog-container recovery-container recovery-container-error">
           <div class="recovery-error-icon">⚠️</div>
-          <h2 class="dialog-title recovery-title recovery-title-error">Invalid Recovery Link</h2>
+          <h2 class="dialog-title recovery-title-error">Invalid Recovery Link</h2>
           <p class="recovery-error-text">
             ${validation.error || 'This recovery link is invalid or has expired.'}
           </p>
-          <button id="close-btn" class="btn btn-success btn-full recovery-button recovery-button-primary">Close</button>
+          <button id="close-btn" class="btn btn-success btn-full recovery-button">Close</button>
         </div>
       `;
       
@@ -126,7 +126,7 @@ export class PasswordRecoveryUI {
       <div class="dialog-container recovery-container">
         <div class="recovery-reset-header">
           <div class="recovery-reset-icon">🔐</div>
-          <h2 class="dialog-title recovery-title">Reset Your Password</h2>
+          <h2 class="dialog-title">Reset Your Password</h2>
           <p class="recovery-username">
             ${validation.username ? `Account: <strong>${validation.username}</strong>` : ''}
           </p>
@@ -146,7 +146,7 @@ export class PasswordRecoveryUI {
           class="form-input recovery-input recovery-input-space-large"
         />
 
-        <button id="reset-btn" class="btn btn-success btn-full recovery-button recovery-button-primary recovery-button-large">Reset Password</button>
+        <button id="reset-btn" class="btn btn-success btn-full recovery-button">Reset Password</button>
 
         <div id="message" class="message recovery-message"></div>
       </div>
@@ -211,16 +211,24 @@ export class PasswordRecoveryUI {
     });
   }
 
-  private showMessage(dialog: HTMLElement, message: string, success: boolean): void {
-    const messageDiv = dialog.querySelector('#message, #recovery-message') as HTMLElement;
-    if (!messageDiv) return;
-    
-    messageDiv.textContent = message;
-    messageDiv.classList.remove('message-success', 'message-error', 'recovery-message-success', 'recovery-message-error');
-    messageDiv.classList.add(success ? 'message-success recovery-message-success' : 'message-error recovery-message-error', 'visible');
-
-    setTimeout(() => {
-      messageDiv.classList.remove('visible');
-    }, 5000);
+  private showMessage(dialogOrMessage: HTMLElement | string, messageOrType: string | boolean, isSuccessOrUndefined?: boolean): void {
+    // Overload 1: showMessage(message, type) - for reset dialog
+    if (typeof dialogOrMessage === 'string' && typeof messageOrType === 'string') {
+      const messageDiv = document.querySelector('#message') as HTMLDivElement;
+      if (messageDiv) {
+        messageDiv.textContent = dialogOrMessage;
+        messageDiv.className = `message message-${messageOrType} recovery-message`;
+        messageDiv.style.display = 'block';
+      }
+    }
+    // Overload 2: showMessage(dialog, message, isSuccess) - for request dialog
+    else if (typeof messageOrType === 'string' && typeof isSuccessOrUndefined === 'boolean') {
+      const messageDiv = (dialogOrMessage as HTMLElement).querySelector('#recovery-message') as HTMLDivElement;
+      if (messageDiv) {
+        messageDiv.textContent = messageOrType;
+        messageDiv.className = `message message-${isSuccessOrUndefined ? 'success' : 'error'} recovery-message`;
+        messageDiv.style.display = 'block';
+      }
+    }
   }
 }
