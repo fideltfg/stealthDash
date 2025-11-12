@@ -1443,6 +1443,175 @@ body {
   animation: slideOut 0.3s ease-out;
 }
 
+/* ==================== PASSWORD RECOVERY STYLES ==================== */
+
+.recovery-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  padding: 20px;
+}
+
+.recovery-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.recovery-container-error {
+  text-align: center;
+}
+
+.recovery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.recovery-title {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text);
+}
+
+.recovery-title-error {
+  margin: 0 0 20px 0;
+  color: #f44336;
+}
+
+.recovery-close-button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 32px;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: all var(--transition-speed);
+}
+
+.recovery-close-button:hover {
+  background: var(--hover);
+  border-radius: 4px;
+}
+
+.recovery-description {
+  margin: 0 0 20px 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}
+
+.recovery-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  transition: border-color var(--transition-speed);
+}
+
+.recovery-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.recovery-input-space {
+  margin-bottom: 15px;
+}
+
+.recovery-input-space-large {
+  margin-bottom: 20px;
+}
+
+.recovery-button {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.recovery-button-primary {
+  width: 100%;
+  background: #4CAF50;
+  color: white;
+}
+
+.recovery-button-large {
+  padding: 14px;
+  font-size: 16px;
+}
+
+.recovery-button:hover {
+  filter: brightness(1.1);
+}
+
+.recovery-message {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 6px;
+  display: none;
+}
+
+.recovery-message.visible {
+  display: block;
+}
+
+.recovery-message-success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid #4CAF50;
+  color: #4CAF50;
+}
+
+.recovery-message-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #f44336;
+}
+
+.recovery-error-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.recovery-error-text {
+  margin: 0 0 30px 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.recovery-reset-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.recovery-reset-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.recovery-username {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
 /* ==================== ADMIN DASHBOARD STYLES ==================== */
 
 .admin-container {.settings-message.error {
