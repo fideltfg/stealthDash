@@ -66,7 +66,7 @@ class Dashboard {
     // Check if user is logged in
     if (authService.isAuthenticated()) {
       this.currentUser = authService.getUser();
-      
+
       // Verify token is still valid and get fresh profile with admin flag
       const valid = await authService.verify();
       if (!valid) {
@@ -80,12 +80,12 @@ class Dashboard {
 
       // Load dashboards from server (primary source of truth)
       this.multiState = await dashboardStorage.loadDashboards();
-      
+
       // Get the active dashboard's state
       const activeDashboard = this.multiState.dashboards.find(
         (d: any) => d.id === this.multiState!.activeDashboardId
       );
-      
+
       if (activeDashboard) {
         this.state = activeDashboard.state;
         console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
@@ -102,22 +102,23 @@ class Dashboard {
       this.saveHistory();
       this.showUserMenu();
       this.startAutoSave();
-      
-      // Hide loading screen now that dashboard is fully loaded
-      this.hideLoadingScreen();
+
+
     } else {
       // Show login dialog
       this.authUI.showLoginDialog();
-      
-      // Hide loading screen even if not logged in
-      this.hideLoadingScreen();
+
+    
     }
+      // Hide loading screen
+    this.hideLoadingScreen();
   }
 
   private handleAuthChange(user: User | null): void {
     this.currentUser = user;
     if (user) {
-      // User logged in, initialize dashboard
+      // User logged in, show loading screen and initialize dashboard
+      this.showLoadingScreen();
       this.init();
     }
   }
@@ -159,6 +160,31 @@ class Dashboard {
     }
   }
 
+  private showLoadingScreen(): void {
+    // Recreate loading screen if it doesn't exist
+    if (!document.getElementById('loading-screen')) {
+      const loadingScreen = document.createElement('div');
+      loadingScreen.id = 'loading-screen';
+      loadingScreen.innerHTML = `
+        <div class="loader"></div>
+        <div class="loading-text">Loading Dashboard<span class="loading-dots"></span></div>
+      `;
+      document.body.appendChild(loadingScreen);
+    }
+    
+    // Remove fade-out class if it exists
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      loadingScreen.classList.remove('fade-out');
+    }
+    
+    // Hide app while loading
+    const app = document.getElementById('app');
+    if (app) {
+      app.classList.remove('loaded');
+    }
+  }
+
   private toggleFullscreen(): void {
     if (!document.fullscreenElement) {
       // Enter fullscreen
@@ -173,9 +199,9 @@ class Dashboard {
 
   private toggleLock(): void {
     this.isLocked = !this.isLocked;
-    
+
     const app = document.getElementById('app')!;
-    
+
     if (this.isLocked) {
       // Lock the dashboard
       app.classList.add('locked');
@@ -192,16 +218,16 @@ class Dashboard {
 
   private setupDOM(): void {
     const app = document.getElementById('app')!;
-    
+
     // Canvas
     this.canvas = document.createElement('div');
     this.canvas.className = 'canvas';
     this.canvas.setAttribute('role', 'main');
-    
+
     this.canvasContent = document.createElement('div');
     this.canvasContent.className = 'canvas-content';
     this.canvas.appendChild(this.canvasContent);
-    
+
     // Menu Button (hamburger icon)
     const menuButton = document.createElement('button');
     menuButton.className = 'menu-button';
@@ -209,12 +235,12 @@ class Dashboard {
     menuButton.setAttribute('aria-label', 'Toggle menu');
     menuButton.setAttribute('title', 'Toggle menu');
     menuButton.addEventListener('click', () => this.toggleMenu());
-    
+
     // Controls Container (slides out from left)
     const controlsContainer = document.createElement('div');
     controlsContainer.className = 'controls-container';
     controlsContainer.id = 'controls-container';
-    
+
     // FAB (Add Widget)
     const fab = document.createElement('button');
     fab.className = 'fab';
@@ -225,7 +251,7 @@ class Dashboard {
       this.showAddWidgetModal();
       this.closeMenu();
     });
-    
+
     // Fullscreen Toggle
     const fullscreenToggle = document.createElement('button');
     fullscreenToggle.className = 'fullscreen-toggle';
@@ -236,7 +262,7 @@ class Dashboard {
       this.toggleFullscreen();
       this.closeMenu();
     });
-    
+
     // Theme Toggle
     const themeToggle = document.createElement('button');
     themeToggle.className = 'theme-toggle';
@@ -247,7 +273,7 @@ class Dashboard {
       this.toggleTheme();
       this.closeMenu();
     });
-    
+
     // Background Toggle
     const backgroundToggle = document.createElement('button');
     backgroundToggle.className = 'background-toggle';
@@ -258,7 +284,7 @@ class Dashboard {
       this.toggleBackground();
       this.closeMenu();
     });
-    
+
     // Lock Toggle (positioned at top-right, replaces user button when locked)
     this.lockButton = document.createElement('button');
     this.lockButton.className = 'lock-toggle';
@@ -268,7 +294,7 @@ class Dashboard {
     this.lockButton.addEventListener('click', () => {
       this.toggleLock();
     });
-    
+
     // Reset Zoom Button
     const resetZoomButton = document.createElement('button');
     resetZoomButton.className = 'reset-zoom-toggle';
@@ -279,7 +305,7 @@ class Dashboard {
       this.resetZoom();
       this.closeMenu();
     });
-    
+
     // Reset View Button
     const resetViewButton = document.createElement('button');
     resetViewButton.className = 'reset-view-toggle';
@@ -290,7 +316,7 @@ class Dashboard {
       this.resetView();
       this.closeMenu();
     });
-    
+
     // Add all buttons to controls container (except lock button)
     controlsContainer.appendChild(fab);
     controlsContainer.appendChild(fullscreenToggle);
@@ -298,12 +324,12 @@ class Dashboard {
     controlsContainer.appendChild(resetViewButton);
     controlsContainer.appendChild(themeToggle);
     controlsContainer.appendChild(backgroundToggle);
-    
+
     app.appendChild(this.canvas);
     app.appendChild(menuButton);
     app.appendChild(this.lockButton);
     app.appendChild(controlsContainer);
-    
+
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
@@ -312,14 +338,14 @@ class Dashboard {
       }
     });
   }
-  
+
   private toggleMenu(): void {
     const container = document.getElementById('controls-container');
     if (container) {
       container.classList.toggle('open');
     }
   }
-  
+
   private closeMenu(): void {
     const container = document.getElementById('controls-container');
     if (container) {
@@ -329,7 +355,7 @@ class Dashboard {
 
   private setupTheme(): void {
     const root = document.documentElement;
-    
+
     if (this.state.theme === 'dark') {
       root.classList.add('theme-dark');
       root.classList.remove('theme-light');
@@ -364,32 +390,32 @@ class Dashboard {
   private setupEventListeners(): void {
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => this.handleKeyboard(e));
-    
+
     // Widget events
     document.addEventListener('widget-update', ((e: CustomEvent) => {
       this.updateWidgetContent(e.detail.id, e.detail.content);
     }) as EventListener);
-    
+
     // Widget delete event
     window.addEventListener('widget-delete', ((e: CustomEvent) => {
       this.deleteWidget(e.detail.widgetId);
     }) as EventListener);
-    
+
     // Pointer events for drag/resize
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
     document.addEventListener('pointerup', () => this.handlePointerUp());
-    
+
     // Click outside to deselect
     this.canvas.addEventListener('click', (e) => {
       if (e.target === this.canvas || e.target === this.canvasContent) {
         this.selectWidget(null);
       }
     });
-    
+
     // Mouse wheel zoom
     this.canvas.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
-    
+
     // Touch events for pinch zoom
     this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
@@ -399,28 +425,28 @@ class Dashboard {
   private handleKeyboard(e: KeyboardEvent): void {
     // Ignore all input when locked
     if (this.isLocked) return;
-    
+
     // Undo/Redo
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
       e.preventDefault();
       this.undo();
       return;
     }
-    
+
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
       e.preventDefault();
       this.redo();
       return;
     }
-    
+
     // Widget manipulation
     if (!this.selectedWidgetId) return;
-    
+
     const widget = this.state.widgets.find(w => w.id === this.selectedWidgetId);
     if (!widget) return;
-    
+
     const step = e.shiftKey ? 10 * this.state.grid : this.state.grid;
-    
+
     switch (e.key) {
       case 'ArrowUp':
         e.preventDefault();
@@ -451,9 +477,9 @@ class Dashboard {
   private handlePointerDown(e: PointerEvent): void {
     // Ignore all interactions when locked
     if (this.isLocked) return;
-    
+
     const target = e.target as HTMLElement;
-    
+
     // Find widget element
     const widgetEl = target.closest('.widget') as HTMLElement;
     if (!widgetEl) {
@@ -464,20 +490,20 @@ class Dashboard {
       }
       return;
     }
-    
+
     const widgetId = widgetEl.id.replace('widget-', '');
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     this.selectWidget(widgetId);
-    
+
     // Check if clicking resize handle
     if (target.classList.contains('resize-handle')) {
       e.preventDefault();
       this.startResize(widgetId, target.dataset.direction!, e);
       return;
     }
-    
+
     // Start drag if clicking header or widget body
     if (target.classList.contains('widget-header') || target.classList.contains('widget')) {
       e.preventDefault();
@@ -503,19 +529,19 @@ class Dashboard {
       this.saveHistory();
       this.save(); // Save after drag/resize is complete
     }
-    
+
     // Save viewport position after panning
     if (this.panState) {
       this.save();
     }
-    
+
     this.dragState = null;
     this.resizeState = null;
     this.panState = null;
-    
+
     // Clear snap guides
     this.clearSnapGuides();
-    
+
     // Reset cursor
     if (this.canvas) {
       this.canvas.style.cursor = '';
@@ -524,7 +550,7 @@ class Dashboard {
 
   private showSnapGuides(snapTargets: { x: number | null; y: number | null }): void {
     this.clearSnapGuides();
-    
+
     if (snapTargets.x !== null) {
       const guide = document.createElement('div');
       guide.className = 'snap-guide snap-guide-vertical';
@@ -532,7 +558,7 @@ class Dashboard {
       this.canvasContent.appendChild(guide);
       this.snapGuides.push(guide);
     }
-    
+
     if (snapTargets.y !== null) {
       const guide = document.createElement('div');
       guide.className = 'snap-guide snap-guide-horizontal';
@@ -541,7 +567,7 @@ class Dashboard {
       this.snapGuides.push(guide);
     }
   }
-  
+
   private clearSnapGuides(): void {
     this.snapGuides.forEach(guide => guide.remove());
     this.snapGuides = [];
@@ -550,7 +576,7 @@ class Dashboard {
   private startDrag(widgetId: string, e: PointerEvent): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     this.dragState = {
       widgetId,
       startPos: { ...widget.position },
@@ -563,20 +589,20 @@ class Dashboard {
     let snapY: number | null = null;
     let snapW: number | null = null;
     let snapH: number | null = null;
-    
+
     const widgetLeft = widget.position.x;
     const widgetRight = widget.position.x + widget.size.w;
     const widgetTop = widget.position.y;
     const widgetBottom = widget.position.y + widget.size.h;
-    
+
     for (const other of otherWidgets) {
       if (other.id === widget.id) continue;
-      
+
       const otherLeft = other.position.x;
       const otherRight = other.position.x + other.size.w;
       const otherTop = other.position.y;
       const otherBottom = other.position.y + other.size.h;
-      
+
       // Check for horizontal edge snapping
       if (Math.abs(widgetLeft - otherRight) < this.SNAP_THRESHOLD) {
         snapX = otherRight;
@@ -587,7 +613,7 @@ class Dashboard {
       } else if (Math.abs(widgetRight - otherRight) < this.SNAP_THRESHOLD) {
         snapX = otherRight - widget.size.w;
       }
-      
+
       // Check for vertical edge snapping
       if (Math.abs(widgetTop - otherBottom) < this.SNAP_THRESHOLD) {
         snapY = otherBottom;
@@ -598,43 +624,43 @@ class Dashboard {
       } else if (Math.abs(widgetBottom - otherBottom) < this.SNAP_THRESHOLD) {
         snapY = otherBottom - widget.size.h;
       }
-      
+
       // Check for width matching (when horizontally aligned)
       const verticalOverlap = !(widgetBottom < otherTop || widgetTop > otherBottom);
       if (verticalOverlap && Math.abs(widget.size.w - other.size.w) < this.SNAP_THRESHOLD) {
         snapW = other.size.w;
       }
-      
+
       // Check for height matching (when vertically aligned)
       const horizontalOverlap = !(widgetRight < otherLeft || widgetLeft > otherRight);
       if (horizontalOverlap && Math.abs(widget.size.h - other.size.h) < this.SNAP_THRESHOLD) {
         snapH = other.size.h;
       }
     }
-    
+
     return { x: snapX, y: snapY, w: snapW, h: snapH };
   }
 
   private updateDrag(e: PointerEvent): void {
     if (!this.dragState) return;
-    
+
     const widget = this.state.widgets.find(w => w.id === this.dragState!.widgetId);
     if (!widget) return;
-    
+
     const dx = (e.clientX - this.dragState.startMousePos.x) / this.state.zoom;
     const dy = (e.clientY - this.dragState.startMousePos.y) / this.state.zoom;
-    
+
     // Calculate new position with grid snapping
     let newX = snapToGrid(this.dragState.startPos.x + dx, this.state.grid);
     let newY = snapToGrid(this.dragState.startPos.y + dy, this.state.grid);
-    
+
     // Temporarily update position for snap detection
     widget.position.x = newX;
     widget.position.y = newY;
-    
+
     // Find snap targets
     const snapTargets = this.findSnapTargets(widget, this.state.widgets);
-    
+
     // Apply snapping if found
     if (snapTargets.x !== null) {
       newX = snapTargets.x;
@@ -642,13 +668,13 @@ class Dashboard {
     if (snapTargets.y !== null) {
       newY = snapTargets.y;
     }
-    
+
     widget.position.x = newX;
     widget.position.y = newY;
-    
+
     // Show visual guides
     this.showSnapGuides({ x: snapTargets.x, y: snapTargets.y });
-    
+
     // Don't save during drag - only update visuals
     this.updateWidget(widget, false);
   }
@@ -656,7 +682,7 @@ class Dashboard {
   private startResize(widgetId: string, direction: string, e: PointerEvent): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     this.resizeState = {
       widgetId,
       direction,
@@ -668,17 +694,17 @@ class Dashboard {
 
   private updateResize(e: PointerEvent): void {
     if (!this.resizeState) return;
-    
+
     const widget = this.state.widgets.find(w => w.id === this.resizeState!.widgetId);
     if (!widget) return;
-    
+
     const dx = (e.clientX - this.resizeState.startMousePos.x) / this.state.zoom;
     const dy = (e.clientY - this.resizeState.startMousePos.y) / this.state.zoom;
     const dir = this.resizeState.direction;
-    
+
     let newSize = { ...this.resizeState.startSize };
     let newPos = { ...this.resizeState.startPos };
-    
+
     if (dir.includes('e')) newSize.w += dx;
     if (dir.includes('w')) {
       newSize.w -= dx;
@@ -689,16 +715,16 @@ class Dashboard {
       newSize.h -= dy;
       newPos.y += dy;
     }
-    
+
     newSize = constrainSize(newSize);
-    
+
     // Temporarily update widget for snap detection
     widget.size = newSize;
     widget.position = newPos;
-    
+
     // Find snap targets for size matching
     const snapTargets = this.findSnapTargets(widget, this.state.widgets);
-    
+
     // Apply size snapping if found
     if (snapTargets.w !== null && (dir.includes('e') || dir.includes('w'))) {
       const widthDiff = snapTargets.w - newSize.w;
@@ -708,7 +734,7 @@ class Dashboard {
         newPos.x -= widthDiff;
       }
     }
-    
+
     if (snapTargets.h !== null && (dir.includes('n') || dir.includes('s'))) {
       const heightDiff = snapTargets.h - newSize.h;
       newSize.h = snapTargets.h;
@@ -717,7 +743,7 @@ class Dashboard {
         newPos.y -= heightDiff;
       }
     }
-    
+
     // Apply edge snapping when resizing
     if (dir.includes('e') && snapTargets.x !== null) {
       const targetRight = snapTargets.x + newSize.w;
@@ -731,7 +757,7 @@ class Dashboard {
         }
       }
     }
-    
+
     if (dir.includes('s') && snapTargets.y !== null) {
       const targetBottom = snapTargets.y + newSize.h;
       // Find the bottom edge we're snapping to
@@ -744,13 +770,13 @@ class Dashboard {
         }
       }
     }
-    
+
     widget.size = newSize;
     widget.position = newPos;
-    
+
     // Show visual guides for snapped edges
     this.showSnapGuides({ x: snapTargets.x, y: snapTargets.y });
-    
+
     // Don't save during resize - only update visuals
     this.updateWidget(widget, false);
   }
@@ -766,21 +792,21 @@ class Dashboard {
 
   private updatePan(e: PointerEvent): void {
     if (!this.panState) return;
-    
+
     const dx = e.clientX - this.panState.startMousePos.x;
     const dy = e.clientY - this.panState.startMousePos.y;
-    
+
     let newX = this.panState.startScrollX + dx;
     let newY = this.panState.startScrollY + dy;
-    
+
     // Apply pan limits to prevent dragging too far from origin
     // Limit how far the canvas can be panned in any direction
     newX = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newX));
     newY = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newY));
-    
+
     this.canvasContent.style.left = `${newX}px`;
     this.canvasContent.style.top = `${newY}px`;
-    
+
     // Update state viewport
     this.state.viewport.x = newX;
     this.state.viewport.y = newY;
@@ -790,28 +816,28 @@ class Dashboard {
     // Only zoom if cursor is over the canvas background, not over a widget
     const target = e.target as HTMLElement;
     const isOverWidget = target.closest('.widget');
-    
+
     if (isOverWidget) {
       // Let the widget handle scrolling
       return;
     }
-    
+
     // Don't zoom when dashboard is locked
     if (this.isLocked) {
       return;
     }
-    
+
     // Require Control key to be pressed for mouse wheel zoom
     // This prevents accidental zooming while scrolling
     if (!e.ctrlKey) {
       return;
     }
-    
+
     e.preventDefault();
-    
+
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     const newZoom = Math.max(0.1, Math.min(3, this.state.zoom + delta));
-    
+
     if (newZoom !== this.state.zoom) {
       this.state.zoom = newZoom;
       this.applyZoom();
@@ -840,17 +866,17 @@ class Dashboard {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      
+
       if (this.lastTouchDistance > 0) {
         const scale = distance / this.lastTouchDistance;
         const newZoom = Math.max(0.1, Math.min(3, this.state.zoom * scale));
-        
+
         if (newZoom !== this.state.zoom) {
           this.state.zoom = newZoom;
           this.applyZoom();
         }
       }
-      
+
       this.lastTouchDistance = distance;
     }
   }
@@ -863,7 +889,7 @@ class Dashboard {
   private applyZoom(): void {
     this.canvasContent.style.transform = `scale(${this.state.zoom})`;
     this.canvasContent.style.transformOrigin = 'top left';
-    
+
     // Restore viewport position
     this.canvasContent.style.left = `${this.state.viewport.x}px`;
     this.canvasContent.style.top = `${this.state.viewport.y}px`;
@@ -888,26 +914,26 @@ class Dashboard {
 
   private autoArrangeWidgets(): void {
     if (this.state.widgets.length === 0) return;
-    
+
     // First, resize all widgets to fit their content
     this.state.widgets.forEach(widget => {
       this.resizeToFitContent(widget);
     });
-    
+
     // Get viewport dimensions
     const viewportWidth = this.canvas.clientWidth / this.state.zoom;
     const viewportHeight = this.canvas.clientHeight / this.state.zoom;
-    
+
     // Keep widgets in their original order (don't sort)
     const widgetsToArrange = [...this.state.widgets];
-    
+
     // Starting position
     const padding = 20;
     let currentX = padding;
     let currentY = padding;
     let rowHeight = 0;
     let maxRowWidth = viewportWidth - padding;
-    
+
     widgetsToArrange.forEach(widget => {
       // Check if widget fits in current row
       if (currentX + widget.size.w > maxRowWidth && currentX > padding) {
@@ -916,18 +942,18 @@ class Dashboard {
         currentY += rowHeight + padding;
         rowHeight = 0;
       }
-      
+
       // Place widget
       widget.position.x = currentX;
       widget.position.y = currentY;
-      
+
       // Update position for next widget
       currentX += widget.size.w + padding;
       rowHeight = Math.max(rowHeight, widget.size.h);
-      
+
       this.updateWidget(widget);
     });
-    
+
     this.saveHistory();
     this.save();
   }
@@ -935,17 +961,17 @@ class Dashboard {
   private resizeToFitContent(widget: Widget): void {
     const el = document.getElementById(`widget-${widget.id}`);
     if (!el) return;
-    
+
     const content = el.querySelector('.widget-content') as HTMLElement;
     if (!content) return;
-    
+
     const header = el.querySelector('.widget-header') as HTMLElement;
     const headerHeight = header ? header.offsetHeight : 40;
-    
+
     // Calculate ideal size based on widget type
     let idealWidth = widget.size.w;
     let idealHeight = widget.size.h;
-    
+
     switch (widget.type) {
       case 'text':
       case 'data': {
@@ -964,32 +990,32 @@ class Dashboard {
           clone.style.whiteSpace = 'pre-wrap';
           clone.style.overflowY = 'hidden';
           clone.style.overflowX = 'hidden';
-          
+
           document.body.appendChild(clone);
-          
+
           // Measure natural size
           const naturalWidth = clone.scrollWidth + 20; // Add padding
           const naturalHeight = clone.scrollHeight + 20; // Add padding
-          
+
           document.body.removeChild(clone);
-          
+
           // Set size with reasonable limits
           idealWidth = Math.max(300, Math.min(1200, naturalWidth));
           idealHeight = Math.max(150, Math.min(1000, naturalHeight + headerHeight + 20));
         }
         break;
       }
-      
+
       case 'image': {
         const img = content.querySelector('img') as HTMLImageElement;
         if (img && img.complete && img.naturalWidth) {
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           const maxWidth = 1000;
           const maxHeight = 800;
-          
+
           let targetWidth = img.naturalWidth;
           let targetHeight = img.naturalHeight;
-          
+
           // Scale down if too large
           if (targetWidth > maxWidth || targetHeight > maxHeight) {
             if (aspectRatio > 1) {
@@ -1000,13 +1026,13 @@ class Dashboard {
               targetWidth = maxHeight * aspectRatio;
             }
           }
-          
+
           idealWidth = targetWidth + 40; // Add space for borders/padding
           idealHeight = targetHeight + headerHeight + 40;
         }
         break;
       }
-      
+
       case 'weather': {
         // Weather widget has a fixed layout with current weather + 5-day forecast
         // Need enough space for all content without scrollbars
@@ -1014,18 +1040,18 @@ class Dashboard {
         idealHeight = 580;
         break;
       }
-      
+
       case 'clock': {
         // Clock widget has a relatively fixed layout
         // Size depends on whether timezone is shown
         const clockContent = widget.content as { timezone?: string; format?: string; showTimezone?: boolean };
         const showTimezone = clockContent.showTimezone !== false; // Default to true
-        
+
         idealWidth = 300;
         idealHeight = showTimezone ? 200 : 100;
         break;
       }
-      
+
       case 'embed': {
         // For embeds, maintain aspect ratio or use current size
         // Common embed sizes: 16:9 video ratio
@@ -1033,7 +1059,7 @@ class Dashboard {
         idealHeight = Math.max(300, widget.size.h);
         break;
       }
-      
+
       case 'rss': {
         // RSS feed widget needs space for multiple items
         const rssContent = widget.content as { maxItems?: number };
@@ -1043,7 +1069,7 @@ class Dashboard {
         idealHeight = Math.min(800, 80 + itemCount * 100);
         break;
       }
-      
+
       case 'uptime': {
         // Uptime widget with bar chart
         idealWidth = 500;
@@ -1051,14 +1077,14 @@ class Dashboard {
         break;
       }
     }
-    
+
     // Apply the new size
     widget.size.w = snapToGrid(idealWidth, this.state.grid);
     widget.size.h = snapToGrid(idealHeight, this.state.grid);
-    
+
     // Ensure minimum size
     widget.size = constrainSize(widget.size);
-    
+
     // Force a re-render
     this.updateWidget(widget);
   }
@@ -1069,9 +1095,9 @@ class Dashboard {
       const prevEl = document.getElementById(`widget-${this.selectedWidgetId}`);
       prevEl?.classList.remove('selected');
     }
-    
+
     this.selectedWidgetId = widgetId;
-    
+
     // Add new selection
     if (widgetId) {
       const el = document.getElementById(`widget-${widgetId}`);
@@ -1084,25 +1110,25 @@ class Dashboard {
     // Load the widget module if not already loaded
     const { loadWidgetModule } = await import('./widgets/types');
     await loadWidgetModule(type);
-    
+
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
-    
+
     // Calculate viewport center based on canvas pan position and zoom
     // The canvas content is positioned using CSS left/top, stored in state.viewport
     // We need to find the center of the visible viewport in canvas coordinates
     const canvasRect = this.canvas.getBoundingClientRect();
     const centerX = (canvasRect.width / 2) / this.state.zoom;
     const centerY = (canvasRect.height / 2) / this.state.zoom;
-    
+
     // Convert viewport center to canvas coordinates by accounting for pan offset
     const canvasCenterX = centerX - this.state.viewport.x / this.state.zoom;
     const canvasCenterY = centerY - this.state.viewport.y / this.state.zoom;
-    
+
     // Set size based on widget type
-    const size = type === 'clock' 
+    const size = type === 'clock'
       ? { w: 400, h: 500 }
       : { ...DEFAULT_WIDGET_SIZE };
-    
+
     const widget: Widget = {
       id,
       type,
@@ -1119,7 +1145,7 @@ class Dashboard {
         updatedAt: Date.now()
       }
     };
-    
+
     this.state.widgets.push(widget);
     this.renderWidget(widget);
     this.selectWidget(id);
@@ -1136,14 +1162,14 @@ class Dashboard {
         updatedAt: Date.now()
       };
     }
-    
+
     const el = document.getElementById(`widget-${widget.id}`);
     if (el) {
       updateWidgetPosition(el, widget.position);
       updateWidgetSize(el, widget.size);
       updateWidgetZIndex(el, widget.z);
     }
-    
+
     if (shouldSave) {
       this.save();
     }
@@ -1152,22 +1178,22 @@ class Dashboard {
   private updateWidgetContent(widgetId: string, content: any): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     console.log('updateWidgetContent - Before merge:', JSON.parse(JSON.stringify(widget.content)));
     console.log('updateWidgetContent - New content:', JSON.parse(JSON.stringify(content)));
-    
+
     // Merge content, but filter out undefined and null values to preserve existing properties
     // This is important for fields like passwords that should persist if not explicitly updated
     const filteredContent = Object.fromEntries(
       Object.entries(content).filter(([_, value]) => value !== undefined && value !== null)
     );
-    
+
     console.log('updateWidgetContent - Filtered content:', JSON.parse(JSON.stringify(filteredContent)));
-    
+
     widget.content = { ...widget.content, ...filteredContent };
-    
+
     console.log('updateWidgetContent - After merge:', JSON.parse(JSON.stringify(widget.content)));
-    
+
     if (widget.meta) {
       widget.meta.updatedAt = Date.now();
     } else {
@@ -1176,14 +1202,14 @@ class Dashboard {
         updatedAt: Date.now()
       };
     }
-    
+
     // Re-render widget
     const el = document.getElementById(`widget-${widgetId}`);
     if (el) {
       el.remove();
       this.renderWidget(widget);
     }
-    
+
     this.saveHistory();
     this.save();
   }
@@ -1191,7 +1217,7 @@ class Dashboard {
   private duplicateWidget(widgetId: string): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     const newWidget: Widget = {
       ...JSON.parse(JSON.stringify(widget)),
       id: Date.now().toString(36) + Math.random().toString(36).substr(2),
@@ -1205,7 +1231,7 @@ class Dashboard {
         updatedAt: Date.now()
       }
     };
-    
+
     this.state.widgets.push(newWidget);
     this.renderWidget(newWidget);
     this.selectWidget(newWidget.id);
@@ -1216,16 +1242,16 @@ class Dashboard {
   private deleteWidget(widgetId: string): void {
     const index = this.state.widgets.findIndex(w => w.id === widgetId);
     if (index === -1) return;
-    
+
     this.state.widgets.splice(index, 1);
-    
+
     const el = document.getElementById(`widget-${widgetId}`);
     el?.remove();
-    
+
     if (this.selectedWidgetId === widgetId) {
       this.selectWidget(null);
     }
-    
+
     this.saveHistory();
     this.save();
   }
@@ -1233,12 +1259,12 @@ class Dashboard {
   private toggleAutoSize(widgetId: string): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     widget.autoSize.width = !widget.autoSize.width;
     widget.autoSize.height = !widget.autoSize.height;
-    
+
     // TODO: Implement actual auto-sizing based on content
-    
+
     this.saveHistory();
     this.save();
   }
@@ -1246,10 +1272,10 @@ class Dashboard {
   private bringForward(widgetId: string): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
-    
+
     const maxZ = Math.max(...this.state.widgets.map(w => w.z));
     widget.z = maxZ + 1;
-    
+
     this.updateWidget(widget);
     this.saveHistory();
   }
@@ -1259,98 +1285,98 @@ class Dashboard {
     overlay.className = 'modal-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
-    
+
     const header = document.createElement('div');
     header.className = 'modal-header';
-    
+
     const title = document.createElement('h2');
     title.className = 'modal-title';
     title.textContent = 'Add Widget';
     header.appendChild(title);
-    
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'modal-close';
     closeBtn.innerHTML = '×';
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.addEventListener('click', () => overlay.remove());
     header.appendChild(closeBtn);
-    
+
     const types = document.createElement('div');
     types.className = 'widget-types';
-    
+
     // Fetch widget metadata from server (no need to load widget code)
     try {
       const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/widgets/metadata`);
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error('Failed to fetch widget metadata');
       }
-      
+
       const widgets = data.widgets;
-      
+
       widgets.forEach((widgetMeta: any) => {
         const row = document.createElement('button');
         row.className = 'widget-type-row';
         row.tabIndex = 0;
-        
+
         const icon = document.createElement('div');
         icon.className = 'widget-type-icon';
         icon.textContent = widgetMeta.icon;
-        
+
         const content = document.createElement('div');
         content.className = 'widget-type-content';
-        
+
         const name = document.createElement('div');
         name.className = 'widget-type-name';
         name.textContent = widgetMeta.name;
-        
+
         const description = document.createElement('div');
         description.className = 'widget-type-description';
         description.textContent = widgetMeta.description || '';
-        
+
         content.appendChild(name);
         content.appendChild(description);
-        
+
         row.appendChild(icon);
         row.appendChild(content);
-        
+
         row.addEventListener('click', () => {
           // Add widget with its default content (widget code will be lazy-loaded)
           this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
           overlay.remove();
         });
-        
+
         types.appendChild(row);
       });
     } catch (error) {
       console.error('Failed to load widget metadata:', error);
       types.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
     }
-    
+
     modal.appendChild(header);
     modal.appendChild(types);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-    
+
     // Focus trap
     const focusableElements = modal.querySelectorAll('button');
     const firstElement = focusableElements[0] as HTMLElement;
     const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-    
+
     firstElement?.focus();
-    
+
     // ESC to close
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         overlay.remove();
         document.removeEventListener('keydown', handleKeyDown);
       }
-      
+
       // Tab trap
       if (e.key === 'Tab') {
         if (e.shiftKey && document.activeElement === firstElement) {
@@ -1362,9 +1388,9 @@ class Dashboard {
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
-    
+
     // Click outside to close
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
@@ -1377,25 +1403,25 @@ class Dashboard {
   private showDashboardManager(): void {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
-    
+
     const header = document.createElement('div');
     header.className = 'modal-header';
-    
+
     const title = document.createElement('h2');
     title.className = 'modal-title';
     title.textContent = 'My Dashboards';
     header.appendChild(title);
-    
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'modal-close';
     closeBtn.innerHTML = '×';
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.addEventListener('click', () => overlay.remove());
     header.appendChild(closeBtn);
-    
+
     const content = document.createElement('div');
     content.className = 'dashboard-manager-content';
     content.style.cssText = `
@@ -1403,11 +1429,11 @@ class Dashboard {
       max-height: 500px;
       overflow-y: auto;
     `;
-    
+
     // Get all dashboards
     const dashboards = getAllDashboards();
     const activeDashboardId = getActiveDashboardId();
-    
+
     // Dashboard list
     const listContainer = document.createElement('div');
     listContainer.style.cssText = `
@@ -1416,7 +1442,7 @@ class Dashboard {
       gap: 10px;
       margin-bottom: 20px;
     `;
-    
+
     dashboards.forEach(dashboard => {
       const dashboardRow = document.createElement('div');
       dashboardRow.style.cssText = `
@@ -1429,7 +1455,7 @@ class Dashboard {
         border-radius: 8px;
         transition: border-color 0.2s;
       `;
-      
+
       // Dashboard name (editable)
       const nameSpan = document.createElement('span');
       nameSpan.style.cssText = `
@@ -1445,7 +1471,7 @@ class Dashboard {
           overlay.remove();
         }
       });
-      
+
       // Rename button
       const renameBtn = document.createElement('button');
       renameBtn.innerHTML = '✏️';
@@ -1464,18 +1490,18 @@ class Dashboard {
         const newName = prompt('Enter new dashboard name:', dashboard.name);
         if (newName && newName.trim()) {
           renameDashboard(dashboard.id, newName.trim());
-          
+
           // Reload and sync to server
           if (authService.isAuthenticated()) {
             this.multiState = await dashboardStorage.loadDashboards();
             await dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
           }
-          
+
           overlay.remove();
           this.showDashboardManager();
         }
       });
-      
+
       // Delete button (only if not the last dashboard)
       if (dashboards.length > 1) {
         const deleteBtn = document.createElement('button');
@@ -1493,24 +1519,24 @@ class Dashboard {
         deleteBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const widgetCount = dashboard.state.widgets.length;
-          const message = widgetCount > 0 
+          const message = widgetCount > 0
             ? `Delete dashboard "${dashboard.name}"? This will delete ${widgetCount} widget${widgetCount > 1 ? 's' : ''}. This cannot be undone.`
             : `Delete dashboard "${dashboard.name}"? This cannot be undone.`;
-          
+
           if (confirm(message)) {
             const wasActive = dashboard.id === activeDashboardId;
-            
+
             // Delete locally
             deleteDashboard(dashboard.id);
-            
+
             // Delete from server if authenticated
             if (authService.isAuthenticated()) {
               this.multiState = await dashboardStorage.loadDashboards();
               await dashboardStorage.deleteDashboard(dashboard.id, this.multiState);
             }
-            
+
             overlay.remove();
-            
+
             if (wasActive) {
               // Switch to the new active dashboard
               const newActiveDashboardId = getActiveDashboardId();
@@ -1525,15 +1551,15 @@ class Dashboard {
       } else {
         dashboardRow.appendChild(renameBtn);
       }
-      
+
       dashboardRow.appendChild(nameSpan);
       dashboardRow.insertBefore(nameSpan, dashboardRow.firstChild);
-      
+
       listContainer.appendChild(dashboardRow);
     });
-    
+
     content.appendChild(listContainer);
-    
+
     // Add new dashboard button
     const addButton = document.createElement('button');
     addButton.textContent = '+ New Dashboard';
@@ -1552,32 +1578,32 @@ class Dashboard {
       const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
       if (name && name.trim()) {
         const newDashboard = createDashboard(name.trim());
-        
+
         // Sync to server if authenticated
         if (authService.isAuthenticated()) {
           this.multiState = await dashboardStorage.loadDashboards();
           await dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
         }
-        
+
         overlay.remove();
         // Switch to the new dashboard
         this.switchToDashboard(newDashboard.id);
       }
     });
     content.appendChild(addButton);
-    
+
     modal.appendChild(header);
     modal.appendChild(content);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-    
+
     // Close on overlay click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         overlay.remove();
       }
     });
-    
+
     // Close on ESC
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -1591,7 +1617,7 @@ class Dashboard {
   private switchToDashboard(dashboardId: string): void {
     // Clean up current widgets before switching
     this.cleanup();
-    
+
     // Switch to new dashboard
     const newState = switchDashboard(dashboardId);
     if (newState) {
@@ -1600,7 +1626,7 @@ class Dashboard {
       this.render();
       this.setupTheme();
       this.setupBackground();
-      
+
       // Reload from server and sync
       if (authService.isAuthenticated()) {
         dashboardStorage.loadDashboards().then(multiState => {
@@ -1623,7 +1649,7 @@ class Dashboard {
         widgetElement.dispatchEvent(event);
       }
     });
-    
+
     // Clear any intervals we might have
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval);
@@ -1637,7 +1663,7 @@ class Dashboard {
       const { loadWidgetModules } = await import('./widgets/types');
       await loadWidgetModules(widgetTypes);
     }
-    
+
     this.canvasContent.innerHTML = '';
     this.state.widgets.forEach(widget => this.renderWidget(widget));
     this.applyZoom();
@@ -1660,14 +1686,14 @@ class Dashboard {
       console.warn('⚠️  Cannot save - multiState not loaded');
       return;
     }
-    
+
     const activeDashboard = this.multiState.dashboards.find(
       (d: any) => d.id === this.multiState!.activeDashboardId
     );
     if (activeDashboard) {
       activeDashboard.state = this.state;
       activeDashboard.updatedAt = Date.now();
-      
+
       // Save to server if authenticated (debounced)
       if (authService.isAuthenticated()) {
         dashboardStorage.saveDashboards(this.multiState).catch((err: any) => {
@@ -1682,7 +1708,7 @@ class Dashboard {
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
       this.render(); // No await needed - fire and forget
-      
+
       // Update cached multi-state
       if (this.multiState) {
         const activeDashboard = this.multiState.dashboards.find(
@@ -1691,7 +1717,7 @@ class Dashboard {
         if (activeDashboard) {
           activeDashboard.state = this.state;
           activeDashboard.updatedAt = Date.now();
-          
+
           if (authService.isAuthenticated()) {
             dashboardStorage.saveDashboards(this.multiState);
           }
@@ -1705,7 +1731,7 @@ class Dashboard {
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
       this.render(); // No await needed - fire and forget
-      
+
       // Update cached multi-state
       if (this.multiState) {
         const activeDashboard = this.multiState.dashboards.find(
@@ -1714,7 +1740,7 @@ class Dashboard {
         if (activeDashboard) {
           activeDashboard.state = this.state;
           activeDashboard.updatedAt = Date.now();
-          
+
           if (authService.isAuthenticated()) {
             dashboardStorage.saveDashboards(this.multiState);
           }
