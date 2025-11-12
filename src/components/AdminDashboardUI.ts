@@ -14,76 +14,47 @@ export class AdminDashboardUI {
 
     const dialog = document.createElement('div');
     dialog.id = 'admin-dashboard';
-    dialog.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100000;
-      padding: 20px;
-    `;
+    dialog.className = 'admin-dialog';
 
     dialog.innerHTML = `
-      <div style="
-        background: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 40px;
-        width: 90%;
-        max-width: 1200px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      ">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-          <h2 style="margin: 0; font-size: 32px;">👑 Admin Dashboard</h2>
-          <button id="close-admin" style="
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 32px;
-            cursor: pointer;
-            padding: 5px 10px;
-          ">×</button>
+      <div class="admin-container">
+        <div class="admin-header">
+          <h2 class="admin-title">👑 Admin Dashboard</h2>
+          <button id="close-admin" class="admin-close-button">×</button>
         </div>
 
         <!-- Stats -->
         ${stats ? `
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <div style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px;">
-              <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">Total Users</div>
-              <div style="font-size: 36px; font-weight: bold;">${stats.totalUsers}</div>
+          <div class="admin-stats">
+            <div class="admin-stat-card admin-stat-card-purple">
+              <div class="admin-stat-label">Total Users</div>
+              <div class="admin-stat-value">${stats.totalUsers}</div>
             </div>
-            <div style="padding: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 8px;">
-              <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">Active Dashboards</div>
-              <div style="font-size: 36px; font-weight: bold;">${stats.totalDashboards}</div>
+            <div class="admin-stat-card admin-stat-card-pink">
+              <div class="admin-stat-label">Active Dashboards</div>
+              <div class="admin-stat-value">${stats.totalDashboards}</div>
             </div>
-            <div style="padding: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px;">
-              <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">Administrators</div>
-              <div style="font-size: 36px; font-weight: bold;">${stats.totalAdmins}</div>
+            <div class="admin-stat-card admin-stat-card-blue">
+              <div class="admin-stat-label">Administrators</div>
+              <div class="admin-stat-value">${stats.totalAdmins}</div>
             </div>
           </div>
         ` : ''}
 
         <!-- Users Table -->
-        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px;">
-          <h3 style="margin: 0 0 20px 0; font-size: 20px;">User Management</h3>
+        <div class="admin-table-section">
+          <h3 class="admin-section-title">User Management</h3>
           
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
               <thead>
-                <tr style="background: rgba(255, 255, 255, 0.1); text-align: left;">
-                  <th style="padding: 12px; font-weight: bold;">ID</th>
-                  <th style="padding: 12px; font-weight: bold;">Username</th>
-                  <th style="padding: 12px; font-weight: bold;">Email</th>
-                  <th style="padding: 12px; font-weight: bold;">Role</th>
-                  <th style="padding: 12px; font-weight: bold;">Created</th>
-                  <th style="padding: 12px; font-weight: bold;">Actions</th>
+                <tr class="admin-table-header">
+                  <th class="admin-table-th">ID</th>
+                  <th class="admin-table-th">Username</th>
+                  <th class="admin-table-th">Email</th>
+                  <th class="admin-table-th">Role</th>
+                  <th class="admin-table-th">Created</th>
+                  <th class="admin-table-th">Actions</th>
                 </tr>
               </thead>
               <tbody id="users-table-body">
@@ -93,12 +64,7 @@ export class AdminDashboardUI {
           </div>
         </div>
 
-        <div id="admin-message" style="
-          margin-top: 20px;
-          padding: 12px;
-          border-radius: 6px;
-          display: none;
-        "></div>
+        <div id="admin-message" class="admin-message"></div>
       </div>
     `;
 
@@ -121,63 +87,31 @@ export class AdminDashboardUI {
     const currentUser = authService.getUser();
     
     return users.map(user => `
-      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-        <td style="padding: 12px;">${user.id}</td>
-        <td style="padding: 12px;">
+      <tr class="admin-table-row">
+        <td class="admin-table-td">${user.id}</td>
+        <td class="admin-table-td">
           ${user.username}
-          ${user.id === currentUser?.id ? '<span style="color: #4CAF50; font-size: 12px;">(You)</span>' : ''}
+          ${user.id === currentUser?.id ? '<span class="admin-current-user">(You)</span>' : ''}
         </td>
-        <td style="padding: 12px;">${user.email}</td>
-        <td style="padding: 12px;">
-          ${user.is_admin ? '<span style="color: #FFC107;">👑 Admin</span>' : 'User'}
+        <td class="admin-table-td">${user.email}</td>
+        <td class="admin-table-td">
+          ${user.is_admin ? '<span class="admin-role-badge">👑 Admin</span>' : 'User'}
         </td>
-        <td style="padding: 12px; font-size: 12px; opacity: 0.7;">
+        <td class="admin-table-td admin-table-td-date">
           ${new Date(user.created_at).toLocaleDateString()}
         </td>
-        <td style="padding: 12px;">
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <td class="admin-table-td">
+          <div class="admin-actions">
             ${!user.is_admin ? `
-              <button class="admin-action-btn make-admin-btn" data-user-id="${user.id}" data-username="${user.username}" style="
-                padding: 6px 12px;
-                background: rgba(76, 175, 80, 0.2);
-                border: 1px solid #4CAF50;
-                border-radius: 4px;
-                color: #4CAF50;
-                cursor: pointer;
-                font-size: 12px;
-              ">Make Admin</button>
+              <button class="admin-action-btn make-admin-btn admin-action-btn-success" data-user-id="${user.id}" data-username="${user.username}">Make Admin</button>
             ` : user.id !== currentUser?.id ? `
-              <button class="admin-action-btn remove-admin-btn" data-user-id="${user.id}" data-username="${user.username}" style="
-                padding: 6px 12px;
-                background: rgba(255, 152, 0, 0.2);
-                border: 1px solid #FF9800;
-                border-radius: 4px;
-                color: #FF9800;
-                cursor: pointer;
-                font-size: 12px;
-              ">Remove Admin</button>
+              <button class="admin-action-btn remove-admin-btn admin-action-btn-warning" data-user-id="${user.id}" data-username="${user.username}">Remove Admin</button>
             ` : ''}
             
-            <button class="admin-action-btn reset-password-btn" data-user-id="${user.id}" data-username="${user.username}" style="
-              padding: 6px 12px;
-              background: rgba(33, 150, 243, 0.2);
-              border: 1px solid #2196F3;
-              border-radius: 4px;
-              color: #2196F3;
-              cursor: pointer;
-              font-size: 12px;
-            ">Reset Password</button>
+            <button class="admin-action-btn reset-password-btn admin-action-btn-info" data-user-id="${user.id}" data-username="${user.username}">Reset Password</button>
             
             ${user.id !== currentUser?.id ? `
-              <button class="admin-action-btn delete-user-btn" data-user-id="${user.id}" data-username="${user.username}" style="
-                padding: 6px 12px;
-                background: rgba(244, 67, 54, 0.2);
-                border: 1px solid #f44336;
-                border-radius: 4px;
-                color: #f44336;
-                cursor: pointer;
-                font-size: 12px;
-              ">Delete</button>
+              <button class="admin-action-btn delete-user-btn admin-action-btn-danger" data-user-id="${user.id}" data-username="${user.username}">Delete</button>
             ` : ''}
           </div>
         </td>
@@ -278,13 +212,11 @@ export class AdminDashboardUI {
   private showMessage(dialog: HTMLElement, message: string, success: boolean): void {
     const messageDiv = dialog.querySelector('#admin-message') as HTMLElement;
     messageDiv.textContent = message;
-    messageDiv.style.display = 'block';
-    messageDiv.style.background = success ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)';
-    messageDiv.style.border = `1px solid ${success ? '#4CAF50' : '#f44336'}`;
-    messageDiv.style.color = success ? '#4CAF50' : '#f44336';
+    messageDiv.classList.remove('admin-message-success', 'admin-message-error');
+    messageDiv.classList.add(success ? 'admin-message-success' : 'admin-message-error', 'visible');
 
     setTimeout(() => {
-      messageDiv.style.display = 'none';
+      messageDiv.classList.remove('visible');
     }, 5000);
   }
 }
