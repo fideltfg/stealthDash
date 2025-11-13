@@ -188,9 +188,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     });
 
     // Stop propagation so widget isn't dragged
-    urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    tokenInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    saveBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    [urlInput, tokenInput, saveBtn].forEach(el => {
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      // Prevent keyboard events from bubbling up to widget drag handlers
+      if (el instanceof HTMLInputElement) {
+        el.addEventListener('keydown', (e) => e.stopPropagation());
+        el.addEventListener('keyup', (e) => e.stopPropagation());
+      }
+    });
   }
 
   private renderNoEntitiesPrompt(container: HTMLElement, widget: Widget): void {
@@ -785,6 +790,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Stop propagation for all inputs
     [searchInput, displayNameInput, cancelBtn, saveBtn].forEach(el => {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      // Prevent keyboard events from bubbling up to widget drag handlers
+      if (el instanceof HTMLInputElement) {
+        el.addEventListener('keydown', (e) => e.stopPropagation());
+        el.addEventListener('keyup', (e) => e.stopPropagation());
+      }
     });
 
     // Cancel button
@@ -964,6 +974,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Stop propagation for all inputs
     [entityIdInput, displayNameInput, entityTypeSelect, cancelBtn, saveBtn].forEach(el => {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      // Prevent keyboard events from bubbling up to widget drag handlers
+      if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
+        el.addEventListener('keydown', (e) => e.stopPropagation());
+        el.addEventListener('keyup', (e) => e.stopPropagation());
+      }
     });
 
     // Cancel button
@@ -1209,9 +1224,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Prevent dialog from being dragged
     dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
-    urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    tokenInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    refreshInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    
+    // Prevent keyboard events from bubbling up to widget drag handlers
+    [urlInput, tokenInput, refreshInput].forEach(input => {
+      input.addEventListener('pointerdown', (e) => e.stopPropagation());
+      input.addEventListener('keydown', (e) => e.stopPropagation());
+      input.addEventListener('keyup', (e) => e.stopPropagation());
+    });
   }
 
   private showManageEntitiesDialog(widget: Widget): void {
