@@ -29,17 +29,54 @@ The frontend widgets have been updated to use `credentialId` instead of storing 
 6. Return response to frontend
 
 ### 2. Home Assistant Proxy (Update Existing)
-**Current**: `/home-assistant/states` and `/home-assistant/service` accept token in body
-**Required**: Accept `credentialId` query parameter instead
+**Current Endpoints**:
+- `/home-assistant/states` - Get entity states
+- `/home-assistant/service` - Call service (turn on/off)
 
-**Paths**:
-- `/api/homeassistant` - Get all states
-- `/api/homeassistant/service` - Call service
+**Required Updates**: Accept `credentialId` query parameter
+
+**Request Format with credentialId**:
+```
+POST /home-assistant/states?credentialId=123
+Authorization: Bearer <user-token>
+Content-Type: application/json
+
+{
+  "url": "http://homeassistant.local:8123"
+}
+```
+
+**Request Format Legacy (backward compatible)**:
+```
+POST /home-assistant/states
+Content-Type: application/json
+
+{
+  "url": "http://homeassistant.local:8123",
+  "token": "eyJ0eXAi..."
+}
+```
+
+**Service Call Example**:
+```
+POST /home-assistant/service?credentialId=123
+Authorization: Bearer <user-token>
+Content-Type: application/json
+
+{
+  "url": "http://homeassistant.local:8123",
+  "domain": "light",
+  "service": "turn_on",
+  "entity_id": "light.living_room"
+}
+```
 
 **Implementation Updates**:
-1. Check if request includes `credentialId` parameter
-2. If yes: lookup credential, extract token, use for HA API call
+1. Check if request includes `credentialId` query parameter
+2. If yes: verify user auth, lookup credential, extract token, use for HA API call
 3. If no: fall back to legacy token in body (backward compatibility)
+4. Forward request to Home Assistant API with proper token
+5. Return response to frontend
 
 ### 3. Weather API Proxy (If Needed)
 Most weather widgets use free APIs that don't require credentials. May not need this endpoint unless using premium weather services.
@@ -70,9 +107,11 @@ Credentials are stored in the `credentials` table with fields:
 - [ ] Rate limiting works correctly
 
 ## Frontend Widget Status
-- ✅ **ChatGPT**: Updated to use credentialId, has legacy API key fallback
-- ⚠️ **Home Assistant**: Interface updated, needs backend endpoint changes
-- ⚠️ **Weather**: Not yet updated (may not need credentials)
+- ✅ **ChatGPT**: Fully migrated to credentialId with legacy apiKey fallback
+- ✅ **Home Assistant**: Fully migrated to credentialId with legacy token fallback
 - ✅ **Pi-hole**: Already using credential system
 - ✅ **UniFi**: Already using credential system
 - ✅ **Google Calendar**: Already using credential system
+- ✅ **Weather**: Does not use credentials (free API)
+
+All widgets that require credentials now support the credential system!
