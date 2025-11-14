@@ -1,10 +1,13 @@
 import type { Widget, MultiDashboardState } from '../types/types';
 
 /**
- * Sanitizes widget content before saving to remove runtime data and cached responses.
- * Configuration data (including user-entered credentials) is kept so widgets work after reload.
+ * Sanitizes widget content before saving to remove sensitive credentials and runtime data.
+ * 
+ * IMPORTANT: All widgets should use the credential management system (credentialId) 
+ * instead of storing credentials directly in widget content.
  * 
  * What gets removed:
+ * - Direct credentials (apiKey, token, password) - Use credentialId instead
  * - Cached API responses (cachedData, data, stats)
  * - Conversation history (messages)
  * - Timestamps (lastUpdated, lastFetched)
@@ -12,24 +15,24 @@ import type { Widget, MultiDashboardState } from '../types/types';
  * 
  * What gets kept:
  * - User configuration (URLs, hosts, ports, settings)
- * - User-entered credentials (tokens, API keys stored in widget config)
+ * - Credential references (credentialId - reference to saved credential)
  * - Display preferences (modes, formats, enabled features)
  */
 
-// Define allowed fields for each widget type (configuration only, no runtime data)
+// Define allowed fields for each widget type (configuration only, no runtime data or direct credentials)
 const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'text': ['markdown'],
   'image': ['src', 'objectFit', 'alt'],
   'embed': ['url', 'sandbox'],
-  'weather': ['location', 'apiKey'], // Keep user-entered API key
+  'weather': ['location'], // Remove apiKey - widgets should use credentialId
   'clock': ['timezone', 'format24h', 'showTimezone'],
   'rss': ['feedUrl', 'maxItems', 'refreshInterval'],
   'uptime': ['target', 'interval', 'timeout'],
-  'chatgpt': ['apiKey', 'model', 'systemPrompt'], // Keep apiKey, remove messages (conversation history)
-  'home-assistant': ['url', 'token', 'entities', 'refreshInterval'], // Keep token and URL - user configuration
+  'chatgpt': ['credentialId', 'model', 'systemPrompt'], // Remove apiKey and messages - use credentialId
+  'home-assistant': ['url', 'credentialId', 'entities', 'refreshInterval'], // Remove token - use credentialId
   'comet-p8541': ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName'],
-  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'], // Remove cachedData only
-  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'], // Remove cachedData only
+  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'],
+  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'],
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
