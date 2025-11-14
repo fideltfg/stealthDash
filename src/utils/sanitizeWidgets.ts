@@ -1,8 +1,19 @@
 import type { Widget, MultiDashboardState } from '../types/types';
 
 /**
- * Sanitizes widget content before saving to remove sensitive data and runtime data.
- * Only configuration data needed to recreate the widget is kept.
+ * Sanitizes widget content before saving to remove runtime data and cached responses.
+ * Configuration data (including user-entered credentials) is kept so widgets work after reload.
+ * 
+ * What gets removed:
+ * - Cached API responses (cachedData, data, stats)
+ * - Conversation history (messages)
+ * - Timestamps (lastUpdated, lastFetched)
+ * - Ephemeral state (loading, error states)
+ * 
+ * What gets kept:
+ * - User configuration (URLs, hosts, ports, settings)
+ * - User-entered credentials (tokens, API keys stored in widget config)
+ * - Display preferences (modes, formats, enabled features)
  */
 
 // Define allowed fields for each widget type (configuration only, no runtime data)
@@ -10,15 +21,15 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'text': ['markdown'],
   'image': ['src', 'objectFit', 'alt'],
   'embed': ['url', 'sandbox'],
-  'weather': ['location'], // Remove apiKey - widgets should use credentials
+  'weather': ['location', 'apiKey'], // Keep user-entered API key
   'clock': ['timezone', 'format24h', 'showTimezone'],
   'rss': ['feedUrl', 'maxItems', 'refreshInterval'],
   'uptime': ['target', 'interval', 'timeout'],
-  'chatgpt': ['model', 'systemPrompt'], // Remove apiKey and messages
-  'home-assistant': ['url', 'entities', 'refreshInterval'], // Remove token - Keep url and entities settings
+  'chatgpt': ['apiKey', 'model', 'systemPrompt'], // Keep apiKey, remove messages (conversation history)
+  'home-assistant': ['url', 'token', 'entities', 'refreshInterval'], // Keep token and URL - user configuration
   'comet-p8541': ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName'],
-  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'], // Remove cachedData
-  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'], // Remove cachedData
+  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'], // Remove cachedData only
+  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'], // Remove cachedData only
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
