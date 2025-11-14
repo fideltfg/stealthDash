@@ -122,8 +122,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const content = widget.content as HomeAssistantContent;
     container.innerHTML = '';
 
-    // If no URL/token configured, show config prompt
-    if (!content.url || !content.token) {
+    // If no URL/credential configured, show config prompt
+    if (!content.url || (!content.credentialId && !content.token)) {
       this.renderConfigPrompt(container, widget);
       return;
     }
@@ -154,12 +154,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
                    value="${content.url || ''}">
           </div>
           <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; text-align: left;">Long-Lived Access Token:</label>
-            <input type="password" id="ha-token" placeholder="Enter your token" 
-                   style="width: 100%; padding: 8px; box-sizing: border-box;"
-                   value="${content.token || ''}">
+            <label style="display: block; margin-bottom: 5px; text-align: left;">Credentials:</label>
+            <select id="ha-credential" style="width: 100%; padding: 8px; box-sizing: border-box;">
+              <option value="">Select saved credential...</option>
+            </select>
             <small style="display: block; text-align: left; margin-top: 5px; opacity: 0.7;">
-              Create in Home Assistant: Profile → Security → Long-Lived Access Tokens
+              💡 Tip: Create Home Assistant credentials from the user menu (🔐 Credentials). Store your long-lived access token from Profile → Security → Long-Lived Access Tokens
             </small>
           </div>
           <button id="save-ha-config" style="padding: 10px 20px; cursor: pointer;">
@@ -170,33 +170,54 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     `;
     container.appendChild(prompt);
 
+    // Load credentials
+    const credentialSelect = prompt.querySelector('#ha-credential') as HTMLSelectElement;
+    (async () => {
+      try {
+        const credentials = await credentialsService.getAll();
+        credentials.forEach(cred => {
+          const option = document.createElement('option');
+          option.value = cred.id.toString();
+          option.textContent = `🔑 ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
+          credentialSelect.appendChild(option);
+        });
+        if (content.credentialId) {
+          credentialSelect.value = content.credentialId.toString();
+        }
+      } catch (error) {
+        console.error('Failed to load credentials:', error);
+      }
+    })();
+
     // Save button handler
     const saveBtn = prompt.querySelector('#save-ha-config') as HTMLButtonElement;
     const urlInput = prompt.querySelector('#ha-url') as HTMLInputElement;
-    const tokenInput = prompt.querySelector('#ha-token') as HTMLInputElement;
 
     saveBtn.addEventListener('click', () => {
       const url = urlInput.value.trim();
-      const token = tokenInput.value.trim();
+      const credId = credentialSelect.value;
 
-      if (!url || !token) {
-        alert('Please enter both URL and token');
+      if (!url || !credId) {
+        alert('Please enter URL and select a credential');
         return;
       }
 
       // Trigger widget update
       const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: { ...content, url, token } }
+        detail: { id: widget.id, content: { ...content, url, credentialId: parseInt(credId) } }
       });
       document.dispatchEvent(event);
     });
 
     // Stop propagation so widget isn't dragged
-    [urlInput, tokenInput, saveBtn].forEach(el => {
+    [urlInput, credentialSelect, saveBtn].forEach(el => {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       // Prevent keyboard events from bubbling up to widget drag handlers
       if (el instanceof HTMLInputElement) {
         preventWidgetKeyboardDrag(el);
+      } else if (el instanceof HTMLSelectElement) {
+        el.addEventListener('keydown', (e) => e.stopPropagation());
+        el.addEventListener('keyup', (e) => e.stopPropagation());
       }
     });
   }
@@ -436,21 +457,38 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private async fetchEntityStates(widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
-    if (!content.url || !content.token) return;
+    if (!content.url || (!content.credentialId && !content.token)) return;
 
     try {
       // Use ping-server proxy to avoid CORS issues
       const pingServerUrl = this.getPingServerUrl();
-      const response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: content.url,
-          token: content.token
-        })
-      });
+      
+      let response;
+      if (content.credentialId) {
+        // Use credentialId (new method)
+        response = await fetch(`${pingServerUrl}/home-assistant/states?credentialId=${content.credentialId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          },
+          body: JSON.stringify({
+            url: content.url
+          })
+        });
+      } else {
+        // Legacy: use token directly
+        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: content.url,
+            token: content.token
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -475,7 +513,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private async toggleEntity(entityId: string, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
-    if (!content.url || !content.token) return;
+    if (!content.url || (!content.credentialId && !content.token)) return;
 
     try {
       const widgetStates = this.entityStates.get(widget.id) || new Map();
@@ -484,19 +522,39 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Use ping-server proxy to avoid CORS issues
       const pingServerUrl = this.getPingServerUrl();
-      const response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: content.url,
-          token: content.token,
-          domain,
-          service,
-          entity_id: entityId
-        })
-      });
+      
+      let response;
+      if (content.credentialId) {
+        // Use credentialId (new method)
+        response = await fetch(`${pingServerUrl}/home-assistant/service?credentialId=${content.credentialId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          },
+          body: JSON.stringify({
+            url: content.url,
+            domain,
+            service,
+            entity_id: entityId
+          })
+        });
+      } else {
+        // Legacy: use token directly
+        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: content.url,
+            token: content.token,
+            domain,
+            service,
+            entity_id: entityId
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -509,7 +567,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private async toggleEntityToState(entityId: string, widget: Widget, turnOn: boolean): Promise<void> {
     const content = widget.content as HomeAssistantContent;
-    if (!content.url || !content.token) return;
+    if (!content.url || (!content.credentialId && !content.token)) return;
 
     try {
       const domain = entityId.split('.')[0];
@@ -517,19 +575,37 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Use ping-server proxy to avoid CORS issues
       const pingServerUrl = this.getPingServerUrl();
-      const response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: content.url,
-          token: content.token,
-          domain,
-          service,
-          entity_id: entityId
-        })
-      });
+      
+      let response;
+      if (content.credentialId) {
+        response = await fetch(`${pingServerUrl}/home-assistant/service?credentialId=${content.credentialId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          },
+          body: JSON.stringify({
+            url: content.url,
+            domain,
+            service,
+            entity_id: entityId
+          })
+        });
+      } else {
+        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: content.url,
+            token: content.token,
+            domain,
+            service,
+            entity_id: entityId
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -548,20 +624,35 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private async fetchAllEntities(widget: Widget): Promise<HomeAssistantEntity[]> {
     const content = widget.content as HomeAssistantContent;
-    if (!content.url || !content.token) return [];
+    if (!content.url || (!content.credentialId && !content.token)) return [];
 
     try {
       const pingServerUrl = this.getPingServerUrl();
-      const response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: content.url,
-          token: content.token
-        })
-      });
+      
+      let response;
+      if (content.credentialId) {
+        response = await fetch(`${pingServerUrl}/home-assistant/states?credentialId=${content.credentialId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          },
+          body: JSON.stringify({
+            url: content.url
+          })
+        });
+      } else {
+        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: content.url,
+            token: content.token
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1028,7 +1119,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     });
   }
 
-  private showSettingsDialog(widget: Widget): void {
+  private async showSettingsDialog(widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
 
     // Create overlay
@@ -1060,6 +1151,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       color: var(--text);
     `;
 
+    // Load credentials for the selector
+    const credentials = await credentialsService.getAll();
+    const homeAssistantCredentials = credentials.filter(c => c.service_type === 'home_assistant');
+
+    const credentialOptions = homeAssistantCredentials
+      .map(c => `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''}>${c.name}</option>`)
+      .join('');
+
     dialog.innerHTML = `
       <h3 style="margin-top: 0; color: var(--text);">⚙️ Home Assistant Settings</h3>
       
@@ -1090,7 +1189,32 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
-          Long-Lived Access Token
+          Saved Credential
+        </label>
+        <select 
+          id="ha-credential-select"
+          style="
+            width: 100%;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+          "
+        >
+          <option value="">Select saved credential...</option>
+          ${credentialOptions}
+        </select>
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+          Use saved credentials instead of storing token directly
+        </small>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+          Or Enter Token Directly (Legacy)
         </label>
         <input 
           type="password" 
@@ -1171,19 +1295,34 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Get input elements
     const urlInput = dialog.querySelector('#ha-url-input') as HTMLInputElement;
+    const credentialSelect = dialog.querySelector('#ha-credential-select') as HTMLSelectElement;
     const tokenInput = dialog.querySelector('#ha-token-input') as HTMLInputElement;
     const refreshInput = dialog.querySelector('#ha-refresh-input') as HTMLInputElement;
     const saveBtn = dialog.querySelector('#save-settings-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-settings-btn') as HTMLButtonElement;
 
+    // Stop propagation for all inputs
+    [urlInput, credentialSelect, tokenInput, refreshInput, saveBtn, cancelBtn].forEach(el => {
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
+        preventWidgetKeyboardDrag(el);
+      }
+    });
+
     // Save button handler
     saveBtn.addEventListener('click', () => {
       const url = urlInput.value.trim();
+      const credentialId = credentialSelect.value ? parseInt(credentialSelect.value) : undefined;
       const token = tokenInput.value.trim();
       const refreshInterval = parseInt(refreshInput.value);
 
-      if (!url || !token) {
-        alert('Please enter both URL and token');
+      if (!url) {
+        alert('Please enter Home Assistant URL');
+        return;
+      }
+
+      if (!credentialId && !token) {
+        alert('Please select a saved credential or enter a token');
         return;
       }
 
@@ -1199,7 +1338,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           content: {
             ...content,
             url,
-            token,
+            credentialId,
+            token: credentialId ? undefined : token, // Clear token if using credentialId
             refreshInterval
           }
         }
