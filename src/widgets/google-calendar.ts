@@ -428,11 +428,28 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       e.preventDefault();
       
       const credentialSelect = document.getElementById('calendar-credential') as HTMLSelectElement;
+      const displayModeSelect = document.getElementById('calendar-display-mode') as HTMLSelectElement;
+      const maxEventsInput = document.getElementById('calendar-max-events') as HTMLInputElement;
+      const daysAheadInput = document.getElementById('calendar-days-ahead') as HTMLInputElement;
+      const refreshInput = document.getElementById('calendar-refresh') as HTMLInputElement;
+
+      // Prevent arrow keys from moving the widget
+      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      maxEventsInput.addEventListener('keydown', (e) => e.stopPropagation());
+      maxEventsInput.addEventListener('keyup', (e) => e.stopPropagation());
+      daysAheadInput.addEventListener('keydown', (e) => e.stopPropagation());
+      daysAheadInput.addEventListener('keyup', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
+      
       const credentialId = parseInt(credentialSelect.value);
-      const displayMode = (document.getElementById('calendar-display-mode') as HTMLSelectElement).value;
-      const maxEvents = parseInt((document.getElementById('calendar-max-events') as HTMLInputElement).value);
-      const daysAhead = parseInt((document.getElementById('calendar-days-ahead') as HTMLInputElement).value);
-      const refreshInterval = parseInt((document.getElementById('calendar-refresh') as HTMLInputElement).value);
+      const displayMode = displayModeSelect.value;
+      const maxEvents = parseInt(maxEventsInput.value);
+      const daysAhead = parseInt(daysAheadInput.value);
+      const refreshInterval = parseInt(refreshInput.value);
 
       // Validate credential selection
       if (!credentialId) {

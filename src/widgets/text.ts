@@ -32,6 +32,8 @@ export class TextWidgetRenderer implements WidgetRenderer {
     textarea.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
     });
+    textarea.addEventListener('keydown', (e) => e.stopPropagation());
+    textarea.addEventListener('keyup', (e) => e.stopPropagation());
     
     container.appendChild(textarea);
   }

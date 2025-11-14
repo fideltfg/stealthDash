@@ -185,6 +185,8 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     });
     
     urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    urlInput.addEventListener('keydown', (e) => e.stopPropagation());
+    urlInput.addEventListener('keyup', (e) => e.stopPropagation());
     button.addEventListener('pointerdown', (e) => e.stopPropagation());
     
     inputContainer.appendChild(icon);

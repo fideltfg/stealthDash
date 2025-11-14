@@ -69,6 +69,14 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
 
+    // Prevent arrow keys from moving the widget
+    urlInput.addEventListener('keydown', (e) => e.stopPropagation());
+    urlInput.addEventListener('keyup', (e) => e.stopPropagation());
+    altInput.addEventListener('keydown', (e) => e.stopPropagation());
+    altInput.addEventListener('keyup', (e) => e.stopPropagation());
+    fitSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    fitSelect.addEventListener('keyup', (e) => e.stopPropagation());
+
     const close = () => overlay.remove();
 
     cancelBtn.onclick = close;

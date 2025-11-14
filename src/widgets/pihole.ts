@@ -391,10 +391,25 @@ class PiholeRenderer implements WidgetRenderer {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const host = (document.getElementById('pihole-host') as HTMLInputElement).value.trim();
-      const credentialId = (document.getElementById('pihole-credential-id') as HTMLSelectElement).value;
-      const displayMode = (document.getElementById('pihole-display-mode') as HTMLSelectElement).value;
-      const refreshInterval = parseInt((document.getElementById('pihole-refresh') as HTMLInputElement).value);
+      const hostInput = document.getElementById('pihole-host') as HTMLInputElement;
+      const credentialSelect = document.getElementById('pihole-credential-id') as HTMLSelectElement;
+      const displayModeSelect = document.getElementById('pihole-display-mode') as HTMLSelectElement;
+      const refreshInput = document.getElementById('pihole-refresh') as HTMLInputElement;
+
+      // Prevent arrow keys from moving the widget
+      hostInput.addEventListener('keydown', (e) => e.stopPropagation());
+      hostInput.addEventListener('keyup', (e) => e.stopPropagation());
+      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
+      
+      const host = hostInput.value.trim();
+      const credentialId = credentialSelect.value;
+      const displayMode = displayModeSelect.value;
+      const refreshInterval = parseInt(refreshInput.value);
 
       if (!credentialId) {
         alert('Please select a saved credential. You can create one from the user menu (🔐 Credentials).');

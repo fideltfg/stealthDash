@@ -280,9 +280,13 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     });
     
     timezoneSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
-    format24h.addEventListener('pointerdown', (e) => e.stopPropagation());
-    format12h.addEventListener('pointerdown', (e) => e.stopPropagation());
-    showTzCheckbox.addEventListener('pointerdown', (e) => e.stopPropagation());
+    timezoneSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    timezoneSelect.addEventListener('keyup', (e) => e.stopPropagation());
+    tzSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
+    tzSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    tzSelect.addEventListener('keyup', (e) => e.stopPropagation());
+    format24Input.addEventListener('pointerdown', (e) => e.stopPropagation());
+    showTzInput.addEventListener('pointerdown', (e) => e.stopPropagation());
     button.addEventListener('pointerdown', (e) => e.stopPropagation());
     
     div.appendChild(icon);

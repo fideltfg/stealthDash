@@ -1,5 +1,6 @@
 import type { Widget, WidgetContent } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { preventWidgetKeyboardDrag } from '../types/widget';
 
 export interface ChatGPTContent extends WidgetContent {
   apiKey: string;
@@ -293,6 +294,8 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
 
     // Prevent widget dragging when interacting with input
     input.addEventListener('pointerdown', (e) => e.stopPropagation());
+    input.addEventListener('keydown', (e) => e.stopPropagation());
+    input.addEventListener('keyup', (e) => e.stopPropagation());
     sendBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   }
 
@@ -564,6 +567,12 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     apiKeyInput.addEventListener('input', updateContent);
     modelSelect.addEventListener('change', updateContent);
     systemPromptInput.addEventListener('input', updateContent);
+
+    // Prevent keyboard events from moving the widget
+    preventWidgetKeyboardDrag(apiKeyInput);
+    preventWidgetKeyboardDrag(systemPromptInput);
+    modelSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    modelSelect.addEventListener('keyup', (e) => e.stopPropagation());
 
     clearHistoryBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all chat messages?')) {

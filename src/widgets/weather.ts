@@ -168,6 +168,8 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     });
     
     locationInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    locationInput.addEventListener('keydown', (e) => e.stopPropagation());
+    locationInput.addEventListener('keyup', (e) => e.stopPropagation());
     button.addEventListener('pointerdown', (e) => e.stopPropagation());
     
     inputContainer.appendChild(icon);

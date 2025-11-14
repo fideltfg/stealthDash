@@ -130,3 +130,12 @@ export function constrainSize(size: Size): Size {
     h: Math.max(MIN_WIDGET_SIZE.h, size.h)
   };
 }
+
+/**
+ * Prevents keyboard events from propagating to widget drag handlers
+ * Use this on input elements in widget configuration dialogs
+ */
+export function preventWidgetKeyboardDrag(element: HTMLElement): void {
+  element.addEventListener('keydown', (e) => e.stopPropagation());
+  element.addEventListener('keyup', (e) => e.stopPropagation());
+}

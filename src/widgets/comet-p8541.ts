@@ -864,6 +864,10 @@ export class CometP8541Renderer implements WidgetRenderer {
         box-sizing: border-box;
       `;
 
+      // Prevent arrow keys from moving the widget
+      input.addEventListener('keydown', (e) => e.stopPropagation());
+      input.addEventListener('keyup', (e) => e.stopPropagation());
+
       inputs[field.key] = input;
       group.appendChild(label);
       group.appendChild(input);
@@ -889,6 +893,11 @@ export class CometP8541Renderer implements WidgetRenderer {
       box-sizing: border-box;
       cursor: pointer;
     `;
+
+    // Prevent arrow keys from moving the widget
+    tempSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    tempSelect.addEventListener('keyup', (e) => e.stopPropagation());
+
     ['C', 'F'].forEach(unit => {
       const option = document.createElement('option');
       option.value = unit;
@@ -921,6 +930,11 @@ export class CometP8541Renderer implements WidgetRenderer {
       box-sizing: border-box;
       cursor: pointer;
     `;
+
+    // Prevent arrow keys from moving the widget
+    displaySelect.addEventListener('keydown', (e) => e.stopPropagation());
+    displaySelect.addEventListener('keyup', (e) => e.stopPropagation());
+
     ['gauge', 'text'].forEach(mode => {
       const option = document.createElement('option');
       option.value = mode;
@@ -971,6 +985,10 @@ export class CometP8541Renderer implements WidgetRenderer {
         font-size: 12px;
         box-sizing: border-box;
       `;
+
+      // Prevent arrow keys from moving the widget
+      nameInput.addEventListener('keydown', (e) => e.stopPropagation());
+      nameInput.addEventListener('keyup', (e) => e.stopPropagation());
 
       channelInputs[ch] = checkbox;
       channelNameInputs[ch] = nameInput;

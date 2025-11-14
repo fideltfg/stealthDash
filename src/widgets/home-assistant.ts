@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { preventWidgetKeyboardDrag } from '../types/widget';
 
 interface HomeAssistantEntity {
   entity_id: string;
@@ -192,8 +193,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       // Prevent keyboard events from bubbling up to widget drag handlers
       if (el instanceof HTMLInputElement) {
-        el.addEventListener('keydown', (e) => e.stopPropagation());
-        el.addEventListener('keyup', (e) => e.stopPropagation());
+        preventWidgetKeyboardDrag(el);
       }
     });
   }
@@ -792,8 +792,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       // Prevent keyboard events from bubbling up to widget drag handlers
       if (el instanceof HTMLInputElement) {
-        el.addEventListener('keydown', (e) => e.stopPropagation());
-        el.addEventListener('keyup', (e) => e.stopPropagation());
+        preventWidgetKeyboardDrag(el);
       }
     });
 
@@ -976,8 +975,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       // Prevent keyboard events from bubbling up to widget drag handlers
       if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
-        el.addEventListener('keydown', (e) => e.stopPropagation());
-        el.addEventListener('keyup', (e) => e.stopPropagation());
+        preventWidgetKeyboardDrag(el);
       }
     });
 
@@ -1228,8 +1226,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Prevent keyboard events from bubbling up to widget drag handlers
     [urlInput, tokenInput, refreshInput].forEach(input => {
       input.addEventListener('pointerdown', (e) => e.stopPropagation());
-      input.addEventListener('keydown', (e) => e.stopPropagation());
-      input.addEventListener('keyup', (e) => e.stopPropagation());
+      preventWidgetKeyboardDrag(input);
     });
   }
 

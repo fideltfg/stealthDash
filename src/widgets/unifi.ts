@@ -477,12 +477,29 @@ class UnifiRenderer implements WidgetRenderer {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const host = (document.getElementById('unifi-host') as HTMLInputElement).value.trim();
+      const hostInput = document.getElementById('unifi-host') as HTMLInputElement;
       const credentialSelect = document.getElementById('unifi-credential') as HTMLSelectElement;
+      const siteInput = document.getElementById('unifi-site') as HTMLInputElement;
+      const displayModeSelect = document.getElementById('unifi-display-mode') as HTMLSelectElement;
+      const refreshInput = document.getElementById('unifi-refresh') as HTMLInputElement;
+
+      // Prevent arrow keys from moving the widget
+      hostInput.addEventListener('keydown', (e) => e.stopPropagation());
+      hostInput.addEventListener('keyup', (e) => e.stopPropagation());
+      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      siteInput.addEventListener('keydown', (e) => e.stopPropagation());
+      siteInput.addEventListener('keyup', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
+      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
+      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
+      
+      const host = hostInput.value.trim();
       const credentialId = parseInt(credentialSelect.value);
-      const site = (document.getElementById('unifi-site') as HTMLInputElement).value.trim();
-      const displayMode = (document.getElementById('unifi-display-mode') as HTMLSelectElement).value;
-      const refreshInterval = parseInt((document.getElementById('unifi-refresh') as HTMLInputElement).value);
+      const site = siteInput.value.trim();
+      const displayMode = displayModeSelect.value;
+      const refreshInterval = parseInt(refreshInput.value);
 
       // Validate credential selection
       if (!credentialId) {
