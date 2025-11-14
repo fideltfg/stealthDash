@@ -1,6 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { preventWidgetKeyboardDrag } from '../types/widget';
+import { credentialsService } from '../services/credentials';
+import { authService } from '../services/auth';
 
 interface HomeAssistantEntity {
   entity_id: string;
@@ -15,7 +17,8 @@ interface HomeAssistantEntity {
 
 interface HomeAssistantContent {
   url?: string;
-  token?: string;
+  token?: string; // Deprecated - use credentialId
+  credentialId?: number;
   entities?: {
     entity_id: string;
     display_name?: string;

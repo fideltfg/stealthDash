@@ -1,9 +1,12 @@
-import type { Widget, WidgetContent } from '../types/types';
+import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { preventWidgetKeyboardDrag } from '../types/widget';
+import { credentialsService } from '../services/credentials';
+import { authService } from '../services/auth';
 
-export interface ChatGPTContent extends WidgetContent {
-  apiKey: string;
+export interface ChatGPTContent {
+  apiKey?: string; // Deprecated - use credentialId
+  credentialId?: number;
   model: string;
   messages: Array<{
     role: 'user' | 'assistant' | 'system';
@@ -97,8 +100,8 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       messagesContainer.appendChild(messageEl);
     });
 
-    // Show setup message if no API key
-    if (!content.apiKey) {
+    // Show setup message if no credential
+    if (!content.credentialId && !content.apiKey) {
       const setupMsg = document.createElement('div');
       setupMsg.style.cssText = `
         padding: 16px;
@@ -228,19 +231,37 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         
         console.log('Sending to OpenAI:', {
           model: requestPayload.model,
-          messageCount: requestPayload.messages.length,
-          apiKeyPrefix: content.apiKey.substring(0, 7) + '...'
+          messageCount: requestPayload.messages.length
         });
 
-        // Call OpenAI API
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${content.apiKey}`
-          },
-          body: JSON.stringify(requestPayload)
-        });
+        // Call OpenAI API via proxy if using credentialId, otherwise direct
+        let response;
+        if (content.credentialId) {
+          // Use proxy with credential
+          const proxyUrl = new URL('/api/openai/chat', window.location.origin.replace(':3000', ':3001'));
+          proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
+          
+          response = await fetch(proxyUrl.toString(), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authService.getToken() || ''}`
+            },
+            body: JSON.stringify(requestPayload)
+          });
+        } else if (content.apiKey) {
+          // Legacy: direct call with API key
+          response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${content.apiKey}`
+            },
+            body: JSON.stringify(requestPayload)
+          });
+        } else {
+          throw new Error('No credential configured');
+        }
 
         typingIndicator.remove();
 
@@ -443,9 +464,9 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div>
         <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--text);">
-          OpenAI API Key <span style="color: #f44336;">*</span>
+          OpenAI Credentials <span style="color: #f44336;">*</span>
         </label>
-        <input type="password" id="api-key" value="${content.apiKey}" placeholder="sk-..." style="
+        <select id="credential-select" style="
           width: 100%;
           padding: 10px;
           box-sizing: border-box;
@@ -455,8 +476,10 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
           color: var(--text);
           font-size: 14px;
         ">
+          <option value="">Select saved credential...</option>
+        </select>
         <small style="display: block; margin-top: 4px; opacity: 0.7; color: var(--text);">
-          Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #2196F3;">OpenAI Platform</a>
+          💡 Tip: Create OpenAI credentials from the user menu (🔐 Credentials). Use type: Generic, store your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #2196F3;">OpenAI Platform</a>
         </small>
       </div>
 
@@ -540,8 +563,29 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       </div>
     `;
 
+    // Load credentials into the select
+    const credentialSelect = container.querySelector('#credential-select') as HTMLSelectElement;
+    (async () => {
+      try {
+        const credentials = await credentialsService.getAll();
+        // For now, show all generic credentials - could filter by service_type in future
+        credentials.forEach(cred => {
+          const option = document.createElement('option');
+          option.value = cred.id.toString();
+          option.textContent = `🔑 ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
+          credentialSelect.appendChild(option);
+        });
+
+        // Set current credential if exists
+        if (content.credentialId) {
+          credentialSelect.value = content.credentialId.toString();
+        }
+      } catch (error) {
+        console.error('Failed to load credentials:', error);
+      }
+    })();
+
     // Get input elements
-    const apiKeyInput = container.querySelector('#api-key') as HTMLInputElement;
     const modelSelect = container.querySelector('#model') as HTMLSelectElement;
     const systemPromptInput = container.querySelector('#system-prompt') as HTMLTextAreaElement;
     const clearHistoryBtn = container.querySelector('#clear-history') as HTMLButtonElement;
@@ -549,7 +593,8 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
 
     // Update content when inputs change
     const updateContent = () => {
-      content.apiKey = apiKeyInput.value.trim();
+      const credId = credentialSelect.value;
+      content.credentialId = credId ? parseInt(credId) : undefined;
       content.model = modelSelect.value;
       content.systemPrompt = systemPromptInput.value;
       
@@ -564,12 +609,13 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       document.dispatchEvent(event);
     };
 
-    apiKeyInput.addEventListener('input', updateContent);
+    credentialSelect.addEventListener('change', updateContent);
     modelSelect.addEventListener('change', updateContent);
     systemPromptInput.addEventListener('input', updateContent);
 
     // Prevent keyboard events from moving the widget
-    preventWidgetKeyboardDrag(apiKeyInput);
+    credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
+    credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
     preventWidgetKeyboardDrag(systemPromptInput);
     modelSelect.addEventListener('keydown', (e) => e.stopPropagation());
     modelSelect.addEventListener('keyup', (e) => e.stopPropagation());
@@ -592,7 +638,7 @@ export const widget = {
   renderer: new ChatGPTWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },
   defaultContent: {
-    apiKey: '',
+    credentialId: undefined,
     model: 'gpt-3.5-turbo',
     messages: [],
     systemPrompt: 'You are a helpful assistant.'
