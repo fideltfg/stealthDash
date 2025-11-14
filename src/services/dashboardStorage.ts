@@ -1,6 +1,7 @@
 import type { MultiDashboardState } from '../types/types';
 import { authService } from './auth';
 import { getDefaultMultiDashboardState } from '../components/storage';
+import { sanitizeDashboardState } from '../utils/sanitizeWidgets';
 
 /**
  * Dashboard storage service - server only (no localStorage).
@@ -57,10 +58,13 @@ class DashboardStorageService {
       console.warn('⚠️  Found and removed', state.dashboards.length - uniqueDashboards.length, 'duplicate dashboards before saving');
     }
     
-    const cleanState = {
+    const deduplicatedState = {
       ...state,
       dashboards: uniqueDashboards
     };
+    
+    // Sanitize sensitive data before saving (remove API keys, tokens, cached data, etc.)
+    const cleanState = sanitizeDashboardState(deduplicatedState);
     
     // Save to server if authenticated
     if (authService.isAuthenticated()) {
