@@ -15,10 +15,10 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'rss': ['feedUrl', 'maxItems', 'refreshInterval'],
   'uptime': ['target', 'interval', 'timeout'],
   'chatgpt': ['model', 'systemPrompt'], // Remove apiKey and messages
-  'home-assistant': ['url', 'entities', 'refreshInterval'], // Remove token
+  'home-assistant': ['url', 'entities', 'refreshInterval'], // Remove token - Keep url and entities settings
   'comet-p8541': ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName'],
-  'mtnxml': ['host', 'refreshInterval', 'displayMode'],
-  'envcanada': ['provinceCode', 'cityCode', 'refreshInterval', 'displayMode'],
+  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'], // Remove cachedData
+  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'], // Remove cachedData
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
