@@ -1,6 +1,6 @@
 import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState } from './types/types';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
-import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId } from './components/storage';
+import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId, generateUUID } from './components/storage';
 import { createHistoryManager, shouldCoalesceAction } from './components/history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './types/widget';
 import { loadWidgetModule, loadWidgetModules } from './types/widget-loader';
@@ -1430,9 +1430,14 @@ class Dashboard {
       overflow-y: auto;
     `;
 
-    // Get all dashboards
-    const dashboards = getAllDashboards();
-    const activeDashboardId = getActiveDashboardId();
+    // Get all dashboards from current state
+    if (!this.multiState) {
+      console.error('No multiState available');
+      return;
+    }
+
+    const dashboards = this.multiState.dashboards;
+    const activeDashboardId = this.multiState.activeDashboardId;
 
     // Dashboard list
     const listContainer = document.createElement('div');
@@ -1489,11 +1494,17 @@ class Dashboard {
         e.stopPropagation();
         const newName = prompt('Enter new dashboard name:', dashboard.name);
         if (newName && newName.trim()) {
-          renameDashboard(dashboard.id, newName.trim());
+          // Update in current state
+          if (this.multiState) {
+            const dash = this.multiState.dashboards.find(d => d.id === dashboard.id);
+            if (dash) {
+              dash.name = newName.trim();
+              dash.updatedAt = Date.now();
+            }
+          }
 
-          // Reload and sync to server
-          if (authService.isAuthenticated()) {
-            this.multiState = await dashboardStorage.loadDashboards();
+          // Save to server
+          if (authService.isAuthenticated() && this.multiState) {
             await dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
           }
 
@@ -1526,21 +1537,34 @@ class Dashboard {
           if (confirm(message)) {
             const wasActive = dashboard.id === activeDashboardId;
 
-            // Delete locally
-            deleteDashboard(dashboard.id);
+            // Delete from current state
+            if (this.multiState) {
+              // Don't delete if it's the last dashboard
+              if (this.multiState.dashboards.length <= 1) {
+                alert('Cannot delete the last dashboard');
+                return;
+              }
 
-            // Delete from server if authenticated
-            if (authService.isAuthenticated()) {
-              this.multiState = await dashboardStorage.loadDashboards();
-              await dashboardStorage.deleteDashboard(dashboard.id, this.multiState);
+              // Remove the dashboard
+              this.multiState.dashboards = this.multiState.dashboards.filter(d => d.id !== dashboard.id);
+
+              // If we deleted the active dashboard, switch to the first one
+              if (this.multiState.activeDashboardId === dashboard.id) {
+                this.multiState.activeDashboardId = this.multiState.dashboards[0].id;
+              }
+
+              // Save to server if authenticated
+              if (authService.isAuthenticated()) {
+                await dashboardStorage.deleteDashboard(dashboard.id, this.multiState);
+                await dashboardStorage.saveDashboards(this.multiState, true);
+              }
             }
 
             overlay.remove();
 
-            if (wasActive) {
+            if (wasActive && this.multiState) {
               // Switch to the new active dashboard
-              const newActiveDashboardId = getActiveDashboardId();
-              this.switchToDashboard(newActiveDashboardId);
+              this.switchToDashboard(this.multiState.activeDashboardId);
             } else {
               this.showDashboardManager();
             }
@@ -1577,11 +1601,18 @@ class Dashboard {
     addButton.addEventListener('click', async () => {
       const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
       if (name && name.trim()) {
-        const newDashboard = createDashboard(name.trim());
+        // Create new dashboard and add to current state
+        const newDashboard = {
+          id: generateUUID(),
+          name: name.trim(),
+          state: getDefaultState(),
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
 
-        // Sync to server if authenticated
-        if (authService.isAuthenticated()) {
-          this.multiState = await dashboardStorage.loadDashboards();
+        // Add to current state and save
+        if (authService.isAuthenticated() && this.multiState) {
+          this.multiState.dashboards.push(newDashboard);
           await dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
         }
 
@@ -1618,21 +1649,22 @@ class Dashboard {
     // Clean up current widgets before switching
     this.cleanup();
 
-    // Switch to new dashboard
-    const newState = switchDashboard(dashboardId);
-    if (newState) {
-      this.state = newState;
-      this.history = createHistoryManager();
-      this.render();
-      this.setupTheme();
-      this.setupBackground();
+    // Update active dashboard in current state
+    if (this.multiState) {
+      this.multiState.activeDashboardId = dashboardId;
+      const dashboard = this.multiState.dashboards.find(d => d.id === dashboardId);
+      
+      if (dashboard) {
+        this.state = dashboard.state;
+        this.history = createHistoryManager();
+        this.render();
+        this.setupTheme();
+        this.setupBackground();
 
-      // Reload from server and sync
-      if (authService.isAuthenticated()) {
-        dashboardStorage.loadDashboards().then(multiState => {
-          this.multiState = multiState;
-          dashboardStorage.saveDashboards(multiState, true); // Immediate save
-        });
+        // Save to server if authenticated
+        if (authService.isAuthenticated()) {
+          dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
+        }
       }
     }
   }

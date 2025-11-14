@@ -6,7 +6,7 @@ import { DEFAULT_GRID_SIZE, DEFAULT_ZOOM } from '../types/types';
 const CURRENT_VERSION = 1;
 
 // Generate UUID with fallback for older browsers
-function generateUUID(): string {
+export function generateUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
