@@ -33,16 +33,17 @@ The frontend widgets have been updated to use `credentialId` instead of storing 
 - `/home-assistant/states` - Get entity states
 - `/home-assistant/service` - Call service (turn on/off)
 
-**Required Updates**: Accept `credentialId` query parameter
+**Status**: ✅ Already supports credentialId in request body
 
 **Request Format with credentialId**:
 ```
-POST /home-assistant/states?credentialId=123
+POST /home-assistant/states
 Authorization: Bearer <user-token>
 Content-Type: application/json
 
 {
-  "url": "http://homeassistant.local:8123"
+  "url": "http://homeassistant.local:8123",
+  "credentialId": 123
 }
 ```
 
@@ -59,24 +60,25 @@ Content-Type: application/json
 
 **Service Call Example**:
 ```
-POST /home-assistant/service?credentialId=123
+POST /home-assistant/service
 Authorization: Bearer <user-token>
 Content-Type: application/json
 
 {
   "url": "http://homeassistant.local:8123",
+  "credentialId": 123,
   "domain": "light",
   "service": "turn_on",
   "entity_id": "light.living_room"
 }
 ```
 
-**Implementation Updates**:
-1. Check if request includes `credentialId` query parameter
-2. If yes: verify user auth, lookup credential, extract token, use for HA API call
-3. If no: fall back to legacy token in body (backward compatibility)
-4. Forward request to Home Assistant API with proper token
-5. Return response to frontend
+**Implementation**:
+- Backend checks for `credentialId` in request body
+- If present: verifies user auth, looks up credential from database, extracts token
+- If not present: uses `token` field from body (backward compatibility)
+- Forwards request to Home Assistant API with proper token
+- Returns response to frontend
 
 ### 3. Weather API Proxy (If Needed)
 Most weather widgets use free APIs that don't require credentials. May not need this endpoint unless using premium weather services.

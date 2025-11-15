@@ -466,14 +466,15 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       let response;
       if (content.credentialId) {
         // Use credentialId (new method)
-        response = await fetch(`${pingServerUrl}/home-assistant/states?credentialId=${content.credentialId}`, {
+        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authService.getToken() || ''}`
           },
           body: JSON.stringify({
-            url: content.url
+            url: content.url,
+            credentialId: content.credentialId
           })
         });
       } else {
@@ -578,7 +579,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       
       let response;
       if (content.credentialId) {
-        response = await fetch(`${pingServerUrl}/home-assistant/service?credentialId=${content.credentialId}`, {
+        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -586,6 +587,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           },
           body: JSON.stringify({
             url: content.url,
+            credentialId: content.credentialId,
             domain,
             service,
             entity_id: entityId
@@ -631,14 +633,15 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       
       let response;
       if (content.credentialId) {
-        response = await fetch(`${pingServerUrl}/home-assistant/states?credentialId=${content.credentialId}`, {
+        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authService.getToken() || ''}`
           },
           body: JSON.stringify({
-            url: content.url
+            url: content.url,
+            credentialId: content.credentialId
           })
         });
       } else {
