@@ -136,6 +136,15 @@ const widgetMetadata = [
     defaultSize: { w: 400, h: 300 },
     defaultContent: {},
     hasSettings: true
+  },
+  {
+    type: 'docker',
+    name: 'Docker',
+    icon: '🐋',
+    description: 'Monitor and manage Docker containers',
+    defaultSize: { w: 400, h: 500 },
+    defaultContent: {},
+    hasSettings: true
   }
 ];
 
