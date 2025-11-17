@@ -60,7 +60,7 @@ router.post('/credentials', authMiddleware, async (req, res) => {
   }
   
   // Validate service_type
-  const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'snmp', 'modbus', 'api', 'custom'];
+  const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'custom'];
   if (!validServiceTypes.includes(service_type)) {
     return res.status(400).json({ 
       error: 'Invalid service_type', 
@@ -118,7 +118,7 @@ router.put('/credentials/:id', authMiddleware, async (req, res) => {
     }
     
     if (service_type !== undefined) {
-      const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'snmp', 'modbus', 'api', 'custom'];
+      const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'custom'];
       if (!validServiceTypes.includes(service_type)) {
         return res.status(400).json({ 
           error: 'Invalid service_type', 
