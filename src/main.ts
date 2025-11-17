@@ -125,7 +125,15 @@ class Dashboard {
   }
 
   private showUserMenu(): void {
-    if (this.currentUser && !this.userMenuElement) {
+    // Remove existing menu if present
+    if (this.userMenuElement) {
+      this.userMenuElement.remove();
+      this.userMenuElement = null;
+    }
+
+    // Create new menu if user is logged in
+    if (this.currentUser) {
+      console.log('Creating user menu for:', this.currentUser.username);
       this.userMenuElement = this.authUI.createUserMenu(
         this.currentUser,
         () => this.userSettingsUI.showSettingsDialog(),
@@ -134,6 +142,8 @@ class Dashboard {
         () => this.credentialsUI.showCredentialsDialog()
       );
       document.body.appendChild(this.userMenuElement);
+    } else {
+      console.warn('Cannot create user menu: currentUser is null');
     }
   }
 
