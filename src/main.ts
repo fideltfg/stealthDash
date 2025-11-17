@@ -134,13 +134,12 @@ class Dashboard {
   }
 
   private showUserMenu(): void {
-    console.log('👤 showUserMenu called');
-    console.log('   currentUser:', this.currentUser);
-    console.log('   existing userMenuElement:', this.userMenuElement);
+    //console.log('👤 showUserMenu called');
+    //console.log('   currentUser:', this.currentUser);
+    //console.log('   existing userMenuElement:', this.userMenuElement);
     
     // Remove existing menu if present
     if (this.userMenuElement) {
-      console.log('   Removing existing menu');
       this.userMenuElement.remove();
       this.userMenuElement = null;
     }
@@ -155,10 +154,7 @@ class Dashboard {
         () => this.showDashboardManager(),
         () => this.credentialsUI.showCredentialsDialog()
       );
-      console.log('   Menu element created:', this.userMenuElement);
-      console.log('   Appending to body');
       document.body.appendChild(this.userMenuElement);
-      console.log('   Menu appended, checking if in DOM:', document.body.contains(this.userMenuElement));
     } else {
       console.warn('   ❌ Cannot create user menu: currentUser is null');
     }
@@ -1826,4 +1822,18 @@ class Dashboard {
 }
 
 // Initialize dashboard
-new Dashboard();
+const dashboard = new Dashboard();
+
+// Expose helper methods for debugging (development only)
+if (typeof window !== 'undefined') {
+  (window as any).dashboard = dashboard;
+  (window as any).deleteWidgetsByType = (type: string) => {
+    const before = (dashboard as any).state.widgets.length;
+    (dashboard as any).state.widgets = (dashboard as any).state.widgets.filter((w: any) => w.type !== type);
+    const after = (dashboard as any).state.widgets.length;
+    console.log(`🗑️ Removed ${before - after} ${type} widget(s)`);
+    (dashboard as any).render();
+    (dashboard as any).saveHistory();
+    (dashboard as any).save();
+  };
+}

@@ -168,7 +168,7 @@ class UnifiRenderer implements WidgetRenderer {
 
         const data: UnifiStats = await response.json();
         
-        console.log('UniFi data received:', data);
+        //console.log('UniFi data received:', data);
 
         // Render based on display mode
         const mode = content.displayMode || 'compact';
