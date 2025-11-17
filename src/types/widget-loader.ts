@@ -36,6 +36,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'pihole': () => import('../widgets/pihole'),
   'google-calendar': () => import('../widgets/google-calendar'),
   'unifi': () => import('../widgets/unifi'),
+  'docker': () => import('../widgets/docker'),
 };
 
 // Track which widgets have been loaded
