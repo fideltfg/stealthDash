@@ -105,8 +105,8 @@ class UnifiRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as UnifiContent;
     
-    console.log('UniFi widget render - Full content:', content);
-    console.log('UniFi widget render - Has credentialId?', !!content.credentialId);
+   // console.log('UniFi widget render - Full content:', content);
+   // console.log('UniFi widget render - Has credentialId?', !!content.credentialId);
     
     // If widget has no host or credential configured, show configuration prompt
     if (!content.host || !content.credentialId) {
@@ -152,8 +152,8 @@ class UnifiRenderer implements WidgetRenderer {
         proxyUrl.searchParams.set('site', content.site || 'default');
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        console.log('Using saved credential ID:', content.credentialId);
-        console.log('Fetching UniFi data via proxy:', proxyUrl.toString());
+        //console.log('Using saved credential ID:', content.credentialId);
+        //console.log('Fetching UniFi data via proxy:', proxyUrl.toString());
         
         const response = await fetch(proxyUrl.toString(), {
           headers: {

@@ -25,11 +25,19 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
   }
 
   render(widget: Widget, container: HTMLElement): void {
-    const content = widget.content as ChatGPTContent;
+    const content = (widget.content || {}) as ChatGPTContent;
     
     // Ensure messages array exists (may be removed by sanitizer)
     if (!content.messages) {
       content.messages = [];
+    }
+    
+    // Ensure required fields exist
+    if (!content.model) {
+      content.model = 'gpt-3.5-turbo';
+    }
+    if (!content.systemPrompt) {
+      content.systemPrompt = 'You are a helpful assistant.';
     }
 
     container.style.cssText = `

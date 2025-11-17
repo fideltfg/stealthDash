@@ -24,7 +24,7 @@ const widgetRegistry = new Map<string, WidgetPlugin>();
 // Register a widget plugin
 export function registerWidget(plugin: WidgetPlugin): void {
   widgetRegistry.set(plugin.type, plugin);
-  console.log(`✅ Registered widget: ${plugin.type} (${plugin.name})`);
+  //console.log(`✅ Registered widget: ${plugin.type} (${plugin.name})`);
 }
 
 // Get a specific widget plugin

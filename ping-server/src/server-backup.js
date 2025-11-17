@@ -265,7 +265,7 @@ app.post('/auth/request-recovery', async (req, res) => {
       try {
         await sendRecoveryEmail(user.email, user.username, token);
         emailSent = true;
-        console.log(`✅ Password recovery email sent to ${user.email}`);
+       // console.log(`✅ Password recovery email sent to ${user.email}`);
       } catch (emailError) {
         console.error('Failed to send recovery email:', emailError);
         emailSent = false;
@@ -274,18 +274,18 @@ app.post('/auth/request-recovery', async (req, res) => {
     
     // If email not sent, log token to console for admin assistance
     if (!emailSent) {
-      console.log('='.repeat(80));
-      console.log('PASSWORD RECOVERY TOKEN GENERATED');
-      console.log('='.repeat(80));
-      console.log(`Username: ${user.username}`);
-      console.log(`Email: ${user.email}`);
-      console.log(`Recovery Link: ${process.env.DASHBOARD_URL || 'http://localhost:3000'}/#/reset-password?token=${token}`);
-      console.log(`Expires: ${expiresAt.toISOString()}`);
-      console.log(`Valid for: 1 hour`);
-      console.log('='.repeat(80));
-      console.log('⚠️  Email not sent - SMTP not configured or failed');
-      console.log('   Share this link with the user to reset their password.');
-      console.log('='.repeat(80));
+      // console.log('='.repeat(80));
+      // console.log('PASSWORD RECOVERY TOKEN GENERATED');
+      // console.log('='.repeat(80));
+      // console.log(`Username: ${user.username}`);
+      // console.log(`Email: ${user.email}`);
+      // console.log(`Recovery Link: ${process.env.DASHBOARD_URL || 'http://localhost:3000'}/#/reset-password?token=${token}`);
+      // console.log(`Expires: ${expiresAt.toISOString()}`);
+      // console.log(`Valid for: 1 hour`);
+      // console.log('='.repeat(80));
+      // console.log('⚠️  Email not sent - SMTP not configured or failed');
+      // console.log('   Share this link with the user to reset their password.');
+      // console.log('='.repeat(80));
     }
     
     res.json({ 
@@ -403,7 +403,7 @@ app.post('/auth/reset-password-with-token', async (req, res) => {
       [recovery.id]
     );
     
-    console.log(`✅ Password reset successful for user: ${recovery.username}`);
+    //console.log(`✅ Password reset successful for user: ${recovery.username}`);
     
     res.json({ 
       success: true, 

@@ -46,7 +46,7 @@ class Dashboard {
   }
 
   private async init(): Promise<void> {
-    console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
+    //console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
     
     // Check for password reset token in URL hash
     const hash = window.location.hash;
@@ -91,7 +91,7 @@ class Dashboard {
 
       if (activeDashboard) {
         this.state = activeDashboard.state;
-        console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
+       //console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
       } else {
         console.warn('⚠️  No active dashboard found, using default state');
         this.state = getDefaultState();
@@ -1729,13 +1729,24 @@ class Dashboard {
     }
 
     this.canvasContent.innerHTML = '';
-    this.state.widgets.forEach(widget => this.renderWidget(widget));
+    this.state.widgets.forEach(widget => {
+      // Skip widgets with invalid or missing content
+      if (!widget || !widget.type) {
+        console.warn('⚠️ Skipping invalid widget:', widget);
+        return;
+      }
+      this.renderWidget(widget);
+    });
     this.applyZoom();
   }
 
   private renderWidget(widget: Widget): void {
-    const el = createWidgetElement(widget, this.state.grid);
-    this.canvasContent.appendChild(el);
+    try {
+      const el = createWidgetElement(widget, this.state.grid);
+      this.canvasContent.appendChild(el);
+    } catch (error) {
+      console.error('❌ Failed to render widget:', widget.type, error);
+    }
   }
 
   private saveHistory(): void {

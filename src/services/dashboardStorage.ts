@@ -19,11 +19,11 @@ class DashboardStorageService {
   async loadDashboards(): Promise<MultiDashboardState> {
     if (authService.isAuthenticated()) {
       try {
-        console.log('🔄 Loading dashboards from server...');
+       // console.log('🔄 Loading dashboards from server...');
         const serverData = await authService.loadDashboard();
         
         if (serverData && serverData.dashboards && serverData.dashboards.length > 0) {
-          console.log('✅ Loaded', serverData.dashboards.length, 'dashboards from server');
+         // console.log('✅ Loaded', serverData.dashboards.length, 'dashboards from server');
           return serverData;
         } else {
           console.log('⚠️  No dashboards on server, creating default');

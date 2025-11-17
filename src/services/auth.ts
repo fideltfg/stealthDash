@@ -236,7 +236,7 @@ class AuthService {
 
       const data = await response.json();
       if (data.success) {
-        console.log('✅ Dashboard saved to server successfully');
+        //console.log('✅ Dashboard saved to server successfully');
         return true;
       }
       console.error('❌ Failed to save dashboard:', data.error);
@@ -257,7 +257,7 @@ class AuthService {
 
       const data = await response.json();
       if (data.success && data.data) {
-        console.log('✅ Dashboard loaded from server:', data.data.dashboards.length, 'dashboards');
+       // console.log('✅ Dashboard loaded from server:', data.data.dashboards.length, 'dashboards');
         return data.data;
       }
       return null;
