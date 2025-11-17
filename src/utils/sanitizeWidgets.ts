@@ -36,6 +36,7 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
+  'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
 };
 
 /**
