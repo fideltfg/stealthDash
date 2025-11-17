@@ -24,9 +24,14 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  render(container: HTMLElement, widget: Widget): void {
+  render(widget: Widget, container: HTMLElement): void {
     const content = widget.content as ChatGPTContent;
     
+    // Ensure messages array exists (may be removed by sanitizer)
+    if (!content.messages) {
+      content.messages = [];
+    }
+
     container.style.cssText = `
       display: flex;
       flex-direction: column;
@@ -94,11 +99,13 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       gap: 12px;
     `;
 
-    // Render existing messages
-    content.messages.forEach(msg => {
-      const messageEl = this.createMessageElement(msg);
-      messagesContainer.appendChild(messageEl);
-    });
+    // Render existing messages (if any)
+    if (content.messages && Array.isArray(content.messages)) {
+      content.messages.forEach(msg => {
+        const messageEl = this.createMessageElement(msg);
+        messagesContainer.appendChild(messageEl);
+      });
+    }
 
     // Show setup message if no credential
     if (!content.credentialId && !content.apiKey) {

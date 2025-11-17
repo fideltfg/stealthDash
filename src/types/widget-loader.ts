@@ -58,7 +58,7 @@ export async function loadWidgetModule(type: string): Promise<void> {
     if (module.widget) {
       registerWidget(module.widget);
       loadedWidgets.add(type);
-      console.log(`📦 Lazy-loaded widget: ${type}`);
+     // console.log(`📦 Lazy-loaded widget: ${type}`);
     }
   } catch (error) {
     console.error(`❌ Failed to load widget ${type}:`, error);

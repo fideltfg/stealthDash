@@ -101,7 +101,13 @@ class Dashboard {
       this.setupTheme();
       this.setupBackground();
       this.setupEventListeners();
-      await this.render();
+      
+      try {
+        await this.render();
+      } catch (error) {
+        console.error('❌ Error during render:', error);
+      }
+      
       this.saveHistory();
       console.log('About to show user menu, currentUser:', this.currentUser);
       this.showUserMenu();

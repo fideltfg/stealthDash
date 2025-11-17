@@ -173,7 +173,7 @@ router.post('/request-recovery', async (req, res) => {
       try {
         await sendRecoveryEmail(user.email, user.username, token);
         emailSent = true;
-        console.log(`✅ Password recovery email sent to ${user.email}`);
+        //console.log(`✅ Password recovery email sent to ${user.email}`);
       } catch (emailError) {
         console.error('Failed to send recovery email:', emailError);
         emailSent = false;
@@ -311,7 +311,7 @@ router.post('/reset-password-with-token', async (req, res) => {
       [recovery.id]
     );
     
-    console.log(`✅ Password reset successful for user: ${recovery.username}`);
+    //console.log(`✅ Password reset successful for user: ${recovery.username}`);
     
     res.json({ 
       success: true, 
