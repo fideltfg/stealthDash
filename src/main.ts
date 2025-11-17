@@ -109,7 +109,7 @@ class Dashboard {
       }
       
       this.saveHistory();
-      console.log('About to show user menu, currentUser:', this.currentUser);
+      //console.log('About to show user menu, currentUser:', this.currentUser);
       this.showUserMenu();
       this.startAutoSave();
 
@@ -146,7 +146,7 @@ class Dashboard {
 
     // Create new menu if user is logged in
     if (this.currentUser) {
-      console.log('   Creating user menu for:', this.currentUser.username);
+      //console.log('   Creating user menu for:', this.currentUser.username);
       this.userMenuElement = this.authUI.createUserMenu(
         this.currentUser,
         () => this.userSettingsUI.showSettingsDialog(),

@@ -487,7 +487,7 @@ export class CometP8541Renderer implements WidgetRenderer {
                   
                   const gauge = new JustGage(config);
                   this.gauges.set(gaugeId, gauge);
-                  console.log(`Successfully created gauge: ${gaugeId}`);
+                  //console.log(`Successfully created gauge: ${gaugeId}`);
                 } catch (e) {
                   console.error(`Error creating JustGage ${gaugeId}:`, e);
                   const fallbackElement = document.getElementById(gaugeId);
