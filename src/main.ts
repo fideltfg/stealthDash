@@ -46,6 +46,8 @@ class Dashboard {
   }
 
   private async init(): Promise<void> {
+    console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
+    
     // Check for password reset token in URL hash
     const hash = window.location.hash;
     if (hash.startsWith('#/reset-password?token=')) {
@@ -101,6 +103,7 @@ class Dashboard {
       this.setupEventListeners();
       await this.render();
       this.saveHistory();
+      console.log('About to show user menu, currentUser:', this.currentUser);
       this.showUserMenu();
       this.startAutoSave();
 
@@ -125,15 +128,20 @@ class Dashboard {
   }
 
   private showUserMenu(): void {
+    console.log('👤 showUserMenu called');
+    console.log('   currentUser:', this.currentUser);
+    console.log('   existing userMenuElement:', this.userMenuElement);
+    
     // Remove existing menu if present
     if (this.userMenuElement) {
+      console.log('   Removing existing menu');
       this.userMenuElement.remove();
       this.userMenuElement = null;
     }
 
     // Create new menu if user is logged in
     if (this.currentUser) {
-      console.log('Creating user menu for:', this.currentUser.username);
+      console.log('   Creating user menu for:', this.currentUser.username);
       this.userMenuElement = this.authUI.createUserMenu(
         this.currentUser,
         () => this.userSettingsUI.showSettingsDialog(),
@@ -141,9 +149,12 @@ class Dashboard {
         () => this.showDashboardManager(),
         () => this.credentialsUI.showCredentialsDialog()
       );
+      console.log('   Menu element created:', this.userMenuElement);
+      console.log('   Appending to body');
       document.body.appendChild(this.userMenuElement);
+      console.log('   Menu appended, checking if in DOM:', document.body.contains(this.userMenuElement));
     } else {
-      console.warn('Cannot create user menu: currentUser is null');
+      console.warn('   ❌ Cannot create user menu: currentUser is null');
     }
   }
 
@@ -229,6 +240,12 @@ class Dashboard {
 
   private setupDOM(): void {
     const app = document.getElementById('app')!;
+
+    // Only setup DOM once (prevent duplicate elements)
+    if (app.querySelector('.canvas')) {
+      console.log('DOM already setup, skipping');
+      return;
+    }
 
     // Canvas
     this.canvas = document.createElement('div');
