@@ -198,6 +198,10 @@ class CredentialsService {
         { name: 'calendar_id', label: 'Calendar ID', type: 'text', placeholder: 'your.email@gmail.com' },
         { name: 'api_key', label: 'Google API Key', type: 'password', placeholder: 'AIza...' }
       ],
+      docker: [
+        { name: 'cert', label: 'TLS Certificate (optional)', type: 'text', placeholder: 'Client certificate for TLS' },
+        { name: 'key', label: 'TLS Key (optional)', type: 'password', placeholder: 'Client key for TLS' }
+      ],
       snmp: [
         { name: 'community', label: 'Community String', type: 'text', placeholder: 'e.g., public or private' }
       ],
@@ -216,6 +220,7 @@ class CredentialsService {
       unifi: 'UniFi Controller',
       home_assistant: 'Home Assistant',
       google_calendar: 'Google Calendar',
+      docker: 'Docker',
       snmp: 'SNMP',
       modbus: 'Modbus',
       api: 'Generic API',
@@ -231,6 +236,7 @@ class CredentialsService {
       unifi: '📡',
       home_assistant: '🏠',
       google_calendar: '📅',
+      docker: '🐋',
       snmp: '📊',
       modbus: '⚙️',
       api: '🔌',
