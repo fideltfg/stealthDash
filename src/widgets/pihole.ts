@@ -44,8 +44,8 @@ class PiholeRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as PiholeContent;
     
-    console.log('Pi-hole widget render - Full content:', content);
-    console.log('Pi-hole widget render - Has credentialId?', !!content.credentialId);
+    //console.log('Pi-hole widget render - Full content:', content);
+    //console.log('Pi-hole widget render - Has credentialId?', !!content.credentialId);
     
     // If widget has no host or credential configured, show configuration prompt
     if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
@@ -90,8 +90,8 @@ class PiholeRenderer implements WidgetRenderer {
         proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        console.log('Using saved credential ID:', content.credentialId);
-        console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString());
+        //console.log('Using saved credential ID:', content.credentialId);
+        //console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString());
         
         const response = await fetch(proxyUrl.toString(), {
           headers: {
@@ -106,7 +106,7 @@ class PiholeRenderer implements WidgetRenderer {
 
         const data: PiholeSummary = await response.json();
         
-        console.log('Pi-hole data received:', data);
+        //console.log('Pi-hole data received:', data);
 
         // Render based on display mode
         const mode = content.displayMode || 'compact';

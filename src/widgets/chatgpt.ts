@@ -24,7 +24,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  render(widget: Widget, container: HTMLElement): void {
+  render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as ChatGPTContent;
     
     // Ensure messages array exists (may be removed by sanitizer)
