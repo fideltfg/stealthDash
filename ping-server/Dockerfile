@@ -9,12 +9,12 @@ COPY package*.json ./
 
 RUN npm install --production
 
-COPY server.js ./
-COPY auth.js ./
-COPY db.js ./
-COPY crypto-utils.js ./
+COPY src/server.js ./
+COPY src/auth.js ./
+COPY src/db.js ./
+COPY src/crypto-utils.js ./
 COPY init-db.sql ./
-COPY widgetMetadata.js ./
+COPY src/widgetMetadata.js ./
 COPY routes ./routes
 
 EXPOSE 3001
