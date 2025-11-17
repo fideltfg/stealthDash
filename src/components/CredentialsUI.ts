@@ -148,6 +148,7 @@ export class CredentialsUI {
               <option value="unifi">📡 UniFi Controller</option>
               <option value="home_assistant">🏠 Home Assistant</option>
               <option value="google_calendar">📅 Google Calendar</option>
+              <option value="docker">🐋 Docker</option>
               <option value="snmp">📊 SNMP</option>
               <option value="api">🔌 Generic API</option>
               <option value="custom">⭐ Custom</option>
