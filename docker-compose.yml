@@ -29,6 +29,8 @@ services:
       - ./ping-server/routes:/app/routes
       # Prevent node_modules from being overwritten
       - /app/node_modules
+      # Mount Docker socket to access host's Docker daemon
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PING_SERVER_PORT=3001
       - DB_HOST=postgres

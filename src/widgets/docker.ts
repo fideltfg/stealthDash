@@ -6,7 +6,7 @@ import { authService } from '../services/auth';
 
 export interface DockerContent {
   host?: string;
-  credentialId?: number;
+  credentialId?: number | null;
   refreshInterval?: number; // seconds
   showAll?: boolean; // show all containers or just running ones
 }
@@ -15,19 +15,35 @@ interface DockerContainer {
   Id: string;
   Names: string[];
   Image: string;
+  ImageID: string;
+  Command: string;
   State: string;
   Status: string;
   Created: number;
+  Ports?: Array<{
+    IP?: string;
+    PrivatePort: number;
+    PublicPort?: number;
+    Type: string;
+  }>;
+  Labels?: Record<string, string>;
+  NetworkSettings?: {
+    Networks?: Record<string, any>;
+  };
+  Mounts?: Array<{
+    Type: string;
+    Source: string;
+    Destination: string;
+    Mode?: string;
+    RW?: boolean;
+  }>;
 }
 
 class DockerWidgetRenderer implements WidgetRenderer {
   private refreshIntervals: Map<string, number> = new Map();
 
   configure(widget: Widget): void {
-    const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
-    if (container) {
-      this.showConfigPrompt(container, widget);
-    }
+    this.showConfigDialog(widget);
   }
 
   render(container: HTMLElement, widget: Widget): void {
@@ -47,8 +63,8 @@ class DockerWidgetRenderer implements WidgetRenderer {
       clearInterval(existingInterval);
     }
 
-    if (!content.host || (!content.credentialId)) {
-      this.showConfigPrompt(container, widget);
+    if (!content.host) {
+      this.showEmptyState(container, widget);
       return;
     }
 
@@ -57,13 +73,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
     // Start auto-refresh
     const interval = window.setInterval(() => {
       this.renderContainerList(container, widget);
-    }, (content.refreshInterval || 10) * 1000);
+    }, (content.refreshInterval || 30) * 1000);
     this.refreshIntervals.set(widget.id, interval);
   }
 
-  private showConfigPrompt(container: HTMLElement, widget: Widget): void {
-    const content = (widget.content || {}) as DockerContent;
-
+  private showEmptyState(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
       <div style="
         display: flex;
@@ -77,10 +91,10 @@ class DockerWidgetRenderer implements WidgetRenderer {
       ">
         <div style="font-size: 48px;">🐋</div>
         <div style="font-size: 18px; font-weight: 600; color: var(--text);">
-          Docker Configuration
+          Docker Containers
         </div>
         <div style="font-size: 14px; color: var(--muted); max-width: 300px;">
-          Configure Docker host connection to monitor and manage containers
+          Configure Docker host to monitor containers
         </div>
         <button id="configure-docker-btn" style="
           padding: 10px 24px;
@@ -93,14 +107,14 @@ class DockerWidgetRenderer implements WidgetRenderer {
           font-weight: 500;
           margin-top: 8px;
         ">
-          Configure Docker
+          Configure
         </button>
       </div>
     `;
 
     const configBtn = container.querySelector('#configure-docker-btn') as HTMLButtonElement;
     configBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    configBtn.addEventListener('click', async () => {
+    configBtn.addEventListener('click', () => {
       this.showConfigDialog(widget);
     });
   }
@@ -148,12 +162,12 @@ class DockerWidgetRenderer implements WidgetRenderer {
       
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
-          Docker Host URL
+          Docker Host URL *
         </label>
         <input 
           type="text" 
           id="docker-host-input" 
-          placeholder="http://localhost:2375 or unix:///var/run/docker.sock"
+          placeholder="unix:///var/run/docker.sock or http://remote-host:2375"
           value="${content.host || ''}"
           style="
             width: 100%;
@@ -167,13 +181,15 @@ class DockerWidgetRenderer implements WidgetRenderer {
           "
         />
         <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
-          For remote Docker hosts, use HTTP/HTTPS. For local, use unix socket or TCP.
+          Local: unix:///var/run/docker.sock<br>
+          Remote TCP: http://192.168.1.100:2375<br>
+          Secure Remote: https://docker.example.com:2376
         </small>
       </div>
 
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
-          Saved Credential
+          TLS Credential (Optional)
         </label>
         <select 
           id="docker-credential-select"
@@ -188,11 +204,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
             box-sizing: border-box;
           "
         >
-          <option value="">Select saved credential...</option>
+          <option value="">None (for unix socket or unsecured TCP)</option>
           ${credentialOptions}
         </select>
         <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
-          Store TLS certificates or authentication tokens in credentials
+          Only needed for secure HTTPS connections with client certificates
         </small>
       </div>
 
@@ -203,9 +219,9 @@ class DockerWidgetRenderer implements WidgetRenderer {
         <input 
           type="number" 
           id="docker-refresh-input" 
-          min="5"
+          min="10"
           max="300"
-          value="${content.refreshInterval || 10}"
+          value="${content.refreshInterval || 30}"
           style="
             width: 100%;
             padding: 10px;
@@ -283,17 +299,12 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     saveBtn.addEventListener('click', () => {
       const host = hostInput.value.trim();
-      const credentialId = credentialSelect.value ? parseInt(credentialSelect.value) : undefined;
+      const credentialId = credentialSelect.value ? parseInt(credentialSelect.value) : null;
       const refreshInterval = parseInt(refreshInput.value);
       const showAll = showAllInput.checked;
 
       if (!host) {
         alert('Please enter Docker host URL');
-        return;
-      }
-
-      if (!credentialId) {
-        alert('Please select a saved credential');
         return;
       }
 
@@ -361,30 +372,32 @@ class DockerWidgetRenderer implements WidgetRenderer {
                 <div style="font-size: 32px;">📦</div>
                 <div>No containers found</div>
               </div>
-            ` : containers.map(c => this.renderContainerCard(c, widget)).join('')}
+            ` : containers.map(c => this.renderContainerCard(c, content.credentialId)).join('')}
           </div>
         </div>
       `;
 
-      // Attach event listeners to control buttons
-      containers.forEach(c => {
-        const startBtn = container.querySelector(`#start-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
-        const stopBtn = container.querySelector(`#stop-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
-        const restartBtn = container.querySelector(`#restart-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
+      // Attach event listeners to control buttons only if credential is set
+      if (content.credentialId) {
+        containers.forEach(c => {
+          const startBtn = container.querySelector(`#start-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
+          const stopBtn = container.querySelector(`#stop-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
+          const restartBtn = container.querySelector(`#restart-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
 
-        if (startBtn) {
-          startBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-          startBtn.addEventListener('click', () => this.controlContainer(c.Id, 'start', content, container, widget));
-        }
-        if (stopBtn) {
-          stopBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-          stopBtn.addEventListener('click', () => this.controlContainer(c.Id, 'stop', content, container, widget));
-        }
-        if (restartBtn) {
-          restartBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-          restartBtn.addEventListener('click', () => this.controlContainer(c.Id, 'restart', content, container, widget));
-        }
-      });
+          if (startBtn) {
+            startBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+            startBtn.addEventListener('click', () => this.controlContainer(c.Id, 'start', content, container, widget));
+          }
+          if (stopBtn) {
+            stopBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+            stopBtn.addEventListener('click', () => this.controlContainer(c.Id, 'stop', content, container, widget));
+          }
+          if (restartBtn) {
+            restartBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+            restartBtn.addEventListener('click', () => this.controlContainer(c.Id, 'restart', content, container, widget));
+          }
+        });
+      }
 
     } catch (error) {
       container.innerHTML = `
@@ -425,10 +438,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  private renderContainerCard(container: DockerContainer, widget: Widget): string {
+  private renderContainerCard(container: DockerContainer, credentialId?: number | null): string {
     const isRunning = container.State === 'running';
     const shortId = container.Id.substring(0, 12);
     const name = container.Names[0]?.replace(/^\//, '') || 'unknown';
+    const hasCredential = !!credentialId;
 
     const statusColor = isRunning ? '#4CAF50' : '#FF9800';
     const statusText = container.Status;
@@ -488,70 +502,81 @@ class DockerWidgetRenderer implements WidgetRenderer {
           font-size: 11px;
           color: var(--muted);
           margin-bottom: 8px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
         ">
-          ${statusText}
+          <div style="margin-bottom: 4px;">${statusText}</div>
+          ${container.Ports && container.Ports.length > 0 ? `
+            <div style="margin-bottom: 4px;">
+              📡 ${container.Ports.filter(p => p.PublicPort).map(p => 
+                `${p.PublicPort}:${p.PrivatePort}/${p.Type}`
+              ).join(', ') || 'No exposed ports'}
+            </div>
+          ` : ''}
+          ${container.NetworkSettings?.Networks ? `
+            <div>
+              🌐 ${Object.keys(container.NetworkSettings.Networks).join(', ')}
+            </div>
+          ` : ''}
         </div>
 
-        <div style="
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        ">
-          ${isRunning ? `
-            <button id="stop-${shortId}" style="
-              flex: 1;
-              min-width: 80px;
-              padding: 6px 12px;
-              background: #f44336;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              font-weight: 500;
-            ">
-              ⏹️ Stop
-            </button>
-            <button id="restart-${shortId}" style="
-              flex: 1;
-              min-width: 80px;
-              padding: 6px 12px;
-              background: #FF9800;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              font-weight: 500;
-            ">
-              🔄 Restart
-            </button>
-          ` : `
-            <button id="start-${shortId}" style="
-              flex: 1;
-              padding: 6px 12px;
-              background: #4CAF50;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 12px;
-              font-weight: 500;
-            ">
-              ▶️ Start
-            </button>
-          `}
-        </div>
+        ${hasCredential ? `
+          <div style="
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+          ">
+            ${isRunning ? `
+              <button id="stop-${shortId}" style="
+                flex: 1;
+                min-width: 80px;
+                padding: 6px 12px;
+                background: #f44336;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                ⏹️ Stop
+              </button>
+              <button id="restart-${shortId}" style="
+                flex: 1;
+                min-width: 80px;
+                padding: 6px 12px;
+                background: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                🔄 Restart
+              </button>
+            ` : `
+              <button id="start-${shortId}" style="
+                flex: 1;
+                padding: 6px 12px;
+                background: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 500;
+              ">
+                ▶️ Start
+              </button>
+            `}
+          </div>
+        ` : ''}
       </div>
     `;
   }
 
   private async fetchContainers(content: DockerContent): Promise<DockerContainer[]> {
-    if (!content.host || !content.credentialId) {
-      throw new Error('Docker host and credentials are required');
+    if (!content.host) {
+      throw new Error('Docker host is required');
     }
 
     const pingServerUrl = this.getPingServerUrl();
@@ -633,8 +658,8 @@ export const widget = {
   defaultSize: { w: 400, h: 500 },
   defaultContent: {
     host: '',
-    credentialId: undefined,
-    refreshInterval: 10,
+    credentialId: null,
+    refreshInterval: 30,
     showAll: false
   },
   hasSettings: true

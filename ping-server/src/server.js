@@ -103,6 +103,7 @@ const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 const credentialsRoutes = require('./routes/credentials');
 const widgetRoutes = require('./routes/widgets');
+const dockerRoutes = require('./routes/docker');
 
 // Initialize auth routes with email function
 authRoutes.init(sendRecoveryEmail, SMTP_CONFIGURED);
@@ -116,6 +117,9 @@ app.use('/user', credentialsRoutes);  // Credentials are under /user/credentials
 
 // Widget routes are mounted at root level to preserve existing API paths
 app.use('/', widgetRoutes);
+
+// Docker API routes
+app.use('/', dockerRoutes);
 
 // Start server
 app.listen(PORT, () => {

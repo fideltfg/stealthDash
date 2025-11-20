@@ -199,8 +199,9 @@ class CredentialsService {
         { name: 'api_key', label: 'Google API Key', type: 'password', placeholder: 'AIza...' }
       ],
       docker: [
-        { name: 'cert', label: 'TLS Certificate (optional)', type: 'text', placeholder: 'Client certificate for TLS' },
-        { name: 'key', label: 'TLS Key (optional)', type: 'password', placeholder: 'Client key for TLS' }
+        { name: 'tls_cert', label: 'TLS Certificate (optional)', type: 'textarea', placeholder: '-----BEGIN CERTIFICATE-----\n...' },
+        { name: 'tls_key', label: 'TLS Key (optional)', type: 'password', placeholder: '-----BEGIN PRIVATE KEY-----\n...' },
+        { name: 'ca_cert', label: 'CA Certificate (optional)', type: 'textarea', placeholder: '-----BEGIN CERTIFICATE-----\n...' }
       ],
       snmp: [
         { name: 'community', label: 'Community String', type: 'text', placeholder: 'e.g., public or private' }
