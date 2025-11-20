@@ -37,6 +37,49 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
+// Create new user (admin only)
+router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
+  const { username, email, password, isAdmin } = req.body;
+  
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Username, email, and password are required' });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  
+  try {
+    // Check if username or email already exists
+    const existing = await db.query(
+      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+    
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    const result = await db.query(
+      'INSERT INTO users (username, email, password_hash, is_admin) VALUES ($1, $2, $3, $4) RETURNING id, username, email, is_admin, created_at',
+      [username, email, passwordHash, isAdmin || false]
+    );
+    
+    res.json({ success: true, message: 'User created successfully', user: result.rows[0] });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
 // Make user admin (admin only)
 router.post('/users/:userId/make-admin', authMiddleware, adminMiddleware, async (req, res) => {
   const { userId } = req.params;

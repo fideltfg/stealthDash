@@ -43,7 +43,12 @@ export class AdminDashboardUI {
 
         <!-- Users Table -->
         <div class="section admin-table-section">
-          <h3 class="section-title">User Management</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="section-title">User Management</h3>
+            <button id="create-user-btn" class="action-btn action-btn-success" style="margin: 0;">
+              ➕ Create User
+            </button>
+          </div>
           
           <div class="admin-table-wrapper">
             <table class="admin-table">
@@ -73,6 +78,10 @@ export class AdminDashboardUI {
     // Close button
     const closeBtn = dialog.querySelector('#close-admin') as HTMLButtonElement;
     closeBtn.addEventListener('click', () => dialog.remove());
+
+    // Create User button
+    const createUserBtn = dialog.querySelector('#create-user-btn') as HTMLButtonElement;
+    createUserBtn.addEventListener('click', () => this.showCreateUserDialog(dialog));
 
     // Click outside to close
     dialog.addEventListener('click', (e) => {
@@ -199,6 +208,124 @@ export class AdminDashboardUI {
           this.showMessage(dialog, result.error || 'Failed to delete user', false);
         }
       });
+    });
+  }
+
+  private showCreateUserDialog(adminDialog: HTMLElement): void {
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.innerHTML = `
+      <div class="dialog-container" style="max-width: 500px;">
+        <div class="dialog-header">
+          <h2 class="dialog-title">➕ Create New User</h2>
+          <button id="close-create-user" class="dialog-close-button">×</button>
+        </div>
+        
+        <div class="section">
+          <form id="create-user-form">
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input 
+                type="text" 
+                id="new-username" 
+                class="form-input" 
+                placeholder="Enter username"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input 
+                type="email" 
+                id="new-email" 
+                class="form-input" 
+                placeholder="user@example.com"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input 
+                type="password" 
+                id="new-password" 
+                class="form-input" 
+                placeholder="At least 6 characters"
+                minlength="6"
+                required
+              />
+              <small class="form-hint">Minimum 6 characters</small>
+            </div>
+
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="new-is-admin" style="cursor: pointer;" />
+                <span>Make this user an administrator</span>
+              </label>
+            </div>
+
+            <div id="create-user-message" class="message"></div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+              <button type="button" id="cancel-create-user" class="btn btn-info" style="flex: 1;">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-success" style="flex: 1;">
+                Create User
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const form = dialog.querySelector('#create-user-form') as HTMLFormElement;
+    const usernameInput = dialog.querySelector('#new-username') as HTMLInputElement;
+    const emailInput = dialog.querySelector('#new-email') as HTMLInputElement;
+    const passwordInput = dialog.querySelector('#new-password') as HTMLInputElement;
+    const isAdminCheckbox = dialog.querySelector('#new-is-admin') as HTMLInputElement;
+    const messageDiv = dialog.querySelector('#create-user-message') as HTMLElement;
+    const closeBtn = dialog.querySelector('#close-create-user') as HTMLButtonElement;
+    const cancelBtn = dialog.querySelector('#cancel-create-user') as HTMLButtonElement;
+
+    closeBtn.addEventListener('click', () => dialog.remove());
+    cancelBtn.addEventListener('click', () => dialog.remove());
+    
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.remove();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = usernameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const isAdmin = isAdminCheckbox.checked;
+
+      if (!username || !email || !password) {
+        messageDiv.textContent = 'All fields are required';
+        messageDiv.className = 'message message-error';
+        return;
+      }
+
+      const result = await authService.createUser(username, email, password, isAdmin);
+      
+      if (result.success) {
+        messageDiv.textContent = `User ${username} created successfully!`;
+        messageDiv.className = 'message message-success';
+        
+        setTimeout(() => {
+          dialog.remove();
+          this.refreshDashboard(adminDialog);
+        }, 1500);
+      } else {
+        messageDiv.textContent = result.error || 'Failed to create user';
+        messageDiv.className = 'message message-error';
+      }
     });
   }
 

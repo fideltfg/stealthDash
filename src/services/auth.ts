@@ -479,6 +479,32 @@ class AuthService {
     }
   }
 
+  async createUser(username: string, email: string, password: string, isAdmin: boolean = false): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`
+        },
+        body: JSON.stringify({ username, email, password, isAdmin })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        return { success: true, user: data.user };
+      }
+      
+      return { success: false, error: data.error || 'Failed to create user' };
+    } catch (error) {
+      console.error('Create user error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
   async getAdminStats(): Promise<AdminStats | null> {
     if (!this.token) return null;
 
