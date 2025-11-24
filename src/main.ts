@@ -48,8 +48,15 @@ class Dashboard {
   private async init(): Promise<void> {
     //console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
     
-    // Check for password reset token in URL hash
+    // Check for public dashboard view
     const hash = window.location.hash;
+    if (hash.startsWith('#/public/')) {
+      const dashboardId = hash.replace('#/public/', '');
+      await this.loadPublicDashboard(dashboardId);
+      return;
+    }
+    
+    // Check for password reset token in URL hash
     if (hash.startsWith('#/reset-password?token=')) {
       const params = new URLSearchParams(hash.split('?')[1]);
       const token = params.get('token');
@@ -1542,6 +1549,51 @@ class Dashboard {
         }
       });
 
+      // Public toggle button
+      const publicBtn = document.createElement('button');
+      const isPublic = (dashboard as any).isPublic || false;
+      publicBtn.innerHTML = isPublic ? '🌐' : '🔒';
+      publicBtn.title = isPublic ? 'Public (click to make private)' : 'Private (click to make public)';
+      publicBtn.style.cssText = `
+        padding: 6px 10px;
+        background: ${isPublic ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'};
+        color: white;
+        border: 1px solid ${isPublic ? '#4CAF50' : 'var(--border)'};
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      `;
+      publicBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const newPublicState = !isPublic;
+        
+        try {
+          const result = await authService.toggleDashboardPublic(dashboard.id, newPublicState);
+          if (result.success) {
+            // Update local state
+            if (this.multiState) {
+              const dash = this.multiState.dashboards.find(d => d.id === dashboard.id);
+              if (dash) {
+                (dash as any).isPublic = result.isPublic;
+              }
+            }
+            overlay.remove();
+            this.showDashboardManager();
+            
+            // Show share URL if made public
+            if (newPublicState) {
+              const shareUrl = `${window.location.origin}/#/public/${dashboard.id}`;
+              prompt('Dashboard is now public! Share this URL:', shareUrl);
+            }
+          } else {
+            alert('Failed to update dashboard visibility');
+          }
+        } catch (error) {
+          console.error('Error toggling public status:', error);
+          alert('Failed to update dashboard visibility');
+        }
+      });
+
       // Delete button (only if not the last dashboard)
       if (dashboards.length > 1) {
         const deleteBtn = document.createElement('button');
@@ -1599,9 +1651,11 @@ class Dashboard {
             }
           }
         });
+        dashboardRow.appendChild(publicBtn);
         dashboardRow.appendChild(renameBtn);
         dashboardRow.appendChild(deleteBtn);
       } else {
+        dashboardRow.appendChild(publicBtn);
         dashboardRow.appendChild(renameBtn);
       }
 
@@ -1817,6 +1871,82 @@ class Dashboard {
           }
         }
       }
+    }
+  }
+
+  private async loadPublicDashboard(dashboardId: string): Promise<void> {
+    try {
+      const publicDashboard = await authService.getPublicDashboard(dashboardId);
+      
+      // Set read-only mode
+      this.isLocked = true;
+      this.state = publicDashboard.state;
+      
+      // Setup DOM without user controls
+      this.setupDOM();
+      
+      // Add read-only banner
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 152, 0, 0.95);
+        color: white;
+        padding: 12px;
+        text-align: center;
+        font-weight: 600;
+        z-index: 10000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      `;
+      banner.innerHTML = `
+        👁️ Viewing public dashboard: "${publicDashboard.name}" by ${publicDashboard.owner} (Read-only)
+      `;
+      document.body.appendChild(banner);
+      
+      // Hide controls for public view
+      const controls = document.querySelector('.controls');
+      if (controls) {
+        (controls as HTMLElement).style.display = 'none';
+      }
+      
+      // Load and render widgets
+      await loadWidgetModules();
+      await this.render();
+      
+    } catch (error) {
+      console.error('Failed to load public dashboard:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+        padding: 40px;
+      `;
+      errorDiv.innerHTML = `
+        <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+        <h1 style="margin-bottom: 12px;">Dashboard Not Available</h1>
+        <p style="color: var(--muted); margin-bottom: 24px;">
+          This dashboard is private or doesn't exist.
+        </p>
+        <button onclick="window.location.href='/'" style="
+          padding: 12px 24px;
+          background: var(--accent);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 600;
+        ">
+          Go to Dashboard
+        </button>
+      `;
+      document.body.appendChild(errorDiv);
     }
   }
 }

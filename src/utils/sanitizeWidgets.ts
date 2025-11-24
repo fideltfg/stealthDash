@@ -35,6 +35,7 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'],
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
+  'unifi-protect': ['host', 'credentialId', 'selectedCameras', 'displayMode', 'viewMode', 'maxDetections', 'detectionTypes', 'refreshInterval', 'autoRefreshDetections'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
   'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
 };

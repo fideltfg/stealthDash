@@ -520,6 +520,43 @@ class AuthService {
       return null;
     }
   }
+
+  async toggleDashboardPublic(dashboardId: string, isPublic: boolean): Promise<{ success: boolean; isPublic?: boolean; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/dashboard/toggle-public/${dashboardId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`
+        },
+        body: JSON.stringify({ isPublic })
+      });
+
+      const data = await response.json();
+      return data.success ? { success: true, isPublic: data.isPublic } : { success: false, error: data.error };
+    } catch (error) {
+      console.error('Toggle public error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
+  async getPublicDashboard(dashboardId: string): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/dashboard/public/${dashboardId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        return data.dashboard;
+      }
+      
+      throw new Error(data.error || 'Failed to load public dashboard');
+    } catch (error) {
+      console.error('Get public dashboard error:', error);
+      throw error;
+    }
+  }
 }
 
 export const authService = new AuthService();

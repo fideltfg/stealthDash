@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS dashboards (
     name VARCHAR(255) NOT NULL DEFAULT 'Main Dashboard',
     dashboard_data JSONB NOT NULL,
     is_active BOOLEAN DEFAULT false,
+    is_public BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_user_dashboard UNIQUE (user_id, dashboard_id)
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS dashboards (
 COMMENT ON COLUMN dashboards.dashboard_id IS 'Unique identifier for the dashboard (client-side UUID)';
 COMMENT ON COLUMN dashboards.name IS 'User-defined name for the dashboard';
 COMMENT ON COLUMN dashboards.is_active IS 'Indicates the currently active dashboard for the user';
+COMMENT ON COLUMN dashboards.is_public IS 'Allows anonymous viewing of the dashboard in read-only mode';
 
 -- Create password recovery tokens table
 CREATE TABLE IF NOT EXISTS password_recovery_tokens (

@@ -96,7 +96,7 @@ router.post('/save', authMiddleware, async (req, res) => {
 router.get('/load', authMiddleware, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT dashboard_id, name, dashboard_data, is_active, updated_at, created_at 
+      `SELECT dashboard_id, name, dashboard_data, is_active, is_public, updated_at, created_at 
        FROM dashboards 
        WHERE user_id = $1 
        ORDER BY created_at ASC`,
@@ -112,6 +112,7 @@ router.get('/load', authMiddleware, async (req, res) => {
       id: row.dashboard_id,
       name: row.name,
       state: row.dashboard_data,
+      isPublic: row.is_public || false,
       createdAt: new Date(row.created_at).getTime(),
       updatedAt: new Date(row.updated_at).getTime()
     }));
@@ -205,6 +206,66 @@ router.delete('/:dashboardId', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Delete dashboard error:', error);
     res.status(500).json({ error: 'Failed to delete dashboard' });
+  }
+});
+
+// Toggle public status of a dashboard
+router.post('/toggle-public/:dashboardId', authMiddleware, async (req, res) => {
+  const { dashboardId } = req.params;
+  const { isPublic } = req.body;
+  
+  try {
+    // Verify ownership
+    const result = await db.query(
+      'UPDATE dashboards SET is_public = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND dashboard_id = $3 RETURNING is_public',
+      [isPublic, req.user.userId, dashboardId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Dashboard not found or access denied' });
+    }
+    
+    res.json({ success: true, isPublic: result.rows[0].is_public });
+  } catch (error) {
+    console.error('Toggle public error:', error);
+    res.status(500).json({ error: 'Failed to update dashboard visibility' });
+  }
+});
+
+// Get public dashboard (no auth required)
+router.get('/public/:dashboardId', async (req, res) => {
+  const { dashboardId } = req.params;
+  
+  try {
+    const result = await db.query(
+      `SELECT d.dashboard_id, d.name, d.dashboard_data, d.updated_at, d.created_at, u.username as owner_username
+       FROM dashboards d
+       JOIN users u ON d.user_id = u.id
+       WHERE d.dashboard_id = $1 AND d.is_public = true`,
+      [dashboardId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Public dashboard not found' });
+    }
+    
+    const dashboard = result.rows[0];
+    res.json({
+      success: true,
+      dashboard: {
+        id: dashboard.dashboard_id,
+        name: dashboard.name,
+        state: dashboard.dashboard_data,
+        owner: dashboard.owner_username,
+        updatedAt: dashboard.updated_at,
+        createdAt: dashboard.created_at,
+        isPublic: true,
+        isReadOnly: true
+      }
+    });
+  } catch (error) {
+    console.error('Get public dashboard error:', error);
+    res.status(500).json({ error: 'Failed to load public dashboard' });
   }
 });
 

@@ -6,7 +6,7 @@ const snmp = require('net-snmp');
 const db = require('../db');
 const { authMiddleware } = require('../auth');
 const { decryptCredentials } = require('../crypto-utils');
-const { widgetMetadata } = require('../widgetMetadata');
+const { widgetMetadata } = require('../src/widgetMetadata');
 
 // Session caches to avoid rate limiting
 const piholeSessionCache = new Map();
@@ -946,6 +946,368 @@ router.get('/api/unifi/stats', async (req, res) => {
     res.status(500).json({ 
       error: error.message,
       details: 'Failed to fetch UniFi data. Check if controller is accessible and credentials are correct.'
+    });
+  }
+});
+
+// ==================== UNIFI PROTECT ROUTES ====================
+
+// UniFi Protect session cache to avoid rate limiting
+// Key: host+credentialId hash, Value: { cookies, token, expires }
+const unifiProtectSessionCache = new Map();
+
+// UniFi Protect Bootstrap Endpoint (cameras + recent events)
+router.get('/api/unifi-protect/bootstrap', async (req, res) => {
+  try {
+    const { host, credentialId } = req.query;
+    
+    if (!host) {
+      return res.status(400).json({ error: 'Missing host parameter' });
+    }
+    
+    if (!credentialId) {
+      return res.status(400).json({ error: 'Missing credentialId parameter' });
+    }
+    
+    // Extract userId from auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    let credentials;
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      credentials = await getCredentials(credentialId, decoded.userId);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+    
+    const username = credentials.username;
+    const password = credentials.password;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Credentials missing username or password' });
+    }
+    
+    // Use node-fetch to make requests
+    const fetch = (await import('node-fetch')).default;
+    const https = require('https');
+    const crypto = require('crypto');
+    
+    // Create an agent that accepts self-signed certificates
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
+    // Create cache key
+    const cacheKey = crypto.createHash('md5').update(`${host}:${credentialId}`).digest('hex');
+    const now = Date.now();
+    
+    let authToken = null;
+    let cookies = [];
+    
+    // Check if we have a valid cached session
+    const cached = unifiProtectSessionCache.get(cacheKey);
+    if (cached && cached.expires > now) {
+      console.log('Using cached UniFi Protect session');
+      authToken = cached.token;
+      cookies = cached.cookies;
+    } else {
+      console.log('Logging into UniFi Protect...');
+      
+      // Login to UniFi Protect
+      const loginUrl = `${host}/api/auth/login`;
+      const loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password, rememberMe: true }),
+        agent: httpsAgent,
+        timeout: 10000
+      });
+      
+      if (!loginResponse.ok) {
+        console.error(`UniFi Protect login failed: ${loginResponse.status}`);
+        return res.status(loginResponse.status).json({ 
+          error: 'Authentication failed. Check credentials.',
+          details: loginResponse.statusText
+        });
+      }
+      
+      // Extract cookies and auth token
+      const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
+      if (setCookieHeaders) {
+        cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]);
+      }
+      
+      // Get the auth token from response headers or body
+      authToken = loginResponse.headers.get('authorization') || 
+                  loginResponse.headers.get('x-csrf-token');
+      
+      // Cache the session (30 minutes)
+      unifiProtectSessionCache.set(cacheKey, {
+        token: authToken,
+        cookies: cookies,
+        expires: now + (30 * 60 * 1000)
+      });
+      
+      console.log('UniFi Protect login successful');
+    }
+    
+    // Prepare request headers
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (cookies.length > 0) {
+      headers['Cookie'] = cookies.join('; ');
+    }
+    
+    if (authToken) {
+      headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    }
+    
+    // Fetch bootstrap data (contains cameras and recent events)
+    const bootstrapUrl = `${host}/proxy/protect/api/bootstrap`;
+    console.log('Fetching UniFi Protect bootstrap data...');
+    
+    const bootstrapResponse = await fetch(bootstrapUrl, {
+      headers: headers,
+      agent: httpsAgent,
+      timeout: 15000
+    });
+    
+    if (!bootstrapResponse.ok) {
+      console.error(`UniFi Protect bootstrap failed: ${bootstrapResponse.status}`);
+      // Clear cache on auth failure
+      if (bootstrapResponse.status === 401) {
+        unifiProtectSessionCache.delete(cacheKey);
+      }
+      return res.status(bootstrapResponse.status).json({ 
+        error: 'Failed to fetch UniFi Protect data',
+        details: bootstrapResponse.statusText
+      });
+    }
+    
+    const bootstrapData = await bootstrapResponse.json();
+    
+    // Process cameras
+    const cameras = (bootstrapData.cameras || []).map(camera => ({
+      id: camera.id,
+      name: camera.name,
+      type: camera.type,
+      model: camera.model,
+      mac: camera.mac,
+      host: camera.host,
+      state: camera.state,
+      isConnected: camera.isConnected || camera.state === 'CONNECTED',
+      isMotionDetected: camera.isMotionDetected || false,
+      isRecording: camera.isRecording || false,
+      lastSeen: camera.lastSeen,
+      channels: (camera.channels || []).map(ch => ({
+        id: ch.id,
+        name: ch.name,
+        enabled: ch.enabled,
+        isRtspEnabled: ch.isRtspEnabled,
+        rtspAlias: ch.rtspAlias
+      }))
+    }));
+    
+    // Fetch recent events
+    const eventsUrl = `${host}/proxy/protect/api/events`;
+    const eventsParams = new URLSearchParams({
+      start: (now - (24 * 60 * 60 * 1000)).toString(), // Last 24 hours
+      end: now.toString(),
+      limit: '50',
+      orderDirection: 'DESC'
+    });
+    
+    console.log('Fetching UniFi Protect events...');
+    
+    const eventsResponse = await fetch(`${eventsUrl}?${eventsParams}`, {
+      headers: headers,
+      agent: httpsAgent,
+      timeout: 10000
+    });
+    
+    let events = [];
+    if (eventsResponse.ok) {
+      const eventsData = await eventsResponse.json();
+      events = (eventsData || []).map(event => ({
+        id: event.id,
+        type: event.type,
+        score: event.score,
+        smartDetectTypes: event.smartDetectTypes || [],
+        camera: event.camera,
+        start: event.start,
+        end: event.end,
+        thumbnail: event.thumbnail ? `${host}/proxy/protect/api/events/${event.id}/thumbnail` : null,
+        heatmap: event.heatmap,
+        modelKey: event.modelKey
+      }));
+      
+      // Add camera names to events
+      events = events.map(event => {
+        const camera = cameras.find(c => c.id === event.camera);
+        return {
+          ...event,
+          cameraName: camera?.name || 'Unknown'
+        };
+      });
+    }
+    
+    console.log(`UniFi Protect data: ${cameras.length} cameras, ${events.length} events`);
+    
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'application/json');
+    
+    res.json({
+      cameras,
+      events
+    });
+    
+  } catch (error) {
+    console.error('UniFi Protect proxy error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to fetch UniFi Protect data. Check if console is accessible and credentials are correct.'
+    });
+  }
+});
+
+// UniFi Protect Camera Snapshot Endpoint
+router.get('/api/unifi-protect/camera/:cameraId/snapshot', async (req, res) => {
+  try {
+    const { cameraId } = req.params;
+    const { host, credentialId } = req.query;
+    
+    if (!host || !credentialId || !cameraId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    // Extract userId from auth token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    let credentials;
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      credentials = await getCredentials(credentialId, decoded.userId);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+    }
+    
+    const username = credentials.username;
+    const password = credentials.password;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Credentials missing username or password' });
+    }
+    
+    // Use node-fetch to make requests
+    const fetch = (await import('node-fetch')).default;
+    const https = require('https');
+    const crypto = require('crypto');
+    
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
+    // Create cache key
+    const cacheKey = crypto.createHash('md5').update(`${host}:${credentialId}`).digest('hex');
+    const now = Date.now();
+    
+    let authToken = null;
+    let cookies = [];
+    
+    // Check if we have a valid cached session
+    const cached = unifiProtectSessionCache.get(cacheKey);
+    if (cached && cached.expires > now) {
+      authToken = cached.token;
+      cookies = cached.cookies;
+    } else {
+      // Need to login
+      const loginUrl = `${host}/api/auth/login`;
+      const loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password, rememberMe: true }),
+        agent: httpsAgent,
+        timeout: 10000
+      });
+      
+      if (!loginResponse.ok) {
+        return res.status(loginResponse.status).json({ 
+          error: 'Authentication failed',
+          details: loginResponse.statusText
+        });
+      }
+      
+      const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
+      if (setCookieHeaders) {
+        cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]);
+      }
+      
+      authToken = loginResponse.headers.get('authorization') || 
+                  loginResponse.headers.get('x-csrf-token');
+      
+      unifiProtectSessionCache.set(cacheKey, {
+        token: authToken,
+        cookies: cookies,
+        expires: now + (30 * 60 * 1000)
+      });
+    }
+    
+    // Prepare request headers
+    const headers = {};
+    
+    if (cookies.length > 0) {
+      headers['Cookie'] = cookies.join('; ');
+    }
+    
+    if (authToken) {
+      headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    }
+    
+    // Fetch camera snapshot
+    const snapshotUrl = `${host}/proxy/protect/api/cameras/${cameraId}/snapshot`;
+    const snapshotResponse = await fetch(snapshotUrl, {
+      headers: headers,
+      agent: httpsAgent,
+      timeout: 10000
+    });
+    
+    if (!snapshotResponse.ok) {
+      return res.status(snapshotResponse.status).json({ 
+        error: 'Failed to fetch camera snapshot',
+        details: snapshotResponse.statusText
+      });
+    }
+    
+    // Stream the image back to client
+    res.set('Content-Type', snapshotResponse.headers.get('content-type') || 'image/jpeg');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    snapshotResponse.body.pipe(res);
+    
+  } catch (error) {
+    console.error('UniFi Protect snapshot error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: 'Failed to fetch camera snapshot'
     });
   }
 });
