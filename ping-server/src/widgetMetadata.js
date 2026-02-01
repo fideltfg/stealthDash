@@ -147,6 +147,15 @@ const widgetMetadata = [
     hasSettings: true
   },
   {
+    type: 'unifi-sensor',
+    name: 'UniFi Environmental Sensors',
+    icon: '🌡️',
+    description: 'Monitor temperature, humidity, and light from USL-Environmental devices',
+    defaultSize: { w: 400, h: 400 },
+    defaultContent: {},
+    hasSettings: true
+  },
+  {
     type: 'docker',
     name: 'Docker',
     icon: '🐋',

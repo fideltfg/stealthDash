@@ -36,6 +36,7 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
   'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
   'unifi-protect': ['host', 'credentialId', 'selectedCameras', 'displayMode', 'viewMode', 'maxDetections', 'detectionTypes', 'refreshInterval', 'autoRefreshDetections'],
+  'unifi-sensor': ['host', 'credentialId', 'selectedSensors', 'showTemperature', 'showHumidity', 'showLight', 'temperatureUnit', 'refreshInterval'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
   'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
 };

@@ -37,6 +37,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'google-calendar': () => import('../widgets/google-calendar'),
   'unifi': () => import('../widgets/unifi'),
   'unifi-protect': () => import('../widgets/unifi-protect'),
+  'unifi-sensor': () => import('../widgets/unifi-sensor'),
   'docker': () => import('../widgets/docker'),
 };
 

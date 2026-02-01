@@ -3,6 +3,7 @@ const router = express.Router();
 const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
 const snmp = require('net-snmp');
+const crypto = require('crypto');
 const db = require('../db');
 const { authMiddleware } = require('../auth');
 const { decryptCredentials } = require('../crypto-utils');
@@ -996,7 +997,6 @@ router.get('/api/unifi-protect/bootstrap', async (req, res) => {
     // Use node-fetch to make requests
     const fetch = (await import('node-fetch')).default;
     const https = require('https');
-    const crypto = require('crypto');
     
     // Create an agent that accepts self-signed certificates
     const httpsAgent = new https.Agent({
@@ -1161,7 +1161,33 @@ router.get('/api/unifi-protect/bootstrap', async (req, res) => {
       });
     }
     
-    console.log(`UniFi Protect data: ${cameras.length} cameras, ${events.length} events`);
+    // Process sensors (environmental devices)
+    const sensors = (bootstrapData.sensors || []).map(sensor => ({
+      id: sensor.id,
+      name: sensor.name,
+      type: sensor.type,
+      model: sensor.model,
+      mac: sensor.mac,
+      state: sensor.state,
+      isConnected: sensor.isConnected || sensor.state === 'CONNECTED',
+      lastSeen: sensor.lastSeen,
+      stats: {
+        temperature: sensor.stats?.temperature ? {
+          value: sensor.stats.temperature.value,
+          unit: sensor.stats.temperature.unit || 'celsius'
+        } : null,
+        humidity: sensor.stats?.humidity ? {
+          value: sensor.stats.humidity.value,
+          unit: sensor.stats.humidity.unit || 'percent'
+        } : null,
+        light: sensor.stats?.light ? {
+          value: sensor.stats.light.value,
+          unit: sensor.stats.light.unit || 'lux'
+        } : null
+      }
+    }));
+    
+    console.log(`UniFi Protect data: ${cameras.length} cameras, ${events.length} events, ${sensors.length} sensors`);
     
     // Set CORS headers
     res.set('Access-Control-Allow-Origin', '*');
@@ -1169,7 +1195,8 @@ router.get('/api/unifi-protect/bootstrap', async (req, res) => {
     
     res.json({
       cameras,
-      events
+      events,
+      sensors
     });
     
   } catch (error) {
@@ -1177,6 +1204,197 @@ router.get('/api/unifi-protect/bootstrap', async (req, res) => {
     res.status(500).json({ 
       error: error.message,
       details: 'Failed to fetch UniFi Protect data. Check if console is accessible and credentials are correct.'
+    });
+  }
+});
+
+// UniFi Protect Sensors Only Endpoint - Public API for external applications
+router.get('/api/unifi-protect/sensors', async (req, res) => {
+  try {
+    const { host } = req.query;
+    
+    // Query database for UniFi Protect credentials
+    // Prioritize custom and unifi-protect over unifi and basic
+    const result = await db.query(`
+      SELECT id, user_id, credential_data 
+      FROM credentials 
+      WHERE service_type IN ('unifi-protect', 'unifi', 'basic', 'custom')
+      ORDER BY 
+        CASE service_type 
+          WHEN 'unifi-protect' THEN 1 
+          WHEN 'custom' THEN 2 
+          WHEN 'unifi' THEN 3 
+          ELSE 4 
+        END,
+        id DESC
+      LIMIT 1
+    `);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'No UniFi Protect credentials found',
+        details: 'Please configure credentials in the Dashboard first'
+      });
+    }
+    
+    const credentialRecord = result.rows[0];
+    
+    // Decrypt the credential data using the imported function
+    const credentialData = decryptCredentials(credentialRecord.credential_data);
+    const username = credentialData.username;
+    const password = credentialData.password;
+    const protectHost = host || credentialData.host || credentialData.url;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Credentials missing username or password' });
+    }
+    
+    if (!protectHost) {
+      return res.status(400).json({ 
+        error: 'Missing host parameter',
+        details: 'Provide host in query parameter or configure it in credentials'
+      });
+    }
+    
+    console.log(`[Sensors API] Using host: ${protectHost}, credential ID: ${credentialRecord.id}`);
+    
+    const fetch = (await import('node-fetch')).default;
+    const https = require('https');
+    
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
+    const cacheKey = crypto.createHash('md5').update(`${protectHost}:${credentialRecord.id}`).digest('hex');
+    const now = Date.now();
+    
+    let authToken = null;
+    let cookies = [];
+    
+    // Check if we have a valid cached session
+    const cached = unifiProtectSessionCache.get(cacheKey);
+    if (cached && cached.expires > now) {
+      console.log('[Sensors API] Using cached UniFi Protect session');
+      authToken = cached.token;
+      cookies = cached.cookies;
+    } else {
+      // Login to UniFi Protect
+      console.log(`[Sensors API] Logging into UniFi Protect at ${protectHost}...`);
+      const loginUrl = `${protectHost}/api/auth/login`;
+      const loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password, rememberMe: true }),
+        agent: httpsAgent,
+        timeout: 10000
+      });
+      
+      if (!loginResponse.ok) {
+        console.error(`[Sensors API] UniFi Protect login failed: ${loginResponse.status} ${loginResponse.statusText}`);
+        return res.status(loginResponse.status).json({ 
+          error: 'Authentication failed. Check credentials.',
+          details: loginResponse.statusText
+        });
+      }
+      
+      console.log('[Sensors API] Login successful, extracting session data...');
+      const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
+      if (setCookieHeaders) {
+        cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]);
+      }
+      
+      authToken = loginResponse.headers.get('authorization') || 
+                  loginResponse.headers.get('x-csrf-token');
+      
+      unifiProtectSessionCache.set(cacheKey, {
+        token: authToken,
+        cookies: cookies,
+        expires: now + (30 * 60 * 1000)
+      });
+    }
+    
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (cookies.length > 0) {
+      headers['Cookie'] = cookies.join('; ');
+    }
+    
+    if (authToken) {
+      headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    }
+    
+    // Fetch bootstrap data
+    const bootstrapUrl = `${protectHost}/proxy/protect/api/bootstrap`;
+    console.log(`[Sensors API] Fetching bootstrap from ${bootstrapUrl}...`);
+    const bootstrapResponse = await fetch(bootstrapUrl, {
+      headers: headers,
+      agent: httpsAgent,
+      timeout: 15000
+    });
+    
+    console.log(`[Sensors API] Bootstrap response status: ${bootstrapResponse.status}`);
+    if (!bootstrapResponse.ok) {
+      if (bootstrapResponse.status === 401) {
+        unifiProtectSessionCache.delete(cacheKey);
+      }
+      console.error(`[Sensors API] Bootstrap fetch failed: ${bootstrapResponse.status} ${bootstrapResponse.statusText}`);
+      return res.status(bootstrapResponse.status).json({ 
+        error: 'Failed to fetch UniFi Protect data',
+        details: bootstrapResponse.statusText
+      });
+    }
+    
+    const bootstrapData = await bootstrapResponse.json();
+    
+    // Process sensors only
+    const sensors = (bootstrapData.sensors || []).map(sensor => ({
+      id: sensor.id,
+      name: sensor.name,
+      type: sensor.type,
+      model: sensor.model,
+      mac: sensor.mac,
+      state: sensor.state,
+      isConnected: sensor.isConnected || sensor.state === 'CONNECTED',
+      lastSeen: sensor.lastSeen,
+      lastSeenReadable: sensor.lastSeen ? new Date(sensor.lastSeen).toISOString() : null,
+      temperature: sensor.stats?.temperature ? {
+        value: sensor.stats.temperature.value,
+        celsius: sensor.stats.temperature.value,
+        fahrenheit: (sensor.stats.temperature.value * 9/5) + 32,
+        unit: sensor.stats.temperature.unit || 'celsius'
+      } : null,
+      humidity: sensor.stats?.humidity ? {
+        value: sensor.stats.humidity.value,
+        unit: sensor.stats.humidity.unit || 'percent'
+      } : null,
+      light: sensor.stats?.light ? {
+        value: sensor.stats.light.value,
+        unit: sensor.stats.light.unit || 'lux'
+      } : null
+    }));
+    
+    // Set CORS headers for external access
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'application/json');
+    
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      host: protectHost,
+      sensorCount: sensors.length,
+      sensors: sensors
+    });
+    
+  } catch (error) {
+    console.error('UniFi Protect sensors API error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      details: 'Failed to fetch sensor data. Check if console is accessible and credentials are correct.'
     });
   }
 });
@@ -1218,7 +1436,6 @@ router.get('/api/unifi-protect/camera/:cameraId/snapshot', async (req, res) => {
     // Use node-fetch to make requests
     const fetch = (await import('node-fetch')).default;
     const https = require('https');
-    const crypto = require('crypto');
     
     const httpsAgent = new https.Agent({
       rejectUnauthorized: false
