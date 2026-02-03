@@ -549,17 +549,17 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   private getWeatherIcon(title: string): string {
     const t = title.toLowerCase();
     
-    if (t.includes('sunny') || t.includes('clear')) return '☀️';
-    if (t.includes('cloudy') || t.includes('overcast')) return '☁️';
-    if (t.includes('rain') || t.includes('shower')) return '🌧️';
-    if (t.includes('snow') || t.includes('flurries')) return '❄️';
-    if (t.includes('storm') || t.includes('thunder')) return '⛈️';
-    if (t.includes('fog') || t.includes('mist')) return '🌫️';
-    if (t.includes('wind')) return '💨';
-    if (t.includes('mix') || t.includes('chance')) return '🌦️';
-    if (t.includes('night')) return '🌙';
+    if (t.includes('sunny') || t.includes('clear')) return '<i class=\"fas fa-sun\"></i>';
+    if (t.includes('cloudy') || t.includes('overcast')) return '<i class=\"fas fa-cloud\"></i>';
+    if (t.includes('rain') || t.includes('shower')) return '<i class=\"fas fa-cloud-rain\"></i>';
+    if (t.includes('snow') || t.includes('flurries')) return '<i class=\"fas fa-snowflake\"></i>';
+    if (t.includes('storm') || t.includes('thunder')) return '<i class=\"fas fa-bolt\"></i>';
+    if (t.includes('fog') || t.includes('mist')) return '<i class=\"fas fa-smog\"></i>';
+    if (t.includes('wind')) return '<i class=\"fas fa-wind\"></i>';
+    if (t.includes('mix') || t.includes('chance')) return '<i class=\"fas fa-cloud-sun-rain\"></i>';
+    if (t.includes('night')) return '<i class=\"fas fa-moon\"></i>';
     
-    return '🌤️'; // Default partly cloudy
+    return '<i class=\"fas fa-cloud-sun\"></i>'; // Default partly cloudy
   }
 
   /**
@@ -798,7 +798,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'envcanada',
   name: 'Environment Canada',
-  icon: '🍁',
+  icon: '<i class="fas fa-leaf"></i>',
   description: 'Display weather forecasts from Environment Canada',
   renderer: new EnvCanadaWidgetRenderer(),
   defaultSize: { w: 350, h: 500 },

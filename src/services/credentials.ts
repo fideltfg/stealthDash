@@ -233,18 +233,18 @@ class CredentialsService {
 
   getServiceTypeIcon(serviceType: string): string {
     const icons: Record<string, string> = {
-      pihole: '🛡️',
-      unifi: '📡',
-      home_assistant: '🏠',
-      google_calendar: '📅',
-      docker: '🐋',
-      snmp: '📊',
-      modbus: '⚙️',
-      api: '🔌',
-      custom: '⭐'
+      pihole: '<i class="fas fa-shield-alt"></i>',
+      unifi: '<i class="fas fa-wifi"></i>',
+      home_assistant: '<i class="fas fa-home"></i>',
+      google_calendar: '<i class="fas fa-calendar"></i>',
+      docker: '<i class="fab fa-docker"></i>',
+      snmp: '<i class="fas fa-chart-bar"></i>',
+      modbus: '<i class="fas fa-cog"></i>',
+      api: '<i class="fas fa-plug"></i>',
+      custom: '<i class="fas fa-star"></i>'
     };
 
-    return icons[serviceType] || '🔑';
+    return icons[serviceType] || '<i class="fas fa-key"></i>';
   }
 }
 

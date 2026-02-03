@@ -443,16 +443,15 @@ body {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   cursor: move;
-  opacity: 0;
+  display: none;
   transition: opacity var(--transition-speed);
   z-index: 10;
-  display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .widget.selected .widget-header {
-  opacity: 1;
+  display: flex;
 }
 
 .widget-title {

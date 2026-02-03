@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const db = require('../db');
-const { authMiddleware } = require('../auth');
+const db = require('../src/db');
+const { authMiddleware } = require('../src/auth');
 
 // Middleware to check if user is admin
 const adminMiddleware = async (req, res, next) => {

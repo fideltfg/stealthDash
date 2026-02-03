@@ -46,6 +46,27 @@ class DockerWidgetRenderer implements WidgetRenderer {
     this.showConfigDialog(widget);
   }
 
+  private formatPorts(ports: Array<{IP?: string; PrivatePort: number; PublicPort?: number; Type: string}>): string {
+    if (!ports || ports.length === 0) return 'No exposed ports';
+    
+    // Get unique public ports
+    const uniquePorts = new Set<string>();
+    
+    ports.forEach(port => {
+      if (port.PublicPort) {
+        uniquePorts.add(`${port.PublicPort}/${port.Type}`);
+      }
+    });
+    
+    if (uniquePorts.size === 0) return 'No exposed ports';
+    
+    return Array.from(uniquePorts).sort((a, b) => {
+      const aNum = parseInt(a.split('/')[0]);
+      const bNum = parseInt(b.split('/')[0]);
+      return aNum - bNum;
+    }).join(', ');
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as DockerContent;
 
@@ -158,7 +179,26 @@ class DockerWidgetRenderer implements WidgetRenderer {
       .join('');
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0; color: var(--text);">🐋 Docker Configuration</h3>
+      <h3 style="margin-top: 0; color: var(--text); display: flex; align-items: center; gap: 8px;">
+        <i class="fab fa-docker"></i> Docker Configuration
+      </h3>
+
+      <div style="
+        background: #2196F322;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        font-size: 13px;
+        color: var(--text);
+      ">
+        <div style="font-weight: 600; margin-bottom: 6px;"><i class="fas fa-info-circle"></i> Connection Types:</div>
+        <div style="opacity: 0.9; line-height: 1.6;">
+          • <strong>Unix Socket</strong> (unix:///var/run/docker.sock): No credentials needed<br>
+          • <strong>TCP</strong> (http://host:2375): No credentials needed<br>
+          • <strong>TLS</strong> (https://host:2376): Create Docker credentials from user menu
+        </div>
+      </div>
       
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
@@ -167,7 +207,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
         <input 
           type="text" 
           id="docker-host-input" 
-          placeholder="unix:///var/run/docker.sock or http://remote-host:2375"
+          placeholder="unix:///var/run/docker.sock"
           value="${content.host || ''}"
           style="
             width: 100%;
@@ -180,16 +220,14 @@ class DockerWidgetRenderer implements WidgetRenderer {
             box-sizing: border-box;
           "
         />
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
-          Local: unix:///var/run/docker.sock<br>
-          Remote TCP: http://192.168.1.100:2375<br>
-          Secure Remote: https://docker.example.com:2376
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted); font-size: 12px;">
+          Examples: unix:///var/run/docker.sock • http://192.168.1.100:2375 • https://docker.example.com:2376
         </small>
       </div>
 
       <div style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
-          TLS Credential (Optional)
+          TLS Credentials (Optional)
         </label>
         <select 
           id="docker-credential-select"
@@ -204,11 +242,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
             box-sizing: border-box;
           "
         >
-          <option value="">None (for unix socket or unsecured TCP)</option>
+          <option value="">None (local socket or unsecured TCP)</option>
           ${credentialOptions}
         </select>
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
-          Only needed for secure HTTPS connections with client certificates
+        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted); font-size: 12px;">
+          Only required for HTTPS connections. Create Docker credentials from the <i class="fas fa-user"></i> user menu.
         </small>
       </div>
 
@@ -325,79 +363,107 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     try {
       const containers = await this.fetchContainers(content);
-
-      container.innerHTML = `
-        <div style="
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow: hidden;
-        ">
+      
+      // Check if we need to do initial render
+      let containersList = container.querySelector('#containers-list') as HTMLElement;
+      
+      if (!containersList) {
+        // Initial render - create the structure
+        container.innerHTML = `
           <div style="
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            container-type: inline-size;
           ">
-            <div style="font-weight: 600; color: var(--text);">
-              🐋 Docker Containers
-            </div>
             <div style="
-              font-size: 12px;
-              color: var(--muted);
-              background: rgba(0, 150, 255, 0.1);
-              padding: 4px 8px;
-              border-radius: 4px;
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--border);
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
             ">
-              ${containers.length} container${containers.length !== 1 ? 's' : ''}
+              <div style="font-weight: 600; color: var(--text);">
+                🐋 Docker Containers
+              </div>
+              <div id="container-count" style="
+                font-size: 12px;
+                color: var(--muted);
+                background: rgba(0, 150, 255, 0.1);
+                padding: 4px 8px;
+                border-radius: 4px;
+              ">
+                ${containers.length} container${containers.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+            
+            <div id="containers-list" style="
+              overflow-y: auto;
+            ">
             </div>
           </div>
+        `;
+        
+        containersList = container.querySelector('#containers-list') as HTMLElement;
+        
+        // Set up event delegation once
+        containersList.addEventListener('pointerdown', (e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.docker-btn')) {
+            e.stopPropagation();
+          }
+        });
+
+        containersList.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          const button = target.closest('.docker-btn') as HTMLButtonElement;
           
-          <div id="containers-list" style="
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-          ">
-            ${containers.length === 0 ? `
-              <div style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                color: var(--muted);
-                gap: 8px;
-              ">
-                <div style="font-size: 32px;">📦</div>
-                <div>No containers found</div>
-              </div>
-            ` : containers.map(c => this.renderContainerCard(c, content.credentialId)).join('')}
-          </div>
-        </div>
-      `;
-
-      // Attach event listeners to control buttons only if credential is set
-      if (content.credentialId) {
-        containers.forEach(c => {
-          const startBtn = container.querySelector(`#start-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
-          const stopBtn = container.querySelector(`#stop-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
-          const restartBtn = container.querySelector(`#restart-${c.Id.substring(0, 12)}`) as HTMLButtonElement;
-
-          if (startBtn) {
-            startBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-            startBtn.addEventListener('click', () => this.controlContainer(c.Id, 'start', content, container, widget));
+          if (!button || button.disabled || button.classList.contains('loading')) {
+            return;
           }
-          if (stopBtn) {
-            stopBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-            stopBtn.addEventListener('click', () => this.controlContainer(c.Id, 'stop', content, container, widget));
+
+          const action = button.dataset.action;
+          const containerId = button.dataset.id;
+          
+          if (!action || !containerId) {
+            return;
           }
-          if (restartBtn) {
-            restartBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-            restartBtn.addEventListener('click', () => this.controlContainer(c.Id, 'restart', content, container, widget));
+
+          // Get stored containers from the element
+          const storedContainers = (containersList as any).__containers || [];
+          const fullContainer = storedContainers.find((c: DockerContainer) => c.Id.startsWith(containerId));
+          
+          if (!fullContainer) {
+            return;
+          }
+
+          if (action === 'logs') {
+            this.showContainerLogs(fullContainer.Id, fullContainer.Names[0]?.replace(/^\//, '') || 'unknown', content);
+          } else if (action === 'start' || action === 'stop' || action === 'restart') {
+            button.classList.add('loading');
+            button.disabled = true;
+            
+            this.controlContainer(fullContainer.Id, action as 'start' | 'stop' | 'restart', content, container, widget)
+              .finally(() => {
+                button.classList.remove('loading');
+                button.disabled = false;
+              });
           }
         });
       }
+      
+      // Store containers for event handlers
+      (containersList as any).__containers = containers;
+      
+      // Update container count
+      const countEl = container.querySelector('#container-count');
+      if (countEl) {
+        countEl.textContent = `${containers.length} container${containers.length !== 1 ? 's' : ''}`;
+      }
+      
+      // Update containers individually
+      this.updateContainersList(containersList, containers, content);
 
     } catch (error) {
       container.innerHTML = `
@@ -438,138 +504,123 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  private renderContainerCard(container: DockerContainer, credentialId?: number | null): string {
+  private updateContainersList(containersList: HTMLElement, containers: DockerContainer[], content: DockerContent): void {
+    if (containers.length === 0) {
+      containersList.innerHTML = `
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          color: var(--muted);
+          gap: 8px;
+        ">
+          <div style="font-size: 32px;">📦</div>
+          <div>No containers found</div>
+        </div>
+      `;
+      return;
+    }
+    
+    // Get existing cards
+    const existingCards = Array.from(containersList.querySelectorAll('.docker-container-card'));
+    const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
+    const newIds = new Set(containers.map(c => c.Id));
+    
+    // Remove containers that no longer exist
+    existingCards.forEach(card => {
+      const cardId = card.getAttribute('data-container-id');
+      if (cardId && !newIds.has(cardId)) {
+        card.remove();
+      }
+    });
+    
+    // Update or add containers
+    containers.forEach((container, index) => {
+      const existingCard = containersList.querySelector(`[data-container-id="${container.Id}"]`);
+      const cardHtml = this.renderContainerCard(container, content.credentialId, content.host);
+      
+      if (existingCard) {
+        // Update existing card
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        const newCard = tempDiv.firstElementChild as HTMLElement;
+        
+        // Only update if content has changed
+        if (existingCard.innerHTML !== newCard.innerHTML) {
+          existingCard.innerHTML = newCard.innerHTML;
+        }
+      } else {
+        // Add new card
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        const newCard = tempDiv.firstElementChild as HTMLElement;
+        
+        // Insert at the correct position to maintain order
+        if (index === 0) {
+          containersList.insertBefore(newCard, containersList.firstChild);
+        } else {
+          const prevContainer = containers[index - 1];
+          const prevCard = containersList.querySelector(`[data-container-id="${prevContainer.Id}"]`);
+          if (prevCard && prevCard.nextSibling) {
+            containersList.insertBefore(newCard, prevCard.nextSibling);
+          } else {
+            containersList.appendChild(newCard);
+          }
+        }
+      }
+    });
+  }
+
+  private renderContainerCard(container: DockerContainer, credentialId?: number | null, host?: string): string {
     const isRunning = container.State === 'running';
     const shortId = container.Id.substring(0, 12);
-    const name = container.Names[0]?.replace(/^\//, '') || 'unknown';
-    const hasCredential = !!credentialId;
+    const name = container.Names[0]?.replace(/^\//,  '') || 'unknown';
+    // Show control buttons if credentials are set OR if using Unix socket (which doesn't need credentials)
+    const hasControlAccess = !!credentialId || (host && host.startsWith('unix://'));
 
-    const statusColor = isRunning ? '#4CAF50' : '#FF9800';
     const statusText = container.Status;
 
     return `
-      <div style="
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 8px;
-      ">
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 8px;
-        ">
-          <div style="flex: 1; min-width: 0;">
-            <div style="
-              font-weight: 600;
-              color: var(--text);
-              margin-bottom: 4px;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            ">
-              ${name}
-            </div>
-            <div style="
-              font-size: 12px;
-              color: var(--muted);
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            ">
-              ${container.Image}
-            </div>
+      <div class="docker-container-card" data-container-id="${container.Id}">
+        <div class="docker-container-header">
+          <div class="docker-container-info">
+            <div class="docker-container-name">${name}</div>
+            <div class="docker-container-image">${container.Image}</div>
           </div>
-          <div style="
-            display: inline-block;
-            padding: 4px 8px;
-            background: ${statusColor}22;
-            color: ${statusColor};
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            white-space: nowrap;
-            margin-left: 8px;
-          ">
-            ${container.State}
-          </div>
+          <div class="docker-status-badge ${container.State.toLowerCase()}">${container.State}</div>
         </div>
 
-        <div style="
-          font-size: 11px;
-          color: var(--muted);
-          margin-bottom: 8px;
-        ">
-          <div style="margin-bottom: 4px;">${statusText}</div>
+        <div class="docker-container-details">
+          <div>${statusText}</div>
           ${container.Ports && container.Ports.length > 0 ? `
-            <div style="margin-bottom: 4px;">
-              📡 ${container.Ports.filter(p => p.PublicPort).map(p => 
-                `${p.PublicPort}:${p.PrivatePort}/${p.Type}`
-              ).join(', ') || 'No exposed ports'}
-            </div>
+            <div><i class="fas fa-network-wired"></i> ${this.formatPorts(container.Ports)}</div>
           ` : ''}
           ${container.NetworkSettings?.Networks ? `
-            <div>
-              🌐 ${Object.keys(container.NetworkSettings.Networks).join(', ')}
-            </div>
+            <div><i class="fas fa-globe"></i> ${Object.keys(container.NetworkSettings.Networks).join(', ')}</div>
           ` : ''}
         </div>
 
-        ${hasCredential ? `
-          <div style="
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-          ">
+        <div class="docker-button-group">
+          ${hasControlAccess ? `
             ${isRunning ? `
-              <button id="stop-${shortId}" style="
-                flex: 1;
-                min-width: 80px;
-                padding: 6px 12px;
-                background: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 500;
-              ">
-                ⏹️ Stop
+              <button class="docker-btn stop" data-action="stop" data-id="${shortId}">
+                <i class="fas fa-stop"></i>
               </button>
-              <button id="restart-${shortId}" style="
-                flex: 1;
-                min-width: 80px;
-                padding: 6px 12px;
-                background: #FF9800;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 500;
-              ">
-                🔄 Restart
+              <button class="docker-btn restart" data-action="restart" data-id="${shortId}">
+                <i class="fas fa-sync-alt"></i>
               </button>
             ` : `
-              <button id="start-${shortId}" style="
-                flex: 1;
-                padding: 6px 12px;
-                background: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 500;
-              ">
-                ▶️ Start
+              <button class="docker-btn start" data-action="start" data-id="${shortId}">
+                <i class="fas fa-play"></i>
               </button>
             `}
-          </div>
-        ` : ''}
+          ` : ''}
+          <button class="docker-btn logs" data-action="logs" data-id="${shortId}">
+            <i class="fas fa-file-alt"></i>
+          </button>
+        </div>
       </div>
     `;
   }
@@ -580,9 +631,8 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
 
     const pingServerUrl = this.getPingServerUrl();
-    const showAll = content.showAll ? 'true' : 'false';
     
-    const response = await fetch(`${pingServerUrl}/api/docker/containers?all=${showAll}`, {
+    const response = await fetch(`${pingServerUrl}/api/docker/containers`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -590,7 +640,8 @@ class DockerWidgetRenderer implements WidgetRenderer {
       },
       body: JSON.stringify({
         host: content.host,
-        credentialId: content.credentialId
+        credentialId: content.credentialId,
+        all: content.showAll || false
       })
     });
 
@@ -641,6 +692,212 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
   }
 
+  private async showContainerLogs(
+    containerId: string,
+    containerName: string,
+    content: DockerContent
+  ): Promise<void> {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 1000px;
+      height: 80vh;
+      max-height: 800px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    `;
+
+    dialog.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; color: var(--text); display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-file-alt"></i>
+          ${containerName} - Logs
+        </h3>
+        <div style="display: flex; gap: 8px;">
+          <button id="refresh-logs-btn" style="
+            padding: 6px 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+          ">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+          <button id="close-logs-btn" style="
+            padding: 6px 12px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+          ">
+            <i class="fas fa-times"></i> Close
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px;">
+          <span>Lines:</span>
+          <select id="log-lines-select" style="
+            padding: 6px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 14px;
+          ">
+            <option value="100">100</option>
+            <option value="500" selected>500</option>
+            <option value="1000">1000</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px;">
+          <input type="checkbox" id="follow-logs-checkbox" />
+          <span>Follow logs (auto-refresh)</span>
+        </label>
+      </div>
+
+      <div id="logs-container" style="
+        flex: 1;
+        background: #1e1e1e;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        overflow: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        color: #d4d4d4;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-all;
+      ">
+        <div style="text-align: center; padding: 20px; color: #888;">
+          <i class="fas fa-spinner fa-spin"></i> Loading logs...
+        </div>
+      </div>
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    const logsContainer = dialog.querySelector('#logs-container') as HTMLElement;
+    const closeBtn = dialog.querySelector('#close-logs-btn') as HTMLButtonElement;
+    const refreshBtn = dialog.querySelector('#refresh-logs-btn') as HTMLButtonElement;
+    const linesSelect = dialog.querySelector('#log-lines-select') as HTMLSelectElement;
+    const followCheckbox = dialog.querySelector('#follow-logs-checkbox') as HTMLInputElement;
+
+    let followInterval: number | null = null;
+
+    const fetchLogs = async () => {
+      try {
+        const lines = linesSelect.value;
+        logsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
+
+        const pingServerUrl = this.getPingServerUrl();
+        const response = await fetch(`${pingServerUrl}/api/docker/containers/logs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          },
+          body: JSON.stringify({
+            host: content.host,
+            credentialId: content.credentialId,
+            containerId,
+            tail: lines === 'all' ? 'all' : parseInt(lines)
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const logs = await response.text();
+        
+        if (logs.trim()) {
+          logsContainer.textContent = logs;
+        } else {
+          logsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">No logs available</div>';
+        }
+        
+        // Auto-scroll to bottom
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+      } catch (error) {
+        logsContainer.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #f44336;">
+            <i class="fas fa-exclamation-triangle"></i> Error loading logs:<br/>
+            ${error instanceof Error ? error.message : 'Unknown error'}
+          </div>
+        `;
+      }
+    };
+
+    const startFollow = () => {
+      if (followInterval) clearInterval(followInterval);
+      followInterval = window.setInterval(fetchLogs, 2000);
+    };
+
+    const stopFollow = () => {
+      if (followInterval) {
+        clearInterval(followInterval);
+        followInterval = null;
+      }
+    };
+
+    // Event listeners
+    closeBtn.addEventListener('click', () => {
+      stopFollow();
+      document.body.removeChild(overlay);
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        stopFollow();
+        document.body.removeChild(overlay);
+      }
+    });
+
+    refreshBtn.addEventListener('click', fetchLogs);
+    linesSelect.addEventListener('change', fetchLogs);
+    
+    followCheckbox.addEventListener('change', () => {
+      if (followCheckbox.checked) {
+        startFollow();
+      } else {
+        stopFollow();
+      }
+    });
+
+    // Initial fetch
+    fetchLogs();
+  }
+
   private getPingServerUrl(): string {
     if (typeof window !== 'undefined') {
       return window.location.origin.replace(':3000', ':3001');
@@ -652,7 +909,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'docker',
   name: 'Docker',
-  icon: '🐋',
+  icon: '<i class="fab fa-docker"></i>',
   description: 'Monitor and manage Docker containers',
   renderer: new DockerWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },

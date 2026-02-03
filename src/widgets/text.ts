@@ -43,7 +43,7 @@ export class TextWidgetRenderer implements WidgetRenderer {
 export const widget: WidgetPlugin = {
   type: 'text',
   name: 'Text',
-  icon: '📝',
+  icon: '<i class="fas fa-file-alt"></i>',
   description: 'Simple text editor with markdown support',
   renderer: new TextWidgetRenderer(),
   defaultSize: { w: 400, h: 300 },

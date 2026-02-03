@@ -125,7 +125,7 @@ class UnifiRenderer implements WidgetRenderer {
       <div class="unifi-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
         <div class="unifi-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
           <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;">📡</span>
+            <span style="font-size: 24px;"><i class="fas fa-wifi"></i></span>
             <span>UniFi Network</span>
           </h3>
         </div>
@@ -217,7 +217,7 @@ class UnifiRenderer implements WidgetRenderer {
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 16px;">📡</div>
+        <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-wifi"></i></div>
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text);">UniFi Network Widget</div>
         <div style="color: var(--muted); margin-bottom: 8px;">Configure your UniFi Controller connection</div>
         <div style="color: var(--muted); font-size: 12px; margin-bottom: 20px;">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
@@ -288,7 +288,7 @@ class UnifiRenderer implements WidgetRenderer {
 
     modal.innerHTML = `
       <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 32px;">📡</span>
+        <span style="font-size: 32px;"><i class="fas fa-wifi"></i></span>
         <div>
           <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 600; color: var(--text);">
             UniFi Network Configuration
@@ -658,15 +658,15 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);">🌐 Gateways</span>
+              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-globe"></i> Gateways</span>
               <span style="font-size: 14px; font-weight: 500; color: var(--text);">${gateways}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);">🔀 Switches</span>
+              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-network-wired"></i> Switches</span>
               <span style="font-size: 14px; font-weight: 500; color: var(--text);">${switches}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);">📡 Access Points</span>
+              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-wifi"></i> Access Points</span>
               <span style="font-size: 14px; font-weight: 500; color: var(--text);">${aps}</span>
             </div>
           </div>
@@ -712,7 +712,7 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
         ` : devices.map(device => {
           const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
-          const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : device.type === 'ugw' ? '🌐' : '📟';
+          const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
           
           return `
             <div style="background: var(--bg); padding: 12px; border-radius: 8px; border-left: 3px solid ${statusColor};">
@@ -768,80 +768,400 @@ class UnifiRenderer implements WidgetRenderer {
 
   private renderClients(container: HTMLElement, data: UnifiStats): void {
     const clients = data.clients || [];
-    const sortedClients = [...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes));
     
-    container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; padding-bottom: 8px;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text);">Active Clients (${clients.length})</div>
-          <div style="font-size: 12px; color: var(--muted);">
-            ${clients.filter(c => c.is_wired).length} wired | ${clients.filter(c => !c.is_wired).length} wireless
-          </div>
-        </div>
-        
-        ${sortedClients.length === 0 ? `
-          <div style="text-align: center; padding: 40px; color: var(--muted);">
-            No active clients
-          </div>
-        ` : sortedClients.map(client => {
-          const isWired = client.is_wired;
-          const connIcon = isWired ? '🔌' : '📶';
-          const totalBytes = client.tx_bytes + client.rx_bytes;
-          const signalBars = client.signal ? 
-            (client.signal >= -50 ? '▂▃▅▆█' : client.signal >= -60 ? '▂▃▅▆▁' : client.signal >= -70 ? '▂▃▅▁▁' : '▂▃▁▁▁') : '';
-          
-          return `
-            <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 16px;">${connIcon}</span>
-                  <div>
-                    <div style="font-size: 13px; font-weight: 600; color: var(--text);">${client.name}</div>
-                    <div style="font-size: 10px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
-                  </div>
-                </div>
-                ${client.is_guest ? '<span style="font-size: 10px; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px;">Guest</span>' : ''}
-              </div>
-              
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 10px;">
-                ${!isWired && client.essid ? `
-                  <div style="display: flex; justify-content: space-between; grid-column: 1 / -1;">
-                    <span style="color: var(--muted);">Network:</span>
-                    <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
-                  </div>
-                ` : ''}
-                ${!isWired && client.signal ? `
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">Signal:</span>
-                    <span style="color: var(--text); font-weight: 500; font-family: monospace;">${signalBars} ${client.signal}dBm</span>
-                  </div>
-                ` : ''}
-                ${!isWired && client.channel ? `
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">Channel:</span>
-                    <span style="color: var(--text); font-weight: 500;">${client.channel} ${client.radio || ''}</span>
-                  </div>
-                ` : ''}
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">↑ TX:</span>
-                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">↓ RX:</span>
-                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Total:</span>
-                  <span style="color: var(--text); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Uptime:</span>
-                  <span style="color: var(--text); font-weight: 500;">${this.formatUptime(client.uptime || 0)}</span>
+    // Check if we need to do initial render
+    let clientsList = container.querySelector('#unifi-clients-list') as HTMLElement;
+    
+    if (!clientsList) {
+      // Get unique virtual network names
+      const virtualNetworks = new Set(
+        clients
+          .map(c => c.network)
+          .filter(Boolean)
+      );
+      const networks = ['All', ...Array.from(virtualNetworks)].sort((a, b) => {
+        if (a === 'All') return -1;
+        if (b === 'All') return 1;
+        return a.localeCompare(b);
+      });
+      
+      // Initial render - create the structure
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden; container-type: inline-size;">
+          <div style="padding: 8px; background: var(--surface); border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--text);">Active Clients (<span id="client-count">${clients.length}</span>)</div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="clear-inactive" style="
+                  padding: 4px 8px;
+                  background: transparent;
+                  color: var(--muted);
+                  border: 1px solid var(--border);
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 11px;
+                  display: none;
+                " title="Clear disconnected clients">
+                  <i class="fas fa-trash"></i>
+                </button>
+                <div style="font-size: 12px; color: var(--muted);">
+                  ${clients.filter(c => c.is_wired).length} wired | ${clients.filter(c => !c.is_wired).length} wireless
                 </div>
               </div>
             </div>
-          `;
-        }).join('')}
+            
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <input 
+                type="text" 
+                id="client-search" 
+                placeholder="Search by name or IP..." 
+                style="
+                  flex: 1;
+                  min-width: 150px;
+                  padding: 6px 10px;
+                  background: var(--bg);
+                  border: 1px solid var(--border);
+                  border-radius: 4px;
+                  color: var(--text);
+                  font-size: 12px;
+                "
+              />
+              <select 
+                id="sort-by" 
+                style="
+                  padding: 6px 10px;
+                  background: var(--bg);
+                  border: 1px solid var(--border);
+                  border-radius: 4px 0 0 4px;
+                  color: var(--text);
+                  font-size: 12px;
+                  border-right: none;
+                "
+              >
+                <option value="traffic">Sort: Traffic</option>
+                <option value="name">Sort: Name</option>
+                <option value="ip">Sort: IP</option>
+                <option value="signal">Sort: Signal</option>
+                <option value="uptime">Sort: Uptime</option>
+              </select>
+              <button 
+                id="sort-reverse" 
+                style="
+                  padding: 6px 10px;
+                  background: var(--bg);
+                  border: 1px solid var(--border);
+                  border-radius: 0 4px 4px 0;
+                  color: var(--text);
+                  font-size: 12px;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                title="Reverse sort order"
+              >
+                <i class="fas fa-arrow-down-wide-short"></i>
+              </button>
+              <select 
+                id="connection-filter" 
+                style="
+                  padding: 6px 10px;
+                  background: var(--bg);
+                  border: 1px solid var(--border);
+                  border-radius: 4px;
+                  color: var(--text);
+                  font-size: 12px;
+                "
+              >
+                <option value="all">All</option>
+                <option value="wired">Wired</option>
+                <option value="wireless">Wireless</option>
+              </select>
+              <select 
+                id="network-filter" 
+                style="
+                  padding: 6px 10px;
+                  background: var(--bg);
+                  border: 1px solid var(--border);
+                  border-radius: 4px;
+                  color: var(--text);
+                  font-size: 12px;
+                "
+              >
+                ${networks.map(net => `<option value="${net}">${net}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          
+          <div id="unifi-clients-list" style="flex: 1; overflow-y: auto;"></div>
+        </div>
+      `;
+      
+      clientsList = container.querySelector('#unifi-clients-list') as HTMLElement;
+      
+      // Set up event listeners once
+      this.setupClientListeners(container, clientsList);
+    }
+    
+    // Update client list
+    this.updateClientsList(clientsList, clients, container);
+  }
+
+  private setupClientListeners(container: HTMLElement, clientsList: HTMLElement): void {
+    const searchInput = container.querySelector('#client-search') as HTMLInputElement;
+    const sortBy = container.querySelector('#sort-by') as HTMLSelectElement;
+    const sortReverse = container.querySelector('#sort-reverse') as HTMLButtonElement;
+    const connectionFilter = container.querySelector('#connection-filter') as HTMLSelectElement;
+    const networkFilter = container.querySelector('#network-filter') as HTMLSelectElement;
+    const clearInactiveBtn = container.querySelector('#clear-inactive') as HTMLButtonElement;
+    const clientCount = container.querySelector('#client-count') as HTMLElement;
+    
+    let isReversed = false;
+    
+    const sortClients = () => {
+      const sortValue = sortBy.value;
+      const cards = Array.from(clientsList.querySelectorAll('.unifi-client-card')) as HTMLElement[];
+      
+      cards.sort((a, b) => {
+        let result = 0;
+        switch (sortValue) {
+          case 'name':
+            result = (a.dataset.name || '').localeCompare(b.dataset.name || '');
+            break;
+          case 'ip':
+            const ipA = (a.dataset.ip || '').split('.').map(n => parseInt(n) || 0);
+            const ipB = (b.dataset.ip || '').split('.').map(n => parseInt(n) || 0);
+            for (let i = 0; i < 4; i++) {
+              if (ipA[i] !== ipB[i]) {
+                result = ipA[i] - ipB[i];
+                break;
+              }
+            }
+            break;
+          case 'signal':
+            result = (parseInt(b.dataset.signal || '0') || -999) - (parseInt(a.dataset.signal || '0') || -999);
+            break;
+          case 'uptime':
+            result = parseInt(b.dataset.uptime || '0') - parseInt(a.dataset.uptime || '0');
+            break;
+          case 'traffic':
+          default:
+            result = parseInt(b.dataset.traffic || '0') - parseInt(a.dataset.traffic || '0');
+            break;
+        }
+        return isReversed ? -result : result;
+      });
+      
+      cards.forEach(card => clientsList.appendChild(card));
+    };
+    
+    const filterClients = () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedConnection = connectionFilter.value;
+      const selectedNetwork = networkFilter.value;
+      const cards = clientsList.querySelectorAll('.unifi-client-card');
+      
+      let visibleCount = 0;
+      cards.forEach(card => {
+        const htmlCard = card as HTMLElement;
+        const name = htmlCard.dataset.name || '';
+        const ip = htmlCard.dataset.ip || '';
+        const network = htmlCard.dataset.network || '';
+        const connection = htmlCard.dataset.connection || '';
+        const isInactive = htmlCard.classList.contains('inactive');
+        
+        const matchesSearch = !searchTerm || name.includes(searchTerm) || ip.includes(searchTerm);
+        const matchesConnection = selectedConnection === 'all' || connection === selectedConnection;
+        const matchesNetwork = selectedNetwork === 'All' || network === selectedNetwork;
+        
+        if (matchesSearch && matchesConnection && matchesNetwork) {
+          htmlCard.style.display = '';
+          if (!isInactive) visibleCount++;
+        } else {
+          htmlCard.style.display = 'none';
+        }
+      });
+      
+      clientCount.textContent = visibleCount.toString();
+    };
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', filterClients);
+      searchInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    
+    if (sortBy) {
+      sortBy.addEventListener('change', sortClients);
+      sortBy.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    
+    if (sortReverse) {
+      sortReverse.addEventListener('click', () => {
+        isReversed = !isReversed;
+        sortReverse.innerHTML = isReversed 
+          ? '<i class="fas fa-arrow-up-wide-short"></i>' 
+          : '<i class="fas fa-arrow-down-wide-short"></i>';
+        sortClients();
+      });
+      sortReverse.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    
+    if (connectionFilter) {
+      connectionFilter.addEventListener('change', filterClients);
+      connectionFilter.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    
+    if (networkFilter) {
+      networkFilter.addEventListener('change', filterClients);
+      networkFilter.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+    
+    if (clearInactiveBtn) {
+      clearInactiveBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+      clearInactiveBtn.addEventListener('click', () => {
+        clientsList.querySelectorAll('.unifi-client-card.inactive').forEach(card => card.remove());
+        clearInactiveBtn.style.display = 'none';
+        const activeCount = clientsList.querySelectorAll('.unifi-client-card:not(.inactive)').length;
+        clientCount.textContent = activeCount.toString();
+      });
+    }
+  }
+
+  private updateClientsList(clientsList: HTMLElement, clients: UnifiClient[], container: HTMLElement): void {
+    if (clients.length === 0) {
+      clientsList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+          No active clients
+        </div>
+      `;
+      return;
+    }
+    
+    // Get existing cards
+    const existingCards = Array.from(clientsList.querySelectorAll('.unifi-client-card'));
+    const newMacs = new Set(clients.map(c => c.mac));
+    
+    // Mark clients that no longer exist as inactive
+    const clearInactiveBtn = container.querySelector('#clear-inactive') as HTMLButtonElement;
+    let hasInactive = false;
+    
+    existingCards.forEach(card => {
+      const cardEl = card as HTMLElement;
+      const cardMac = cardEl.dataset.mac;
+      if (cardMac && !newMacs.has(cardMac)) {
+        cardEl.classList.add('inactive');
+        hasInactive = true;
+      }
+    });
+    
+    if (clearInactiveBtn) {
+      clearInactiveBtn.style.display = hasInactive ? '' : 'none';
+    }
+    
+    // Update or add clients
+    clients.forEach(client => {
+      const existingCard = clientsList.querySelector(`[data-mac="${client.mac}"]`) as HTMLElement;
+      const cardHtml = this.renderClientCard(client);
+      
+      if (existingCard) {
+        // Update existing card
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        const newCard = tempDiv.firstElementChild as HTMLElement;
+        
+        // Only update if content has changed
+        if (existingCard.innerHTML !== newCard.innerHTML) {
+          existingCard.innerHTML = newCard.innerHTML;
+          // Update data attributes
+          Object.keys(newCard.dataset).forEach(key => {
+            existingCard.dataset[key] = newCard.dataset[key];
+          });
+        }
+        
+        // Remove inactive class if it was there
+        existingCard.classList.remove('inactive');
+      } else {
+        // Add new card
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        const newCard = tempDiv.firstElementChild as HTMLElement;
+        clientsList.appendChild(newCard);
+      }
+    });
+    
+    // Update counts
+    const clientCount = container.querySelector('#client-count') as HTMLElement;
+    const activeCount = clients.length;
+    if (clientCount) {
+      clientCount.textContent = activeCount.toString();
+    }
+  }
+
+  private renderClientCard(client: UnifiClient): string {
+    const isWired = client.is_wired;
+    const connIcon = isWired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
+    const totalBytes = client.tx_bytes + client.rx_bytes;
+    const signalBars = client.signal ? 
+      (client.signal >= -50 ? '▂▃▅▆█' : client.signal >= -60 ? '▂▃▅▆▁' : client.signal >= -70 ? '▂▃▅▁▁' : '▂▃▁▁▁') : '';
+    
+    return `
+      <div class="unifi-client-card" 
+        data-mac="${client.mac}"
+        data-name="${client.name.toLowerCase()}" 
+        data-ip="${client.ip || ''}" 
+        data-network="${client.network || 'Unknown'}" 
+        data-connection="${isWired ? 'wired' : 'wireless'}"
+        data-signal="${client.signal || 0}"
+        data-uptime="${client.uptime || 0}"
+        data-traffic="${totalBytes}"
+      >
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">${connIcon}</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--text);">${client.name}</div>
+              <div style="font-size: 10px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
+            </div>
+          </div>
+          ${client.is_guest ? '<span style="font-size: 10px; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px;">Guest</span>' : ''}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 10px;">
+          ${!isWired && client.essid ? `
+            <div style="display: flex; justify-content: space-between; grid-column: 1 / -1;">
+              <span style="color: var(--muted);">Network:</span>
+              <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
+            </div>
+          ` : ''}
+          ${!isWired && client.signal ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--muted);">Signal:</span>
+              <span style="color: var(--text); font-weight: 500; font-family: monospace;">${signalBars} ${client.signal}dBm</span>
+            </div>
+          ` : ''}
+          ${!isWired && client.channel ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--muted);">Channel:</span>
+              <span style="color: var(--text); font-weight: 500;">${client.channel} ${client.radio || ''}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--muted);">↑ TX:</span>
+            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--muted);">↓ RX:</span>
+            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--muted);">Total:</span>
+            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--muted);">Uptime:</span>
+            <span style="color: var(--text); font-weight: 500;">${this.formatUptime(client.uptime || 0)}</span>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -909,7 +1229,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${devices.slice(0, 5).map(device => {
                 const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
-                const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : '🌐';
+                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : '<i class="fas fa-globe"></i>';
                 
                 return `
                   <div style="background: var(--bg); padding: 8px; border-radius: 6px; border-left: 2px solid ${statusColor};">
@@ -934,7 +1254,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Top Clients</div>
             <div style="display: flex; flex-direction: column; gap: 6px;">
               ${[...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes)).slice(0, 5).map(client => {
-                const connIcon = client.is_wired ? '🔌' : '📶';
+                const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
                 const totalBytes = client.tx_bytes + client.rx_bytes;
                 
                 return `
@@ -1006,7 +1326,7 @@ class UnifiRenderer implements WidgetRenderer {
             ${sortedByTotal.slice(0, 10).map((client, index) => {
               const totalBytes = client.tx_bytes + client.rx_bytes;
               const percentage = totalTraffic > 0 ? (totalBytes / totalTraffic * 100) : 0;
-              const connIcon = client.is_wired ? '🔌' : '📶';
+              const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
               const signalColor = !client.is_wired && client.signal ? 
                 (client.signal >= -50 ? '#34c759' : client.signal >= -60 ? '#ffcc00' : client.signal >= -70 ? '#ff9500' : '#ff3b30') : 'var(--muted)';
               
@@ -1068,7 +1388,7 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
             ${sortedByTx.slice(0, 5).map((client, index) => {
-              const connIcon = client.is_wired ? '🔌' : '📶';
+              const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
               return `
                 <div style="background: var(--bg); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                   <div style="display: flex; align-items: center; gap: 8px;">
@@ -1091,7 +1411,7 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
             ${sortedByRx.slice(0, 5).map((client, index) => {
-              const connIcon = client.is_wired ? '🔌' : '📶';
+              const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
               return `
                 <div style="background: var(--bg); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                   <div style="display: flex; align-items: center; gap: 8px;">
@@ -1171,7 +1491,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Device Throughput</div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${deviceTraffic.slice(0, 8).map(device => {
-                const typeIcon = device.type === 'uap' ? '📡' : device.type === 'usw' ? '🔀' : '🌐';
+                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : '<i class="fas fa-globe"></i>';
                 const percentage = totalDeviceTraffic > 0 ? (device.total / totalDeviceTraffic * 100) : 0;
                 
                 return `
@@ -1310,7 +1630,7 @@ class UnifiRenderer implements WidgetRenderer {
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${fastestClients.slice(0, 10).map((client, index) => {
-                const connIcon = client.is_wired ? '🔌' : '📶';
+                const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
                 const txSpeed = (client.tx_rate || 0) / 1000;
                 const rxSpeed = (client.rx_rate || 0) / 1000;
                 const maxSpeed = Math.max(txSpeed, rxSpeed);
@@ -1368,7 +1688,7 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
         ` : `
           <div style="background: var(--bg); padding: 20px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; margin-bottom: 8px;">📡</div>
+            <div style="font-size: 32px; margin-bottom: 8px;"><i class="fas fa-wifi"></i></div>
             <div style="font-size: 13px; color: var(--muted);">No client rate data available</div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Client speeds will appear when data transfer is active</div>
           </div>
@@ -1387,10 +1707,10 @@ class UnifiRenderer implements WidgetRenderer {
                 
                 return `
                   <div style="flex: ${wired}; background: #0077ff; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; min-width: 60px;">
-                    🔌 ${wired} (${wiredPct.toFixed(0)}%)
+                    <i class="fas fa-ethernet"></i> ${wired} (${wiredPct.toFixed(0)}%)
                   </div>
                   <div style="flex: ${wireless}; background: var(--accent); height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; min-width: 60px;">
-                    📶 ${wireless} (${wirelessPct.toFixed(0)}%)
+                    <i class="fas fa-wifi"></i> ${wireless} (${wirelessPct.toFixed(0)}%)
                   </div>
                 `;
               })()}
@@ -1450,7 +1770,7 @@ class UnifiRenderer implements WidgetRenderer {
 export const widget = {
   type: 'unifi',
   name: 'UniFi Network',
-  icon: '📡',
+  icon: '<i class="fas fa-wifi"></i>',
   description: 'Monitor UniFi network statistics and connected devices',
   renderer: new UnifiRenderer(),
   defaultContent: {

@@ -645,7 +645,7 @@ export class CometP8541Renderer implements WidgetRenderer {
             : (error.message || 'Failed to read sensor');
           
           errorOverlay.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px; animation: pulse 2s infinite;">⚠️</div>
+            <div style="font-size: 48px; margin-bottom: 16px; animation: pulse 2s infinite;"><i class="fas fa-exclamation-triangle"></i></div>
             <div style="font-weight: 600; margin-bottom: 8px;">Temporary Connection Error</div>
             <div style="opacity: 0.8; text-align: center;">${errorMessage}</div>
             <div style="font-size: 12px; opacity: 0.6; margin-top: 12px;">Retrying in ${content.refreshInterval || 10} seconds...</div>
@@ -673,7 +673,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
         const header = document.createElement('div');
         header.className = 'header';
-        header.textContent = '🌡️ ' + (content.deviceName || 'Comet P8541');
+        header.innerHTML = '<i class="fas fa-thermometer-half"></i> ' + (content.deviceName || 'Comet P8541');
 
         const deviceInfo = document.createElement('div');
         deviceInfo.className = 'device-info';
@@ -702,7 +702,7 @@ export class CometP8541Renderer implements WidgetRenderer {
   private renderError(container: HTMLElement, message: string): void {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'errorDiv';
-    errorDiv.innerHTML = `<div style="font-size: 32px; margin-bottom: 10px;">⚠️</div><div>${message}</div>`;
+    errorDiv.innerHTML = `<div style="font-size: 32px; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i></div><div>${message}</div>`;
     container.appendChild(errorDiv);
   }
 
@@ -714,7 +714,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const title = document.createElement('div');
     title.style.cssText = 'font-size: 18px; font-weight: 600; margin-bottom: 10px; text-align: center;';
-    title.textContent = '🌡️ Configure Comet P8541';
+    title.innerHTML = '<i class="fas fa-thermometer-half"></i> Configure Comet P8541';
     form.appendChild(title);
 
     const fields = [
@@ -830,7 +830,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const title = document.createElement('div');
     title.style.cssText = 'font-size: 18px; font-weight: 600; margin-bottom: 20px;';
-    title.textContent = '⚙️ Comet P8541 Settings';
+    title.innerHTML = '<i class="fas fa-cog"></i> Comet P8541 Settings';
     modal.appendChild(title);
 
     const fields = [
@@ -1136,7 +1136,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const header = document.createElement('div');
     header.style.cssText = 'font-size: 18px; font-weight: 600;';
-    header.textContent = '🌡️ ' + (deviceName || content.deviceName || 'Comet P8541');
+    header.innerHTML = '<i class="fas fa-thermometer-half"></i> ' + (deviceName || content.deviceName || 'Comet P8541');
 
     const deviceInfo = document.createElement('div');
     deviceInfo.style.cssText = 'font-size: 11px; opacity: 0.5; margin-top: 2px;';
@@ -1164,7 +1164,7 @@ export class CometP8541Renderer implements WidgetRenderer {
     headerLeft.appendChild(chartsLink);
 
     const settingsBtn = document.createElement('button');
-    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.innerHTML = '<i class="fas fa-cog"></i>';
     settingsBtn.className = 'widget-settings-btn';
     settingsBtn.style.cssText = `
       background: rgba(255, 255, 255, 0.1);
@@ -1210,7 +1210,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 export const widget: WidgetPlugin = {
   type: 'comet-p8541',
   name: 'Comet P8541',
-  icon: '🌡️',
+  icon: '<i class="fas fa-temperature-high"></i>',
   description: 'Multi-channel temperature and humidity sensor (Modbus TCP)',
   renderer: new CometP8541Renderer(),
   defaultSize: { w: 400, h: 500 },

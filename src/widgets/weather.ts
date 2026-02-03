@@ -102,7 +102,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     inputContainer.style.gap = '12px';
     
     const icon = document.createElement('div');
-    icon.textContent = '🌤️';
+    icon.innerHTML = '<i class="fas fa-cloud-sun"></i>';
     icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
@@ -211,13 +211,13 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     const daily = data.daily;
     
     const getWeatherEmoji = (code: number): string => {
-      if (code === 0) return '☀️';
-      if (code <= 3) return '⛅';
-      if (code <= 49) return '🌫️';
-      if (code <= 69) return '🌧️';
-      if (code <= 79) return '🌨️';
-      if (code <= 99) return '⛈️';
-      return '🌤️';
+      if (code === 0) return '<i class="fas fa-sun"></i>';
+      if (code <= 3) return '<i class="fas fa-cloud-sun"></i>';
+      if (code <= 49) return '<i class="fas fa-smog"></i>';
+      if (code <= 69) return '<i class="fas fa-cloud-rain"></i>';
+      if (code <= 79) return '<i class="fas fa-snowflake"></i>';
+      if (code <= 99) return '<i class="fas fa-bolt"></i>';
+      return '<i class="fas fa-cloud-sun"></i>';
     };
     
     const getWeatherDescription = (code: number): string => {
@@ -248,7 +248,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     
     const weatherIcon = document.createElement('div');
     weatherIcon.style.fontSize = '64px';
-    weatherIcon.textContent = getWeatherEmoji(current.weather_code);
+    weatherIcon.innerHTML = getWeatherEmoji(current.weather_code);
     
     const tempInfo = document.createElement('div');
     tempInfo.style.flex = '1';
@@ -282,10 +282,10 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     additionalInfo.style.color = 'var(--muted)';
     
     const humidity = document.createElement('div');
-    humidity.textContent = `💧 ${current.relative_humidity_2m}%`;
+    humidity.innerHTML = '<i class="fas fa-tint"></i> ' + `${current.relative_humidity_2m}%`;
     
     const wind = document.createElement('div');
-    wind.textContent = `💨 ${Math.round(current.wind_speed_10m)} km/h`;
+    wind.innerHTML = '<i class="fas fa-wind"></i> ' + `${Math.round(current.wind_speed_10m)} km/h`;
     
     additionalInfo.appendChild(humidity);
     additionalInfo.appendChild(wind);
@@ -327,7 +327,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
       
       const icon = document.createElement('div');
       icon.style.fontSize = '24px';
-      icon.textContent = getWeatherEmoji(daily.weather_code[i]);
+      icon.innerHTML = getWeatherEmoji(daily.weather_code[i]);
       
       const temps = document.createElement('div');
       temps.style.flex = '1';
@@ -336,7 +336,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
       const precip = document.createElement('div');
       precip.style.fontSize = '12px';
       precip.style.color = 'var(--muted)';
-      precip.textContent = `💧 ${daily.precipitation_probability_max[i]}%`;
+      precip.innerHTML = '<i class="fas fa-tint"></i> ' + `${daily.precipitation_probability_max[i]}%`;
       
       forecastDay.appendChild(dayLabel);
       forecastDay.appendChild(icon);
@@ -355,7 +355,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'weather',
   name: 'Weather',
-  icon: '🌤️',
+  icon: '<i class="fas fa-cloud-sun"></i>',
   description: 'Display weather information',
   renderer: new WeatherWidgetRenderer(),
   defaultSize: { w: 340, h: 580 },

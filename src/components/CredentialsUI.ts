@@ -150,7 +150,7 @@ export class CredentialsUI {
               <option value="google_calendar">📅 Google Calendar</option>
               <option value="docker">🐋 Docker</option>
               <option value="snmp">📊 SNMP</option>
-              <option value="api">🔌 Generic API</option>
+              <option value="api"><i class="fas fa-plug"></i> Generic API</option>
               <option value="custom">⭐ Custom</option>
             </select>
           </div>

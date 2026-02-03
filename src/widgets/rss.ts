@@ -148,7 +148,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
     inputContainer.style.padding = '20px';
     
     const icon = document.createElement('div');
-    icon.textContent = '📰';
+    icon.innerHTML = '<i class="fas fa-rss"></i>';
     icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
@@ -304,7 +304,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       this.renderFeedItems(container, data.feed, data.items, maxItems);
     } catch (error) {
       container.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--error); text-align: center; padding: 20px;">
-        <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
+        <div style="font-size: 32px; margin-bottom: 12px;"><i class="fas fa-exclamation-triangle"></i></div>
         <div>Failed to load RSS feed</div>
         <div style="font-size: 12px; margin-top: 8px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
       </div>`;
@@ -427,7 +427,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'rss',
   name: 'RSS Feed',
-  icon: '📰',
+  icon: '<i class="fas fa-rss"></i>',
   description: 'Display RSS/Atom feeds',
   renderer: new RssWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },

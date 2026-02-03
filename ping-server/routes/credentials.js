@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
-const { authMiddleware } = require('../auth');
-const { encryptCredentials, decryptCredentials } = require('../crypto-utils');
+const db = require('../src/db');
+const { authMiddleware } = require('../src/auth');
+const { encryptCredentials, decryptCredentials } = require('../src/crypto-utils');
 
 // Get all credentials for the current user
 router.get('/credentials', authMiddleware, async (req, res) => {

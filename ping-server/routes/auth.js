@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const db = require('../db');
-const { authMiddleware, generateToken } = require('../auth');
+const db = require('../src/db');
+const { authMiddleware, generateToken } = require('../src/auth');
 
 // Helper function to send recovery email (will be passed from server.js)
 let sendRecoveryEmail;

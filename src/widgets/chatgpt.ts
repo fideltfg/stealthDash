@@ -68,13 +68,13 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       gap: 8px;
     `;
     headerLeft.innerHTML = `
-      <span>🤖</span>
+      <span><i class="fas fa-robot"></i></span>
       <span>ChatGPT (${content.model})</span>
     `;
     
     // Settings button - always visible for now to debug
     const settingsBtn = document.createElement('button');
-    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.innerHTML = '<i class="fas fa-cog"></i>';
     settingsBtn.title = 'Settings';
     settingsBtn.style.cssText = `
       background: rgba(255, 255, 255, 0.3);
@@ -127,9 +127,9 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         text-align: center;
       `;
       setupMsg.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px;">⚠️ API Key Required</div>
+        <div style="font-weight: bold; margin-bottom: 8px;"><i class="fas fa-exclamation-triangle"></i> API Key Required</div>
         <div style="font-size: 12px; opacity: 0.8;">
-          Click the widget to select it, then click the ⚙️ settings button to add your API key.<br>
+          Click the widget to select it, then click the <i class="fas fa-cog"></i> settings button to add your API key.<br>
           Get yours at <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #2196F3;">platform.openai.com</a>
         </div>
       `;
@@ -310,7 +310,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         
         const errorMsg = {
           role: 'assistant' as const,
-          content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+          content: `<i class=\"fas fa-times\"></i> Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
           timestamp: Date.now()
         };
         content.messages.push(errorMsg);
@@ -648,7 +648,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'chatgpt',
   name: 'ChatGPT',
-  icon: '🤖',
+  icon: '<i class="fas fa-robot"></i>',
   description: 'Chat with OpenAI GPT models',
   renderer: new ChatGPTWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },

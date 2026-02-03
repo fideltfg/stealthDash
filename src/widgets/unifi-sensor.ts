@@ -72,7 +72,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div class="unifi-sensor-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
         <div class="sensor-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; color: var(--text); font-size: 18px; font-weight: 600;">🌡️ Environmental Sensors</h3>
+          <h3 style="margin: 0; color: var(--text); font-size: 18px; font-weight: 600;"><i class="fas fa-thermometer-half"></i> Environmental Sensors</h3>
           <button class="refresh-btn" style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
             Refresh
           </button>
@@ -177,7 +177,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
       return `
         <div class="sensor-card" style="background: var(--widget-surface); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; border: 1px solid var(--border);">
           <div style="display: flex; align-items: center; margin-bottom: 12px;">
-            <div style="font-size: 32px; margin-right: 12px;">🌡️</div>
+            <div style="font-size: 32px; margin-right: 12px;"><i class="fas fa-thermometer-half"></i></div>
             <div style="flex: 1;">
               <div style="font-weight: 600; color: var(--text); font-size: 16px;">${sensor.name || 'Environmental Sensor'}</div>
               <div style="font-size: 12px; color: var(--text-secondary);">${sensor.model || 'Unknown Model'}</div>
@@ -254,7 +254,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
       <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
-        <div style="font-size: 48px; margin-bottom: 16px;">🌡️</div>
+        <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-thermometer-half"></i></div>
         <h3 style="margin-bottom: 8px; color: var(--text);">Environmental Sensors Not Configured</h3>
         <p style="margin-bottom: 16px;">Click the button below to configure your UniFi Protect connection</p>
         <button class="config-btn" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">
@@ -411,7 +411,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
 export const widget = {
   type: 'unifi-sensor',
   name: 'UniFi Environmental Sensors',
-  icon: '🌡️',
+  icon: '<i class="fas fa-thermometer-half"></i>',
   description: 'Monitor temperature, humidity, and light from USL-Environmental devices',
   renderer: new UnifiSensorRenderer(),
   defaultSize: { w: 400, h: 400 },

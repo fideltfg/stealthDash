@@ -110,7 +110,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     inputContainer.style.gap = '12px';
     
     const icon = document.createElement('div');
-    icon.textContent = '🌐';
+    icon.innerHTML = '<i class="fas fa-globe"></i>';
     icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
@@ -200,7 +200,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'embed',
   name: 'Embed',
-  icon: '🌐',
+  icon: '<i class="fas fa-globe"></i>',
   description: 'Embed websites via iframe',
   renderer: new EmbedWidgetRenderer(),
   defaultSize: { w: 600, h: 400 },

@@ -522,10 +522,10 @@ class PiholeRenderer implements WidgetRenderer {
 
         <!-- Main Stats -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-          ${this.createStatCard('Queries Today', this.formatNumber(data.queries.total), '📊', '#2196f3')}
+          ${this.createStatCard('Queries Today', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
-          ${this.createStatCard('Block %', blockedPercentage + '%', '📈', statusColor)}
-          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '📋', '#ff9800')}
+          ${this.createStatCard('Block %', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
+          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
         </div>
 
         <!-- Query Types -->
@@ -568,17 +568,17 @@ class PiholeRenderer implements WidgetRenderer {
 
         <!-- Primary Stats -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-          ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '📊', '#2196f3', true)}
+          ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3', true)}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336', true)}
-          ${this.createStatCard('Block Rate', blockedPercentage + '%', '📈', statusColor, true)}
+          ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor, true)}
         </div>
 
         <!-- Secondary Stats -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '📋', '#ff9800', true)}
-          ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '🌐', '#9c27b0', true)}
+          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800', true)}
+          ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0', true)}
           ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4', true)}
-          ${this.createStatCard('Cached', this.formatNumber(data.queries.cached), '💾', '#607d8b', true)}
+          ${this.createStatCard('Cached', this.formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b', true)}
         </div>
 
         <!-- Gravity Update -->
@@ -622,7 +622,7 @@ class PiholeRenderer implements WidgetRenderer {
 export const widget = {
   type: 'pihole',
   name: 'Pi-hole',
-  icon: '🕳️',
+  icon: '<i class="fas fa-shield-alt"></i>',
   description: 'Display Pi-hole DNS statistics and blocking information',
   renderer: new PiholeRenderer(),
   defaultSize: { w: 400, h: 500 },

@@ -376,7 +376,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'clock',
   name: 'Clock',
-  icon: '🕐',
+  icon: '<i class="fas fa-clock"></i>',
   description: 'World clock with timezone support',
   renderer: new ClockWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },

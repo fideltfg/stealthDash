@@ -72,7 +72,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       <div class="calendar-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
         <div class="calendar-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
           <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;">📅</span>
+            <span style="font-size: 24px;"><i class="fas fa-calendar"></i></span>
             <span>Calendar</span>
           </h3>
         </div>
@@ -148,10 +148,10 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         console.error('Error fetching calendar data:', error);
         contentEl.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #f44336;">
-            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-exclamation-triangle"></i></div>
             <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Error loading calendar</div>
             <div style="font-size: 12px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check your credentials in the user menu (🔐 Credentials)</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check your credentials in the user menu (<i class="fas fa-key"></i> Credentials)</div>
           </div>
         `;
       }
@@ -176,13 +176,13 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--surface);">
         <div style="text-align: center; max-width: 400px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+          <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-calendar"></i></div>
           <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">Configure Google Calendar</h3>
           <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--muted);">
             Connect your Google Calendar to display upcoming events
           </p>
           <p style="margin: 0 0 24px 0; font-size: 12px; color: var(--muted);">
-            💡 Tip: Create credentials first from the user menu (🔐 Credentials)
+            <i class="fas fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fas fa-key"></i> Credentials)
           </p>
           <button id="configure-calendar-btn" style="
             padding: 12px 24px;
@@ -251,7 +251,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     modal.innerHTML = `
       <div style="margin-bottom: 20px;">
         <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: var(--text);">
-          📅 Google Calendar Configuration
+          <i class="fas fa-calendar"></i> Google Calendar Configuration
         </h2>
         <p style="margin: 0; font-size: 14px; color: var(--muted);">
           Configure your Google Calendar connection
@@ -281,7 +281,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             ${credentialOptions}
           </select>
           <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Create Google Calendar credentials from the user menu (🔐 Credentials). Include Calendar ID and API Key.
+            Create Google Calendar credentials from the user menu (<i class="fas fa-key"></i> Credentials). Include Calendar ID and API Key.
           </small>
         </div>
 
@@ -495,7 +495,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     if (!events || events.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
           <div style="font-size: 14px;">No upcoming events</div>
         </div>
       `;
@@ -528,7 +528,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               </div>
               <div style="font-size: 12px; color: var(--muted);">
                 ${isAllDay ? 'All day' : this.formatTime(startDate)}
-                ${event.location ? `<span style="margin-left: 8px;">📍 ${this.escapeHtml(event.location)}</span>` : ''}
+                ${event.location ? `<span style="margin-left: 8px;"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}</span>` : ''}
               </div>
             </div>
             <div style="font-size: 11px; color: var(--muted); white-space: nowrap;">
@@ -550,7 +550,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     if (!events || events.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
           <div style="font-size: 14px;">No upcoming events</div>
         </div>
       `;
@@ -588,7 +588,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           </div>
           ${event.location ? `
             <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-              <span>📍</span>
+              <span><i class="fas fa-map-marker-alt"></i></span>
               <span>${this.escapeHtml(event.location)}</span>
             </div>
           ` : ''}
@@ -599,7 +599,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           ` : ''}
           ${event.attendees && event.attendees.length > 0 ? `
             <div style="font-size: 11px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
-              👥 ${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}
+              <i class="fas fa-users"></i> ${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}
             </div>
           ` : ''}
         </div>
@@ -617,7 +617,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     if (!events || events.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
           <div style="font-size: 14px;">No upcoming events</div>
         </div>
       `;
@@ -668,7 +668,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               </div>
               ${event.location ? `
                 <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
-                  📍 ${this.escapeHtml(event.location)}
+                  <i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}
                 </div>
               ` : ''}
             </div>
@@ -746,7 +746,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
 export const widget = {
   type: 'google-calendar',
   name: 'Google Calendar',
-  icon: '📅',
+  icon: '<i class="fas fa-calendar"></i>',
   description: 'Display upcoming events from Google Calendar',
   renderer: new GoogleCalendarRenderer(),
   defaultSize: { w: 400, h: 600 },

@@ -111,7 +111,7 @@ export class ImageWidgetRenderer implements WidgetRenderer {
       div.appendChild(img);
     } else {
       const placeholder = document.createElement('div');
-      placeholder.textContent = '🖼️ Click to configure image';
+      placeholder.innerHTML = '<i class="fas fa-image" style="margin-right: 8px;"></i> Click to configure image';
       placeholder.style.color = 'var(--muted)';
       placeholder.style.cursor = 'pointer';
       placeholder.addEventListener('click', () => {
@@ -127,7 +127,7 @@ export class ImageWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'image',
   name: 'Image',
-  icon: '🖼️',
+  icon: '<i class="fas fa-image"></i>',
   description: 'Display images from URLs',
   renderer: new ImageWidgetRenderer(),
   defaultSize: { w: 400, h: 400 },

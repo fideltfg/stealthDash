@@ -156,7 +156,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     inputContainer.style.gap = '12px';
     
     const icon = document.createElement('div');
-    icon.textContent = '📊';
+    icon.innerHTML = '<i class="fas fa-chart-bar"></i>';
     icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
@@ -548,7 +548,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'uptime',
   name: 'Uptime Monitor',
-  icon: '📊',
+  icon: '<i class="fas fa-chart-bar"></i>',
   description: 'Monitor uptime via ping',
   renderer: new UptimeWidgetRenderer(),
   defaultSize: { w: 500, h: 300 },

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
-const { authMiddleware } = require('../auth');
+const db = require('../src/db');
+const { authMiddleware } = require('../src/auth');
 
 // Save entire multi-dashboard state
 router.post('/save', authMiddleware, async (req, res) => {

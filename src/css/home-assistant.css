@@ -1,0 +1,514 @@
+/* Home Assistant Widget Styles */
+
+/* Entity Grid */
+.ha-entities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.ha-entities-grid.ha-drop-highlight {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+/* Main Container */
+.ha-main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 10px;
+}
+
+/* Entity Card */
+.ha-entity-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  transition: opacity 0.2s, border-color 0.2s, border-width 0.2s;
+  cursor: move;
+}
+
+.ha-entity-card.dragging {
+  opacity: 0.5;
+}
+
+.ha-entity-card.ha-drop-target {
+  border-color: #4CAF50;
+  border-width: 2px;
+}
+
+/* Entity Name */
+.ha-entity-name {
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+}
+
+/* Toggle Switch */
+.ha-toggle-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.ha-toggle-wrapper input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ha-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.ha-toggle-slider span {
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+/* Sensor Value */
+.ha-sensor-value {
+  font-size: 16px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Group Section */
+.ha-group-section {
+  /* background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px; */
+}
+
+.ha-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ha-group-title {
+  font-weight: 600;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ha-group-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ha-group-controls button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  font-size: 12px;
+}
+
+.ha-group-controls button:hover {
+  opacity: 1;
+}
+
+/* Context Menu */
+.ha-context-menu {
+  position: fixed;
+  background: rgba(30, 30, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.ha-context-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.ha-context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Dropdown Select */
+.ha-dropdown {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Modal/Dialog Styles */
+.ha-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.ha-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 500px;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+}
+
+.ha-dialog h3 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.ha-dialog-field {
+  margin-bottom: 15px;
+}
+
+.ha-dialog-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.ha-dialog-input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.ha-entity-list {
+  margin-bottom: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+}
+
+.ha-entity-list-item {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.ha-entity-list-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ha-entity-list-item.selected {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.ha-entity-list-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ha-entity-list-item-icon {
+  font-size: 20px;
+}
+
+.ha-entity-list-item-info {
+  flex: 1;
+}
+
+.ha-entity-list-item-name {
+  font-weight: 500;
+}
+
+.ha-entity-list-item-id {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ha-entity-list-item-domain {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+
+.ha-entity-list-message {
+  padding: 20px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.ha-entity-list-error {
+  padding: 20px;
+  text-align: center;
+  color: #f44336;
+}
+
+.ha-dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.ha-dialog-buttons-spaced {
+  justify-content: space-between;
+}
+
+.ha-dialog-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+}
+
+.ha-dialog-button-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.ha-dialog-button-save {
+  background: var(--accent);
+  color: white;
+  font-weight: 500;
+}
+
+.ha-dialog-button-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dialog title */
+.ha-dialog-title {
+  margin-top: 0;
+  color: var(--text);
+}
+
+/* Dialog hint text */
+.ha-dialog-hint {
+  display: block;
+  margin-top: 6px;
+  opacity: 0.7;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Manage entities list */
+.ha-manage-entities-list {
+  margin-bottom: 20px;
+}
+
+.ha-entity-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ha-entity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.ha-entity-item-info {
+  flex: 1;
+}
+
+.ha-entity-item-name {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.ha-entity-item-id {
+  font-size: 12px;
+  opacity: 0.7;
+  color: var(--muted);
+}
+
+.ha-entity-item-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.ha-entity-item-button:hover {
+  opacity: 0.9;
+}
+
+.ha-entity-item-button-edit {
+  background: var(--accent);
+  color: white;
+}
+
+.ha-entity-item-button-remove {
+  background: #f44336;
+  color: white;
+}
+
+/* Config prompt styles */
+.ha-config-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.ha-config-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-config-title {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-config-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.ha-config-field {
+  margin-bottom: 15px;
+}
+
+.ha-config-label {
+  display: block;
+  margin-bottom: 5px;
+  text-align: left;
+  color: var(--text);
+}
+
+.ha-config-input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.ha-config-hint {
+  display: block;
+  text-align: left;
+  margin-top: 5px;
+  opacity: 0.7;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ha-config-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ha-config-button:hover {
+  opacity: 0.9;
+}
+
+/* Empty state styles */
+.ha-empty-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.ha-empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-empty-title {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-empty-text {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-empty-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ha-empty-button:hover {
+  opacity: 0.9;
+}

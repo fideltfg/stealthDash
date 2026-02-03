@@ -4,9 +4,9 @@ const ping = require('ping');
 const ModbusRTU = require('modbus-serial');
 const snmp = require('net-snmp');
 const crypto = require('crypto');
-const db = require('../db');
-const { authMiddleware } = require('../auth');
-const { decryptCredentials } = require('../crypto-utils');
+const db = require('../src/db');
+const { authMiddleware } = require('../src/auth');
+const { decryptCredentials } = require('../src/crypto-utils');
 const { widgetMetadata } = require('../src/widgetMetadata');
 
 // Session caches to avoid rate limiting
@@ -391,6 +391,9 @@ router.post('/home-assistant/states', async (req, res) => {
   
   try {
     const fetch = (await import('node-fetch')).default;
+    console.log(`Fetching Home Assistant states from: ${url}/api/states`);
+    console.log(`Using ${credentialId ? 'credential ID: ' + credentialId : 'direct token'}`);
+    
     const response = await fetch(`${url}/api/states`, {
       headers: {
         'Authorization': `Bearer ${haToken}`,
@@ -399,12 +402,14 @@ router.post('/home-assistant/states', async (req, res) => {
     });
     
     if (!response.ok) {
+      console.error(`Home Assistant returned ${response.status}: ${response.statusText}`);
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
     const data = await response.json();
     res.json(data);
   } catch (error) {
+    console.error('Error in /home-assistant/states:', error);
     res.status(500).json({ error: error.message, success: false });
   }
 });

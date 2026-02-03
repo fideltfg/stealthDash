@@ -99,7 +99,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
       <div class="unifi-protect-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
         <div class="protect-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
           <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;">📹</span>
+            <span style="font-size: 24px;"><i class="fas fa-video"></i></span>
             <span>UniFi Protect</span>
           </h3>
           <button class="refresh-btn" style="background: var(--primary); color: white; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 14px;">
@@ -185,7 +185,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
       <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; background: var(--surface);">
-        <div style="font-size: 64px; margin-bottom: 16px;">📹</div>
+        <div style="font-size: 64px; margin-bottom: 16px;"><i class="fas fa-video"></i></div>
         <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">UniFi Protect Not Configured</h3>
         <p style="margin: 0 0 20px 0; color: var(--muted); font-size: 14px; max-width: 400px;">
           Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
@@ -474,7 +474,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
     if (cameras.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📹</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-video"></i></div>
           <div style="font-size: 14px;">No cameras found</div>
         </div>
       `;
@@ -526,7 +526,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
         ` : `
           <div style="width: 100%; height: 180px; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted);">
             <div style="text-align: center;">
-              <div style="font-size: 48px; margin-bottom: 8px;">📹</div>
+              <div style="font-size: 48px; margin-bottom: 8px;"><i class="fas fa-video"></i></div>
               <div style="font-size: 14px;">${isOnline ? 'Camera' : 'Offline'}</div>
             </div>
           </div>
@@ -623,7 +623,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
 export const widget = {
   type: 'unifi-protect',
   name: 'UniFi Protect',
-  icon: '📹',
+  icon: '<i class="fas fa-video"></i>',
   description: 'View UniFi Protect cameras and motion detections',
   renderer: new UnifiProtectRenderer(),
   defaultContent: {

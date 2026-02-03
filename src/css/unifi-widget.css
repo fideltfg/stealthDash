@@ -1,0 +1,41 @@
+/* UniFi Widget Styles */
+
+#unifi-clients-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Grid layout for wider widgets */
+@container (min-width: 600px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 900px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container (min-width: 1200px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.unifi-client-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  height: fit-content;
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.unifi-client-card.inactive {
+  opacity: 0.4;
+  filter: grayscale(1);
+  pointer-events: none;
+}

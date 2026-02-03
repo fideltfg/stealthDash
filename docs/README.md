@@ -7,15 +7,15 @@ A minimalist web dashboard with draggable, resizable widgets. Built with TypeScr
 
 ## Features
 
-- 🎯 **Zero-Chrome UI** - No sidebars or menus, just floating controls
-- 🧩 **15+ Widget Types** - Text, Image, Uptime, RSS, Weather, ChatGPT, Clock, and more
-- 👤 **Multi-User Auth** - Secure login, registration, and admin management
-- 🎨 **Theming** - Light, dark, and system theme with custom backgrounds
-- 🖱️ **Drag & Resize** - Intuitive controls with grid snapping
-- ⌨️ **Keyboard Navigation** - Full accessibility support
-- 💾 **Auto-Save** - Server-side persistence with PostgreSQL
-- � **Credential Management** - Secure storage for API keys and secrets
-- 🏓 **Network Monitoring** - Real-time uptime tracking with ping server
+- **Zero-Chrome UI** - No sidebars or menus, just floating controls
+- **15+ Widget Types** - Text, Image, Uptime, RSS, Weather, ChatGPT, Clock, and more
+- **Multi-User Auth** - Secure login, registration, and admin management
+- **Theming** - Light, dark, and system theme with custom backgrounds
+- **Drag & Resize** - Intuitive controls with grid snapping
+- **Keyboard Navigation** - Full accessibility support
+- **Auto-Save** - Server-side persistence with PostgreSQL
+- **Credential Management** - Secure storage for API keys and secrets
+- **Network Monitoring** - Real-time uptime tracking with ping server
 
 ## Quick Start
 
@@ -99,7 +99,7 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 - Changes save automatically
 
 **Delete Widget**
-- Click the ✕ button on widget header
+- Click the X button on widget header
 
 ### Keyboard Shortcuts
 
@@ -116,15 +116,15 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 ### Themes & Backgrounds
 
 **Change Theme**
-- Click the **🌓** button (bottom-left menu)
+- Click the theme button (bottom-left menu)
 - Cycles through: Light → Dark → System preference
 
 **Change Background**
-- Click the **◫** button (bottom-left menu)
+- Click the background button (bottom-left menu)
 - Options: Grid (default), Dots, Lines, Solid
 
 **Lock Dashboard**
-- Click the **🔒** button (top-right)
+- Click the lock button (top-right)
 - Prevents accidental widget changes
 - Hides edit controls
 
@@ -525,7 +525,7 @@ MIT License - see LICENSE file for details
 
 ---
 
-Built with ❤️ using TypeScript and Docker
+Built with TypeScript and Docker
 
 ## Widget Types
 
@@ -585,7 +585,7 @@ Tested on:
 
 ## Accessibility
 
-✅ **WCAG AA Compliant**
+**WCAG AA Compliant**
 
 - Keyboard navigation for all features
 - Visible focus indicators

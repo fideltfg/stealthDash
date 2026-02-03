@@ -186,4 +186,32 @@ router.post('/api/docker/containers/restart', async (req, res) => {
   }
 });
 
+// POST /api/docker/containers/logs - Get container logs
+router.post('/api/docker/containers/logs', async (req, res) => {
+  try {
+    const { host, credentialId, containerId, tail = 500 } = req.body;
+    
+    if (!host || !containerId) {
+      return res.status(400).json({ error: 'Docker host and container ID are required' });
+    }
+    
+    const tailParam = tail === 'all' ? 'all' : tail;
+    const endpoint = `/containers/${containerId}/logs?stdout=true&stderr=true&timestamps=true&tail=${tailParam}`;
+    const logs = await dockerRequest(host, endpoint, 'GET', credentialId);
+    
+    // Docker API returns logs in a special format with headers
+    // We need to handle both raw text and the special format
+    if (typeof logs === 'string') {
+      res.type('text/plain');
+      res.send(logs);
+    } else {
+      res.type('text/plain');
+      res.send(JSON.stringify(logs));
+    }
+  } catch (error) {
+    console.error('Docker logs error:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch container logs' });
+  }
+});
+
 module.exports = router;

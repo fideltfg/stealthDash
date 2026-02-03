@@ -236,13 +236,13 @@ class Dashboard {
     if (this.isLocked) {
       // Lock the dashboard
       app.classList.add('locked');
-      this.lockButton.innerHTML = '🔒';
+      this.lockButton.innerHTML = '<i class="fas fa-lock"></i>';
       this.lockButton.setAttribute('aria-label', 'Unlock dashboard');
       this.selectWidget(null);
     } else {
       // Unlock the dashboard
       app.classList.remove('locked');
-      this.lockButton.innerHTML = '🔓';
+      this.lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
       this.lockButton.setAttribute('aria-label', 'Lock dashboard');
     }
   }
@@ -532,7 +532,10 @@ class Dashboard {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    this.selectWidget(widgetId);
+    // Only select widget if shift key is pressed
+    if (e.shiftKey) {
+      this.selectWidget(widgetId);
+    }
 
     // Check if clicking resize handle
     if (target.classList.contains('resize-handle')) {
@@ -541,8 +544,8 @@ class Dashboard {
       return;
     }
 
-    // Start drag if clicking header or widget body
-    if (target.classList.contains('widget-header') || target.classList.contains('widget')) {
+    // Start drag if clicking header or widget body (only if shift is pressed)
+    if (e.shiftKey && (target.classList.contains('widget-header') || target.classList.contains('widget'))) {
       e.preventDefault();
       this.startDrag(widgetId, e);
     }
@@ -1552,7 +1555,7 @@ class Dashboard {
       // Public toggle button
       const publicBtn = document.createElement('button');
       const isPublic = (dashboard as any).isPublic || false;
-      publicBtn.innerHTML = isPublic ? '🌐' : '🔒';
+      publicBtn.innerHTML = isPublic ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-lock"></i>';
       publicBtn.title = isPublic ? 'Public (click to make private)' : 'Private (click to make public)';
       publicBtn.style.cssText = `
         padding: 6px 10px;
@@ -1819,9 +1822,16 @@ class Dashboard {
       activeDashboard.state = this.state;
       activeDashboard.updatedAt = Date.now();
 
-      // Save to server if authenticated (debounced)
+      console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
+        id: w.id,
+        type: w.type,
+        groups: w.content?.groups?.length || 0,
+        entities: w.content?.entities?.length || 0
+      })));
+
+      // Save to server if authenticated (immediate save for widget updates)
       if (authService.isAuthenticated()) {
-        dashboardStorage.saveDashboards(this.multiState).catch((err: any) => {
+        dashboardStorage.saveDashboards(this.multiState, true).catch((err: any) => {
           console.error('Failed to save dashboard to server:', err);
         });
       }
@@ -1928,7 +1938,7 @@ class Dashboard {
         padding: 40px;
       `;
       errorDiv.innerHTML = `
-        <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+        <div style="font-size: 64px; margin-bottom: 20px;"><i class="fas fa-lock"></i></div>
         <h1 style="margin-bottom: 12px;">Dashboard Not Available</h1>
         <p style="color: var(--muted); margin-bottom: 24px;">
           This dashboard is private or doesn't exist.

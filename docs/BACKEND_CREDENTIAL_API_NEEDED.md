@@ -33,7 +33,7 @@ The frontend widgets have been updated to use `credentialId` instead of storing 
 - `/home-assistant/states` - Get entity states
 - `/home-assistant/service` - Call service (turn on/off)
 
-**Status**: ✅ Already supports credentialId in request body
+**Status**: Already supports credentialId in request body
 
 **Request Format with credentialId**:
 ```
@@ -109,11 +109,11 @@ Credentials are stored in the `credentials` table with fields:
 - [ ] Rate limiting works correctly
 
 ## Frontend Widget Status
-- ✅ **ChatGPT**: Fully migrated to credentialId with legacy apiKey fallback
-- ✅ **Home Assistant**: Fully migrated to credentialId with legacy token fallback
-- ✅ **Pi-hole**: Already using credential system
-- ✅ **UniFi**: Already using credential system
-- ✅ **Google Calendar**: Already using credential system
-- ✅ **Weather**: Does not use credentials (free API)
+- **ChatGPT**: Fully migrated to credentialId with legacy apiKey fallback
+- **Home Assistant**: Fully migrated to credentialId with legacy token fallback
+- **Pi-hole**: Already using credential system
+- **UniFi**: Already using credential system
+- **Google Calendar**: Already using credential system
+- **Weather**: Does not use credentials (free API)
 
 All widgets that require credentials now support the credential system!

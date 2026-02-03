@@ -385,7 +385,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Weather
     if (content.showWeather && data.weather && data.weather.temperature) {
-      const weatherSection = this.createSection('🌤️ Current Weather', [
+      const weatherSection = this.createSection('<i class="fas fa-cloud-sun"></i> Current Weather', [
         { label: 'Condition', value: data.weather.condition || 'N/A' },
         { label: 'Temperature', value: `${data.weather.temperature}°` },
         { label: 'Wind', value: `${data.weather.windSpeed} ${data.weather.windDirection}` }
@@ -518,7 +518,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
-      const status = item.status === 'open' ? '✅' : '❌';
+      const status = item.status === 'open' ? '<i class="fas fa-check-circle" style="color: #4caf50;"></i>' : '<i class="fas fa-times-circle" style="color: #f44336;"></i>';
       const row = document.createElement('div');
       row.style.cssText = `
         display: flex;
@@ -743,7 +743,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 export const widget = {
   type: 'mtnxml',
   name: 'Mountain XML',
-  icon: '⛷️',
+  icon: '<i class="fas fa-skiing"></i>',
   description: 'Display ski resort conditions from MTNXML feeds',
   renderer: new MTNXMLWidgetRenderer(),
   defaultSize: { w: 350, h: 500 },

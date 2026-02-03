@@ -2,7 +2,7 @@
 
 Complete documentation for the StealthDash monitoring system.
 
-## 📚 Main Documentation
+## Main Documentation
 
 ### [README.md](./README.md) - Start Here
 Complete guide covering:
@@ -31,7 +31,7 @@ Production deployment guide:
 - Cloud deployment (AWS, DigitalOcean, GCP)
 - Security hardening
 
-## 🔧 Technical Documentation
+## Technical Documentation
 
 ### [src/widgets/README.md](./src/widgets/README.md) - Widget Architecture
 Developer guide for widget system:
@@ -48,7 +48,7 @@ Backend service documentation:
 - Session caching
 - Device protocols (SNMP, Modbus)
 
-## 🎨 Customization
+## Customization
 
 ### [Docs/THEMING.md](./Docs/THEMING.md) - Theme Customization
 Theme system documentation:
@@ -57,7 +57,7 @@ Theme system documentation:
 - Creating custom themes
 - Accessibility guidelines
 
-## �� Integration Examples
+## Integration Examples
 
 ### [Docs/SENSOR_GRAPH_API_EXAMPLE.md](./Docs/SENSOR_GRAPH_API_EXAMPLE.md)
 PHP API endpoint examples for sensor data integration.
@@ -82,13 +82,3 @@ PHP API endpoint examples for sensor data integration.
 - Security: [DEPLOYMENT.md#security-hardening](./DEPLOYMENT.md#security-hardening)
 - Backup: [DEPLOYMENT.md#database-backup](./DEPLOYMENT.md#database-backup)
 
----
-
-## Documentation Statistics
-
-- **Main Guides**: 3 files (2,116 lines)
-- **Technical Docs**: 2 files
-- **Customization**: 2 files
-- **Total**: 8 documentation files
-
-**Clean, Focused, Complete** ✨

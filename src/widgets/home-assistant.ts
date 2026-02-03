@@ -15,15 +15,25 @@ interface HomeAssistantEntity {
   last_updated?: string;
 }
 
+interface EntityConfig {
+  entity_id: string;
+  display_name?: string;
+  type: 'switch' | 'light' | 'sensor';
+}
+
+interface EntityGroup {
+  id: string;
+  label: string;
+  entities: EntityConfig[];
+  collapsed?: boolean;
+}
+
 interface HomeAssistantContent {
   url?: string;
   token?: string; // Deprecated - use credentialId
   credentialId?: number;
-  entities?: {
-    entity_id: string;
-    display_name?: string;
-    type: 'switch' | 'light' | 'sensor';
-  }[];
+  entities?: EntityConfig[]; // Ungrouped entities
+  groups?: EntityGroup[];
   refreshInterval?: number; // seconds
 }
 
@@ -47,16 +57,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Add dropdown for bulk actions
     const dropdown = document.createElement('select');
-    dropdown.className = 'widget-settings-btn';
-    dropdown.style.cssText = `
-      padding: 4px 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      color: var(--text);
-      cursor: pointer;
-      font-size: 12px;
-    `;
+    dropdown.className = 'widget-settings-btn ha-dropdown';
     dropdown.innerHTML = `
       <option value="">Actions...</option>
       <option value="all-on">Turn All On</option>
@@ -115,7 +116,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     
     dropdown.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-    return [dropdown, entitiesBtn];
+    // Add group button
+    const groupBtn = document.createElement('button');
+    groupBtn.innerHTML = '+';
+    groupBtn.title = 'Create new group';
+    groupBtn.className = 'widget-settings-btn';
+    groupBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.createNewGroup(widget);
+    };
+    groupBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    return [groupBtn, dropdown, entitiesBtn];
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
@@ -128,8 +140,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       return;
     }
 
-    // If no entities configured, show add entities prompt
-    if (!content.entities || content.entities.length === 0) {
+    // Check if there are any entities (either ungrouped or in groups)
+    const hasUngroupedEntities = content.entities && content.entities.length > 0;
+    const hasGroupedEntities = content.groups && content.groups.some(g => g.entities && g.entities.length > 0);
+    
+    // If no entities configured anywhere, show add entities prompt
+    if (!hasUngroupedEntities && !hasGroupedEntities) {
       this.renderNoEntitiesPrompt(container, widget);
       return;
     }
@@ -143,26 +159,26 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const prompt = document.createElement('div');
     prompt.className = 'config-prompt';
     prompt.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
-        <div style="font-size: 48px; margin-bottom: 20px;">🏠</div>
-        <h3 style="margin-bottom: 20px;">Configure Home Assistant</h3>
-        <div style="max-width: 400px; margin: 0 auto;">
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; text-align: left;">Home Assistant URL:</label>
+      <div class="ha-config-container">
+        <div class="ha-config-icon"><i class="fas fa-home"></i></div>
+        <h3 class="ha-config-title">Configure Home Assistant</h3>
+        <div class="ha-config-form">
+          <div class="ha-config-field">
+            <label class="ha-config-label">Home Assistant URL:</label>
             <input type="text" id="ha-url" placeholder="http://homeassistant.local:8123" 
-                   style="width: 100%; padding: 8px; box-sizing: border-box;" 
+                   class="ha-config-input" 
                    value="${content.url || ''}">
           </div>
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; text-align: left;">Credentials:</label>
-            <select id="ha-credential" style="width: 100%; padding: 8px; box-sizing: border-box;">
+          <div class="ha-config-field">
+            <label class="ha-config-label">Credentials:</label>
+            <select id="ha-credential" class="ha-config-input">
               <option value="">Select saved credential...</option>
             </select>
-            <small style="display: block; text-align: left; margin-top: 5px; opacity: 0.7;">
-              💡 Tip: Create Home Assistant credentials from the user menu (🔐 Credentials). Store your long-lived access token from Profile → Security → Long-Lived Access Tokens
+            <small class="ha-config-hint">
+              <i class="fas fa-lightbulb"></i> Tip: Create Home Assistant credentials from the user menu (<i class="fas fa-key"></i> Credentials). Store your long-lived access token from Profile → Security → Long-Lived Access Tokens
             </small>
           </div>
-          <button id="save-ha-config" style="padding: 10px 20px; cursor: pointer;">
+          <button id="save-ha-config" class="ha-config-button">
             Save Configuration
           </button>
         </div>
@@ -226,11 +242,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const prompt = document.createElement('div');
     prompt.className = 'no-entities-prompt';
     prompt.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
-        <div style="font-size: 48px; margin-bottom: 20px;">🏠</div>
-        <h3 style="margin-bottom: 20px;">No Entities Added</h3>
-        <p style="margin-bottom: 20px;">Add Home Assistant entities to monitor and control.</p>
-        <button id="add-entity-btn" style="padding: 10px 20px; cursor: pointer;">
+      <div class="ha-empty-state">
+        <div class="ha-empty-icon"><i class="fas fa-home"></i></div>
+        <h3 class="ha-empty-title">No Entities Added</h3>
+        <p class="ha-empty-text">Add Home Assistant entities to monitor and control.</p>
+        <button id="add-entity-btn" class="ha-empty-button">
           + Add Entity
         </button>
       </div>
@@ -247,79 +263,189 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private async renderEntities(container: HTMLElement, widget: Widget): Promise<void> {
     const content = widget.content as HomeAssistantContent;
 
-    // Create grid container first
-    const grid = document.createElement('div');
-    grid.className = 'ha-entities-grid';
-    grid.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-      padding: 10px;
-    `;
-    container.appendChild(grid);
+    // Create main container
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'ha-main-container';
+    container.appendChild(mainContainer);
 
-    // Add floating action buttons
-    container.style.position = 'relative';
-
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'ha-floating-buttons';
-    buttonContainer.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      display: flex;
-      gap: 8px;
-      z-index: 100;
-    `;
-
-    // Entities button
-    // get the entitiesBtn 
-
-
-
-
-    // buttonContainer.appendChild(entitiesBtn);
-    // container.appendChild(buttonContainer);
-
-    // Render each entity with loading state
     const entities = content.entities || [];
-    for (const entity of entities) {
-      const card = this.createEntityCard(entity, widget, container);
-      grid.appendChild(card);
+    const groups = content.groups || [];
+
+    // Render ungrouped entities (without a section header)
+    if (entities.length > 0) {
+      const ungroupedGrid = document.createElement('div');
+      ungroupedGrid.className = 'ha-entities-grid';
+
+      // Make it a drop zone for ungrouped entities
+      ungroupedGrid.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer!.dropEffect = 'move';
+        ungroupedGrid.classList.add('ha-drop-highlight');
+      });
+
+      ungroupedGrid.addEventListener('dragleave', (e) => {
+        if (e.target === ungroupedGrid) {
+          ungroupedGrid.classList.remove('ha-drop-highlight');
+        }
+      });
+
+      ungroupedGrid.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        ungroupedGrid.classList.remove('ha-drop-highlight');
+
+        const dragData = e.dataTransfer!.getData('text/plain');
+        const [sourceGroupId, entityId] = dragData.split('|');
+
+        if (sourceGroupId !== 'ungrouped') {
+          await this.moveEntityToGroup(widget, entityId, sourceGroupId, 'ungrouped');
+        }
+      });
+
+      entities.forEach((entity, index) => {
+        const card = this.createEntityCard(entity, widget, `ungrouped-${index}`, null);
+        ungroupedGrid.appendChild(card);
+      });
+
+      mainContainer.appendChild(ungroupedGrid);
     }
+
+    // Render each group
+    groups.forEach((group) => {
+      const groupSection = this.createSection(group.label, group, widget);
+      mainContainer.appendChild(groupSection);
+      
+      const groupGrid = groupSection.querySelector('.ha-entities-grid') as HTMLElement;
+      group.entities.forEach((entity, index) => {
+        const card = this.createEntityCard(entity, widget, `${group.id}-${index}`, group.id);
+        groupGrid.appendChild(card);
+      });
+    });
 
     // Fetch current states and update cards
     await this.fetchEntityStates(widget);
-    this.updateEntityCards(widget, grid);
+    this.updateEntityCards(widget, mainContainer);
 
     // Start auto-refresh
-    this.startAutoRefresh(widget, grid);
+    this.startAutoRefresh(widget, mainContainer);
   }
 
   private createEntityCard(
-    entity: { entity_id: string; display_name?: string; type: 'switch' | 'light' | 'sensor' },
+    entity: EntityConfig,
     widget: Widget,
-    container: HTMLElement
+    cardId: string,
+    groupId: string | null
   ): HTMLElement {
     const widgetStates = this.entityStates.get(widget.id) || new Map();
     const state = widgetStates.get(entity.entity_id);
     const card = document.createElement('div');
     card.className = 'ha-entity-card';
-    card.style.cssText = `
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    `;
+    card.draggable = true;
+    card.dataset.cardId = cardId;
+    card.dataset.entityId = entity.entity_id;
+    card.dataset.groupId = groupId || 'ungrouped';
+
+    // Drag handlers
+    card.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      card.classList.add('dragging');
+      e.dataTransfer!.effectAllowed = 'move';
+      const sourceGroupId = card.dataset.groupId || 'ungrouped';
+      e.dataTransfer!.setData('text/plain', `${sourceGroupId}|${entity.entity_id}`);
+    });
+    
+    card.addEventListener('dragend', (e) => {
+      e.stopPropagation();
+      card.classList.remove('dragging');
+    });
+
+    // Make card a drop target for reordering within same group
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const dragging = document.querySelector('.dragging');
+      if (dragging && dragging !== card) {
+        e.dataTransfer!.dropEffect = 'move';
+        card.classList.add('ha-drop-target');
+      }
+    });
+
+    card.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove('ha-drop-target');
+    });
+
+    card.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove('ha-drop-target');
+      
+      const dragData = e.dataTransfer!.getData('text/plain');
+      const [sourceGroupId, draggedEntityId] = dragData.split('|');
+      const targetGroupId = card.dataset.groupId || 'ungrouped';
+      const targetEntityId = entity.entity_id;
+
+      if (draggedEntityId !== targetEntityId) {
+        if (sourceGroupId === targetGroupId) {
+          // Reorder within same group
+          await this.reorderEntity(widget, draggedEntityId, targetEntityId, targetGroupId);
+        } else {
+          // Move between groups and place before target
+          await this.moveEntityToGroup(widget, draggedEntityId, sourceGroupId, targetGroupId, targetEntityId);
+        }
+      }
+    });
+
+    // Context menu for ungrouping
+    if (groupId) {
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Remove any existing context menus
+        document.querySelectorAll('.ha-context-menu').forEach(m => m.remove());
+        
+        // Create context menu
+        const menu = document.createElement('div');
+        menu.className = 'ha-context-menu';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        
+        const ungroupOption = document.createElement('div');
+        ungroupOption.className = 'ha-context-menu-item';
+        ungroupOption.textContent = '↑ Ungroup';
+        
+        ungroupOption.addEventListener('click', async () => {
+          await this.moveEntityToGroup(widget, entity.entity_id, groupId, 'ungrouped');
+          if (menu.parentNode) {
+            document.body.removeChild(menu);
+          }
+        });
+        
+        menu.appendChild(ungroupOption);
+        document.body.appendChild(menu);
+        
+        // Close menu on any click outside
+        const closeMenu = (e: MouseEvent) => {
+          if (!menu.contains(e.target as Node)) {
+            if (menu.parentNode) {
+              document.body.removeChild(menu);
+            }
+            document.removeEventListener('click', closeMenu);
+          }
+        };
+        
+        setTimeout(() => {
+          document.addEventListener('click', closeMenu);
+        }, 0);
+      });
+    }
 
     // Entity name
     const name = document.createElement('div');
-    name.style.cssText = 'font-weight: 500; font-size: 14px; flex: 1;';
+    name.className = 'ha-entity-name';
     name.textContent = entity.display_name || state?.attributes.friendly_name || entity.entity_id;
     card.appendChild(name);
 
@@ -329,56 +455,38 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       // Toggle switch wrapper
       const toggleWrapper = document.createElement('label');
       toggleWrapper.className = 'ha-toggle-wrapper';
-      toggleWrapper.style.cssText = `
-        position: relative;
-        display: inline-block;
-        width: 48px;
-        height: 24px;
-        cursor: pointer;
-      `;
 
       // Hidden checkbox for state
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = state?.state === 'on';
-      checkbox.style.cssText = 'opacity: 0; width: 0; height: 0;';
 
       // Slider
       const slider = document.createElement('span');
       slider.className = 'ha-toggle-slider';
-      slider.style.cssText = `
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: ${state?.state === 'on' ? '#4CAF50' : '#666'};
-        transition: 0.3s;
-        border-radius: 24px;
-      `;
+      slider.style.background = state?.state === 'on' ? '#4CAF50' : '#666';
 
       // Slider button
       const sliderButton = document.createElement('span');
-      sliderButton.style.cssText = `
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: ${state?.state === 'on' ? '27px' : '3px'};
-        bottom: 3px;
-        background-color: white;
-        transition: 0.3s;
-        border-radius: 50%;
-      `;
+      sliderButton.style.left = state?.state === 'on' ? '27px' : '3px';
       slider.appendChild(sliderButton);
 
       toggleWrapper.appendChild(checkbox);
       toggleWrapper.appendChild(slider);
 
+      // Prevent dragging when interacting with the toggle
+      toggleWrapper.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+      });
+      toggleWrapper.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
       // Click handler
       toggleWrapper.addEventListener('click', async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         
         // Show loading state
         const isCurrentlyOn = checkbox.checked;
@@ -388,11 +496,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
         try {
           await this.toggleEntity(entity.entity_id, widget);
-          // Refresh state and update cards (don't re-render everything)
+          // Refresh state and update cards
           await this.fetchEntityStates(widget);
-          const grid = container.querySelector('.ha-entities-grid') as HTMLElement;
-          if (grid) {
-            this.updateEntityCards(widget, grid);
+          const widgetElement = document.querySelector(`[data-widget-id="${widget.id}"]`);
+          if (widgetElement) {
+            const mainContainer = widgetElement.querySelector('.widget-content') as HTMLElement;
+            if (mainContainer) {
+              this.updateEntityCards(widget, mainContainer);
+            }
           }
         } catch (error) {
           // Restore original state on error
@@ -407,50 +518,69 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       toggleWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 
       card.appendChild(toggleWrapper);
+    } else if (entity.type === 'sensor') {
+      // Display sensor value
+      const valueDisplay = document.createElement('div');
+      valueDisplay.className = 'ha-sensor-value';
+      
+      if (state) {
+        const unit = state.attributes.unit_of_measurement || '';
+        valueDisplay.textContent = `${state.state} ${unit}`.trim();
+        valueDisplay.style.color = '#4CAF50';
+      } else {
+        valueDisplay.textContent = '—';
+        valueDisplay.style.color = '#666';
+      }
+      
+      card.appendChild(valueDisplay);
     }
 
     return card;
   }
 
-  private updateEntityCards(widget: Widget, grid: HTMLElement): void {
-    const content = widget.content as HomeAssistantContent;
-    const entities = content.entities || [];
+  private updateEntityCards(widget: Widget, mainContainer: HTMLElement): void {
     const widgetStates = this.entityStates.get(widget.id) || new Map();
 
-    // Update entity cards
-    const cards = grid.querySelectorAll('.ha-entity-card');
-    entities.forEach((entity, index) => {
-      const state = widgetStates.get(entity.entity_id);
-      const card = cards[index] as HTMLElement;
-      if (card) {
-        // Update entity name if we got friendly name from state
-        if (state?.attributes.friendly_name && !entity.display_name) {
-          const nameDiv = card.querySelector('div:first-child') as HTMLElement;
-          if (nameDiv) {
-            nameDiv.textContent = state.attributes.friendly_name;
-          }
-        }
+    // Update all entity cards - find by entity-id data attribute
+    mainContainer.querySelectorAll('[data-entity-id]').forEach((card) => {
+      const htmlCard = card as HTMLElement;
+      const entityId = htmlCard.dataset.entityId;
+      if (!entityId) return;
 
-        // Update toggle switch for switches/lights
-        if (state && (entity.type === 'switch' || entity.type === 'light')) {
-          const checkbox = card.querySelector('input[type="checkbox"]') as HTMLInputElement;
-          const slider = card.querySelector('.ha-toggle-slider') as HTMLElement;
-          const sliderButton = slider?.querySelector('span') as HTMLElement;
-          const toggleWrapper = card.querySelector('.ha-toggle-wrapper') as HTMLElement;
+      const state = widgetStates.get(entityId);
+      if (!state) return;
 
-          if (checkbox && slider && sliderButton) {
-            const isOn = state.state === 'on';
-            checkbox.checked = isOn;
-            slider.style.background = isOn ? '#4CAF50' : '#666';
-            sliderButton.style.left = isOn ? '27px' : '3px';
-            // Restore interactive state
-            slider.style.opacity = '1';
-            slider.style.cursor = 'pointer';
-            if (toggleWrapper) {
-              toggleWrapper.style.pointerEvents = 'auto';
-            }
-          }
+      // Update entity name if we got friendly name from state
+      const nameDiv = htmlCard.querySelector('.ha-entity-name') as HTMLElement;
+      if (nameDiv && state.attributes.friendly_name) {
+        nameDiv.textContent = state.attributes.friendly_name;
+      }
+
+      // Update toggle switch for switches/lights
+      const checkbox = htmlCard.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      const slider = htmlCard.querySelector('.ha-toggle-slider') as HTMLElement;
+      const sliderButton = slider?.querySelector('span') as HTMLElement;
+      const toggleWrapper = htmlCard.querySelector('.ha-toggle-wrapper') as HTMLElement;
+
+      if (checkbox && slider && sliderButton) {
+        const isOn = state.state === 'on';
+        checkbox.checked = isOn;
+        slider.style.background = isOn ? '#4CAF50' : '#666';
+        sliderButton.style.left = isOn ? '27px' : '3px';
+        // Restore interactive state
+        slider.style.opacity = '1';
+        slider.style.cursor = 'pointer';
+        if (toggleWrapper) {
+          toggleWrapper.style.pointerEvents = 'auto';
         }
+      }
+      
+      // Update sensor value
+      const valueDisplay = htmlCard.querySelector('.ha-sensor-value') as HTMLElement;
+      if (valueDisplay) {
+        const unit = state.attributes.unit_of_measurement || '';
+        valueDisplay.textContent = `${state.state} ${unit}`.trim();
+        valueDisplay.style.color = '#4CAF50';
       }
     });
   }
@@ -674,99 +804,29 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'ha-modal-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      min-width: 500px;
-      max-width: 600px;
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      color: var(--text);
-    `;
+    dialog.className = 'ha-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0; color: var(--text);">Add Entity</h3>
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Search Entity:</label>
-        <input type="text" id="entity-search" placeholder="Search entities..." 
-               style="
-                 width: 100%; 
-                 padding: 10px; 
-                 box-sizing: border-box;
-                 background: var(--background);
-                 color: var(--text);
-                 border: 1px solid var(--border);
-                 border-radius: 6px;
-                 font-size: 14px;
-               ">
+      <h3>Add Entity</h3>
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">Search Entity:</label>
+        <input type="text" id="entity-search" placeholder="Search entities..." class="ha-dialog-input">
       </div>
-      <div id="entity-list-container" style="
-        margin-bottom: 15px;
-        max-height: 300px;
-        overflow-y: auto;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        background: var(--background);
-      ">
-        <div style="padding: 20px; text-align: center; opacity: 0.7;">
+      <div id="entity-list-container" class="ha-entity-list">
+        <div class="ha-entity-list-message">
           Loading entities...
         </div>
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Display Name (optional):</label>
-        <input type="text" id="display-name" placeholder="Custom display name" 
-               style="
-                 width: 100%; 
-                 padding: 10px; 
-                 box-sizing: border-box;
-                 background: var(--background);
-                 color: var(--text);
-                 border: 1px solid var(--border);
-                 border-radius: 6px;
-                 font-size: 14px;
-               ">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">Display Name (optional):</label>
+        <input type="text" id="display-name" placeholder="Custom display name" class="ha-dialog-input">
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-entity" style="
-          padding: 10px 20px; 
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">Cancel</button>
-        <button id="save-entity" disabled style="
-          padding: 10px 20px; 
-          cursor: pointer; 
-          background: var(--accent); 
-          color: white; 
-          border: none; 
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-          opacity: 0.5;
-        ">
-          Add Entity
-        </button>
+      <div class="ha-dialog-buttons">
+        <button id="cancel-entity" class="ha-dialog-button ha-dialog-button-cancel">Cancel</button>
+        <button id="save-entity" disabled class="ha-dialog-button ha-dialog-button-save">Add Entity</button>
       </div>
     `;
 
@@ -788,7 +848,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       if (allEntities.length === 0) {
         entityListContainer.innerHTML = `
-          <div style="padding: 20px; text-align: center; opacity: 0.7;">
+          <div class="ha-entity-list-message">
             No entities found in Home Assistant
           </div>
         `;
@@ -797,7 +857,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
     } catch (error) {
       entityListContainer.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #f44336;">
+        <div class="ha-entity-list-error">
           Failed to load entities: ${error}
         </div>
       `;
@@ -806,7 +866,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     function renderEntityList(entities: HomeAssistantEntity[]) {
       if (entities.length === 0) {
         entityListContainer.innerHTML = `
-          <div style="padding: 20px; text-align: center; opacity: 0.7;">
+          <div class="ha-entity-list-message">
             No matching entities found
           </div>
         `;
@@ -816,46 +876,30 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       entityListContainer.innerHTML = '';
       entities.forEach(entity => {
         const item = document.createElement('div');
-        item.className = 'entity-list-item';
-        item.style.cssText = `
-          padding: 12px;
-          cursor: pointer;
-          border-bottom: 1px solid var(--border);
-          transition: background 0.2s;
-        `;
+        item.className = 'ha-entity-list-item';
         
         const domain = entity.entity_id.split('.')[0];
-        const icon = domain === 'light' ? '💡' : domain === 'switch' ? '🔌' : domain === 'sensor' ? '📊' : '🏠';
+        const icon = domain === 'light' ? '<i class="fas fa-lightbulb"></i>' : domain === 'switch' ? '<i class="fas fa-plug"></i>' : domain === 'sensor' ? '<i class="fas fa-chart-bar"></i>' : '<i class="fas fa-home"></i>';
         
         item.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 20px;">${icon}</div>
-            <div style="flex: 1;">
-              <div style="font-weight: 500;">${entity.attributes.friendly_name || entity.entity_id}</div>
-              <div style="font-size: 12px; opacity: 0.7;">${entity.entity_id}</div>
+          <div class="ha-entity-list-item-content">
+            <div class="ha-entity-list-item-icon">${icon}</div>
+            <div class="ha-entity-list-item-info">
+              <div class="ha-entity-list-item-name">${entity.attributes.friendly_name || entity.entity_id}</div>
+              <div class="ha-entity-list-item-id">${entity.entity_id}</div>
             </div>
-            <div style="font-size: 12px; opacity: 0.7; text-transform: capitalize;">${domain}</div>
+            <div class="ha-entity-list-item-domain">${domain}</div>
           </div>
         `;
 
-        item.addEventListener('mouseenter', () => {
-          item.style.background = 'rgba(255, 255, 255, 0.1)';
-        });
-
-        item.addEventListener('mouseleave', () => {
-          if (selectedEntity?.entity_id !== entity.entity_id) {
-            item.style.background = '';
-          }
-        });
-
         item.addEventListener('click', () => {
           // Deselect all
-          entityListContainer.querySelectorAll('.entity-list-item').forEach(el => {
-            (el as HTMLElement).style.background = '';
+          entityListContainer.querySelectorAll('.ha-entity-list-item').forEach(el => {
+            el.classList.remove('selected');
           });
 
           // Select this one
-          item.style.background = 'var(--accent)';
+          item.classList.add('selected');
           selectedEntity = entity;
           
           // Auto-fill display name if empty
@@ -936,7 +980,20 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       overlay.remove();
 
-      // Trigger widget update
+      // Update widget content
+      content.entities = entities;
+      
+      // Update dashboard state and save
+      const dashboard = (window as any).dashboard;
+      if (dashboard && dashboard.state && dashboard.state.widgets) {
+        const widgetInState = dashboard.state.widgets.find((w: Widget) => w.id === widget.id);
+        if (widgetInState) {
+          if (!widgetInState.content) widgetInState.content = {};
+          (widgetInState.content as HomeAssistantContent).entities = entities;
+        }
+      }
+
+      // Trigger widget update for UI refresh
       const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content: { ...content, entities } }
       });
@@ -959,102 +1016,37 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'ha-modal-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      min-width: 400px;
-      max-width: 500px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      color: var(--text);
-    `;
+    dialog.className = 'ha-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0; color: var(--text);">Edit Entity</h3>
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Entity ID:</label>
+      <h3>Edit Entity</h3>
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">Entity ID:</label>
         <input type="text" id="edit-entity-id" placeholder="light.living_room" 
                value="${entity.entity_id}"
-               style="
-                 width: 100%; 
-                 padding: 10px; 
-                 box-sizing: border-box;
-                 background: var(--background);
-                 color: var(--text);
-                 border: 1px solid var(--border);
-                 border-radius: 6px;
-                 font-size: 14px;
-               ">
-        <small style="opacity: 0.7; color: var(--muted); font-size: 12px;">Example: light.kitchen, switch.fan, sensor.temperature</small>
+               class="ha-dialog-input">
+        <small class="ha-dialog-hint">Example: light.kitchen, switch.fan, sensor.temperature</small>
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Display Name (optional):</label>
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">Display Name (optional):</label>
         <input type="text" id="edit-display-name" placeholder="Living Room Light" 
                value="${entity.display_name || ''}"
-               style="
-                 width: 100%; 
-                 padding: 10px; 
-                 box-sizing: border-box;
-                 background: var(--background);
-                 color: var(--text);
-                 border: 1px solid var(--border);
-                 border-radius: 6px;
-                 font-size: 14px;
-               ">
+               class="ha-dialog-input">
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 5px; color: var(--text); font-weight: 500;">Type:</label>
-        <select id="edit-entity-type" style="
-          width: 100%; 
-          padding: 10px;
-          background: var(--background);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">Type:</label>
+        <select id="edit-entity-type" class="ha-dialog-input">
           <option value="light" ${entity.type === 'light' ? 'selected' : ''}>Light</option>
           <option value="switch" ${entity.type === 'switch' ? 'selected' : ''}>Switch</option>
           <option value="sensor" ${entity.type === 'sensor' ? 'selected' : ''}>Sensor</option>
         </select>
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-edit-entity" style="
-          padding: 10px 20px; 
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">Cancel</button>
-        <button id="save-edit-entity" style="
-          padding: 10px 20px; 
-          cursor: pointer; 
-          background: var(--accent); 
-          color: white; 
-          border: none; 
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-        ">
-          Save Changes
-        </button>
+      <div class="ha-dialog-buttons">
+        <button id="cancel-edit-entity" class="ha-dialog-button ha-dialog-button-cancel">Cancel</button>
+        <button id="save-edit-entity" class="ha-dialog-button ha-dialog-button-save">Save Changes</button>
       </div>
     `;
 
@@ -1111,6 +1103,19 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       overlay.remove();
 
+      // Update widget content
+      content.entities = entities;
+      
+      // Update dashboard state and save
+      const dashboard = (window as any).dashboard;
+      if (dashboard && dashboard.state && dashboard.state.widgets) {
+        const widgetInState = dashboard.state.widgets.find((w: Widget) => w.id === widget.id);
+        if (widgetInState) {
+          if (!widgetInState.content) widgetInState.content = {};
+          (widgetInState.content as HomeAssistantContent).entities = entities;
+        }
+      }
+
       // Trigger widget update
       const event = new CustomEvent('widget-update', {
         detail: { id: widget.id, content: { ...content, entities } }
@@ -1127,32 +1132,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'ha-modal-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      min-width: 500px;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      color: var(--text);
-    `;
+    dialog.className = 'ha-dialog';
 
     // Load credentials for the selector
     const credentials = await credentialsService.getAll();
@@ -1163,131 +1146,78 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       .join('');
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0; color: var(--text);">⚙️ Home Assistant Settings</h3>
+      <h3 class="ha-dialog-title">⚙️ Home Assistant Settings</h3>
       
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">
           Home Assistant URL
         </label>
         <input 
           type="text" 
           id="ha-url-input" 
+          class="ha-dialog-input"
           placeholder="http://homeassistant.local:8123"
           value="${content.url || ''}"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
         />
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+        <small class="ha-dialog-hint">
           The base URL of your Home Assistant instance
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">
           Saved Credential
         </label>
         <select 
           id="ha-credential-select"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
+          class="ha-dialog-input"
         >
           <option value="">Select saved credential...</option>
           ${credentialOptions}
         </select>
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+        <small class="ha-dialog-hint">
           Use saved credentials instead of storing token directly
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">
           Or Enter Token Directly (Legacy)
         </label>
         <input 
           type="password" 
           id="ha-token-input" 
+          class="ha-dialog-input"
           placeholder="Enter your access token"
           value="${content.token || ''}"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
         />
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+        <small class="ha-dialog-hint">
           Create in Home Assistant: Profile → Security → Long-Lived Access Tokens
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="ha-dialog-field">
+        <label class="ha-dialog-label">
           Refresh Interval (seconds)
         </label>
         <input 
           type="number" 
           id="ha-refresh-input" 
+          class="ha-dialog-input"
           min="1"
           max="300"
           value="${content.refreshInterval || 5}"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
         />
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted);">
+        <small class="ha-dialog-hint">
           How often to refresh entity states
         </small>
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 20px;">
-        <button id="cancel-settings-btn" style="
-          padding: 10px 20px;
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">
+      <div class="ha-dialog-buttons">
+        <button id="cancel-settings-btn" class="ha-dialog-button ha-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-settings-btn" style="
-          padding: 10px 20px;
-          cursor: pointer;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-        ">
+        <button id="save-settings-btn" class="ha-dialog-button ha-dialog-button-save">
           Save Settings
         </button>
       </div>
@@ -1381,86 +1311,36 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'ha-modal-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      min-width: 500px;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      color: var(--text);
-    `;
+    dialog.className = 'ha-dialog';
 
     const entities = content.entities || [];
 
     let dialogHTML = `
-      <h3 style="margin-top: 0; color: var(--text);">Manage Entities</h3>
-      <div style="margin-bottom: 20px;">
+      <h3 class="ha-dialog-title">Manage Entities</h3>
+      <div class="ha-manage-entities-list">
     `;
 
     if (entities.length === 0) {
-      dialogHTML += `<p style="opacity: 0.7; color: var(--muted);">No entities added yet.</p>`;
+      dialogHTML += `<p class="ha-dialog-hint">No entities added yet.</p>`;
     } else {
-      dialogHTML += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+      dialogHTML += `<div class="ha-entity-items">`;
       entities.forEach((entity, index) => {
         dialogHTML += `
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: var(--surface-hover);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-          ">
-            <div style="flex: 1;">
-              <div style="font-weight: bold; color: var(--text);">${entity.display_name || entity.entity_id}</div>
-              <div style="font-size: 12px; opacity: 0.7; color: var(--muted);">${entity.entity_id} (${entity.type})</div>
+          <div class="ha-entity-item">
+            <div class="ha-entity-item-info">
+              <div class="ha-entity-item-name">${entity.display_name || entity.entity_id}</div>
+              <div class="ha-entity-item-id">${entity.entity_id} (${entity.type})</div>
             </div>
             <button 
-              class="edit-entity-btn" 
+              class="edit-entity-btn ha-entity-item-button ha-entity-item-button-edit" 
               data-index="${index}"
-              style="
-                padding: 8px 14px;
-                background: var(--accent);
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 500;
-              "
             >Edit</button>
             <button 
-              class="remove-entity-btn" 
+              class="remove-entity-btn ha-entity-item-button ha-entity-item-button-remove" 
               data-index="${index}"
-              style="
-                padding: 8px 14px;
-                background: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                font-weight: 500;
-              "
             >Remove</button>
           </div>
         `;
@@ -1470,28 +1350,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     dialogHTML += `
       </div>
-      <div style="display: flex; gap: 12px; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 15px;">
-        <button id="add-new-entity-btn" style="
-          padding: 10px 20px; 
-          cursor: pointer; 
-          background: var(--accent); 
-          color: white; 
-          border: none; 
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-        ">
+      <div class="ha-dialog-buttons ha-dialog-buttons-spaced">
+        <button id="add-new-entity-btn" class="ha-dialog-button ha-dialog-button-save">
           + Add Entity
         </button>
-        <button id="close-manage-dialog" style="
-          padding: 10px 20px; 
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">
+        <button id="close-manage-dialog" class="ha-dialog-button ha-dialog-button-cancel">
           Close
         </button>
       </div>
@@ -1542,6 +1405,19 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
         if (confirm(`Remove ${entities[index].display_name || entities[index].entity_id}?`)) {
           entities.splice(index, 1);
+          
+          // Update widget content
+          content.entities = entities;
+          
+          // Update dashboard state and save
+          const dashboard = (window as any).dashboard;
+          if (dashboard && dashboard.state && dashboard.state.widgets) {
+            const widgetInState = dashboard.state.widgets.find((w: Widget) => w.id === widget.id);
+            if (widgetInState) {
+              if (!widgetInState.content) widgetInState.content = {};
+              (widgetInState.content as HomeAssistantContent).entities = entities;
+            }
+          }
 
           // Trigger widget update
           const event = new CustomEvent('widget-update', {
@@ -1596,13 +1472,263 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Clear cached states
     this.entityStates.delete(widgetId);
   }
+
+  private createSection(label: string, group: EntityGroup | null, widget: Widget): HTMLElement {
+    const section = document.createElement('div');
+    section.className = 'ha-group-section';
+    
+    if (group) {
+      section.dataset.groupId = group.id;
+    }
+
+    // Header with label and controls
+    const header = document.createElement('div');
+    header.className = 'ha-group-header';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'ha-group-title';
+    labelEl.textContent = label;
+    header.appendChild(labelEl);
+
+    // Controls for groups (not ungrouped)
+    if (group) {
+      const controls = document.createElement('div');
+      controls.className = 'ha-group-controls';
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '🗑️';
+      deleteBtn.title = 'Delete group';
+      deleteBtn.addEventListener('click', () => this.deleteGroup(widget, group.id));
+
+      controls.appendChild(deleteBtn);
+      header.appendChild(controls);
+    }
+
+    section.appendChild(header);
+
+    // Grid for entities with drop zone
+    const grid = document.createElement('div');
+    grid.className = 'ha-entities-grid';
+
+    // Make the grid a drop zone
+    grid.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer!.dropEffect = 'move';
+      grid.classList.add('ha-drop-highlight');
+    });
+
+    grid.addEventListener('dragleave', (e) => {
+      if (e.target === grid) {
+        grid.classList.remove('ha-drop-highlight');
+      }
+    });
+
+    grid.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      grid.classList.remove('ha-drop-highlight');
+
+      const dragData = e.dataTransfer!.getData('text/plain');
+      const [sourceGroupId, entityId] = dragData.split('|');
+      const targetGroupId = group?.id || 'ungrouped';
+
+      if (sourceGroupId !== targetGroupId) {
+        await this.moveEntityToGroup(widget, entityId, sourceGroupId, targetGroupId);
+      }
+    });
+
+    section.appendChild(grid);
+    return section;
+  }
+
+  private async createNewGroup(widget: Widget): Promise<void> {
+    const label = prompt('Enter group name:');
+    if (!label) return;
+
+    const content = widget.content as HomeAssistantContent;
+    
+    const newGroup: EntityGroup = {
+      id: `group-${Date.now()}`,
+      label,
+      entities: [],
+      collapsed: false
+    };
+
+    const updatedGroups = [...(content.groups || []), newGroup];
+    
+    // Trigger widget update event - this will save to database
+    const event = new CustomEvent('widget-update', {
+      detail: { 
+        id: widget.id, 
+        content: {
+          url: content.url,
+          credentialId: content.credentialId,
+          entities: content.entities || [],
+          groups: updatedGroups,
+          refreshInterval: content.refreshInterval
+        }
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  private async deleteGroup(widget: Widget, groupId: string): Promise<void> {
+    if (!confirm('Delete this group? Entities will be moved to Ungrouped.')) return;
+
+    const content = widget.content as HomeAssistantContent;
+    const groups = content.groups || [];
+    const group = groups.find(g => g.id === groupId);
+    
+    if (!group) return;
+
+    // Move all entities back to ungrouped
+    const updatedEntities = [...(content.entities || []), ...group.entities];
+    const updatedGroups = groups.filter(g => g.id !== groupId);
+    
+    // Trigger widget update event - this will save to database
+    const event = new CustomEvent('widget-update', {
+      detail: { 
+        id: widget.id, 
+        content: {
+          url: content.url,
+          credentialId: content.credentialId,
+          entities: updatedEntities,
+          groups: updatedGroups,
+          refreshInterval: content.refreshInterval
+        }
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  private async moveEntityToGroup(widget: Widget, entityId: string, sourceGroupId: string, targetGroupId: string, beforeEntityId?: string): Promise<void> {
+    const content = widget.content as HomeAssistantContent;
+    let entity: EntityConfig | undefined;
+
+    // Create new arrays to avoid mutation issues
+    const entities = [...(content.entities || [])];
+    const groups = JSON.parse(JSON.stringify(content.groups || [])) as EntityGroup[];
+
+    // Find and remove entity from source
+    if (sourceGroupId === 'ungrouped') {
+      const index = entities.findIndex(e => e.entity_id === entityId);
+      if (index >= 0) {
+        entity = entities.splice(index, 1)[0];
+      }
+    } else {
+      const sourceGroup = groups.find(g => g.id === sourceGroupId);
+      if (sourceGroup) {
+        const index = sourceGroup.entities.findIndex(e => e.entity_id === entityId);
+        if (index >= 0) {
+          entity = sourceGroup.entities.splice(index, 1)[0];
+        }
+      }
+    }
+
+    if (!entity) return;
+
+    // Add entity to target at specific position if beforeEntityId is provided
+    if (targetGroupId === 'ungrouped') {
+      if (beforeEntityId) {
+        const targetIndex = entities.findIndex(e => e.entity_id === beforeEntityId);
+        if (targetIndex >= 0) {
+          entities.splice(targetIndex, 0, entity);
+        } else {
+          entities.push(entity);
+        }
+      } else {
+        entities.push(entity);
+      }
+    } else {
+      const targetGroup = groups.find(g => g.id === targetGroupId);
+      if (targetGroup) {
+        if (beforeEntityId) {
+          const targetIndex = targetGroup.entities.findIndex(e => e.entity_id === beforeEntityId);
+          if (targetIndex >= 0) {
+            targetGroup.entities.splice(targetIndex, 0, entity);
+          } else {
+            targetGroup.entities.push(entity);
+          }
+        } else {
+          targetGroup.entities.push(entity);
+        }
+      }
+    }
+
+    // Trigger widget update event - this will save to database
+    const event = new CustomEvent('widget-update', {
+      detail: { 
+        id: widget.id, 
+        content: {
+          url: content.url,
+          credentialId: content.credentialId,
+          entities: entities,
+          groups: groups,
+          refreshInterval: content.refreshInterval
+        }
+      }
+    });
+    document.dispatchEvent(event);
+  }
+
+  private async reorderEntity(widget: Widget, entityId: string, beforeEntityId: string, groupId: string): Promise<void> {
+    const content = widget.content as HomeAssistantContent;
+    const entities = [...(content.entities || [])];
+    const groups = JSON.parse(JSON.stringify(content.groups || [])) as EntityGroup[];
+
+    let entity: EntityConfig | undefined;
+    let targetArray: EntityConfig[];
+
+    // Find the array and remove the entity
+    if (groupId === 'ungrouped') {
+      targetArray = entities;
+      const index = entities.findIndex(e => e.entity_id === entityId);
+      if (index >= 0) {
+        entity = entities.splice(index, 1)[0];
+      }
+    } else {
+      const group = groups.find(g => g.id === groupId);
+      if (!group) return;
+      targetArray = group.entities;
+      const index = group.entities.findIndex(e => e.entity_id === entityId);
+      if (index >= 0) {
+        entity = group.entities.splice(index, 1)[0];
+      }
+    }
+
+    if (!entity) return;
+
+    // Insert before the target entity
+    const targetIndex = targetArray.findIndex(e => e.entity_id === beforeEntityId);
+    if (targetIndex >= 0) {
+      targetArray.splice(targetIndex, 0, entity);
+    } else {
+      targetArray.push(entity);
+    }
+
+    // Trigger widget update event - this will save to database
+    const event = new CustomEvent('widget-update', {
+      detail: { 
+        id: widget.id, 
+        content: {
+          url: content.url,
+          credentialId: content.credentialId,
+          entities: entities,
+          groups: groups,
+          refreshInterval: content.refreshInterval
+        }
+      }
+    });
+    document.dispatchEvent(event);
+  }
 }
 
 // Plugin configuration
 export const widget = {
   type: 'home-assistant',
   name: 'Home Assistant',
-  icon: '🏠',
+  icon: '<i class="fas fa-home"></i>',
   description: 'Monitor and control Home Assistant entities',
   renderer: new HomeAssistantRenderer(),
   defaultSize: { w: 600, h: 400 },
@@ -1610,6 +1736,7 @@ export const widget = {
     url: '',
     token: '',
     entities: [],
+    groups: [],
     refreshInterval: 5
   }
 };
