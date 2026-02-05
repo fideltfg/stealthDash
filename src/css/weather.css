@@ -1,0 +1,251 @@
+/* Weather Widget Styles */
+
+/* Main Widget Container */
+.weather-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* Configuration Overlay */
+.weather-config-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Configuration Dialog */
+.weather-config-dialog {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.weather-config-title {
+  margin: 0 0 20px 0;
+  color: var(--text);
+}
+
+.weather-config-field {
+  margin-bottom: 20px;
+}
+
+.weather-config-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.weather-config-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.weather-config-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.weather-config-btn-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.weather-config-btn-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+/* Initial Config Screen */
+.weather-config-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+}
+
+.weather-config-icon {
+  font-size: 48px;
+}
+
+.weather-config-prompt {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.weather-input {
+  width: 80%;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.weather-button {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.weather-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading State */
+.weather-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+}
+
+/* Error State */
+.weather-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--error);
+  text-align: center;
+  padding: 20px;
+}
+
+.weather-error-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.weather-error-message {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+/* Current Weather Section */
+.weather-current-section {
+  margin-bottom: 20px;
+}
+
+.weather-location {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.weather-current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.weather-icon {
+  font-size: 64px;
+}
+
+.weather-temp-info {
+  flex: 1;
+}
+
+.weather-temp {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.weather-description {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.weather-feels-like {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.weather-additional-info {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Forecast Section */
+.weather-forecast-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.weather-forecast-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weather-forecast-day {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.weather-forecast-day-label {
+  width: 50px;
+  font-weight: 500;
+}
+
+.weather-forecast-icon {
+  font-size: 24px;
+}
+
+.weather-forecast-temps {
+  flex: 1;
+}
+
+.weather-forecast-precip {
+  font-size: 12px;
+  color: var(--muted);
+}

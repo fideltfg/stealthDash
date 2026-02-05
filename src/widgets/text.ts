@@ -10,17 +10,6 @@ export class TextWidgetRenderer implements WidgetRenderer {
     textarea.setAttribute('aria-multiline', 'true');
     textarea.placeholder = 'Type here... (Markdown supported)';
     textarea.value = content.markdown || '';
-    textarea.style.width = '100%';
-    textarea.style.height = '100%';
-    textarea.style.border = 'none';
-    textarea.style.outline = 'none';
-    textarea.style.resize = 'none';
-    textarea.style.fontFamily = 'inherit';
-    textarea.style.fontSize = '14px';
-    textarea.style.lineHeight = '1.6';
-    textarea.style.background = 'transparent';
-    textarea.style.color = 'inherit';
-    textarea.style.padding = '0';
     
     textarea.addEventListener('input', () => {
       const event = new CustomEvent('widget-update', {

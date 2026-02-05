@@ -1,0 +1,292 @@
+/* Uptime Widget Styles */
+
+/* Configuration Dialog Styles */
+.uptime-config-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.uptime-config-dialog {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.uptime-config-title {
+  margin: 0 0 20px 0;
+  color: var(--text);
+}
+
+.uptime-config-field {
+  margin-bottom: 16px;
+}
+
+.uptime-config-field-last {
+  margin-bottom: 20px;
+}
+
+.uptime-config-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.uptime-config-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.uptime-config-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.uptime-config-button-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.uptime-config-button-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+/* Widget Container */
+.uptime-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* Config Screen Styles */
+.uptime-config-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+}
+
+.uptime-config-icon {
+  font-size: 48px;
+}
+
+.uptime-config-description {
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.uptime-config-target-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.uptime-config-interval-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.uptime-config-interval-input {
+  width: 100px;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.uptime-config-timeout-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.uptime-config-timeout-input {
+  width: 100px;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.uptime-config-button {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.uptime-config-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Display Container */
+.uptime-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.uptime-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.uptime-target-label {
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.uptime-chart-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+}
+
+.uptime-stats-container {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Chart Bar Styles */
+.uptime-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 8px;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+}
+
+.uptime-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transition: all 150ms;
+}
+
+.uptime-bar-placeholder {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px 2px 0 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.3;
+}
+
+/* Bar Color Classes */
+.uptime-bar-excellent {
+  background: #22c55e;
+}
+
+.uptime-bar-good {
+  background: #84cc16;
+}
+
+.uptime-bar-ok {
+  background: #eab308;
+}
+
+.uptime-bar-slow {
+  background: #f97316;
+}
+
+.uptime-bar-very-slow {
+  background: #ef4444;
+}
+
+.uptime-bar-failed {
+  background: #ef4444;
+  opacity: 1;
+}
+
+.uptime-bar-container:hover .uptime-bar {
+  opacity: 0.8;
+}
+
+.uptime-bar-container:hover .uptime-bar-failed {
+  opacity: 0.5;
+}
+
+/* Tooltip Styles */
+.uptime-tooltip {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms;
+  z-index: 1000;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.uptime-bar-container:hover .uptime-tooltip {
+  opacity: 1;
+}

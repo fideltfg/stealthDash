@@ -6,41 +6,22 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { url: string; sandbox?: string[] };
     
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'embed-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
+    dialog.className = 'embed-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure Embed</h3>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">URL to Embed</label>
-        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+      <h3 class="embed-dialog-title">Configure Embed</h3>
+      <div class="embed-dialog-field">
+        <label class="embed-dialog-label">URL to Embed</label>
+        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="embed-dialog-input" />
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
+      <div class="embed-dialog-buttons">
+        <button id="cancel-btn" class="embed-dialog-button embed-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
+        <button id="save-btn" class="embed-dialog-button embed-dialog-button-save">
           Save
         </button>
       </div>
@@ -77,16 +58,10 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { url: string; sandbox?: string[] };
     const div = document.createElement('div');
     div.className = 'embed-widget';
-    div.style.height = '100%';
-    div.style.display = 'flex';
-    div.style.flexDirection = 'column';
     
     if (content.url) {
       const iframe = document.createElement('iframe');
       iframe.src = content.url;
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
       iframe.sandbox.add('allow-same-origin');
       iframe.sandbox.add('allow-scripts');
       if (content.sandbox) {
@@ -102,47 +77,25 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.style.display = 'flex';
-    inputContainer.style.flexDirection = 'column';
-    inputContainer.style.alignItems = 'center';
-    inputContainer.style.justifyContent = 'center';
-    inputContainer.style.height = '100%';
-    inputContainer.style.gap = '12px';
+    inputContainer.className = 'embed-config-container';
     
     const icon = document.createElement('div');
     icon.innerHTML = '<i class="fas fa-globe"></i>';
-    icon.style.fontSize = '48px';
+    icon.className = 'embed-config-icon';
     
     const label = document.createElement('div');
     label.textContent = 'Enter URL to embed';
-    label.style.color = 'var(--muted)';
-    label.style.marginBottom = '8px';
+    label.className = 'embed-config-label';
     
     const urlInput = document.createElement('input');
     urlInput.type = 'text';
     urlInput.placeholder = 'https://example.com';
-    urlInput.style.width = '80%';
-    urlInput.style.padding = '8px 12px';
-    urlInput.style.border = '2px solid var(--border)';
-    urlInput.style.borderRadius = '6px';
-    urlInput.style.fontFamily = 'inherit';
-    urlInput.style.fontSize = '14px';
-    urlInput.style.background = 'var(--bg)';
-    urlInput.style.color = 'var(--text)';
+    urlInput.className = 'embed-config-input';
     
     const button = document.createElement('button');
     button.textContent = 'Load URL';
-    button.style.padding = '8px 20px';
-    button.style.background = 'var(--accent)';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '6px';
-    button.style.cursor = 'pointer';
-    button.style.fontSize = '14px';
-    button.style.fontWeight = '500';
+    button.className = 'embed-config-button';
     button.disabled = true;
-    button.style.opacity = '0.5';
-    button.style.cursor = 'not-allowed';
     
     const isValidUrl = (url: string): boolean => {
       try {
@@ -157,12 +110,8 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
       const url = urlInput.value.trim();
       if (isValidUrl(url)) {
         button.disabled = false;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
       } else {
         button.disabled = true;
-        button.style.opacity = '0.5';
-        button.style.cursor = 'not-allowed';
       }
     };
     

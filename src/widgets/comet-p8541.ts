@@ -1,6 +1,7 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 import JustGage from 'justgage';
+import '../css/comet-p8541.css';
 
 
 
@@ -104,27 +105,12 @@ export class CometP8541Renderer implements WidgetRenderer {
     return `${protocol}//${hostname}:3001`;
   }
 
-  private styles(): void {
-    // Add flash animation styles if not already present
-    if (!document.getElementById('comet-flash-styles')) {
-      const style = document.createElement('style');
-      style.id = 'comet-flash-styles';
-      style.textContent = `
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.1); }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }
+  // Styles are now loaded from ../css/comet-p8541.css
 
 
   render(container: HTMLElement, widget: Widget): void {
     container.innerHTML = '';
     const content = widget.content as unknown as CometP8541Content;
-
-    this.styles();
 
     if (!content.host) {
       this.renderConfigPrompt(container, widget);
@@ -137,7 +123,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const loadingDiv = document.createElement('div');
     loadingDiv.textContent = 'Reading...';
-    loadingDiv.classList.add('loadingDiv');
+    loadingDiv.className = 'comet-loading';
     wrapper.appendChild(loadingDiv);
 
     container.appendChild(wrapper);
@@ -371,7 +357,8 @@ export class CometP8541Renderer implements WidgetRenderer {
             // Update alarm status
             let alarmText = "Norminal";
 
-
+            // Remove previous alarm classes
+            alarmDiv.className = 'alarm-div';
 
             if (reading.sensorError) {
               alarmText = "SENSOR ERROR";
@@ -382,9 +369,6 @@ export class CometP8541Renderer implements WidgetRenderer {
             } else if (reading.alarm === "lo") {
               alarmText = "TOO COLD!";
               alarmDiv.classList.add('alarm-flash-cold');
-            } else {
-              alarmDiv.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
-              alarmDiv.style.color = '#4CAF50';
             }
 
             alarmDiv.textContent = alarmText;
@@ -493,9 +477,9 @@ export class CometP8541Renderer implements WidgetRenderer {
                   const fallbackElement = document.getElementById(gaugeId);
                   if (fallbackElement) {
                     fallbackElement.innerHTML = `
-                      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: white;">
-                        <div style="font-size: 24px; font-weight: bold;">${reading.value.toFixed(1)}${reading.unit}</div>
-                        <div style="font-size: 12px; opacity: 0.7;">${reading.name}</div>
+                      <div class="comet-gauge-fallback">
+                        <div class="comet-gauge-fallback-value">${reading.value.toFixed(1)}${reading.unit}</div>
+                        <div class="comet-gauge-fallback-name">${reading.name}</div>
                       </div>
                     `;
                   }
@@ -510,46 +494,31 @@ export class CometP8541Renderer implements WidgetRenderer {
 
           readings.forEach((reading) => {
             const channelDiv = document.createElement('div');
-            channelDiv.style.cssText = `
-              display: flex;
-              flex-direction: column;
-              background: rgba(0, 0, 0, 0.3);
-              border-radius: 8px;
-              padding: 12px 15px;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            `;
+            channelDiv.className = 'comet-channel';
 
             // Top row: name and value
             const topRow = document.createElement('div');
-            topRow.style.cssText = `
-              display: flex;
-              justify-content: space-between;
-              align-items: baseline;
-              margin-bottom: 8px;
-            `;
+            topRow.className = 'comet-channel-top-row';
 
             const nameLabel = document.createElement('div');
-            nameLabel.style.cssText = 'font-size: 14px; font-weight: 500; opacity: 0.9;';
+            nameLabel.className = 'comet-channel-name';
             nameLabel.textContent = reading.name;
 
             const valueLabel = document.createElement('div');
-            valueLabel.style.cssText = 'font-size: 24px; font-weight: bold;';
+            valueLabel.className = 'comet-channel-value';
 
             // Color based on alarm status (sensor error takes priority)
             if (reading.sensorError) {
-              valueLabel.style.color = '#f44336';
-              valueLabel.style.animation = 'flash-error 0.5s infinite alternate';
+              valueLabel.classList.add('error');
               valueLabel.textContent = 'ERROR';
             } else if (reading.alarm === "hi") {
-              valueLabel.style.color = '#f44336';
-              valueLabel.style.animation = 'flash-hot 0.5s infinite alternate';
+              valueLabel.classList.add('hot');
               valueLabel.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
             } else if (reading.alarm === "lo") {
-              valueLabel.style.color = '#2196F3';
-              valueLabel.style.animation = 'flash-cold 0.5s infinite alternate';
+              valueLabel.classList.add('cold');
               valueLabel.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
             } else {
-              valueLabel.style.color = '#4CAF50';
+              valueLabel.classList.add('normal');
               valueLabel.textContent = `${reading.value.toFixed(1)}${reading.unit}`;
             }
 
@@ -558,19 +527,14 @@ export class CometP8541Renderer implements WidgetRenderer {
 
             // Bottom row: limits and alarm status
             const bottomRow = document.createElement('div');
-            bottomRow.style.cssText = `
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              font-size: 11px;
-              opacity: 0.7;
-            `;
+            bottomRow.className = 'comet-channel-bottom-row';
 
             const limitsLabel = document.createElement('div');
+            limitsLabel.className = 'comet-channel-limits';
             limitsLabel.textContent = `Range: ${reading.lowerLimit.toFixed(1)} - ${reading.upperLimit.toFixed(1)}${reading.unit}`;
 
             const alarmLabel = document.createElement('div');
-            alarmLabel.style.cssText = 'font-weight: 600; padding: 3px 8px; border-radius: 4px;';
+            alarmLabel.className = 'comet-channel-alarm';
 
             if (reading.sensorError) {
               alarmLabel.textContent = "SENSOR ERROR";
@@ -583,8 +547,7 @@ export class CometP8541Renderer implements WidgetRenderer {
               alarmLabel.classList.add('alarm-flash-cold');
             } else {
               alarmLabel.textContent = "Normal";
-              alarmLabel.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
-              alarmLabel.style.color = '#4CAF50';
+              alarmLabel.classList.add('normal');
             }
 
             bottomRow.appendChild(limitsLabel);
@@ -618,24 +581,7 @@ export class CometP8541Renderer implements WidgetRenderer {
           
           if (!errorOverlay) {
             errorOverlay = document.createElement('div');
-            errorOverlay.className = 'error-overlay';
-            errorOverlay.style.cssText = `
-              position: absolute;
-              top: 40px;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: rgba(0, 0, 0, 0.85);
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              color: #f44336;
-              font-size: 14px;
-              padding: 20px;
-              z-index: 10;
-              border-radius: 8px;
-            `;
+            errorOverlay.className = 'comet-error-overlay';
             wrapper.appendChild(errorOverlay);
           }
           
@@ -645,10 +591,10 @@ export class CometP8541Renderer implements WidgetRenderer {
             : (error.message || 'Failed to read sensor');
           
           errorOverlay.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px; animation: pulse 2s infinite;"><i class="fas fa-exclamation-triangle"></i></div>
-            <div style="font-weight: 600; margin-bottom: 8px;">Temporary Connection Error</div>
-            <div style="opacity: 0.8; text-align: center;">${errorMessage}</div>
-            <div style="font-size: 12px; opacity: 0.6; margin-top: 12px;">Retrying in ${content.refreshInterval || 10} seconds...</div>
+            <div class="comet-error-overlay-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="comet-error-overlay-title">Temporary Connection Error</div>
+            <div class="comet-error-overlay-message">${errorMessage}</div>
+            <div class="comet-error-overlay-retry">Retrying in ${content.refreshInterval || 10} seconds...</div>
           `;
           
           // Remove error overlay after a delay to show the next attempt
@@ -666,17 +612,17 @@ export class CometP8541Renderer implements WidgetRenderer {
 
         // Recreate header
         const headerRow = document.createElement('div');
-        headerRow.className = 'header-row';
+        headerRow.className = 'comet-header-row';
 
         const headerLeft = document.createElement('div');
-        headerLeft.className = 'header-left';
+        headerLeft.className = 'comet-header-left';
 
         const header = document.createElement('div');
-        header.className = 'header';
+        header.className = 'comet-header';
         header.innerHTML = '<i class="fas fa-thermometer-half"></i> ' + (content.deviceName || 'Comet P8541');
 
         const deviceInfo = document.createElement('div');
-        deviceInfo.className = 'device-info';
+        deviceInfo.className = 'comet-device-info';
         deviceInfo.textContent = content.host;
 
         headerLeft.appendChild(header);
@@ -701,8 +647,8 @@ export class CometP8541Renderer implements WidgetRenderer {
 
   private renderError(container: HTMLElement, message: string): void {
     const errorDiv = document.createElement('div');
-    errorDiv.className = 'errorDiv';
-    errorDiv.innerHTML = `<div style="font-size: 32px; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i></div><div>${message}</div>`;
+    errorDiv.className = 'comet-error';
+    errorDiv.innerHTML = `<div class="comet-error-icon"><i class="fas fa-exclamation-triangle"></i></div><div>${message}</div>`;
     container.appendChild(errorDiv);
   }
 
@@ -710,10 +656,10 @@ export class CometP8541Renderer implements WidgetRenderer {
     const content = widget.content as unknown as CometP8541Content;
 
     const form = document.createElement('div');
-    form.style.cssText = 'padding: 20px; display: flex; flex-direction: column; gap: 15px;';
+    form.className = 'comet-config-form';
 
     const title = document.createElement('div');
-    title.style.cssText = 'font-size: 18px; font-weight: 600; margin-bottom: 10px; text-align: center;';
+    title.className = 'comet-config-title';
     title.innerHTML = '<i class="fas fa-thermometer-half"></i> Configure Comet P8541';
     form.appendChild(title);
 
@@ -729,24 +675,17 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     fields.forEach(field => {
       const group = document.createElement('div');
+      group.className = 'comet-form-group';
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 5px; display: block;';
+      label.className = 'comet-form-label';
 
       const input = document.createElement('input');
       input.type = field.type;
       input.placeholder = field.placeholder;
       input.value = field.value?.toString() || (content as any)[field.key] || '';
-      input.style.cssText = `
-        width: 100%;
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.05);
-        color: inherit;
-        box-sizing: border-box;
-      `;
+      input.className = 'comet-form-input';
 
       inputs[field.key] = input;
       group.appendChild(label);
@@ -756,16 +695,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save & Connect';
-    saveBtn.style.cssText = `
-      padding: 10px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      margin-top: 10px;
-    `;
+    saveBtn.className = 'comet-btn-primary';
 
     saveBtn.onclick = () => {
       const newContent = {
@@ -803,33 +733,13 @@ export class CometP8541Renderer implements WidgetRenderer {
     const content = widget.content as unknown as CometP8541Content;
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'comet-modal-overlay';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      background: #1a1a1a;
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      color: white;
-    `;
+    modal.className = 'comet-modal';
 
     const title = document.createElement('div');
-    title.style.cssText = 'font-size: 18px; font-weight: 600; margin-bottom: 20px;';
+    title.className = 'comet-modal-title';
     title.innerHTML = '<i class="fas fa-cog"></i> Comet P8541 Settings';
     modal.appendChild(title);
 
@@ -845,24 +755,16 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     fields.forEach(field => {
       const group = document.createElement('div');
-      group.style.marginBottom = '15px';
+      group.className = 'comet-modal-group';
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 5px; display: block;';
+      label.className = 'comet-form-label';
 
       const input = document.createElement('input');
       input.type = field.type;
       input.value = field.value?.toString() || '';
-      input.style.cssText = `
-        width: 100%;
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        box-sizing: border-box;
-      `;
+      input.className = 'comet-modal-input';
 
       // Prevent arrow keys from moving the widget
       input.addEventListener('keydown', (e) => e.stopPropagation());
@@ -876,23 +778,14 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Temperature unit selector
     const tempGroup = document.createElement('div');
-    tempGroup.style.marginBottom = '15px';
+    tempGroup.className = 'comet-modal-group';
 
     const tempLabel = document.createElement('label');
     tempLabel.textContent = 'Temperature Unit';
-    tempLabel.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 5px; display: block;';
+    tempLabel.className = 'comet-form-label';
 
     const tempSelect = document.createElement('select');
-    tempSelect.style.cssText = `
-      width: 100%;
-      padding: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      background: #2a2a2a;
-      color: white;
-      box-sizing: border-box;
-      cursor: pointer;
-    `;
+    tempSelect.className = 'comet-form-select';
 
     // Prevent arrow keys from moving the widget
     tempSelect.addEventListener('keydown', (e) => e.stopPropagation());
@@ -903,7 +796,6 @@ export class CometP8541Renderer implements WidgetRenderer {
       option.value = unit;
       option.textContent = unit === 'C' ? 'Celsius (°C)' : 'Fahrenheit (°F)';
       option.selected = (content.temperatureUnit || 'C') === unit;
-      option.style.cssText = 'background: #2a2a2a; color: white;';
       tempSelect.appendChild(option);
     });
 
@@ -913,23 +805,14 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Display mode selector
     const displayGroup = document.createElement('div');
-    displayGroup.style.marginBottom = '15px';
+    displayGroup.className = 'comet-modal-group';
 
     const displayLabel = document.createElement('label');
     displayLabel.textContent = 'Display Mode';
-    displayLabel.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 5px; display: block;';
+    displayLabel.className = 'comet-form-label';
 
     const displaySelect = document.createElement('select');
-    displaySelect.style.cssText = `
-      width: 100%;
-      padding: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      background: #2a2a2a;
-      color: white;
-      box-sizing: border-box;
-      cursor: pointer;
-    `;
+    displaySelect.className = 'comet-form-select';
 
     // Prevent arrow keys from moving the widget
     displaySelect.addEventListener('keydown', (e) => e.stopPropagation());
@@ -940,7 +823,6 @@ export class CometP8541Renderer implements WidgetRenderer {
       option.value = mode;
       option.textContent = mode === 'gauge' ? 'Gauge Display' : 'Text Display';
       option.selected = (content.displayMode || 'gauge') === mode;
-      option.style.cssText = 'background: #2a2a2a; color: white;';
       displaySelect.appendChild(option);
     });
 
@@ -950,11 +832,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Channel enable/disable and naming
     const channelsGroup = document.createElement('div');
-    channelsGroup.style.marginBottom = '15px';
+    channelsGroup.className = 'comet-channels-group';
 
     const channelsLabel = document.createElement('div');
     channelsLabel.textContent = 'Channels';
-    channelsLabel.style.cssText = 'font-size: 12px; opacity: 0.7; margin-bottom: 10px;';
+    channelsLabel.className = 'comet-channels-label';
     channelsGroup.appendChild(channelsLabel);
 
     const channels = ['temp1', 'temp2', 'temp3', 'temp4', 'humidity'];
@@ -964,27 +846,18 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     channels.forEach((ch, idx) => {
       const channelRow = document.createElement('div');
-      channelRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 8px;';
+      channelRow.className = 'comet-channel-row';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = content.enabledChannels?.[ch as keyof typeof content.enabledChannels] !== false;
-      checkbox.style.cssText = 'cursor: pointer; flex-shrink: 0;';
+      checkbox.className = 'comet-channel-checkbox';
 
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
       nameInput.placeholder = channelDefaultNames[idx];
       nameInput.value = content.channelNames?.[ch as keyof typeof content.channelNames] || '';
-      nameInput.style.cssText = `
-        flex: 1;
-        padding: 6px 10px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-        font-size: 12px;
-        box-sizing: border-box;
-      `;
+      nameInput.className = 'comet-channel-name-input';
 
       // Prevent arrow keys from moving the widget
       nameInput.addEventListener('keydown', (e) => e.stopPropagation());
@@ -1002,20 +875,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Buttons
     const btnGroup = document.createElement('div');
-    btnGroup.style.cssText = 'display: flex; gap: 10px; margin-top: 20px;';
+    btnGroup.className = 'comet-btn-group';
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
-    saveBtn.style.cssText = `
-      flex: 1;
-      padding: 10px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-    `;
+    saveBtn.className = 'comet-btn-save';
 
     saveBtn.onclick = () => {
       const newContent: CometP8541Content = {
@@ -1054,15 +918,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.style.cssText = `
-      flex: 1;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    `;
+    cancelBtn.className = 'comet-btn-cancel';
     cancelBtn.onclick = () => overlay.remove();
 
     btnGroup.appendChild(saveBtn);
@@ -1113,33 +969,24 @@ export class CometP8541Renderer implements WidgetRenderer {
   // Helper method to create wrapper element
   private createWrapper(): HTMLElement {
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 5px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      position: relative;
-    `;
+    wrapper.className = 'comet-widget-wrapper';
     return wrapper;
   }
 
   // Helper method to create header with settings button
   private createHeader(content: CometP8541Content, container: HTMLElement, widget: Widget, deviceName?: string): HTMLElement {
     const headerRow = document.createElement('div');
-    headerRow.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;';
+    headerRow.className = 'comet-header-row';
 
     const headerLeft = document.createElement('div');
-    headerLeft.style.cssText = 'display: flex; flex-direction: column;';
+    headerLeft.className = 'comet-header-left';
 
     const header = document.createElement('div');
-    header.style.cssText = 'font-size: 18px; font-weight: 600;';
+    header.className = 'comet-header';
     header.innerHTML = '<i class="fas fa-thermometer-half"></i> ' + (deviceName || content.deviceName || 'Comet P8541');
 
     const deviceInfo = document.createElement('div');
-    deviceInfo.style.cssText = 'font-size: 11px; opacity: 0.5; margin-top: 2px;';
+    deviceInfo.className = 'comet-device-info';
     deviceInfo.textContent = content.host;
 
     // Add "View Charts" link
@@ -1147,17 +994,7 @@ export class CometP8541Renderer implements WidgetRenderer {
     chartsLink.href = 'http://sensors.norquay.local:8889/';
     chartsLink.target = '_blank';
     chartsLink.textContent = 'View Charts';
-    chartsLink.style.cssText = `
-      font-size: 11px;
-      color: #4CAF50;
-      text-decoration: none;
-      margin-top: 4px;
-      display: inline-block;
-      opacity: 0.8;
-      transition: opacity 0.2s;
-    `;
-    chartsLink.onmouseover = () => chartsLink.style.opacity = '1';
-    chartsLink.onmouseout = () => chartsLink.style.opacity = '0.8';
+    chartsLink.className = 'comet-charts-link';
 
     headerLeft.appendChild(header);
     headerLeft.appendChild(deviceInfo);
@@ -1165,29 +1002,16 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = '<i class="fas fa-cog"></i>';
-    settingsBtn.className = 'widget-settings-btn';
-    settingsBtn.style.cssText = `
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 16px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    `;
+    settingsBtn.className = 'widget-settings-btn comet-settings-btn';
     settingsBtn.onclick = () => this.showSettings(container, widget);
 
     // Show settings button when widget is selected
     const updateSettingsVisibility = () => {
       const widgetElement = container.closest('.widget');
       if (widgetElement?.classList.contains('selected')) {
-        settingsBtn.style.opacity = '1';
-        settingsBtn.style.pointerEvents = 'auto';
+        settingsBtn.classList.add('visible');
       } else {
-        settingsBtn.style.opacity = '0';
-        settingsBtn.style.pointerEvents = 'none';
+        settingsBtn.classList.remove('visible');
       }
     };
 

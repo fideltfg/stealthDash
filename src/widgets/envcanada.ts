@@ -28,14 +28,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as EnvCanadaContent;
     
-    container.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: var(--surface);
-      border-radius: 8px;
-      overflow: hidden;
-    `;
+    container.className = 'envcanada-container';
 
     if (!content.latitude || !content.longitude) {
       this.renderConfigScreen(container, widget);
@@ -53,28 +46,20 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as EnvCanadaContent;
     
     const configDiv = document.createElement('div');
-    configDiv.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 16px;
-      padding: 20px;
-    `;
+    configDiv.className = 'envcanada-config';
 
     configDiv.innerHTML = `
-      <div style="font-size: 48px;">🍁</div>
-      <div style="color: var(--text); font-size: 18px; font-weight: bold; text-align: center;">
+      <div class="envcanada-config-icon">🍁</div>
+      <div class="envcanada-config-title">
         Environment Canada Weather
       </div>
-      <div style="color: var(--muted); font-size: 14px; text-align: center; max-width: 300px;">
+      <div class="envcanada-config-description">
         Enter latitude and longitude coordinates to display weather forecasts
       </div>
       
-      <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted);">
+      <div class="envcanada-config-form">
+        <div class="envcanada-config-field">
+          <label>
             Latitude
           </label>
           <input
@@ -82,21 +67,12 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
             id="latitude"
             placeholder="51.179"
             value="${content.latitude || ''}"
-            style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              border: 2px solid var(--border);
-              border-radius: 6px;
-              background: var(--background);
-              color: var(--text);
-              font-size: 14px;
-            "
+            class="envcanada-config-input"
           >
         </div>
         
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted);">
+        <div class="envcanada-config-field">
+          <label>
             Longitude
           </label>
           <input
@@ -104,35 +80,17 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
             id="longitude"
             placeholder="-115.569"
             value="${content.longitude || ''}"
-            style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              border: 2px solid var(--border);
-              border-radius: 6px;
-              background: var(--background);
-              color: var(--text);
-              font-size: 14px;
-            "
+            class="envcanada-config-input"
           >
         </div>
         
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted);">
+        <div class="envcanada-config-field">
+          <label>
             Language
           </label>
           <select
             id="language"
-            style="
-              width: 100%;
-              padding: 12px;
-              box-sizing: border-box;
-              border: 2px solid var(--border);
-              border-radius: 6px;
-              background: var(--background);
-              color: var(--text);
-              font-size: 14px;
-            "
+            class="envcanada-config-select"
           >
             <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
             <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
@@ -142,23 +100,14 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       
       <button
         id="load-forecast"
-        style="
-          padding: 12px 24px;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-        "
+        class="envcanada-config-button"
       >
         Load Forecast
       </button>
       
-      <div style="color: var(--muted); font-size: 11px; text-align: center; max-width: 350px;">
+      <div class="envcanada-config-hint">
         Example: Banff, AB = 51.179, -115.569<br>
-        Find coordinates at <a href="https://weather.gc.ca" target="_blank" style="color: var(--accent);">weather.gc.ca</a>
+        Find coordinates at <a href="https://weather.gc.ca" target="_blank">weather.gc.ca</a>
       </div>
     `;
 
@@ -210,24 +159,10 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     // Header with settings button
     const header = document.createElement('div');
-    header.style.cssText = `
-      padding: 12px 16px;
-      background: var(--primary);
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    `;
+    header.className = 'envcanada-header';
 
     const headerLeft = document.createElement('div');
-    headerLeft.style.cssText = `
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    `;
+    headerLeft.className = 'envcanada-header-left';
     headerLeft.innerHTML = `
       <span>🍁</span>
       <span>Weather Forecast</span>
@@ -239,15 +174,11 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     // Content area
     const contentArea = document.createElement('div');
-    contentArea.style.cssText = `
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    `;
+    contentArea.className = 'envcanada-content';
 
     // Loading indicator
     contentArea.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted);">
+      <div class="envcanada-loading">
         <div>Loading forecast...</div>
       </div>
     `;
@@ -266,24 +197,14 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       contentArea.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #f44336;">
-          <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
-          <div style="font-weight: bold; margin-bottom: 8px;">Failed to load forecast</div>
-          <div style="font-size: 12px; opacity: 0.8; margin-bottom: 12px;">${errorMessage}</div>
-          <div style="font-size: 11px; opacity: 0.6; color: var(--muted); margin-bottom: 16px;">
+        <div class="envcanada-error">
+          <div class="envcanada-error-icon">⚠️</div>
+          <div class="envcanada-error-title">Failed to load forecast</div>
+          <div class="envcanada-error-message">${errorMessage}</div>
+          <div class="envcanada-error-hint">
             Check coordinates and try again
           </div>
-          <button
-            id="retry-btn"
-            style="
-              padding: 8px 16px;
-              background: var(--accent);
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
+          <button id="retry-btn" class="envcanada-retry-button">
             Retry
           </button>
         </div>
@@ -406,30 +327,13 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    `;
+    wrapper.className = 'envcanada-wrapper';
 
     // Location header with icon
     const locationDiv = document.createElement('div');
-    locationDiv.style.cssText = `
-      font-size: 18px;
-      font-weight: bold;
-      color: var(--text);
-      text-align: center;
-      padding: 12px;
-      background: linear-gradient(135deg, var(--surface-hover) 0%, var(--surface) 100%);
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    `;
+    locationDiv.className = 'envcanada-location';
     locationDiv.innerHTML = `
-      <span style="font-size: 24px;">📍</span>
+      <span class="envcanada-location-icon">📍</span>
       <span>${data.location || 'Weather Forecast'}</span>
     `;
     wrapper.appendChild(locationDiv);
@@ -437,68 +341,30 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     // Forecast entries with improved visual design
     data.entries.forEach((entry: any) => {
       const entryDiv = document.createElement('div');
-      entryDiv.style.cssText = `
-        background: var(--surface-hover);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 16px;
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: default;
-      `;
-      
-      // Add hover effect
-      entryDiv.addEventListener('mouseenter', () => {
-        entryDiv.style.transform = 'translateY(-2px)';
-        entryDiv.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-      });
-      entryDiv.addEventListener('mouseleave', () => {
-        entryDiv.style.transform = 'translateY(0)';
-        entryDiv.style.boxShadow = 'none';
-      });
+      entryDiv.className = 'envcanada-entry';
 
       // Title row with temperature
       const titleDiv = document.createElement('div');
-      titleDiv.style.cssText = `
-        font-weight: bold;
-        font-size: 15px;
-        color: var(--text);
-        margin-bottom: 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-      `;
+      titleDiv.className = 'envcanada-entry-title';
       
       const titleText = document.createElement('span');
-      titleText.style.cssText = `
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      `;
+      titleText.className = 'envcanada-entry-title-text';
       
       // Add weather icon based on title
       const weatherIcon = this.getWeatherIcon(entry.title);
       titleText.innerHTML = `
-        <span style="font-size: 20px;">${weatherIcon}</span>
+        <span class="envcanada-entry-icon">${weatherIcon}</span>
         <span>${entry.title}</span>
       `;
       titleDiv.appendChild(titleText);
       
       if (entry.temperature) {
         const tempSpan = document.createElement('span');
-        tempSpan.style.cssText = `
-          font-size: 24px;
-          font-weight: bold;
-          color: ${this.getTempColor(entry.temperature)};
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-          display: flex;
-          align-items: center;
-          gap: 2px;
-        `;
+        tempSpan.className = 'envcanada-entry-temp';
+        tempSpan.style.color = this.getTempColor(entry.temperature);
         tempSpan.innerHTML = `
           <span>${entry.temperature}</span>
-          <span style="font-size: 16px;">°C</span>
+          <span class="envcanada-entry-temp-unit">°C</span>
         `;
         titleDiv.appendChild(tempSpan);
       }
@@ -507,13 +373,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
       // Summary text with better formatting
       const summaryDiv = document.createElement('div');
-      summaryDiv.style.cssText = `
-        font-size: 13px;
-        color: var(--text);
-        opacity: 0.85;
-        line-height: 1.6;
-        padding-left: 28px;
-      `;
+      summaryDiv.className = 'envcanada-entry-summary';
       summaryDiv.textContent = entry.summary;
       entryDiv.appendChild(summaryDiv);
 
@@ -523,16 +383,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     // Last updated with icon
     if (content.lastUpdated) {
       const lastUpdate = document.createElement('div');
-      lastUpdate.style.cssText = `
-        text-align: center;
-        font-size: 11px;
-        color: var(--muted);
-        margin-top: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-      `;
+      lastUpdate.className = 'envcanada-last-updated';
       lastUpdate.innerHTML = `
         <span>🕐</span>
         <span>Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}</span>
@@ -606,101 +457,53 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as EnvCanadaContent;
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'envcanada-settings-overlay';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      color: var(--text);
-    `;
+    modal.className = 'envcanada-settings-modal';
 
     modal.innerHTML = `
-      <h3 style="margin: 0 0 20px 0;">Weather Forecast Settings</h3>
+      <h3>Weather Forecast Settings</h3>
       
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="envcanada-settings-field">
+        <label class="envcanada-settings-label">
           Latitude
         </label>
         <input
           type="text"
           id="settings-lat"
           value="${content.latitude}"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="envcanada-settings-input"
         >
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="envcanada-settings-field">
+        <label class="envcanada-settings-label">
           Longitude
         </label>
         <input
           type="text"
           id="settings-lon"
           value="${content.longitude}"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="envcanada-settings-input"
         >
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="envcanada-settings-field">
+        <label class="envcanada-settings-label">
           Language
         </label>
         <select
           id="settings-lang"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="envcanada-settings-select"
         >
           <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
           <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
         </select>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="envcanada-settings-field">
+        <label class="envcanada-settings-label">
           Refresh Interval (seconds)
         </label>
         <input
@@ -709,49 +512,21 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
           value="${content.refreshInterval || 1800}"
           min="0"
           step="300"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="envcanada-settings-input"
         >
-        <small style="opacity: 0.7; font-size: 12px;">Set to 0 to disable auto-refresh</small>
+        <small class="envcanada-settings-hint">Set to 0 to disable auto-refresh</small>
       </div>
 
-      <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <div class="envcanada-settings-buttons">
         <button
           id="settings-save"
-          style="
-            flex: 1;
-            padding: 12px;
-            background: var(--accent);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-          "
+          class="envcanada-settings-button envcanada-settings-button-save"
         >
           Save & Reload
         </button>
         <button
           id="settings-close"
-          style="
-            flex: 1;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 14px;
-          "
+          class="envcanada-settings-button envcanada-settings-button-close"
         >
           Cancel
         </button>

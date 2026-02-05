@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import '../css/uptime.css';
 
 interface PingResult {
   timestamp: number;
@@ -16,51 +17,30 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { target?: string; interval?: number; timeout?: number };
     
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'uptime-config-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
+    dialog.className = 'uptime-config-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure Uptime Monitor</h3>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Target (URL or IP)</label>
-        <input type="text" id="uptime-target" value="${content.target || ''}" placeholder="example.com or 192.168.1.1"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+      <h3 class="uptime-config-title">Configure Uptime Monitor</h3>
+      <div class="uptime-config-field">
+        <label class="uptime-config-label">Target (URL or IP)</label>
+        <input type="text" id="uptime-target" class="uptime-config-input" value="${content.target || ''}" placeholder="example.com or 192.168.1.1" />
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Ping Interval (seconds)</label>
-        <input type="number" id="uptime-interval" value="${content.interval || 30}" min="5" max="300"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+      <div class="uptime-config-field">
+        <label class="uptime-config-label">Ping Interval (seconds)</label>
+        <input type="number" id="uptime-interval" class="uptime-config-input" value="${content.interval || 30}" min="5" max="300" />
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Timeout (milliseconds)</label>
-        <input type="number" id="uptime-timeout" value="${content.timeout || 5000}" min="1000" max="30000" step="1000"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+      <div class="uptime-config-field-last">
+        <label class="uptime-config-label">Timeout (milliseconds)</label>
+        <input type="number" id="uptime-timeout" class="uptime-config-input" value="${content.timeout || 5000}" min="1000" max="30000" step="1000" />
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
+      <div class="uptime-config-buttons">
+        <button id="cancel-btn" class="uptime-config-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
+        <button id="save-btn" class="uptime-config-button-save">
           Save
         </button>
       </div>
@@ -103,11 +83,6 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { target?: string; interval?: number; timeout?: number };
     const div = document.createElement('div');
     div.className = 'uptime-widget';
-    div.style.height = '100%';
-    div.style.display = 'flex';
-    div.style.flexDirection = 'column';
-    div.style.padding = '16px';
-    div.style.overflow = 'hidden';
     
     if (!content.target) {
       this.renderConfigScreen(div, widget);
@@ -148,101 +123,51 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.style.display = 'flex';
-    inputContainer.style.flexDirection = 'column';
-    inputContainer.style.alignItems = 'center';
-    inputContainer.style.justifyContent = 'center';
-    inputContainer.style.height = '100%';
-    inputContainer.style.gap = '12px';
+    inputContainer.className = 'uptime-config-screen';
     
     const icon = document.createElement('div');
+    icon.className = 'uptime-config-icon';
     icon.innerHTML = '<i class="fas fa-chart-bar"></i>';
-    icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
+    label.className = 'uptime-config-description';
     label.textContent = 'Monitor Target Uptime';
-    label.style.color = 'var(--muted)';
-    label.style.marginBottom = '8px';
-    label.style.textAlign = 'center';
     
     const targetInput = document.createElement('input');
     targetInput.type = 'text';
     targetInput.placeholder = 'e.g., google.com or 192.168.1.1';
-    targetInput.style.width = '100%';
-    targetInput.style.padding = '8px 12px';
-    targetInput.style.border = '2px solid var(--border)';
-    targetInput.style.borderRadius = '6px';
-    targetInput.style.fontFamily = 'inherit';
-    targetInput.style.fontSize = '14px';
-    targetInput.style.background = 'var(--bg)';
-    targetInput.style.color = 'var(--text)';
+    targetInput.className = 'uptime-config-target-input';
     
     const intervalLabel = document.createElement('div');
     intervalLabel.textContent = 'Ping interval (seconds)';
-    intervalLabel.style.fontSize = '12px';
-    intervalLabel.style.color = 'var(--muted)';
-    intervalLabel.style.marginTop = '8px';
+    intervalLabel.className = 'uptime-config-interval-label';
     
     const intervalInput = document.createElement('input');
     intervalInput.type = 'number';
     intervalInput.value = '30';
     intervalInput.min = '5';
     intervalInput.max = '300';
-    intervalInput.style.width = '100px';
-    intervalInput.style.padding = '8px 12px';
-    intervalInput.style.border = '2px solid var(--border)';
-    intervalInput.style.borderRadius = '6px';
-    intervalInput.style.fontFamily = 'inherit';
-    intervalInput.style.fontSize = '14px';
-    intervalInput.style.background = 'var(--bg)';
-    intervalInput.style.color = 'var(--text)';
+    intervalInput.className = 'uptime-config-interval-input';
     
     const timeoutLabel = document.createElement('div');
     timeoutLabel.textContent = 'Timeout (milliseconds)';
-    timeoutLabel.style.fontSize = '12px';
-    timeoutLabel.style.color = 'var(--muted)';
-    timeoutLabel.style.marginTop = '8px';
+    timeoutLabel.className = 'uptime-config-timeout-label';
     
     const timeoutInput = document.createElement('input');
     timeoutInput.type = 'number';
     timeoutInput.value = '5000';
     timeoutInput.min = '1000';
     timeoutInput.max = '30000';
-    timeoutInput.style.width = '100px';
-    timeoutInput.style.padding = '8px 12px';
-    timeoutInput.style.border = '2px solid var(--border)';
-    timeoutInput.style.borderRadius = '6px';
-    timeoutInput.style.fontFamily = 'inherit';
-    timeoutInput.style.fontSize = '14px';
-    timeoutInput.style.background = 'var(--bg)';
-    timeoutInput.style.color = 'var(--text)';
+    timeoutInput.className = 'uptime-config-timeout-input';
     
     const button = document.createElement('button');
     button.textContent = 'Start Monitoring';
-    button.style.padding = '8px 20px';
-    button.style.background = 'var(--accent)';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '6px';
-    button.style.cursor = 'pointer';
-    button.style.fontSize = '14px';
-    button.style.fontWeight = '500';
-    button.style.marginTop = '8px';
+    button.className = 'uptime-config-button';
     button.disabled = true;
-    button.style.opacity = '0.5';
-    button.style.cursor = 'not-allowed';
     
     const updateButtonState = () => {
       const target = targetInput.value.trim();
-      if (target.length > 0) {
-        button.disabled = false;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-      } else {
-        button.disabled = true;
-        button.style.opacity = '0.5';
-        button.style.cursor = 'not-allowed';
-      }
+      button.disabled = target.length === 0;
     };
     
     const startMonitoring = () => {
@@ -292,34 +217,20 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     
     // Main container with horizontal layout
     const mainContainer = document.createElement('div');
-    mainContainer.style.display = 'flex';
-    mainContainer.style.flexDirection = 'column';
-    mainContainer.style.gap = '16px';
-    mainContainer.style.height = '100%';
+    mainContainer.className = 'uptime-display-container';
     
     // Top row: target and bars side by side
     const topRow = document.createElement('div');
-    topRow.style.display = 'flex';
-    topRow.style.alignItems = 'center';
-    topRow.style.gap = '16px';
-    topRow.style.justifyContent = 'space-between';
+    topRow.className = 'uptime-top-row';
     
     // Left side: target
     const targetLabel = document.createElement('div');
-    targetLabel.style.fontSize = '16px';
-    targetLabel.style.fontWeight = '600';
-    targetLabel.style.flexShrink = '0';
+    targetLabel.className = 'uptime-target-label';
     targetLabel.textContent = content.target;
     
     // Right side: chart bars
     const chartContainer = document.createElement('div');
-    chartContainer.style.flex = '1';
-    chartContainer.style.display = 'flex';
-    chartContainer.style.alignItems = 'flex-end';
-    chartContainer.style.gap = '3px';
-    chartContainer.style.height = '40px';
-    chartContainer.style.minHeight = '40px';
-    chartContainer.style.maxHeight = '40px';
+    chartContainer.className = 'uptime-chart-container';
     
     const history = this.pingHistory.get(widget.id) || [];
     this.renderChart(chartContainer, history);
@@ -329,12 +240,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     
     // Stats row
     const statsContainer = document.createElement('div');
-    statsContainer.style.display = 'flex';
-    statsContainer.style.gap = '16px';
-    statsContainer.style.fontSize = '12px';
-    statsContainer.style.color = 'var(--muted)';
-    statsContainer.style.paddingTop = '8px';
-    statsContainer.style.borderTop = '1px solid var(--border)';
+    statsContainer.className = 'uptime-stats-container';
     
     const successCount = history.filter(p => p.success).length;
     const uptime = history.length > 0 ? ((successCount / history.length) * 100).toFixed(1) : '0.0';
@@ -376,21 +282,10 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     // Add placeholder bars on the left (grayed out)
     for (let i = 0; i < placeholderCount; i++) {
       const barContainer = document.createElement('div');
-      barContainer.style.flex = '1';
-      barContainer.style.display = 'flex';
-      barContainer.style.flexDirection = 'column';
-      barContainer.style.alignItems = 'center';
-      barContainer.style.justifyContent = 'flex-end';
-      barContainer.style.minWidth = '8px';
-      barContainer.style.height = '100%';
-      barContainer.style.position = 'relative';
+      barContainer.className = 'uptime-bar-container';
       
       const bar = document.createElement('div');
-      bar.style.width = '100%';
-      bar.style.height = '4px';
-      bar.style.borderRadius = '2px 2px 0 0';
-      bar.style.background = 'rgba(255, 255, 255, 0.1)'; // Grayed placeholder
-      bar.style.opacity = '0.3';
+      bar.className = 'uptime-bar-placeholder';
       
       barContainer.appendChild(bar);
       container.appendChild(barContainer);
@@ -399,20 +294,10 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     // Add actual ping results (populate from left to right, newest on right)
     displayHistory.forEach((result) => {
       const barContainer = document.createElement('div');
-      barContainer.style.flex = '1';
-      barContainer.style.display = 'flex';
-      barContainer.style.flexDirection = 'column';
-      barContainer.style.alignItems = 'center';
-      barContainer.style.justifyContent = 'flex-end';
-      barContainer.style.minWidth = '8px';
-      barContainer.style.height = '100%';
-      barContainer.style.position = 'relative';
-      barContainer.style.cursor = 'pointer';
+      barContainer.className = 'uptime-bar-container';
       
       const bar = document.createElement('div');
-      bar.style.width = '100%';
-      bar.style.borderRadius = '2px 2px 0 0';
-      bar.style.transition = 'all 150ms';
+      bar.className = 'uptime-bar';
       
       if (result.success && result.responseTime !== null) {
         // Calculate height as percentage of max, minimum 10% for visibility
@@ -421,40 +306,25 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
         
         // Color based on response time (like reference image)
         if (result.responseTime < 50) {
-          bar.style.background = '#22c55e'; // green - excellent
+          bar.classList.add('uptime-bar-excellent');
         } else if (result.responseTime < 150) {
-          bar.style.background = '#84cc16'; // light green - good
+          bar.classList.add('uptime-bar-good');
         } else if (result.responseTime < 300) {
-          bar.style.background = '#eab308'; // yellow - ok
+          bar.classList.add('uptime-bar-ok');
         } else if (result.responseTime < 1000) {
-          bar.style.background = '#f97316'; // orange - slow
+          bar.classList.add('uptime-bar-slow');
         } else {
-          bar.style.background = '#ef4444'; // red - very slow
+          bar.classList.add('uptime-bar-very-slow');
         }
       } else {
         // Failed ping - small red bar at bottom
         bar.style.height = '8px';
-        bar.style.background = '#ef4444'; // red
-        bar.style.opacity = '1';
+        bar.classList.add('uptime-bar-failed');
       }
       
       // Tooltip
       const tooltip = document.createElement('div');
-      tooltip.style.position = 'absolute';
-      tooltip.style.bottom = '110%';
-      tooltip.style.left = '50%';
-      tooltip.style.transform = 'translateX(-50%)';
-      tooltip.style.background = 'var(--surface)';
-      tooltip.style.border = '1px solid var(--border)';
-      tooltip.style.borderRadius = '4px';
-      tooltip.style.padding = '6px 8px';
-      tooltip.style.fontSize = '11px';
-      tooltip.style.whiteSpace = 'nowrap';
-      tooltip.style.pointerEvents = 'none';
-      tooltip.style.opacity = '0';
-      tooltip.style.transition = 'opacity 150ms';
-      tooltip.style.zIndex = '1000';
-      tooltip.style.boxShadow = '0 2px 8px var(--shadow)';
+      tooltip.className = 'uptime-tooltip';
       
       const time = new Date(result.timestamp).toLocaleTimeString('en', { 
         hour: '2-digit', 
@@ -467,16 +337,6 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       } else {
         tooltip.textContent = `${time}\nTimeout`;
       }
-      
-      barContainer.addEventListener('mouseenter', () => {
-        tooltip.style.opacity = '1';
-        bar.style.opacity = '0.8';
-      });
-      
-      barContainer.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = '0';
-        bar.style.opacity = result.success ? '1' : '0.5';
-      });
       
       barContainer.appendChild(bar);
       barContainer.appendChild(tooltip);

@@ -26,14 +26,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
     
-    container.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: var(--surface);
-      border-radius: 8px;
-      overflow: hidden;
-    `;
+    container.className = 'mtnxml-container';
 
     if (!content.feedUrl) {
       this.renderConfigScreen(container, widget);
@@ -48,22 +41,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as MTNXMLContent;
     
     const configDiv = document.createElement('div');
-    configDiv.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 16px;
-      padding: 20px;
-    `;
+    configDiv.className = 'mtnxml-config';
 
     configDiv.innerHTML = `
-      <div style="font-size: 48px;">⛷️</div>
-      <div style="color: var(--text); font-size: 18px; font-weight: bold; text-align: center;">
+      <div class="mtnxml-config-icon">⛷️</div>
+      <div class="mtnxml-config-title">
         Mountain XML Feed
       </div>
-      <div style="color: var(--muted); font-size: 14px; text-align: center; max-width: 300px;">
+      <div class="mtnxml-config-description">
         Display ski resort conditions, lifts, trails, and weather from MTNXML feeds
       </div>
       <input
@@ -71,32 +56,15 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         id="feed-url"
         placeholder="https://example.com/mtn-xml/"
         value="${content.feedUrl || ''}"
-        style="
-          width: 100%;
-          max-width: 400px;
-          padding: 12px;
-          border: 2px solid var(--border);
-          border-radius: 6px;
-          background: var(--background);
-          color: var(--text);
-          font-size: 14px;
-        "
+        class="mtnxml-config-input"
       >
       <button
         id="load-feed"
-        style="
-          padding: 12px 24px;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-        "
+        class="mtnxml-config-button"
       >
         Load Feed
       </button>
-      <div style="color: var(--muted); font-size: 12px; text-align: center;">
+      <div class="mtnxml-config-hint">
         Example: https://banffnorquay.com/mtn-xml/
       </div>
     `;
@@ -140,24 +108,10 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Header with settings button
     const header = document.createElement('div');
-    header.style.cssText = `
-      padding: 12px 16px;
-      background: var(--primary);
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    `;
+    header.className = 'mtnxml-header';
 
     const headerLeft = document.createElement('div');
-    headerLeft.style.cssText = `
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    `;
+    headerLeft.className = 'mtnxml-header-left';
     headerLeft.innerHTML = `
       <span>⛷️</span>
       <span>Mountain Conditions</span>
@@ -170,15 +124,11 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Content area
     const contentArea = document.createElement('div');
-    contentArea.style.cssText = `
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    `;
+    contentArea.className = 'mtnxml-content';
 
     // Loading indicator
     contentArea.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted);">
+      <div class="mtnxml-loading">
         <div>Loading data...</div>
       </div>
     `;
@@ -201,24 +151,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       contentArea.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #f44336;">
-          <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
-          <div style="font-weight: bold; margin-bottom: 8px;">Failed to load feed</div>
-          <div style="font-size: 12px; opacity: 0.8; margin-bottom: 12px;">${errorMessage}</div>
-          <div style="font-size: 11px; opacity: 0.6; color: var(--muted); margin-bottom: 16px;">
+        <div class="mtnxml-error">
+          <div class="mtnxml-error-icon">⚠️</div>
+          <div class="mtnxml-error-title">Failed to load feed</div>
+          <div class="mtnxml-error-message">${errorMessage}</div>
+          <div class="mtnxml-error-hint">
             Check browser console (F12) for details
           </div>
-          <button
-            id="retry-btn"
-            style="
-              padding: 8px 16px;
-              background: var(--accent);
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
+          <button id="retry-btn" class="mtnxml-retry-button">
             Retry
           </button>
         </div>
@@ -353,22 +293,11 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    `;
+    wrapper.className = 'mtnxml-wrapper';
 
     // Resort name
     const resortName = document.createElement('div');
-    resortName.style.cssText = `
-      font-size: 20px;
-      font-weight: bold;
-      color: var(--text);
-      text-align: center;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--border);
-    `;
+    resortName.className = 'mtnxml-resort-name';
     resortName.textContent = data.resort.name || 'Unknown Resort';
     wrapper.appendChild(resortName);
 
@@ -420,12 +349,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     // Last updated
     if (content.lastUpdated) {
       const lastUpdate = document.createElement('div');
-      lastUpdate.style.cssText = `
-        text-align: center;
-        font-size: 11px;
-        color: var(--muted);
-        margin-top: 8px;
-      `;
+      lastUpdate.className = 'mtnxml-last-updated';
       lastUpdate.textContent = `Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}`;
       wrapper.appendChild(lastUpdate);
     }
@@ -435,35 +359,19 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
     const section = document.createElement('div');
-    section.style.cssText = `
-      background: var(--surface-hover);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-    `;
+    section.className = 'mtnxml-section';
 
     const header = document.createElement('div');
-    header.style.cssText = `
-      font-weight: bold;
-      font-size: 14px;
-      color: var(--text);
-      margin-bottom: 8px;
-    `;
+    header.className = 'mtnxml-section-header';
     header.textContent = title;
     section.appendChild(header);
 
     items.forEach(item => {
       const row = document.createElement('div');
-      row.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        padding: 4px 0;
-        font-size: 13px;
-        color: var(--text);
-      `;
+      row.className = 'mtnxml-section-row';
       row.innerHTML = `
-        <span style="opacity: 0.7;">${item.label}:</span>
-        <span style="font-weight: 500;">${item.value}</span>
+        <span class="mtnxml-section-row-label">${item.label}:</span>
+        <span class="mtnxml-section-row-value">${item.value}</span>
       `;
       section.appendChild(row);
     });
@@ -483,24 +391,11 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
    */
   private createStatusSection(title: string, items: any[], openCount: number, totalCount: number): HTMLElement {
     const section = document.createElement('div');
-    section.style.cssText = `
-      background: var(--surface-hover);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
-    `;
+    section.className = 'mtnxml-status-section';
 
     // Header showing title and open/total count
     const header = document.createElement('div');
-    header.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-      font-size: 14px;
-      color: var(--text);
-      margin-bottom: 8px;
-    `;
+    header.className = 'mtnxml-status-header';
     header.innerHTML = `
       <span>${title}</span>
       <span style="color: ${openCount > 0 ? '#4CAF50' : '#f44336'};">${openCount}/${totalCount}</span>
@@ -509,29 +404,17 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Scrollable container for all items (no limit, shows all lifts/trails)
     const itemsContainer = document.createElement('div');
-    itemsContainer.style.cssText = `
-      max-height: 250px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) var(--surface);
-    `;
+    itemsContainer.className = 'mtnxml-status-items';
 
     // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
       const status = item.status === 'open' ? '<i class="fas fa-check-circle" style="color: #4caf50;"></i>' : '<i class="fas fa-times-circle" style="color: #f44336;"></i>';
       const row = document.createElement('div');
-      row.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 4px 0;
-        font-size: 12px;
-        color: var(--text);
-      `;
+      row.className = 'mtnxml-status-item';
       row.innerHTML = `
         <span>${status}</span>
-        <span style="flex: 1;">${item.name}</span>
-        ${item.difficulty ? `<span style="opacity: 0.6;">${item.difficulty}</span>` : ''}
+        <span class="mtnxml-status-item-name">${item.name}</span>
+        ${item.difficulty ? `<span class="mtnxml-status-item-difficulty">${item.difficulty}</span>` : ''}
       `;
       itemsContainer.appendChild(row);
     });
@@ -567,58 +450,28 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as MTNXMLContent;
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'mtnxml-settings-overlay';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      color: var(--text);
-    `;
+    modal.className = 'mtnxml-settings-modal';
 
     modal.innerHTML = `
-      <h3 style="margin: 0 0 20px 0;">Mountain XML Settings</h3>
+      <h3>Mountain XML Settings</h3>
       
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="mtnxml-settings-field">
+        <label class="mtnxml-settings-label">
           Feed URL
         </label>
         <input
           type="text"
           id="settings-url"
           value="${content.feedUrl}"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="mtnxml-settings-input"
         >
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;">
+      <div class="mtnxml-settings-field">
+        <label class="mtnxml-settings-label">
           Refresh Interval (seconds)
         </label>
         <input
@@ -627,71 +480,45 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           value="${content.refreshInterval || 300}"
           min="0"
           step="60"
-          style="
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
-            color: var(--text);
-            font-size: 14px;
-          "
+          class="mtnxml-settings-input"
         >
-        <small style="opacity: 0.7; font-size: 12px;">Set to 0 to disable auto-refresh</small>
+        <small class="mtnxml-settings-hint">Set to 0 to disable auto-refresh</small>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 10px; font-size: 14px; font-weight: 500;">
+      <div class="mtnxml-settings-field">
+        <label class="mtnxml-settings-label">
           Display Options
         </label>
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
-          <input type="checkbox" id="settings-snow" ${content.showSnow !== false ? 'checked' : ''}>
-          <span>Show Snow Report</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
-          <input type="checkbox" id="settings-weather" ${content.showWeather !== false ? 'checked' : ''}>
-          <span>Show Weather</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
-          <input type="checkbox" id="settings-lifts" ${content.showLifts !== false ? 'checked' : ''}>
-          <span>Show Lifts</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="settings-trails" ${content.showTrails !== false ? 'checked' : ''}>
-          <span>Show Trails</span>
-        </label>
+        <div class="mtnxml-settings-checkboxes">
+          <label class="mtnxml-settings-checkbox-label">
+            <input type="checkbox" id="settings-snow" ${content.showSnow !== false ? 'checked' : ''}>
+            <span>Show Snow Report</span>
+          </label>
+          <label class="mtnxml-settings-checkbox-label">
+            <input type="checkbox" id="settings-weather" ${content.showWeather !== false ? 'checked' : ''}>
+            <span>Show Weather</span>
+          </label>
+          <label class="mtnxml-settings-checkbox-label">
+            <input type="checkbox" id="settings-lifts" ${content.showLifts !== false ? 'checked' : ''}>
+            <span>Show Lifts</span>
+          </label>
+          <label class="mtnxml-settings-checkbox-label">
+            <input type="checkbox" id="settings-trails" ${content.showTrails !== false ? 'checked' : ''}>
+            <span>Show Trails</span>
+          </label>
+        </div>
       </div>
 
-      <div style="display: flex; gap: 12px; margin-top: 24px;">
+      <div class="mtnxml-settings-buttons">
         <button
           id="settings-save"
-          style="
-            flex: 1;
-            padding: 12px;
-            background: var(--accent);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-          "
+          class="mtnxml-settings-button mtnxml-settings-button-save"
         >
           Save & Reload
         </button>
         <button
           id="settings-close"
-          style="
-            flex: 1;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 14px;
-          "
+          class="mtnxml-settings-button mtnxml-settings-button-close"
         >
           Cancel
         </button>

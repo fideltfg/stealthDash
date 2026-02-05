@@ -16,51 +16,33 @@ export class RssWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { feedUrl?: string; maxItems?: number; refreshInterval?: number };
     
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'rss-config-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
+    dialog.className = 'rss-config-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure RSS Feed</h3>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Feed URL</label>
+      <h3 class="rss-config-title">Configure RSS Feed</h3>
+      <div class="rss-config-field">
+        <label class="rss-config-label">Feed URL</label>
         <input type="text" id="rss-url" value="${content.feedUrl || ''}" placeholder="https://example.com/feed.xml"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+          class="rss-config-input" />
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Max Items</label>
+      <div class="rss-config-field">
+        <label class="rss-config-label">Max Items</label>
         <input type="number" id="rss-max-items" value="${content.maxItems || 10}" min="1" max="50"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+          class="rss-config-input" />
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Refresh Interval (minutes, 0 to disable)</label>
+      <div class="rss-config-field large-margin">
+        <label class="rss-config-label">Refresh Interval (minutes, 0 to disable)</label>
         <input type="number" id="rss-refresh" value="${content.refreshInterval !== undefined ? content.refreshInterval : 5}" min="0" max="60"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+          class="rss-config-input" />
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
+      <div class="rss-config-actions">
+        <button id="cancel-btn" class="rss-config-btn cancel">
           Cancel
         </button>
-        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
+        <button id="save-btn" class="rss-config-btn save">
           Save
         </button>
       </div>
@@ -103,10 +85,6 @@ export class RssWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { feedUrl?: string; maxItems?: number; refreshInterval?: number };
     const div = document.createElement('div');
     div.className = 'rss-widget';
-    div.style.height = '100%';
-    div.style.display = 'flex';
-    div.style.flexDirection = 'column';
-    div.style.overflow = 'hidden';
     
     if (!content.feedUrl) {
       this.renderConfigScreen(div, widget);
@@ -139,101 +117,51 @@ export class RssWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.style.display = 'flex';
-    inputContainer.style.flexDirection = 'column';
-    inputContainer.style.alignItems = 'center';
-    inputContainer.style.justifyContent = 'center';
-    inputContainer.style.height = '100%';
-    inputContainer.style.gap = '12px';
-    inputContainer.style.padding = '20px';
+    inputContainer.className = 'rss-setup-container';
     
     const icon = document.createElement('div');
+    icon.className = 'rss-setup-icon';
     icon.innerHTML = '<i class="fas fa-rss"></i>';
-    icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
+    label.className = 'rss-setup-label';
     label.textContent = 'Enter RSS Feed URL';
-    label.style.color = 'var(--muted)';
-    label.style.marginBottom = '8px';
     
     const urlInput = document.createElement('input');
+    urlInput.className = 'rss-setup-input';
     urlInput.type = 'text';
     urlInput.placeholder = 'https://example.com/feed.xml';
-    urlInput.style.width = '100%';
-    urlInput.style.padding = '8px 12px';
-    urlInput.style.border = '2px solid var(--border)';
-    urlInput.style.borderRadius = '6px';
-    urlInput.style.fontFamily = 'inherit';
-    urlInput.style.fontSize = '14px';
-    urlInput.style.background = 'var(--bg)';
-    urlInput.style.color = 'var(--text)';
     
     const maxItemsLabel = document.createElement('div');
+    maxItemsLabel.className = 'rss-setup-sublabel';
     maxItemsLabel.textContent = 'Max items to display';
-    maxItemsLabel.style.fontSize = '12px';
-    maxItemsLabel.style.color = 'var(--muted)';
-    maxItemsLabel.style.marginTop = '8px';
     
     const maxItemsInput = document.createElement('input');
+    maxItemsInput.className = 'rss-setup-input number';
     maxItemsInput.type = 'number';
     maxItemsInput.value = '10';
     maxItemsInput.min = '1';
     maxItemsInput.max = '50';
-    maxItemsInput.style.width = '100px';
-    maxItemsInput.style.padding = '8px 12px';
-    maxItemsInput.style.border = '2px solid var(--border)';
-    maxItemsInput.style.borderRadius = '6px';
-    maxItemsInput.style.fontFamily = 'inherit';
-    maxItemsInput.style.fontSize = '14px';
-    maxItemsInput.style.background = 'var(--bg)';
-    maxItemsInput.style.color = 'var(--text)';
     
     const refreshLabel = document.createElement('div');
+    refreshLabel.className = 'rss-setup-sublabel';
     refreshLabel.textContent = 'Auto-refresh (minutes, 0 = disabled)';
-    refreshLabel.style.fontSize = '12px';
-    refreshLabel.style.color = 'var(--muted)';
-    refreshLabel.style.marginTop = '8px';
     
     const refreshInput = document.createElement('input');
+    refreshInput.className = 'rss-setup-input number';
     refreshInput.type = 'number';
     refreshInput.value = '5';
     refreshInput.min = '0';
     refreshInput.max = '1440';
-    refreshInput.style.width = '100px';
-    refreshInput.style.padding = '8px 12px';
-    refreshInput.style.border = '2px solid var(--border)';
-    refreshInput.style.borderRadius = '6px';
-    refreshInput.style.fontFamily = 'inherit';
-    refreshInput.style.fontSize = '14px';
-    refreshInput.style.background = 'var(--bg)';
-    refreshInput.style.color = 'var(--text)';
     
     const button = document.createElement('button');
+    button.className = 'rss-setup-button';
     button.textContent = 'Load Feed';
-    button.style.padding = '8px 20px';
-    button.style.background = 'var(--accent)';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '6px';
-    button.style.cursor = 'pointer';
-    button.style.fontSize = '14px';
-    button.style.fontWeight = '500';
-    button.style.marginTop = '8px';
     button.disabled = true;
-    button.style.opacity = '0.5';
-    button.style.cursor = 'not-allowed';
     
     const updateButtonState = () => {
       const url = urlInput.value.trim();
-      if (url.length > 0) {
-        button.disabled = false;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-      } else {
-        button.disabled = true;
-        button.style.opacity = '0.5';
-        button.style.cursor = 'not-allowed';
-      }
+      button.disabled = url.length === 0;
     };
     
     const loadFeed = () => {
@@ -283,7 +211,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchAndRenderFeed(container: HTMLElement, widget: Widget, feedUrl: string, maxItems: number): Promise<void> {
-    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); padding: 20px;">Loading feed...</div>';
+    container.innerHTML = '<div class="rss-loading">Loading feed...</div>';
     
     try {
       // Use RSS2JSON service as a CORS proxy
@@ -303,36 +231,28 @@ export class RssWidgetRenderer implements WidgetRenderer {
       container.innerHTML = '';
       this.renderFeedItems(container, data.feed, data.items, maxItems);
     } catch (error) {
-      container.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--error); text-align: center; padding: 20px;">
-        <div style="font-size: 32px; margin-bottom: 12px;"><i class="fas fa-exclamation-triangle"></i></div>
+      container.innerHTML = `<div class="rss-error">
+        <div class="rss-error-icon"><i class="fas fa-exclamation-triangle"></i></div>
         <div>Failed to load RSS feed</div>
-        <div style="font-size: 12px; margin-top: 8px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
+        <div class="rss-error-detail">${error instanceof Error ? error.message : 'Unknown error'}</div>
       </div>`;
     }
   }
 
   private renderFeedItems(container: HTMLElement, feed: any, items: any[], maxItems: number): void {
     const feedContainer = document.createElement('div');
-    feedContainer.style.height = '100%';
-    feedContainer.style.display = 'flex';
-    feedContainer.style.flexDirection = 'column';
-    feedContainer.style.overflow = 'hidden';
+    feedContainer.className = 'rss-feed-container';
     
     // Feed header
     const header = document.createElement('div');
-    header.style.padding = '16px';
-    header.style.borderBottom = '1px solid var(--border)';
-    header.style.flexShrink = '0';
+    header.className = 'rss-feed-header';
     
     const feedTitle = document.createElement('div');
-    feedTitle.style.fontSize = '16px';
-    feedTitle.style.fontWeight = '600';
-    feedTitle.style.marginBottom = '4px';
+    feedTitle.className = 'rss-feed-title';
     feedTitle.textContent = feed.title || 'RSS Feed';
     
     const feedDescription = document.createElement('div');
-    feedDescription.style.fontSize = '12px';
-    feedDescription.style.color = 'var(--muted)';
+    feedDescription.className = 'rss-feed-description';
     feedDescription.textContent = feed.description || '';
     
     header.appendChild(feedTitle);
@@ -342,29 +262,13 @@ export class RssWidgetRenderer implements WidgetRenderer {
     
     // Items list
     const itemsList = document.createElement('div');
-    itemsList.style.flex = '1';
-    itemsList.style.overflowY = 'auto';
-    itemsList.style.padding = '8px';
+    itemsList.className = 'rss-items-list';
     
     const displayItems = items.slice(0, maxItems);
     
     displayItems.forEach((item, index) => {
       const itemDiv = document.createElement('div');
-      itemDiv.style.padding = '12px';
-      itemDiv.style.marginBottom = '8px';
-      itemDiv.style.background = 'var(--bg)';
-      itemDiv.style.borderRadius = '6px';
-      itemDiv.style.border = '1px solid var(--border)';
-      itemDiv.style.cursor = 'pointer';
-      itemDiv.style.transition = 'background var(--transition-speed)';
-      
-      itemDiv.addEventListener('mouseenter', () => {
-        itemDiv.style.background = 'var(--surface)';
-      });
-      
-      itemDiv.addEventListener('mouseleave', () => {
-        itemDiv.style.background = 'var(--bg)';
-      });
+      itemDiv.className = 'rss-item';
       
       itemDiv.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -374,16 +278,11 @@ export class RssWidgetRenderer implements WidgetRenderer {
       });
       
       const itemTitle = document.createElement('div');
-      itemTitle.style.fontSize = '14px';
-      itemTitle.style.fontWeight = '500';
-      itemTitle.style.marginBottom = '6px';
-      itemTitle.style.color = 'var(--text)';
+      itemTitle.className = 'rss-item-title';
       itemTitle.textContent = item.title || 'Untitled';
       
       const itemMeta = document.createElement('div');
-      itemMeta.style.fontSize = '11px';
-      itemMeta.style.color = 'var(--muted)';
-      itemMeta.style.marginBottom = '6px';
+      itemMeta.className = 'rss-item-meta';
       
       const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en', { 
         month: 'short', 
@@ -403,9 +302,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       
       if (item.description) {
         const itemDescription = document.createElement('div');
-        itemDescription.style.fontSize = '12px';
-        itemDescription.style.color = 'var(--muted)';
-        itemDescription.style.lineHeight = '1.4';
+        itemDescription.className = 'rss-item-description';
         
         // Strip HTML tags and truncate
         const text = item.description.replace(/<[^>]*>/g, '');
