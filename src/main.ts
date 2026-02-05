@@ -22,6 +22,9 @@ class Dashboard {
   private resizeState: { widgetId: string; direction: string; startSize: Size; startPos: Vec2; startMousePos: Vec2 } | null = null;
   private panState: { startScrollX: number; startScrollY: number; startMousePos: Vec2 } | null = null;
   private lastTouchDistance: number = 0;
+  private touchStartX: number = 0;
+  private touchStartY: number = 0;
+  private touchStartTime: number = 0;
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
   private readonly SNAP_DISTANCE = 10; // pixels to snap to nearby edges
@@ -159,7 +162,8 @@ class Dashboard {
         () => this.userSettingsUI.showSettingsDialog(),
         () => this.adminDashboardUI.showAdminDashboard(),
         () => this.showDashboardManager(),
-        () => this.credentialsUI.showCredentialsDialog()
+        () => this.credentialsUI.showCredentialsDialog(),
+        () => this.showHelpDialog()
       );
       document.body.appendChild(this.userMenuElement);
     } else {
@@ -265,6 +269,40 @@ class Dashboard {
     this.canvasContent.className = 'canvas-content';
     this.canvas.appendChild(this.canvasContent);
 
+    // Dashboard Switcher (top-left)
+    const dashboardSwitcher = document.createElement('div');
+    dashboardSwitcher.className = 'dashboard-switcher';
+    
+    const dashboardButton = document.createElement('button');
+    dashboardButton.className = 'dashboard-switcher-button';
+    dashboardButton.innerHTML = '<span class="dashboard-switcher-icon">📊</span><span class="dashboard-switcher-text"></span>';
+    dashboardButton.setAttribute('aria-label', 'Switch dashboard');
+    dashboardButton.setAttribute('title', 'Switch dashboard');
+    
+    const dashboardDropdown = document.createElement('div');
+    dashboardDropdown.className = 'dashboard-switcher-dropdown';
+    dashboardDropdown.style.display = 'none';
+    
+    dashboardButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = dashboardDropdown.style.display === 'block';
+      dashboardDropdown.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        this.updateDashboardSwitcherDropdown(dashboardDropdown);
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+      dashboardDropdown.style.display = 'none';
+    });
+    
+    dashboardSwitcher.appendChild(dashboardButton);
+    dashboardSwitcher.appendChild(dashboardDropdown);
+    
+    // Update button text with current dashboard name
+    this.updateDashboardSwitcherButton(dashboardButton);
+
     // Menu Button (hamburger icon)
     const menuButton = document.createElement('button');
     menuButton.className = 'menu-button';
@@ -362,7 +400,25 @@ class Dashboard {
     controlsContainer.appendChild(themeToggle);
     controlsContainer.appendChild(backgroundToggle);
 
+    // Dashboard navigation arrows
+    const prevDashboardBtn = document.createElement('button');
+    prevDashboardBtn.className = 'dashboard-nav-btn dashboard-nav-prev';
+    prevDashboardBtn.innerHTML = '‹';
+    prevDashboardBtn.setAttribute('aria-label', 'Previous dashboard');
+    prevDashboardBtn.setAttribute('title', 'Previous dashboard (Ctrl+←)');
+    prevDashboardBtn.addEventListener('click', () => this.navigateToPreviousDashboard());
+
+    const nextDashboardBtn = document.createElement('button');
+    nextDashboardBtn.className = 'dashboard-nav-btn dashboard-nav-next';
+    nextDashboardBtn.innerHTML = '›';
+    nextDashboardBtn.setAttribute('aria-label', 'Next dashboard');
+    nextDashboardBtn.setAttribute('title', 'Next dashboard (Ctrl+→)');
+    nextDashboardBtn.addEventListener('click', () => this.navigateToNextDashboard());
+
     app.appendChild(this.canvas);
+    app.appendChild(dashboardSwitcher);
+    app.appendChild(prevDashboardBtn);
+    app.appendChild(nextDashboardBtn);
     app.appendChild(menuButton);
     app.appendChild(this.lockButton);
     app.appendChild(controlsContainer);
@@ -438,6 +494,11 @@ class Dashboard {
       this.deleteWidget(e.detail.widgetId);
     }) as EventListener);
 
+    // Widget copy event
+    window.addEventListener('widget-copy', ((e: CustomEvent) => {
+      this.showCopyWidgetDialog(e.detail.widgetId);
+    }) as EventListener);
+
     // Pointer events for drag/resize
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
@@ -456,12 +517,37 @@ class Dashboard {
     // Touch events for pinch zoom
     this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-    this.canvas.addEventListener('touchend', () => this.handleTouchEnd());
+    this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
   }
 
   private handleKeyboard(e: KeyboardEvent): void {
     // Ignore all input when locked
     if (this.isLocked) return;
+
+    // Dashboard navigation with Shift + Number (e.g., Shift+1, Shift+2)
+    if (e.shiftKey && e.code.startsWith('Digit')) {
+      const digit = e.code.replace('Digit', '');
+      const dashboardIndex = parseInt(digit) - 1;
+      if (this.multiState && this.multiState.dashboards[dashboardIndex]) {
+        e.preventDefault();
+        this.switchToDashboard(this.multiState.dashboards[dashboardIndex].id);
+        return;
+      }
+    }
+
+    // Dashboard navigation with Ctrl+Arrow keys (when no widget is selected)
+    if ((e.ctrlKey || e.metaKey) && !this.selectedWidgetId) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        this.navigateToPreviousDashboard();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        this.navigateToNextDashboard();
+        return;
+      }
+    }
 
     // Undo/Redo
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
@@ -886,7 +972,12 @@ class Dashboard {
   }
 
   private handleTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 1) {
+      // Store touch start position for swipe detection
+      this.touchStartX = e.touches[0].clientX;
+      this.touchStartY = e.touches[0].clientY;
+      this.touchStartTime = Date.now();
+    } else if (e.touches.length === 2) {
       e.preventDefault();
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
@@ -921,8 +1012,40 @@ class Dashboard {
     }
   }
 
-  private handleTouchEnd(): void {
+  private handleTouchEnd(e: TouchEvent): void {
+    // Detect swipe gesture for dashboard navigation
+    if (e.changedTouches.length === 1 && this.touchStartTime > 0) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - this.touchStartX;
+      const deltaY = touchEndY - this.touchStartY;
+      const deltaTime = Date.now() - this.touchStartTime;
+      
+      // Swipe thresholds
+      const minSwipeDistance = 100; // minimum distance in pixels
+      const maxSwipeTime = 300; // maximum time in milliseconds
+      const minHorizontalRatio = 2; // horizontal movement should be at least 2x vertical
+      
+      // Check if it's a horizontal swipe
+      if (
+        Math.abs(deltaX) > minSwipeDistance &&
+        deltaTime < maxSwipeTime &&
+        Math.abs(deltaX) > Math.abs(deltaY) * minHorizontalRatio
+      ) {
+        if (deltaX > 0) {
+          // Swipe right - go to previous dashboard
+          this.navigateToPreviousDashboard();
+        } else {
+          // Swipe left - go to next dashboard
+          this.navigateToNextDashboard();
+        }
+      }
+    }
+    
     this.lastTouchDistance = 0;
+    this.touchStartX = 0;
+    this.touchStartY = 0;
+    this.touchStartTime = 0;
     this.save();
   }
 
@@ -1439,6 +1562,401 @@ class Dashboard {
     });
   }
 
+  private updateDashboardSwitcherButton(button: HTMLButtonElement): void {
+    if (!this.multiState) return;
+    
+    const activeDashboard = this.multiState.dashboards.find(
+      d => d.id === this.multiState!.activeDashboardId
+    );
+    
+    if (activeDashboard) {
+      const textSpan = button.querySelector('.dashboard-switcher-text');
+      if (textSpan) {
+        textSpan.textContent = activeDashboard.name;
+      }
+    }
+  }
+
+  private updateDashboardSwitcherDropdown(dropdown: HTMLElement): void {
+    if (!this.multiState) return;
+    
+    dropdown.innerHTML = '';
+    
+    this.multiState.dashboards.forEach(dashboard => {
+      const item = document.createElement('button');
+      item.className = 'dashboard-switcher-item';
+      
+      const isActive = dashboard.id === this.multiState!.activeDashboardId;
+      if (isActive) {
+        item.classList.add('active');
+      }
+      
+      item.innerHTML = `
+        <span class="dashboard-switcher-item-icon">${isActive ? '✓' : ''}</span>
+        <span class="dashboard-switcher-item-name">${dashboard.name}</span>
+      `;
+      
+      item.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!isActive) {
+          await this.switchToDashboard(dashboard.id);
+        }
+        dropdown.style.display = 'none';
+      });
+      
+      dropdown.appendChild(item);
+    });
+    
+    // Add "Manage Dashboards" option
+    const separator = document.createElement('div');
+    separator.className = 'dashboard-switcher-separator';
+    dropdown.appendChild(separator);
+    
+    const manageItem = document.createElement('button');
+    manageItem.className = 'dashboard-switcher-item manage';
+    manageItem.innerHTML = `
+      <span class="dashboard-switcher-item-icon">⚙️</span>
+      <span class="dashboard-switcher-item-name">Manage Dashboards</span>
+    `;
+    manageItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.showDashboardManager();
+      dropdown.style.display = 'none';
+    });
+    
+    dropdown.appendChild(manageItem);
+  }
+
+  private async switchToDashboard(dashboardId: string): Promise<void> {
+    if (!this.multiState) return;
+    
+    // Clean up current widgets before switching
+    this.cleanup();
+    
+    this.multiState.activeDashboardId = dashboardId;
+    
+    const dashboard = this.multiState.dashboards.find(d => d.id === dashboardId);
+    if (!dashboard) return;
+    
+    this.state = dashboard.state;
+    this.history = createHistoryManager();
+    this.render();
+    this.setupTheme();
+    this.setupBackground();
+    
+    // Update switcher button
+    const button = document.querySelector('.dashboard-switcher-button') as HTMLButtonElement;
+    if (button) {
+      this.updateDashboardSwitcherButton(button);
+    }
+    
+    // Save the active dashboard change
+    if (authService.isAuthenticated()) {
+      await dashboardStorage.saveDashboards(this.multiState, true);
+    }
+  }
+
+  private navigateToNextDashboard(): void {
+    if (!this.multiState || this.multiState.dashboards.length <= 1) return;
+    
+    const currentIndex = this.multiState.dashboards.findIndex(
+      d => d.id === this.multiState!.activeDashboardId
+    );
+    
+    const nextIndex = (currentIndex + 1) % this.multiState.dashboards.length;
+    this.switchToDashboard(this.multiState.dashboards[nextIndex].id);
+  }
+
+  private navigateToPreviousDashboard(): void {
+    if (!this.multiState || this.multiState.dashboards.length <= 1) return;
+    
+    const currentIndex = this.multiState.dashboards.findIndex(
+      d => d.id === this.multiState!.activeDashboardId
+    );
+    
+    const prevIndex = currentIndex === 0 
+      ? this.multiState.dashboards.length - 1 
+      : currentIndex - 1;
+    
+    this.switchToDashboard(this.multiState.dashboards[prevIndex].id);
+  }
+
+  private showCopyWidgetDialog(widgetId: string): void {
+    if (!this.multiState) {
+      alert('Cannot copy widget: dashboard state not available');
+      return;
+    }
+
+    const widget = this.state.widgets.find(w => w.id === widgetId);
+    if (!widget) {
+      alert('Widget not found');
+      return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+
+    const title = document.createElement('h2');
+    title.className = 'modal-title';
+    title.textContent = 'Copy Widget to Dashboard';
+    header.appendChild(title);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.addEventListener('click', () => overlay.remove());
+    header.appendChild(closeBtn);
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+
+    const description = document.createElement('p');
+    description.textContent = `Select a dashboard to copy "${widget.meta?.title || widget.type}" to:`;
+    content.appendChild(description);
+
+    // List of dashboards (excluding current one)
+    const currentDashboardId = this.multiState.activeDashboardId;
+    const otherDashboards = this.multiState.dashboards.filter(d => d.id !== currentDashboardId);
+
+    if (otherDashboards.length === 0) {
+      const noDashboards = document.createElement('p');
+      noDashboards.className = 'modal-no-data';
+      noDashboards.textContent = 'No other dashboards available. Create a new dashboard first.';
+      content.appendChild(noDashboards);
+    } else {
+      const dashboardList = document.createElement('div');
+      dashboardList.className = 'dashboard-list';
+
+      otherDashboards.forEach(dashboard => {
+        const item = document.createElement('button');
+        item.className = 'widget-type-row dashboard-list-item';
+
+        const itemContent = document.createElement('div');
+        itemContent.className = 'dashboard-list-item-content';
+
+        const dashName = document.createElement('div');
+        dashName.className = 'dashboard-list-item-name';
+        dashName.textContent = dashboard.name;
+
+        const dashInfo = document.createElement('div');
+        dashInfo.className = 'dashboard-list-item-info';
+        dashInfo.textContent = `${dashboard.state.widgets.length} widget${dashboard.state.widgets.length !== 1 ? 's' : ''}`;
+
+        itemContent.appendChild(dashName);
+        itemContent.appendChild(dashInfo);
+        item.appendChild(itemContent);
+
+        item.addEventListener('click', () => {
+          this.copyWidgetToDashboard(widget, dashboard.id);
+          overlay.remove();
+        });
+
+        dashboardList.appendChild(item);
+      });
+
+      content.appendChild(dashboardList);
+    }
+
+    // Add cancel button
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'modal-button-container';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'modal-cancel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => overlay.remove());
+
+    buttonContainer.appendChild(cancelBtn);
+    content.appendChild(buttonContainer);
+
+    modal.appendChild(header);
+    modal.appendChild(content);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+  }
+
+  private copyWidgetToDashboard(widget: Widget, targetDashboardId: string): void {
+    if (!this.multiState) return;
+
+    const targetDashboard = this.multiState.dashboards.find(d => d.id === targetDashboardId);
+    if (!targetDashboard) {
+      alert('Target dashboard not found');
+      return;
+    }
+
+    // Create a copy of the widget with a new ID
+    const newWidget: Widget = {
+      ...widget,
+      id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      z: targetDashboard.state.widgets.length, // Place on top
+      meta: {
+        ...widget.meta,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+    };
+
+    // Add to target dashboard
+    targetDashboard.state.widgets.push(newWidget);
+
+    // Save to server
+    if (authService.isAuthenticated()) {
+      dashboardStorage.saveDashboards(this.multiState, true);
+    }
+
+    alert(`Widget copied to "${targetDashboard.name}" successfully!`);
+  }
+
+  private showHelpDialog(): void {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal help-modal';
+    modal.style.maxWidth = '800px';
+
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+
+    const title = document.createElement('h2');
+    title.className = 'modal-title';
+    title.textContent = '❓ Dashboard Help';
+    header.appendChild(title);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.addEventListener('click', () => overlay.remove());
+    header.appendChild(closeBtn);
+
+    const content = document.createElement('div');
+    content.className = 'modal-content help-content';
+    
+    content.innerHTML = `
+      <div class="help-section">
+        <h3>🎛️ Dashboard Navigation</h3>
+        <ul>
+          <li>Click the dashboard name in the top-left corner or use a keyboard shortcut...</li>
+          <li>
+            <ul>
+              <li><kbd>Shift</kbd> + <kbd>1-9</kbd> - Jump to dashboard by number</li>
+              <li><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd> - Navigate previous/next dashboard</li>
+            </ul>
+          </li>
+          <li><strong>Touch Gestures:</strong> Swipe left/right to switch dashboards</li>
+          <li><strong>Arrow Buttons:</strong> Click the arrows on the left/right edges of the screen</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🎨 Widgets</h3>
+        <ul>
+          <li><strong>Add Widget:</strong> Click the <strong>+</strong> button (bottom-left)</li>
+          <li><kbd>Shift</kbd> + Click to select a widget</li>
+          <li><kbd>Shift</kbd> + Click and drag the widget anywhere</li>
+          <li><strong>Resize Widget:</strong> Drag the edges or corners (hover to reveal handles)</li>
+          <li><strong>Configure:</strong> Click the ⚙️ icon in the widget header</li>
+          <li><strong>Copy to Dashboard:</strong> Click the 📋 icon to copy widget to another dashboard</li>
+          <li><strong>Delete:</strong> Click the × icon in the widget header</li>
+          <li><strong>Keyboard Movement:</strong>
+            <ul>
+              <li><kbd>Shift</kbd> + Click to select a widget</li>
+              <li>Arrow keys to move selected widget (hold <kbd>Shift</kbd> for 10x speed)</li>
+              <li><kbd>Esc</kbd> to deselect widget</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔒 Lock Mode</h3>
+        <ul>
+          <li><strong>Toggle Lock:</strong> Click the lock icon (top-right)</li>
+          <li><strong>Locked Mode:</strong> Prevents moving, resizing, or deleting widgets</li>
+          <li><strong>Use Case:</strong> Perfect for viewing dashboards without accidental changes</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔍 Canvas Controls</h3>
+        <ul>
+          <li><strong>Zoom:</strong> <kbd>Ctrl</kbd> + Mouse Wheel or pinch gesture</li>
+          <li><strong>Pan:</strong> Click and drag on empty canvas area</li>
+          <li><strong>Reset Zoom:</strong> Click the <strong>1:1</strong> button (left menu)</li>
+          <li><strong>Reset View:</strong> Click the 🎯 button to center canvas</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🎭 Themes & Appearance</h3>
+        <ul>
+          <li><strong>Theme Toggle:</strong> Click the 🌓 button (left menu)</li>
+          <li><strong>Background Pattern:</strong> Click the ◫ button to cycle patterns</li>
+          <li><strong>Fullscreen:</strong> Click the ⛶ button or press <kbd>F11</kbd></li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔐 Credentials & Security</h3>
+        <ul>
+          <li><strong>Credential Manager:</strong> Store API keys and tokens securely</li>
+          <li><strong>Access:</strong> User menu → Credentials</li>
+          <li><strong>Usage:</strong> Select stored credentials when configuring widgets</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>⌨️ Keyboard Shortcuts Summary</h3>
+        <table class="help-shortcuts-table">
+          <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr>
+          <tr><td><kbd>Shift</kbd> + <kbd>1-9</kbd></td><td>Switch to dashboard</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd></td><td>Navigate dashboards</td></tr>
+          <tr><td><kbd>Arrow Keys</kbd></td><td>Move selected widget</td></tr>
+          <tr><td><kbd>Alt</kbd> + <kbd>Arrow Keys</kbd></td><td>Resize selected widget</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Deselect widget</td></tr>
+        </table>
+      </div>
+
+      <div class="help-section">
+        <h3>💡 Tips & Tricks</h3>
+        <ul>
+          <li>Use <strong>My Dashboards</strong> to organize widgets into separate dashboards</li>
+          <li>Lock the dashboard when presenting to prevent accidental edits</li>
+          <li>Store credentials once and reuse them across multiple widgets</li>
+          <li>Use the grid snap feature for perfectly aligned widgets</li>
+        </ul>
+      </div>
+    `;
+
+    modal.appendChild(header);
+    modal.appendChild(content);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+  }
+
   private showDashboardManager(): void {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -1731,30 +2249,6 @@ class Dashboard {
     document.addEventListener('keydown', handleKeyDown);
   }
 
-  private switchToDashboard(dashboardId: string): void {
-    // Clean up current widgets before switching
-    this.cleanup();
-
-    // Update active dashboard in current state
-    if (this.multiState) {
-      this.multiState.activeDashboardId = dashboardId;
-      const dashboard = this.multiState.dashboards.find(d => d.id === dashboardId);
-      
-      if (dashboard) {
-        this.state = dashboard.state;
-        this.history = createHistoryManager();
-        this.render();
-        this.setupTheme();
-        this.setupBackground();
-
-        // Save to server if authenticated
-        if (authService.isAuthenticated()) {
-          dashboardStorage.saveDashboards(this.multiState, true); // Immediate save
-        }
-      }
-    }
-  }
-
   private cleanup(): void {
     // Stop all widget refresh intervals and cleanup
     this.state.widgets.forEach(widget => {
@@ -1922,7 +2416,10 @@ class Dashboard {
       }
       
       // Load and render widgets
-      await loadWidgetModules();
+      const widgetTypes = this.state.widgets.map(w => w.type);
+      if (widgetTypes.length > 0) {
+        await loadWidgetModules(widgetTypes);
+      }
       await this.render();
       
     } catch (error) {

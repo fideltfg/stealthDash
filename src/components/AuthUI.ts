@@ -194,7 +194,7 @@ export class AuthUI {
     }
   }
 
-  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void): HTMLElement {
+  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void, onHelpClick?: () => void): HTMLElement {
     const container = document.createElement('div');
     container.className = 'user-menu';
 
@@ -215,6 +215,10 @@ export class AuthUI {
           <button id="credentials-btn" class="user-dropdown-button">
             <span>🔐</span>
             <span>Credentials</span>
+          </button>
+          <button id="help-btn" class="user-dropdown-button">
+            <span>❓</span>
+            <span>Help</span>
           </button>
           <button id="settings-btn" class="user-dropdown-button user-dropdown-button-primary">
             <span>⚙️</span>
@@ -286,6 +290,16 @@ export class AuthUI {
         dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onCredentialsClick();
+      });
+    }
+
+    // Help button
+    const helpBtn = dropdown.querySelector('#help-btn') as HTMLButtonElement;
+    if (helpBtn && onHelpClick) {
+      helpBtn.addEventListener('click', () => {
+        dropdown.classList.remove('visible');
+        toggle.style.transform = 'scale(1)';
+        onHelpClick();
       });
     }
 

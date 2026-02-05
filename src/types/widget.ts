@@ -35,46 +35,96 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   const plugin = getWidgetPlugin(widget.type);
   const renderer = getWidgetRenderer(widget.type);
   
-  // Add custom buttons from widget renderer (if provided)
+  // Create menu button
+  const menuBtn = document.createElement('button');
+  menuBtn.className = 'widget-menu-btn';
+  menuBtn.innerHTML = '⋮';
+  menuBtn.title = 'Widget menu';
+  menuBtn.setAttribute('aria-label', 'Widget menu');
+  
+  // Create dropdown menu
+  const menuDropdown = document.createElement('div');
+  menuDropdown.className = 'widget-menu-dropdown';
+  menuDropdown.style.display = 'none';
+  
+  // Add custom menu items from widget renderer
   if (renderer?.getHeaderButtons) {
     const customButtons = renderer.getHeaderButtons(widget);
     customButtons.forEach((btn: HTMLElement) => {
-      headerButtons.appendChild(btn);
+      const menuItem = document.createElement('button');
+      menuItem.className = 'widget-menu-item';
+      menuItem.innerHTML = `<span class="widget-menu-icon">${btn.innerHTML}</span><span class="widget-menu-label">${btn.title || btn.getAttribute('aria-label') || 'Action'}</span>`;
+      menuItem.onclick = (e) => {
+        e.stopPropagation();
+        btn.click();
+        menuDropdown.style.display = 'none';
+      };
+      menuDropdown.appendChild(menuItem);
     });
   }
   
-  // Settings button (if widget has configuration)
+  // Settings menu item (if widget has configuration)
   if (plugin?.hasSettings !== false && renderer?.configure) {
-    const settingsBtn = document.createElement('button');
-    settingsBtn.className = 'widget-settings-btn';
-    settingsBtn.innerHTML = '⚙️';
-    settingsBtn.title = 'Configure widget';
-    settingsBtn.setAttribute('aria-label', 'Configure widget');
-    settingsBtn.onclick = (e) => {
+    const settingsItem = document.createElement('button');
+    settingsItem.className = 'widget-menu-item';
+    settingsItem.innerHTML = '<span class="widget-menu-icon">⚙️</span><span class="widget-menu-label">Configure</span>';
+    settingsItem.onclick = (e) => {
       e.stopPropagation();
+      menuDropdown.style.display = 'none';
       if (renderer.configure) {
         renderer.configure(widget);
       }
     };
-    headerButtons.appendChild(settingsBtn);
+    menuDropdown.appendChild(settingsItem);
   }
   
-  // Delete button
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'widget-delete-btn';
-  deleteBtn.innerHTML = '×';
-  deleteBtn.title = 'Delete widget';
-  deleteBtn.setAttribute('aria-label', 'Delete widget');
-  deleteBtn.onclick = (e) => {
+  // Copy to Dashboard menu item
+  const copyItem = document.createElement('button');
+  copyItem.className = 'widget-menu-item';
+  copyItem.innerHTML = '<span class="widget-menu-icon">📋</span><span class="widget-menu-label">Copy</span>';
+  copyItem.onclick = (e) => {
     e.stopPropagation();
+    menuDropdown.style.display = 'none';
+    const event = new CustomEvent('widget-copy', { detail: { widgetId: widget.id } });
+    window.dispatchEvent(event);
+  };
+  menuDropdown.appendChild(copyItem);
+  
+  // Delete menu item
+  const deleteItem = document.createElement('button');
+  deleteItem.className = 'widget-menu-item widget-menu-item-danger';
+  deleteItem.innerHTML = '<span class="widget-menu-icon">🗑️</span><span class="widget-menu-label">Delete</span>';
+  deleteItem.onclick = (e) => {
+    e.stopPropagation();
+    menuDropdown.style.display = 'none';
     const confirmed = confirm('Are you sure you want to delete this widget?');
     if (confirmed) {
       const event = new CustomEvent('widget-delete', { detail: { widgetId: widget.id } });
       window.dispatchEvent(event);
     }
   };
+  menuDropdown.appendChild(deleteItem);
   
-  headerButtons.appendChild(deleteBtn);
+  // Toggle menu on button click
+  menuBtn.onclick = (e) => {
+    e.stopPropagation();
+    const isVisible = menuDropdown.style.display === 'block';
+    // Close all other widget menus
+    document.querySelectorAll('.widget-menu-dropdown').forEach(menu => {
+      (menu as HTMLElement).style.display = 'none';
+    });
+    menuDropdown.style.display = isVisible ? 'none' : 'block';
+  };
+  
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!menuBtn.contains(e.target as Node) && !menuDropdown.contains(e.target as Node)) {
+      menuDropdown.style.display = 'none';
+    }
+  });
+  
+  headerButtons.appendChild(menuBtn);
+  headerButtons.appendChild(menuDropdown);
   
   header.appendChild(title);
   header.appendChild(headerButtons);

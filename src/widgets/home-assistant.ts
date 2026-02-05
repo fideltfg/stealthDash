@@ -348,6 +348,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Drag handlers
     card.addEventListener('dragstart', (e) => {
+      // Prevent dragging when dashboard is locked
+      const isLocked = document.getElementById('app')?.classList.contains('locked');
+      if (isLocked) {
+        e.preventDefault();
+        return;
+      }
+      
       e.stopPropagation();
       card.classList.add('dragging');
       e.dataTransfer!.effectAllowed = 'move';
@@ -525,8 +532,15 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       
       if (state) {
         const unit = state.attributes.unit_of_measurement || '';
-        valueDisplay.textContent = `${state.state} ${unit}`.trim();
-        valueDisplay.style.color = '#4CAF50';
+        const stateValue = state.state.toLowerCase();
+        
+        if (stateValue === 'unavailable' || stateValue === 'unknown') {
+          valueDisplay.textContent = `⚠ ERROR`;
+          valueDisplay.classList.add('alarm-flash-error');
+        } else {
+          valueDisplay.textContent = `${state.state} ${unit}`.trim();
+          valueDisplay.style.color = '#4CAF50';
+        }
       } else {
         valueDisplay.textContent = '—';
         valueDisplay.style.color = '#666';
@@ -579,8 +593,20 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const valueDisplay = htmlCard.querySelector('.ha-sensor-value') as HTMLElement;
       if (valueDisplay) {
         const unit = state.attributes.unit_of_measurement || '';
-        valueDisplay.textContent = `${state.state} ${unit}`.trim();
-        valueDisplay.style.color = '#4CAF50';
+        const stateValue = state.state.toLowerCase();
+        
+        // Remove any existing alarm classes and inline styles
+        valueDisplay.classList.remove('alarm-flash-error');
+        valueDisplay.style.removeProperty('color');
+        valueDisplay.style.removeProperty('background-color');
+        
+        if (stateValue === 'unavailable' || stateValue === 'unknown') {
+          valueDisplay.textContent = `⚠ ERROR`;
+          valueDisplay.classList.add('alarm-flash-error');
+        } else {
+          valueDisplay.textContent = `${state.state} ${unit}`.trim();
+          valueDisplay.style.color = '#4CAF50';
+        }
       }
     });
   }
@@ -629,6 +655,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Store states for this widget
       const widgetStates = new Map<string, HomeAssistantEntity>();
+      
+      // Fetch states for ungrouped entities
       const entities = content.entities || [];
       for (const entity of entities) {
         const state = allStates.find(s => s.entity_id === entity.entity_id);
@@ -636,6 +664,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           widgetStates.set(entity.entity_id, state);
         }
       }
+      
+      // Fetch states for entities in groups
+      const groups = content.groups || [];
+      for (const group of groups) {
+        for (const entity of group.entities) {
+          const state = allStates.find(s => s.entity_id === entity.entity_id);
+          if (state) {
+            widgetStates.set(entity.entity_id, state);
+          }
+        }
+      }
+      
       this.entityStates.set(widget.id, widgetStates);
     } catch (error) {
       console.error('Failed to fetch entity states:', error);
@@ -1316,31 +1356,48 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const dialog = document.createElement('div');
     dialog.className = 'ha-dialog';
 
-    const entities = content.entities || [];
+    // Collect all entities (ungrouped and grouped)
+    const allEntities: Array<{ entity: EntityConfig; groupId: string | null; groupName: string | null }> = [];
+    
+    // Add ungrouped entities
+    (content.entities || []).forEach(entity => {
+      allEntities.push({ entity, groupId: null, groupName: null });
+    });
+    
+    // Add grouped entities
+    (content.groups || []).forEach(group => {
+      group.entities.forEach(entity => {
+        allEntities.push({ entity, groupId: group.id, groupName: group.label });
+      });
+    });
 
     let dialogHTML = `
       <h3 class="ha-dialog-title">Manage Entities</h3>
       <div class="ha-manage-entities-list">
     `;
 
-    if (entities.length === 0) {
+    if (allEntities.length === 0) {
       dialogHTML += `<p class="ha-dialog-hint">No entities added yet.</p>`;
     } else {
       dialogHTML += `<div class="ha-entity-items">`;
-      entities.forEach((entity, index) => {
+      allEntities.forEach((item, index) => {
+        const groupBadge = item.groupName ? `<span class="ha-entity-group-badge">${item.groupName}</span>` : '<span class="ha-entity-group-badge ha-entity-ungrouped">Ungrouped</span>';
         dialogHTML += `
           <div class="ha-entity-item">
             <div class="ha-entity-item-info">
-              <div class="ha-entity-item-name">${entity.display_name || entity.entity_id}</div>
-              <div class="ha-entity-item-id">${entity.entity_id} (${entity.type})</div>
+              <div class="ha-entity-item-name">${item.entity.display_name || item.entity.entity_id}</div>
+              <div class="ha-entity-item-id">${item.entity.entity_id} (${item.entity.type}) ${groupBadge}</div>
             </div>
             <button 
               class="edit-entity-btn ha-entity-item-button ha-entity-item-button-edit" 
               data-index="${index}"
+              data-group-id="${item.groupId || ''}"
             >Edit</button>
             <button 
               class="remove-entity-btn ha-entity-item-button ha-entity-item-button-remove" 
               data-index="${index}"
+              data-group-id="${item.groupId || ''}"
+              data-entity-id="${item.entity.entity_id}"
             >Remove</button>
           </div>
         `;
@@ -1401,27 +1458,35 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const removeButtons = dialog.querySelectorAll('.remove-entity-btn');
     removeButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const index = parseInt((e.target as HTMLElement).getAttribute('data-index') || '0');
+        const target = e.target as HTMLElement;
+        const index = parseInt(target.getAttribute('data-index') || '0');
+        const groupId = target.getAttribute('data-group-id') || null;
+        const entityId = target.getAttribute('data-entity-id') || '';
+        
+        const item = allEntities[index];
 
-        if (confirm(`Remove ${entities[index].display_name || entities[index].entity_id}?`)) {
-          entities.splice(index, 1);
-          
-          // Update widget content
-          content.entities = entities;
-          
-          // Update dashboard state and save
-          const dashboard = (window as any).dashboard;
-          if (dashboard && dashboard.state && dashboard.state.widgets) {
-            const widgetInState = dashboard.state.widgets.find((w: Widget) => w.id === widget.id);
-            if (widgetInState) {
-              if (!widgetInState.content) widgetInState.content = {};
-              (widgetInState.content as HomeAssistantContent).entities = entities;
+        if (confirm(`Remove ${item.entity.display_name || item.entity.entity_id}?`)) {
+          // Remove from the correct location
+          if (groupId) {
+            // Remove from group
+            const groups = content.groups || [];
+            const group = groups.find(g => g.id === groupId);
+            if (group) {
+              group.entities = group.entities.filter(e => e.entity_id !== entityId);
             }
+          } else {
+            // Remove from ungrouped entities
+            const entities = content.entities || [];
+            const entityIndex = entities.findIndex(e => e.entity_id === entityId);
+            if (entityIndex !== -1) {
+              entities.splice(entityIndex, 1);
+            }
+            content.entities = entities;
           }
-
+          
           // Trigger widget update
           const event = new CustomEvent('widget-update', {
-            detail: { id: widget.id, content: { ...content, entities } }
+            detail: { id: widget.id, content }
           });
           document.dispatchEvent(event);
 
@@ -1498,7 +1563,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const deleteBtn = document.createElement('button');
       deleteBtn.innerHTML = '🗑️';
       deleteBtn.title = 'Delete group';
-      deleteBtn.addEventListener('click', () => this.deleteGroup(widget, group.id));
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Prevent deletion when dashboard is locked
+        const isLocked = document.getElementById('app')?.classList.contains('locked');
+        if (isLocked) return;
+        
+        this.deleteGroup(widget, group.id);
+      });
 
       controls.appendChild(deleteBtn);
       header.appendChild(controls);
@@ -1574,6 +1646,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   }
 
   private async deleteGroup(widget: Widget, groupId: string): Promise<void> {
+    // Prevent deletion when dashboard is locked
+    const isLocked = document.getElementById('app')?.classList.contains('locked');
+    if (isLocked) return;
+    
     if (!confirm('Delete this group? Entities will be moved to Ungrouped.')) return;
 
     const content = widget.content as HomeAssistantContent;
