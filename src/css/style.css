@@ -462,9 +462,8 @@ body {
 }
 
 .widget-header-buttons {
-  display: flex;
-  gap: 4px;
   align-items: center;
+  position: relative;
 }
 
 /* Widget Menu Button */
@@ -485,7 +484,6 @@ body {
   border-radius: 4px;
   transition: all 0.2s ease;
   opacity: 0.6;
-  position: relative;
 }
 
 .widget-menu-btn:hover {
@@ -557,6 +555,48 @@ body {
 
 .widget-menu-item-danger:active {
   background: rgba(255, 59, 48, 0.15);
+}
+
+.widget-settings-btn,
+.widget-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.widget-settings-btn:hover,
+.widget-delete-btn:hover {
+  opacity: 1;
+}
+
+.widget-settings-btn:hover {
+  background: var(--hover);
+}
+
+.widget-delete-btn {
+  font-size: 24px;
+}
+
+.widget-delete-btn:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
+
+.widget-settings-btn:active,
+.widget-delete-btn:active {
+  transform: scale(0.95);
 }
 
 .widget-content {
@@ -678,149 +718,6 @@ body {
   height: 2px;
   width: 100%;
   left: 0;
-}
-
-/* Dashboard Switcher */
-.dashboard-switcher {
-  position: fixed;
-  top: 24px;
-  left: 24px;
-  z-index: var(--z-fab);
-}
-
-.dashboard-switcher-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: all 0.2s;
-}
-
-.dashboard-switcher-button:hover {
-  background: var(--hover);
-  transform: scale(1.02);
-}
-
-.dashboard-switcher-icon {
-  font-size: 16px;
-}
-
-.dashboard-switcher-text {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dashboard-switcher-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 250px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px var(--shadow);
-  overflow: hidden;
-  z-index: 1000;
-}
-
-.dashboard-switcher-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: background 0.2s;
-}
-
-.dashboard-switcher-item:last-child {
-  border-bottom: none;
-}
-
-.dashboard-switcher-item:hover {
-  background: var(--hover);
-}
-
-.dashboard-switcher-item.active {
-  background: rgba(76, 175, 80, 0.1);
-}
-
-.dashboard-switcher-item.manage {
-  color: var(--accent);
-}
-
-.dashboard-switcher-item-icon {
-  width: 20px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.dashboard-switcher-item-name {
-  flex: 1;
-  font-size: 14px;
-}
-
-.dashboard-switcher-separator {
-  height: 1px;
-  background: var(--border);
-  margin: 4px 0;
-}
-
-/* Dashboard Navigation Arrows */
-.dashboard-nav-btn {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 48px;
-  height: 80px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-fab);
-  transition: all 0.2s;
-  opacity: 0.3;
-}
-
-.dashboard-nav-btn:hover {
-  opacity: 1;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.dashboard-nav-prev {
-  left: 0;
-  border-left: none;
-  border-radius: 0 8px 8px 0;
-}
-
-.dashboard-nav-next {
-  right: 0;
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-}
-
-/* Hide nav buttons when there's only one dashboard */
-.dashboard-nav-btn.hidden {
-  display: none;
 }
 
 /* FAB and Menu Controls */
@@ -952,7 +849,8 @@ body {
 #app.locked .controls-container,
 #app.locked .resize-handle,
 #app.locked .widget-header,
-#app.locked .widget-menu-btn,
+#app.locked .widget-settings-btn,
+#app.locked .widget-delete-btn,
 #app.locked .user-menu {
   display: none !important;
   pointer-events: none !important;
@@ -1695,88 +1593,6 @@ body {
   }
 }
 
-/* Help Modal */
-.help-modal {
-  max-height: 90vh;
-}
-
-.help-content {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.help-section {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.help-section:last-child {
-  border-bottom: none;
-}
-
-.help-section h3 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.help-section ul {
-  margin: 0;
-  padding-left: 24px;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.8;
-}
-
-.help-section ul ul {
-  margin-top: 8px;
-  padding-left: 20px;
-}
-
-.help-section li {
-  margin-bottom: 8px;
-}
-
-.help-section strong {
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
-}
-
-.help-section kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-}
-
-.help-shortcuts-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
-}
-
-.help-shortcuts-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.help-shortcuts-table tr:last-child td {
-  border-bottom: none;
-}
-
-.help-shortcuts-table td:first-child {
-  width: 200px;
-  font-weight: 500;
-}
-
 /* ==================== LOCKED STATE ==================== */
 
 #app.locked .lock-toggle {
@@ -1830,76 +1646,6 @@ body {
   width: 90%;
   max-height: 80vh;
   overflow: auto;
-  color: var(--text);
-}
-
-.modal p {
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 20px;
-}
-
-.modal-content {
-  /* Container for modal body content */
-}
-
-.modal-no-data {
-  color: var(--muted);
-  text-align: center;
-  padding: 20px;
-}
-
-.dashboard-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.dashboard-list-item {
-  width: 100%;
-  text-align: left;
-  padding: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.dashboard-list-item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.dashboard-list-item-name {
-  font-weight: 500;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.dashboard-list-item-info {
-  font-size: 12px;
-  opacity: 0.7;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.modal-button-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.modal-cancel-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.modal-cancel-btn:hover {
-  background: var(--hover);
 }
 
 .modal-header {
@@ -1998,12 +1744,12 @@ body {
 .widget-type-name {
   font-weight: 600;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text);
 }
 
 .widget-type-description {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
   line-height: 1.4;
 }
 
