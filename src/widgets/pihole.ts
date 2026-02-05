@@ -63,8 +63,8 @@ class PiholeRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div class="pihole-widget widget-container flex flex-column">
         <div class="pihole-header widget-header-row">
-          <h3 className="widget-title flex align-center gap-8">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-icon" />
+          <h3 class="widget-title flex align-center gap-8">
+            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon" />
             <span>Pi-hole</span>
           </h3>
         </div>
@@ -122,11 +122,11 @@ class PiholeRenderer implements WidgetRenderer {
       } catch (error) {
         console.error('Error fetching Pi-hole data:', error);
         contentEl.innerHTML = `
-          <div className="widget-error">
-            <div className="widget-error-icon large">⚠️</div>
-            <div className="widget-error-title">Error loading Pi-hole data</div>
-            <div className="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div className="widget-error-hint">Check host: ${content.host}</div>
+          <div class="widget-error">
+            <div class="widget-error-icon large">⚠️</div>
+            <div class="widget-error-title">Error loading Pi-hole data</div>
+            <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
+            <div class="widget-error-hint">Check host: ${content.host}</div>
           </div>
         `;
       }
@@ -143,19 +143,19 @@ class PiholeRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div className="widget-container flex align-center justify-center">
-        <div className="text-center" style="max-width: 400px;">
-          <div className="mb-16">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-logo" />
+      <div class="widget-container flex align-center justify-center">
+        <div class="text-center" style="max-width: 400px;">
+          <div class="mb-16">
+            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-logo" />
           </div>
-          <h3 className="widget-title mb-12">Configure Pi-hole</h3>
-          <p className="widget-text mb-8">
+          <h3 class="widget-title mb-12">Configure Pi-hole</h3>
+          <p class="widget-text mb-8">
             Configure your Pi-hole server connection
           </p>
-          <p className="widget-hint mb-24">
+          <p class="widget-hint mb-24">
             💡 Tip: Create credentials first from the user menu (🔐 Credentials)
           </p>
-          <button id="configure-pihole-btn" className="widget-button primary">
+          <button id="configure-pihole-btn" class="widget-button primary">
             Configure
           </button>
         </div>
@@ -178,37 +178,37 @@ class PiholeRenderer implements WidgetRenderer {
     modal.className = 'modal widget-dialog';
 
     modal.innerHTML = `
-      <div className="pihole-config-header flex align-center gap-12 mb-20">
-        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-icon-large" />
+      <div class="pihole-config-header flex align-center gap-12 mb-20">
+        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon-large" />
         <div>
-          <h2 className="widget-dialog-title">
+          <h2 class="widget-dialog-title">
             Pi-hole Configuration
           </h2>
-          <p className="widget-text">
+          <p class="widget-text">
             Configure your Pi-hole connection settings
           </p>
         </div>
       </div>
 
-      <form id="pihole-config-form" className="flex flex-column gap-16";
+      <form id="pihole-config-form" class="flex flex-column gap-16";
         <div>
-          <label className="widget-dialog-label">
+          <label class="widget-dialog-label">
             Saved Credentials *
           </label>
           <select 
             id="pihole-credential-id"
             required
-            className="widget-dialog-input"
+            class="widget-dialog-input"
           >
             <option value="">Select a saved credential...</option>
           </select>
-          <small className="widget-dialog-hint">
+          <small class="widget-dialog-hint">
             Manage credentials from the user menu (🔐 Credentials)
           </small>
         </div>
 
         <div>
-          <label className="widget-dialog-label">
+          <label class="widget-dialog-label">
             Pi-hole Host *
           </label>
           <input 
@@ -217,20 +217,20 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.host || 'http://192.168.1.100'}"
             placeholder="http://192.168.1.100 or http://pi.hole"
             required
-            className="widget-dialog-input"
+            class="widget-dialog-input"
           />
-          <small className="widget-dialog-hint">
+          <small class="widget-dialog-hint">
             Example: http://192.168.1.100 or http://pi.hole
           </small>
         </div>
 
         <div>
-          <label className="widget-dialog-label">
+          <label class="widget-dialog-label">
             Display Mode
           </label>
           <select 
             id="pihole-display-mode"
-            className="widget-dialog-input"
+            class="widget-dialog-input"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
             <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
@@ -239,7 +239,7 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <div>
-          <label className="widget-dialog-label">
+          <label class="widget-dialog-label">
             Refresh Interval (seconds)
           </label>
           <input 
@@ -248,21 +248,21 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.refreshInterval || 30}"
             min="5"
             max="300"
-            className="widget-dialog-input"
+            class="widget-dialog-input"
           />
         </div>
 
-        <div className="widget-dialog-buttons">
+        <div class="widget-dialog-buttons">
           <button 
             type="submit"
-            className="widget-dialog-button-save full-width"
+            class="widget-dialog-button-save full-width"
           >
             Save
           </button>
           <button 
             type="button"
             id="cancel-btn"
-            className="widget-dialog-button-cancel full-width"
+            class="widget-dialog-button-cancel full-width"
           >
             Cancel
           </button>
@@ -383,31 +383,31 @@ class PiholeRenderer implements WidgetRenderer {
     const statusColor = '#4caf50'; // Always show as active
 
     container.innerHTML = `
-      <div className="pihole-minimal flex flex-column gap-16 align-center justify-center h-100">
-        <div className="text-center">
-          <div className="pihole-percentage" style="font-size: 48px; font-weight: 700; color: ${statusColor};">
+      <div class="pihole-minimal flex flex-column gap-16 align-center justify-center h-100">
+        <div class="text-center">
+          <div class="pihole-percentage" style="font-size: 48px; font-weight: 700; color: ${statusColor};">
             ${blockedPercentage}%
           </div>
-          <div className="widget-hint mt-4">
+          <div class="widget-hint mt-4">
             Queries Blocked
           </div>
         </div>
-        <div className="grid grid-2 gap-12 w-100">
-          <div className="text-center">
-            <div className="pihole-stat-value">
+        <div class="grid grid-2 gap-12 w-100">
+          <div class="text-center">
+            <div class="pihole-stat-value">
               ${this.formatNumber(data.queries.blocked)}
             </div>
-            <div className="pihole-stat-label">Blocked</div>
+            <div class="pihole-stat-label">Blocked</div>
           </div>
-          <div className="text-center">
-            <div className="pihole-stat-value">
+          <div class="text-center">
+            <div class="pihole-stat-value">
               ${this.formatNumber(data.queries.total)}
             </div>
-            <div className="pihole-stat-label">Total</div>
+            <div class="pihole-stat-label">Total</div>
           </div>
         </div>
-        <div className="pihole-progress-bar">
-          <div className="pihole-progress-fill" style="width: ${blockedPercentage}%; background: ${statusColor};"></div>
+        <div class="pihole-progress-bar">
+          <div class="pihole-progress-fill" style="width: ${blockedPercentage}%; background: ${statusColor};"></div>
         </div>
       </div>
     `;
@@ -419,20 +419,20 @@ class PiholeRenderer implements WidgetRenderer {
     const statusText = 'Active';
 
     container.innerHTML = `
-      <div className="flex flex-column gap-16">
+      <div class="flex flex-column gap-16">
         <!-- Status Bar -->
-        <div className="pihole-status-bar">
-          <div className="flex align-center gap-8">
-            <div className="status-dot" style="background: ${statusColor};"></div>
-            <span className="pihole-status-text">${statusText}</span>
+        <div class="pihole-status-bar">
+          <div class="flex align-center gap-8">
+            <div class="status-dot" style="background: ${statusColor};"></div>
+            <span class="pihole-status-text">${statusText}</span>
           </div>
-          <div className="widget-hint">
+          <div class="widget-hint">
             ${data.clients.active} client${data.clients.active !== 1 ? 's' : ''}
           </div>
         </div>
 
         <!-- Main Stats -->
-        <div className="grid grid-2 gap-12">
+        <div class="grid grid-2 gap-12">
           ${this.createStatCard('Queries Today', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
           ${this.createStatCard('Block %', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
@@ -440,16 +440,16 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <!-- Query Types -->
-        <div className="pihole-query-dist">
-          <div className="pihole-query-dist-title">Query Distribution</div>
-          <div className="pihole-query-dist-grid">
-            <div className="flex space-between">
-              <span className="widget-muted">Forwarded:</span>
-              <span className="widget-text-bold">${this.formatNumber(data.queries.forwarded)}</span>
+        <div class="pihole-query-dist">
+          <div class="pihole-query-dist-title">Query Distribution</div>
+          <div class="pihole-query-dist-grid">
+            <div class="flex space-between">
+              <span class="widget-muted">Forwarded:</span>
+              <span class="widget-text-bold">${this.formatNumber(data.queries.forwarded)}</span>
             </div>
-            <div className="flex space-between">
-              <span className="widget-muted">Cached:</span>
-              <span className="widget-text-bold">${this.formatNumber(data.queries.cached)}</span>
+            <div class="flex space-between">
+              <span class="widget-muted">Cached:</span>
+              <span class="widget-text-bold">${this.formatNumber(data.queries.cached)}</span>
             </div>
           </div>
         </div>
@@ -465,27 +465,27 @@ class PiholeRenderer implements WidgetRenderer {
     const gravityDate = new Date(data.gravity.last_update * 1000).toLocaleString();
 
     container.innerHTML = `
-      <div className="flex flex-column gap-12">
+      <div class="flex flex-column gap-12">
         <!-- Status Header -->
-        <div className="pihole-status-bar">
-          <div className="flex align-center gap-8">
-            <div className="status-dot" style="background: ${statusColor};"></div>
-            <span className="pihole-status-text">${statusText}</span>
+        <div class="pihole-status-bar">
+          <div class="flex align-center gap-8">
+            <div class="status-dot" style="background: ${statusColor};"></div>
+            <span class="pihole-status-text">${statusText}</span>
           </div>
-          <div className="pihole-client-count">
+          <div class="pihole-client-count">
             ${data.clients.active} / ${data.clients.total} clients
           </div>
         </div>
 
         <!-- Primary Stats -->
-        <div className="grid grid-3 gap-8">
+        <div class="grid grid-3 gap-8">
           ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3', true)}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336', true)}
           ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor, true)}
         </div>
 
         <!-- Secondary Stats -->
-        <div className="grid grid-2 gap-8">
+        <div class="grid grid-2 gap-8">
           ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800', true)}
           ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0', true)}
           ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4', true)}
@@ -493,7 +493,7 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <!-- Gravity Update -->
-        <div className="pihole-gravity-update">
+        <div class="pihole-gravity-update">
           Gravity updated ${gravityDate}
         </div>
       </div>
@@ -503,18 +503,18 @@ class PiholeRenderer implements WidgetRenderer {
   private createStatCard(label: string, value: string, icon: string, color: string, compact: boolean = false): string {
     if (compact) {
       return `
-        <div className="pihole-stat-card-compact">
-          <div className="pihole-stat-card-label">${icon} ${label}</div>
-          <div className="pihole-stat-card-value" style="color: ${color};">${value}</div>
+        <div class="pihole-stat-card-compact">
+          <div class="pihole-stat-card-label">${icon} ${label}</div>
+          <div class="pihole-stat-card-value" style="color: ${color};">${value}</div>
         </div>
       `;
     }
     
     return `
-      <div className="pihole-stat-card">
-        <div className="pihole-stat-card-icon">${icon}</div>
-        <div className="pihole-stat-card-value" style="color: ${color};">${value}</div>
-        <div className="pihole-stat-card-label">${label}</div>
+      <div class="pihole-stat-card">
+        <div class="pihole-stat-card-icon">${icon}</div>
+        <div class="pihole-stat-card-value" style="color: ${color};">${value}</div>
+        <div class="pihole-stat-card-label">${label}</div>
       </div>
     `;
   }

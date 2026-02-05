@@ -98,8 +98,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div class="unifi-protect-widget widget-container flex flex-column">
         <div class="protect-header widget-header-row">
-          <h3 className="widget-title flex align-center gap-8">
-            <span className="widget-icon-large"><i class="fas fa-video"></i></span>
+          <h3 class="widget-title flex align-center gap-8">
+            <span class="widget-icon-large"><i class="fas fa-video"></i></span>
             <span>UniFi Protect</span>
           </h3>
           <button class="refresh-btn widget-button secondary">🔄 Refresh</button>
@@ -153,12 +153,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
       } catch (error: any) {
         console.error('Error fetching UniFi Protect data:', error);
         contentEl.innerHTML = `
-          <div className="widget-error">
-            <div className="widget-error-icon large">⚠️</div>
-            <div className="widget-error-title" style="color: var(--error);">
+          <div class="widget-error">
+            <div class="widget-error-icon large">⚠️</div>
+            <div class="widget-error-title" style="color: var(--error);">
               ${error.message || 'Failed to load UniFi Protect data'}
             </div>
-            <div className="widget-error-message">
+            <div class="widget-error-message">
               Check console connection and credentials
             </div>
           </div>
@@ -182,10 +182,10 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div className="widget-container flex flex-column align-center justify-center text-center">
-        <div className="widget-config-icon"><i class="fas fa-video"></i></div>
-        <h3 className="widget-title mb-12">UniFi Protect Not Configured</h3>
-        <p className="widget-text mb-20" style="max-width: 400px;">
+      <div class="widget-container flex flex-column align-center justify-center text-center">
+        <div class="widget-config-icon"><i class="fas fa-video"></i></div>
+        <h3 class="widget-title mb-12">UniFi Protect Not Configured</h3>
+        <p class="widget-text mb-20" style="max-width: 400px;">
           Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
         </p>
         <button class="config-btn widget-button primary">
@@ -219,27 +219,27 @@ class UnifiProtectRenderer implements WidgetRenderer {
     modal.style.maxWidth = '600px';
 
     modal.innerHTML = `
-      <h2 className="widget-dialog-title large mb-20">
+      <h2 class="widget-dialog-title large mb-20">
         Configure UniFi Protect Widget
       </h2>
       
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           UniFi Protect Console URL *
         </label>
         <input type="text" id="host-input" placeholder="https://192.168.1.1" value="${content.host || ''}"
-          className="widget-dialog-input">
-        <small className="widget-dialog-hint">
+          class="widget-dialog-input">
+        <small class="widget-dialog-hint">
           URL of your UniFi Protect console (Cloud Key, UDM Pro, UNVR, etc.)
         </small>
       </div>
 
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           Credentials *
         </label>
         <select id="credential-select" 
-          className="widget-dialog-input">
+          class="widget-dialog-input">
           <option value="">Select saved credentials...</option>
           ${unifiProtectCreds.map((cred: any) => 
             `<option value="${cred.id}" ${content.credentialId === cred.id ? 'selected' : ''}>
@@ -247,58 +247,58 @@ class UnifiProtectRenderer implements WidgetRenderer {
             </option>`
           ).join('')}
         </select>
-        <small className="widget-dialog-hint">
+        <small class="widget-dialog-hint">
           Select credentials from Credentials Manager (local admin user recommended)
         </small>
       </div>
 
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           Display Mode
         </label>
         <select id="display-mode-select" 
-          className="widget-dialog-input">
+          class="widget-dialog-input">
           <option value="both" ${content.displayMode === 'both' ? 'selected' : ''}>Cameras & Detections</option>
           <option value="cameras" ${content.displayMode === 'cameras' ? 'selected' : ''}>Cameras Only</option>
           <option value="detections" ${content.displayMode === 'detections' ? 'selected' : ''}>Detections Only</option>
         </select>
       </div>
 
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           Camera View Mode
         </label>
         <select id="view-mode-select" 
-          className="widget-dialog-input">
+          class="widget-dialog-input">
           <option value="snapshots" ${content.viewMode === 'snapshots' ? 'selected' : ''}>Snapshots</option>
           <option value="streams" ${content.viewMode === 'streams' ? 'selected' : ''}>Live Streams</option>
           <option value="both" ${content.viewMode === 'both' ? 'selected' : ''}>Both</option>
         </select>
       </div>
 
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           Maximum Detections
         </label>
         <input type="number" id="max-detections-input" value="${content.maxDetections || 10}" min="1" max="50"
-          className="widget-dialog-input">
+          class="widget-dialog-input">
       </div>
 
-      <div className="widget-dialog-field large-margin">
-        <label className="widget-dialog-label">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">
           Refresh Interval (seconds)
         </label>
         <input type="number" id="refresh-input" value="${content.refreshInterval || 30}" min="5" max="300"
-          className="widget-dialog-input">
+          class="widget-dialog-input">
       </div>
 
-      <div className="widget-dialog-buttons top-margin">
+      <div class="widget-dialog-buttons top-margin">
         <button id="cancel-btn" 
-          className="widget-dialog-button-cancel">
+          class="widget-dialog-button-cancel">
           Cancel
         </button>
         <button id="save-btn" 
-          className="widget-dialog-button-save">
+          class="widget-dialog-button-save">
           Save Configuration
         </button>
       </div>
@@ -376,17 +376,17 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     if (displayEvents.length === 0) {
       container.innerHTML = `
-        <div className="widget-empty">
-          <div className="widget-empty-icon">✓</div>
-          <div className="widget-text">No recent detections</div>
+        <div class="widget-empty">
+          <div class="widget-empty-icon">✓</div>
+          <div class="widget-text">No recent detections</div>
         </div>
       `;
       return;
     }
 
     container.innerHTML = `
-      <div className="flex flex-column gap-12">
-        <h4 className="protect-section-title">
+      <div class="flex flex-column gap-12">
+        <h4 class="protect-section-title">
           Recent Detections (${displayEvents.length})
         </h4>
         <div class="detections-list flex flex-column gap-8">
@@ -410,30 +410,30 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : '';
 
     return `
-      <div className="protect-detection-card">
+      <div class="protect-detection-card">
         ${thumbnailUrl ? `
-          <div className="protect-detection-thumbnail">
+          <div class="protect-detection-thumbnail">
             <img src="${thumbnailUrl}" 
-              className="protect-detection-img"
+              class="protect-detection-img"
               onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'protect-no-image\\'>No Image</div>'">
           </div>
         ` : ''}
-        <div className="flex-1 truncate">
-          <div className="flex space-between align-start mb-4">
-            <div className="protect-detection-camera">${cameraName}</div>
-            <div className="protect-detection-time">${timeAgo}</div>
+        <div class="flex-1 truncate">
+          <div class="flex space-between align-start mb-4">
+            <div class="protect-detection-camera">${cameraName}</div>
+            <div class="protect-detection-time">${timeAgo}</div>
           </div>
-          <div className="flex align-center gap-8 mb-4">
-            <span className="protect-detection-badge">
+          <div class="flex align-center gap-8 mb-4">
+            <span class="protect-detection-badge">
               ${detectionType}
             </span>
             ${event.score ? `
-              <span className="protect-detection-confidence">
+              <span class="protect-detection-confidence">
                 ${Math.round(event.score)}% confidence
               </span>
             ` : ''}
           </div>
-          <div className="protect-detection-timestamp">
+          <div class="protect-detection-timestamp">
             ${timestamp.toLocaleString()}
           </div>
         </div>
@@ -451,9 +451,9 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     if (cameras.length === 0) {
       container.innerHTML = `
-        <div className="widget-empty">
-          <div className="widget-empty-icon"><i class="fas fa-video"></i></div>
-          <div className="widget-text">No cameras found</div>
+        <div class="widget-empty">
+          <div class="widget-empty-icon"><i class="fas fa-video"></i></div>
+          <div class="widget-text">No cameras found</div>
         </div>
       `;
       return;
@@ -462,8 +462,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const viewMode = content.viewMode || 'snapshots';
     
     container.innerHTML = `
-      <div className="flex flex-column gap-12">
-        <h4 className="protect-section-title">
+      <div class="flex flex-column gap-12">
+        <h4 class="protect-section-title">
           Cameras (${cameras.length})
         </h4>
         <div class="cameras-grid protect-cameras-grid">
