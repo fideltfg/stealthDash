@@ -16,30 +16,30 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { target?: string; interval?: number; timeout?: number };
     
     const overlay = document.createElement('div');
-    overlay.className = 'uptime-config-overlay';
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'uptime-config-dialog';
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="uptime-config-title">Configure Uptime Monitor</h3>
-      <div class="uptime-config-field">
-        <label class="uptime-config-label">Target (URL or IP)</label>
-        <input type="text" id="uptime-target" class="uptime-config-input" value="${content.target || ''}" placeholder="example.com or 192.168.1.1" />
+      <h3 class="widget-dialog-title">Configure Uptime Monitor</h3>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Target (URL or IP)</label>
+        <input type="text" id="uptime-target" class="widget-dialog-input" value="${content.target || ''}" placeholder="example.com or 192.168.1.1" />
       </div>
-      <div class="uptime-config-field">
-        <label class="uptime-config-label">Ping Interval (seconds)</label>
-        <input type="number" id="uptime-interval" class="uptime-config-input" value="${content.interval || 30}" min="5" max="300" />
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Ping Interval (seconds)</label>
+        <input type="number" id="uptime-interval" class="widget-dialog-input" value="${content.interval || 30}" min="5" max="300" />
       </div>
-      <div class="uptime-config-field-last">
-        <label class="uptime-config-label">Timeout (milliseconds)</label>
-        <input type="number" id="uptime-timeout" class="uptime-config-input" value="${content.timeout || 5000}" min="1000" max="30000" step="1000" />
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">Timeout (milliseconds)</label>
+        <input type="number" id="uptime-timeout" class="widget-dialog-input" value="${content.timeout || 5000}" min="1000" max="30000" step="1000" />
       </div>
-      <div class="uptime-config-buttons">
-        <button id="cancel-btn" class="uptime-config-button-cancel">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" class="uptime-config-button-save">
+        <button id="save-btn" class="widget-dialog-button-save">
           Save
         </button>
       </div>
@@ -122,10 +122,10 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'uptime-config-screen';
+    inputContainer.className = 'widget-config-screen';
     
     const icon = document.createElement('div');
-    icon.className = 'uptime-config-icon';
+    icon.className = 'widget-config-icon';
     icon.innerHTML = '<i class="fas fa-chart-bar"></i>';
     
     const label = document.createElement('div');

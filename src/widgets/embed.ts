@@ -6,22 +6,22 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { url: string; sandbox?: string[] };
     
     const overlay = document.createElement('div');
-    overlay.className = 'embed-overlay';
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'embed-dialog';
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="embed-dialog-title">Configure Embed</h3>
-      <div class="embed-dialog-field">
-        <label class="embed-dialog-label">URL to Embed</label>
-        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="embed-dialog-input" />
+      <h3 class="widget-dialog-title">Configure Embed</h3>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">URL to Embed</label>
+        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="widget-dialog-input" />
       </div>
-      <div class="embed-dialog-buttons">
-        <button id="cancel-btn" class="embed-dialog-button embed-dialog-button-cancel">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" class="embed-dialog-button embed-dialog-button-save">
+        <button id="save-btn" class="widget-dialog-button-save">
           Save
         </button>
       </div>
@@ -77,11 +77,11 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'embed-config-container';
+    inputContainer.className = 'widget-config-screen padded';
     
     const icon = document.createElement('div');
     icon.innerHTML = '<i class="fas fa-globe"></i>';
-    icon.className = 'embed-config-icon';
+    icon.className = 'widget-config-icon';
     
     const label = document.createElement('div');
     label.textContent = 'Enter URL to embed';

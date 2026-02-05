@@ -1,8 +1,8 @@
 /* ============================================================================
-   CONSOLIDATED WIDGET STYLES
+   CONSOLIDATED WIDGET STYLES - REFACTORED
    ============================================================================
-   All widget CSS consolidated into a single optimized file.
-   Organized into common patterns and widget-specific styles.
+   All widget CSS consolidated with generic reusable class names.
+   Widget-specific classes kept only when they have unique styling.
    ============================================================================ */
 
 
@@ -11,16 +11,7 @@
    ============================================================================ */
 
 /* Configuration overlays (used by most widgets) */
-.clock-config-overlay,
-.uptime-config-overlay,
-.rss-config-overlay,
-.weather-config-overlay,
-.embed-overlay,
-.chatgpt-settings-overlay,
-.envcanada-settings-overlay,
-.mtnxml-settings-overlay,
-.ha-modal-overlay,
-.comet-modal-overlay {
+.widget-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -33,20 +24,12 @@
   z-index: 10000;
 }
 
-.chatgpt-settings-overlay,
-.envcanada-settings-overlay,
-.mtnxml-settings-overlay,
-.ha-modal-overlay,
-.comet-modal-overlay {
+.widget-overlay.dark {
   background: rgba(0, 0, 0, 0.8);
 }
 
 /* Configuration dialogs (common structure) */
-.clock-config-dialog,
-.uptime-config-dialog,
-.rss-config-dialog,
-.weather-config-dialog,
-.embed-dialog {
+.widget-dialog {
   background: var(--surface);
   border-radius: 8px;
   padding: 24px;
@@ -55,34 +38,25 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.chatgpt-settings-modal,
-.envcanada-settings-modal,
-.mtnxml-settings-modal,
-.ha-dialog,
-.comet-modal {
-  background: var(--surface);
+.widget-dialog.extended {
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
-  max-width: 500px;
-  width: 90%;
   max-height: 80vh;
   overflow-y: auto;
   color: var(--text);
 }
 
-.clock-config-dialog {
+.widget-dialog.scrollable {
   max-height: 80vh;
   overflow-y: auto;
 }
 
-.comet-modal {
+.widget-dialog.dark-theme {
   background: #1a1a1a;
-  max-width: 500px;
   color: white;
 }
 
-.ha-dialog {
+.widget-dialog.large {
   min-width: 500px;
   max-width: 600px;
   display: flex;
@@ -91,105 +65,57 @@
 }
 
 /* Dialog titles */
-.clock-config-title,
-.uptime-config-title,
-.rss-config-title,
-.weather-config-title,
-.embed-dialog-title {
+.widget-dialog-title {
   margin: 0 0 20px 0;
   color: var(--text);
 }
 
-.chatgpt-settings-modal h3,
-.envcanada-settings-modal h3,
-.mtnxml-settings-modal h3,
-.ha-dialog h3,
-.comet-modal-title,
-.ha-dialog-title {
-  margin: 0 0 20px 0;
-  color: var(--text);
-}
-
-.comet-modal-title {
+.widget-dialog-title.large {
   font-size: 18px;
   font-weight: 600;
 }
 
 /* Dialog fields */
-.uptime-config-field,
-.rss-config-field,
-.weather-config-field,
-.embed-dialog-field,
-.chatgpt-settings-field,
-.envcanada-settings-field,
-.mtnxml-settings-field,
-.ha-dialog-field,
-.ha-config-field {
+.widget-dialog-field {
   margin-bottom: 16px;
 }
 
-.weather-config-field,
-.rss-config-field.large-margin,
-.uptime-config-field-last {
+.widget-dialog-field.large-margin {
   margin-bottom: 20px;
 }
 
-.comet-modal-group {
+.widget-dialog-group {
   margin-bottom: 15px;
 }
 
 /* Dialog labels */
-.uptime-config-label,
-.rss-config-label,
-.weather-config-label,
-.embed-dialog-label,
-.chatgpt-settings-label,
-.envcanada-settings-label,
-.mtnxml-settings-label,
-.ha-dialog-label,
-.ha-config-label {
+.widget-dialog-label {
   display: block;
   margin-bottom: 8px;
   color: var(--text);
   font-size: 14px;
 }
 
-.chatgpt-settings-label,
-.envcanada-settings-label,
-.mtnxml-settings-label,
-.ha-dialog-label {
-  font-weight: 500;
-}
-
-.chatgpt-settings-label {
+.widget-dialog-label.bold {
   font-weight: bold;
 }
 
-.ha-config-label {
+.widget-dialog-label.medium {
+  font-weight: 500;
+}
+
+.widget-dialog-label.left-align {
   text-align: left;
 }
 
-.comet-form-label,
-.comet-channels-label {
+.widget-dialog-label.small {
   font-size: 12px;
   opacity: 0.7;
   margin-bottom: 5px;
-  display: block;
 }
 
 /* Dialog inputs */
-.uptime-config-input,
-.rss-config-input,
-.weather-config-input,
-.embed-dialog-input,
-.chatgpt-settings-select,
-.chatgpt-settings-textarea,
-.envcanada-settings-input,
-.envcanada-settings-select,
-.mtnxml-settings-input,
-.ha-dialog-input,
-.ha-config-input,
-.comet-modal-input {
+.widget-dialog-input {
   width: 100%;
   padding: 8px;
   border: 1px solid var(--border);
@@ -198,12 +124,7 @@
   color: var(--text);
 }
 
-.chatgpt-settings-select,
-.chatgpt-settings-textarea,
-.envcanada-settings-input,
-.envcanada-settings-select,
-.mtnxml-settings-input,
-.ha-dialog-input {
+.widget-dialog-input.extended {
   padding: 10px;
   border-radius: 6px;
   background: var(--background);
@@ -211,67 +132,49 @@
   box-sizing: border-box;
 }
 
-.ha-config-input {
+.widget-dialog-input.rounded {
   border-radius: 6px;
   box-sizing: border-box;
 }
 
-.chatgpt-settings-textarea {
+.widget-dialog-input.textarea {
   resize: vertical;
   font-family: inherit;
 }
 
-.comet-modal-input {
+.widget-dialog-input.dark-theme {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   box-sizing: border-box;
 }
 
 /* Dialog buttons */
-.uptime-config-buttons,
-.rss-config-actions,
-.weather-config-actions,
-.embed-dialog-buttons,
-.chatgpt-button-group,
-.envcanada-settings-buttons,
-.mtnxml-settings-buttons,
-.ha-dialog-buttons,
-.comet-btn-group {
+.widget-dialog-buttons {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
 }
 
-.chatgpt-button-group,
-.envcanada-settings-buttons,
-.mtnxml-settings-buttons {
+.widget-dialog-buttons.top-margin {
   margin-top: 24px;
 }
 
-.chatgpt-button-group {
+.widget-dialog-buttons.border-top {
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
-.comet-btn-group {
+.widget-dialog-buttons.small-gap {
   gap: 10px;
   margin-top: 20px;
 }
 
-.ha-dialog-buttons-spaced {
+.widget-dialog-buttons.spaced {
   justify-content: space-between;
 }
 
 /* Cancel buttons */
-.uptime-config-button-cancel,
-.rss-config-btn.cancel,
-.weather-config-btn-cancel,
-.embed-dialog-button-cancel,
-.chatgpt-close-button,
-.envcanada-settings-button-close,
-.mtnxml-settings-button-close,
-.ha-dialog-button-cancel,
-.comet-btn-cancel {
+.widget-dialog-button-cancel {
   padding: 8px 16px;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -280,43 +183,30 @@
   cursor: pointer;
 }
 
-.chatgpt-close-button,
-.envcanada-settings-button-close,
-.mtnxml-settings-button-close,
-.ha-dialog-button-cancel {
+.widget-dialog-button-cancel.extended {
   padding: 10px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.1);
   font-size: 14px;
 }
 
-.chatgpt-close-button,
-.envcanada-settings-button,
-.mtnxml-settings-button,
-.ha-dialog-button {
+.widget-dialog-button-cancel.full-width {
   flex: 1;
   padding: 12px;
 }
 
-.comet-btn-cancel {
+.widget-dialog-button-cancel.dark-theme {
   padding: 10px;
   background: rgba(255, 255, 255, 0.1);
   border: none;
 }
 
-.comet-btn-cancel:hover {
+.widget-dialog-button-cancel.dark-theme:hover {
   background: rgba(255, 255, 255, 0.15);
 }
 
 /* Save buttons */
-.uptime-config-button-save,
-.rss-config-btn.save,
-.weather-config-btn-save,
-.embed-dialog-button-save,
-.envcanada-settings-button-save,
-.mtnxml-settings-button-save,
-.ha-dialog-button-save,
-.comet-btn-save {
+.widget-dialog-button-save {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
@@ -325,44 +215,37 @@
   cursor: pointer;
 }
 
-.envcanada-settings-button-save,
-.mtnxml-settings-button-save,
-.ha-dialog-button-save {
+.widget-dialog-button-save.extended {
   padding: 10px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
 }
 
-.ha-dialog-button-save:disabled {
+.widget-dialog-button-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.envcanada-settings-button,
-.mtnxml-settings-button {
+.widget-dialog-button-save.full-width {
   flex: 1;
   padding: 12px;
   cursor: pointer;
 }
 
-.comet-btn-save {
+.widget-dialog-button-save.green {
   flex: 1;
   padding: 10px;
   background: #4CAF50;
   font-weight: 600;
 }
 
-.comet-btn-save:hover {
+.widget-dialog-button-save.green:hover {
   background: #45a049;
 }
 
 /* Dialog hints */
-.chatgpt-settings-hint,
-.envcanada-settings-hint,
-.mtnxml-settings-hint,
-.ha-dialog-hint,
-.ha-config-hint {
+.widget-dialog-hint {
   display: block;
   margin-top: 4px;
   opacity: 0.7;
@@ -370,25 +253,23 @@
   font-size: 12px;
 }
 
-.envcanada-settings-hint,
-.mtnxml-settings-hint {
+.widget-dialog-hint.no-margin {
   margin-top: 0;
 }
 
-.ha-dialog-hint {
+.widget-dialog-hint.medium-margin {
   margin-top: 6px;
   color: var(--muted);
   font-size: 13px;
 }
 
-.ha-config-hint {
+.widget-dialog-hint.left-align {
   text-align: left;
   margin-top: 5px;
   font-size: 13px;
 }
 
-.chatgpt-settings-hint a,
-.ha-dialog-hint a {
+.widget-dialog-hint a {
   color: #2196F3;
 }
 
@@ -398,11 +279,7 @@
    ============================================================================ */
 
 /* Configuration screen containers */
-.clock-config-screen,
-.uptime-config-screen,
-.rss-setup-container,
-.weather-config-screen,
-.embed-config-container {
+.widget-config-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -411,44 +288,27 @@
   gap: 12px;
 }
 
-.rss-setup-container,
-.weather-config-screen,
-.embed-config-container {
+.widget-config-screen.padded {
   padding: 20px;
 }
 
 /* Configuration icons */
-.clock-config-icon,
-.uptime-config-icon,
-.rss-setup-icon,
-.weather-config-icon,
-.embed-config-icon,
-.envcanada-config-icon,
-.mtnxml-config-icon,
-.ha-config-icon,
-.ha-empty-icon {
+.widget-config-icon {
   font-size: 48px;
 }
 
 /* Configuration descriptions */
-.uptime-config-description,
-.rss-setup-label,
-.weather-config-prompt,
-.embed-config-label {
+.widget-config-description {
   color: var(--muted);
   margin-bottom: 8px;
 }
 
-.rss-setup-label,
-.embed-config-label {
+.widget-config-description.centered {
   text-align: center;
 }
 
 /* Configuration inputs */
-.uptime-config-target-input,
-.rss-setup-input,
-.weather-input,
-.embed-config-input {
+.widget-config-input {
   width: 100%;
   padding: 8px 12px;
   border: 2px solid var(--border);
@@ -459,31 +319,23 @@
   color: var(--text);
 }
 
-.weather-input,
-.embed-config-input {
+.widget-config-input.narrow {
   width: 80%;
 }
 
-.rss-setup-input.number,
-.uptime-config-interval-input,
-.uptime-config-timeout-input {
+.widget-config-input.number {
   width: 100px;
 }
 
 /* Configuration sublabels */
-.rss-setup-sublabel,
-.uptime-config-interval-label,
-.uptime-config-timeout-label {
+.widget-config-sublabel {
   font-size: 12px;
   color: var(--muted);
   margin-top: 8px;
 }
 
 /* Configuration buttons */
-.uptime-config-button,
-.rss-setup-button,
-.weather-button,
-.embed-config-button {
+.widget-config-button {
   padding: 8px 20px;
   background: var(--accent);
   color: white;
@@ -495,15 +347,12 @@
   margin-top: 8px;
 }
 
-.uptime-config-button:disabled,
-.rss-setup-button:disabled,
-.weather-button:disabled,
-.embed-config-button:disabled {
+.widget-config-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.rss-setup-button:not(:disabled) {
+.widget-config-button:not(:disabled) {
   opacity: 1;
   cursor: pointer;
 }
@@ -513,11 +362,7 @@
    COMMON PATTERNS - Loading States
    ============================================================================ */
 
-.rss-loading,
-.weather-loading,
-.envcanada-loading,
-.mtnxml-loading,
-.comet-loading {
+.widget-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -525,12 +370,11 @@
   color: var(--muted);
 }
 
-.rss-loading,
-.weather-loading {
+.widget-loading.padded {
   padding: 20px;
 }
 
-.comet-loading {
+.widget-loading.centered {
   padding: 20px;
   text-align: center;
   font-size: 14px;
@@ -543,8 +387,7 @@
    ============================================================================ */
 
 /* Error containers */
-.rss-error,
-.weather-error {
+.widget-error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -555,72 +398,59 @@
   padding: 20px;
 }
 
-.envcanada-error,
-.mtnxml-error,
-.comet-error {
+.widget-error.simple {
   padding: 20px;
   text-align: center;
   color: #f44336;
 }
 
-.comet-error {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  font-size: 14px;
-}
-
 /* Error icons */
-.rss-error-icon,
-.weather-error-icon,
-.envcanada-error-icon,
-.mtnxml-error-icon,
-.comet-error-icon {
+.widget-error-icon {
   font-size: 32px;
   margin-bottom: 12px;
 }
 
-.rss-error-icon {
-  margin-bottom: 12px;
+.widget-error-icon.large {
+  font-size: 48px;
+  margin-bottom: 16px;
 }
 
-.comet-error-icon {
-  margin-bottom: 10px;
+.widget-error-icon.animated {
+  animation: pulse 2s infinite;
 }
 
 /* Error messages */
-.rss-error-detail,
-.weather-error-message {
+.widget-error-message {
   font-size: 12px;
   margin-top: 8px;
   color: var(--muted);
 }
 
-.envcanada-error-title,
-.mtnxml-error-title {
+.widget-error-title {
   font-weight: bold;
   margin-bottom: 8px;
 }
 
-.envcanada-error-message,
-.mtnxml-error-message {
+.widget-error-detail {
   font-size: 12px;
   opacity: 0.8;
   margin-bottom: 12px;
 }
 
-.envcanada-error-hint,
-.mtnxml-error-hint {
+.widget-error-hint {
   font-size: 11px;
   opacity: 0.6;
   color: var(--muted);
   margin-bottom: 16px;
 }
 
-.envcanada-retry-button,
-.mtnxml-retry-button {
+.widget-error-retry {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 12px;
+}
+
+.widget-retry-button {
   padding: 8px 16px;
   background: var(--accent);
   color: white;
@@ -634,9 +464,7 @@
    COMMON PATTERNS - Widget Headers
    ============================================================================ */
 
-.chatgpt-header,
-.envcanada-header,
-.mtnxml-header {
+.widget-header {
   padding: 12px 16px;
   color: white;
   font-weight: bold;
@@ -646,84 +474,15 @@
   justify-content: space-between;
 }
 
-.chatgpt-header {
-  background: var(--primary);
-}
-
-.envcanada-header,
-.mtnxml-header {
+.widget-header.primary {
   background: var(--primary);
   flex-shrink: 0;
 }
 
-.chatgpt-header-left,
-.envcanada-header-left,
-.mtnxml-header-left {
+.widget-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-
-/* ============================================================================
-   CLOCK WIDGET
-   ============================================================================ */
-
-.clock-widget {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 16px;
-}
-
-.clock-config-label {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  align-self: flex-start;
-}
-
-.clock-timezone-select {
-  padding: 8px 12px;
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 14px;
-  background: var(--bg);
-  color: var(--text);
-  cursor: pointer;
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 12px;
-}
-
-.clock-format-container {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.clock-format-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.clock-format-btn[data-selected="true"] {
-  border: 2px solid var(--accent);
-  background: var(--accent);
-  color: white;
-}
-
-.clock-format-btn[data-selected="false"] {
-  border: 2px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
 }
 
 .clock-format-btn:hover {

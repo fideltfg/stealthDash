@@ -49,7 +49,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     configDiv.className = 'envcanada-config';
 
     configDiv.innerHTML = `
-      <div class="envcanada-config-icon">🍁</div>
+      <div class="widget-config-icon">🍁</div>
       <div class="envcanada-config-title">
         Environment Canada Weather
       </div>
@@ -178,7 +178,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
     // Loading indicator
     contentArea.innerHTML = `
-      <div class="envcanada-loading">
+      <div class="widget-loading padded centered">
         <div>Loading forecast...</div>
       </div>
     `;
@@ -197,11 +197,11 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       contentArea.innerHTML = `
-        <div class="envcanada-error">
-          <div class="envcanada-error-icon">⚠️</div>
-          <div class="envcanada-error-title">Failed to load forecast</div>
-          <div class="envcanada-error-message">${errorMessage}</div>
-          <div class="envcanada-error-hint">
+        <div class="widget-error simple">
+          <div class="widget-error-icon">⚠️</div>
+          <div class="widget-error-title">Failed to load forecast</div>
+          <div class="widget-error-detail">${errorMessage}</div>
+          <div class="widget-error-hint">
             Check coordinates and try again
           </div>
           <button id="retry-btn" class="envcanada-retry-button">
@@ -457,53 +457,53 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as EnvCanadaContent;
 
     const overlay = document.createElement('div');
-    overlay.className = 'envcanada-settings-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const modal = document.createElement('div');
-    modal.className = 'envcanada-settings-modal';
+    modal.className = 'widget-dialog extended';
 
     modal.innerHTML = `
       <h3>Weather Forecast Settings</h3>
       
-      <div class="envcanada-settings-field">
-        <label class="envcanada-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Latitude
         </label>
         <input
           type="text"
           id="settings-lat"
           value="${content.latitude}"
-          class="envcanada-settings-input"
+          class="widget-dialog-input extended"
         >
       </div>
 
-      <div class="envcanada-settings-field">
-        <label class="envcanada-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Longitude
         </label>
         <input
           type="text"
           id="settings-lon"
           value="${content.longitude}"
-          class="envcanada-settings-input"
+          class="widget-dialog-input extended"
         >
       </div>
 
-      <div class="envcanada-settings-field">
-        <label class="envcanada-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Language
         </label>
         <select
           id="settings-lang"
-          class="envcanada-settings-select"
+          class="widget-dialog-input extended"
         >
           <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
           <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
         </select>
       </div>
 
-      <div class="envcanada-settings-field">
-        <label class="envcanada-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Refresh Interval (seconds)
         </label>
         <input
@@ -512,21 +512,21 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
           value="${content.refreshInterval || 1800}"
           min="0"
           step="300"
-          class="envcanada-settings-input"
+          class="widget-dialog-input extended"
         >
         <small class="envcanada-settings-hint">Set to 0 to disable auto-refresh</small>
       </div>
 
-      <div class="envcanada-settings-buttons">
+      <div class="widget-dialog-buttons top-margin">
         <button
           id="settings-save"
-          class="envcanada-settings-button envcanada-settings-button-save"
+          class="widget-dialog-button-save extended full-width"
         >
           Save & Reload
         </button>
         <button
           id="settings-close"
-          class="envcanada-settings-button envcanada-settings-button-close"
+          class="widget-dialog-button-cancel extended full-width"
         >
           Cancel
         </button>

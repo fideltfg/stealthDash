@@ -122,7 +122,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const loadingDiv = document.createElement('div');
     loadingDiv.textContent = 'Reading...';
-    loadingDiv.className = 'comet-loading';
+    loadingDiv.className = 'widget-loading padded centered';
     wrapper.appendChild(loadingDiv);
 
     container.appendChild(wrapper);
@@ -580,7 +580,7 @@ export class CometP8541Renderer implements WidgetRenderer {
           
           if (!errorOverlay) {
             errorOverlay = document.createElement('div');
-            errorOverlay.className = 'comet-error-overlay';
+            errorOverlay.className = 'widget-error overlay';
             wrapper.appendChild(errorOverlay);
           }
           
@@ -590,10 +590,10 @@ export class CometP8541Renderer implements WidgetRenderer {
             : (error.message || 'Failed to read sensor');
           
           errorOverlay.innerHTML = `
-            <div class="comet-error-overlay-icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="comet-error-overlay-title">Temporary Connection Error</div>
-            <div class="comet-error-overlay-message">${errorMessage}</div>
-            <div class="comet-error-overlay-retry">Retrying in ${content.refreshInterval || 10} seconds...</div>
+            <div class="widget-error-icon large animated"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="widget-error-title">Temporary Connection Error</div>
+            <div class="widget-error-detail">${errorMessage}</div>
+            <div class="widget-error-retry">Retrying in ${content.refreshInterval || 10} seconds...</div>
           `;
           
           // Remove error overlay after a delay to show the next attempt
@@ -647,7 +647,7 @@ export class CometP8541Renderer implements WidgetRenderer {
   private renderError(container: HTMLElement, message: string): void {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'comet-error';
-    errorDiv.innerHTML = `<div class="comet-error-icon"><i class="fas fa-exclamation-triangle"></i></div><div>${message}</div>`;
+    errorDiv.innerHTML = `<div class="widget-error-icon"><i class="fas fa-exclamation-triangle"></i></div><div>${message}</div>`;
     container.appendChild(errorDiv);
   }
 
@@ -678,7 +678,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.className = 'comet-form-label';
+      label.className = 'widget-dialog-label small';
 
       const input = document.createElement('input');
       input.type = field.type;
@@ -732,10 +732,10 @@ export class CometP8541Renderer implements WidgetRenderer {
     const content = widget.content as unknown as CometP8541Content;
 
     const overlay = document.createElement('div');
-    overlay.className = 'comet-modal-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const modal = document.createElement('div');
-    modal.className = 'comet-modal';
+    modal.className = 'widget-dialog dark-theme';
 
     const title = document.createElement('div');
     title.className = 'comet-modal-title';
@@ -754,16 +754,16 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     fields.forEach(field => {
       const group = document.createElement('div');
-      group.className = 'comet-modal-group';
+      group.className = 'widget-dialog-group';
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.className = 'comet-form-label';
+      label.className = 'widget-dialog-label small';
 
       const input = document.createElement('input');
       input.type = field.type;
       input.value = field.value?.toString() || '';
-      input.className = 'comet-modal-input';
+      input.className = 'widget-dialog-input dark-theme';
 
       // Prevent arrow keys from moving the widget
       input.addEventListener('keydown', (e) => e.stopPropagation());
@@ -777,11 +777,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Temperature unit selector
     const tempGroup = document.createElement('div');
-    tempGroup.className = 'comet-modal-group';
+    tempGroup.className = 'widget-dialog-group';
 
     const tempLabel = document.createElement('label');
     tempLabel.textContent = 'Temperature Unit';
-    tempLabel.className = 'comet-form-label';
+    tempLabel.className = 'widget-dialog-label small';
 
     const tempSelect = document.createElement('select');
     tempSelect.className = 'comet-form-select';
@@ -804,11 +804,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Display mode selector
     const displayGroup = document.createElement('div');
-    displayGroup.className = 'comet-modal-group';
+    displayGroup.className = 'widget-dialog-group';
 
     const displayLabel = document.createElement('label');
     displayLabel.textContent = 'Display Mode';
-    displayLabel.className = 'comet-form-label';
+    displayLabel.className = 'widget-dialog-label small';
 
     const displaySelect = document.createElement('select');
     displaySelect.className = 'comet-form-select';
@@ -835,7 +835,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const channelsLabel = document.createElement('div');
     channelsLabel.textContent = 'Channels';
-    channelsLabel.className = 'comet-channels-label';
+    channelsLabel.className = 'widget-dialog-label small';
     channelsGroup.appendChild(channelsLabel);
 
     const channels = ['temp1', 'temp2', 'temp3', 'temp4', 'humidity'];
@@ -874,11 +874,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Buttons
     const btnGroup = document.createElement('div');
-    btnGroup.className = 'comet-btn-group';
+    btnGroup.className = 'widget-dialog-buttons small-gap';
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
-    saveBtn.className = 'comet-btn-save';
+    saveBtn.className = 'widget-dialog-button-save green';
 
     saveBtn.onclick = () => {
       const newContent: CometP8541Content = {
@@ -917,7 +917,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'comet-btn-cancel';
+    cancelBtn.className = 'widget-dialog-button-cancel dark-theme';
     cancelBtn.onclick = () => overlay.remove();
 
     btnGroup.appendChild(saveBtn);

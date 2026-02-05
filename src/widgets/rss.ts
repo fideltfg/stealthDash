@@ -16,33 +16,33 @@ export class RssWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { feedUrl?: string; maxItems?: number; refreshInterval?: number };
     
     const overlay = document.createElement('div');
-    overlay.className = 'rss-config-overlay';
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'rss-config-dialog';
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="rss-config-title">Configure RSS Feed</h3>
-      <div class="rss-config-field">
-        <label class="rss-config-label">Feed URL</label>
+      <h3 class="widget-dialog-title">Configure RSS Feed</h3>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Feed URL</label>
         <input type="text" id="rss-url" value="${content.feedUrl || ''}" placeholder="https://example.com/feed.xml"
-          class="rss-config-input" />
+          class="widget-dialog-input" />
       </div>
-      <div class="rss-config-field">
-        <label class="rss-config-label">Max Items</label>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Max Items</label>
         <input type="number" id="rss-max-items" value="${content.maxItems || 10}" min="1" max="50"
-          class="rss-config-input" />
+          class="widget-dialog-input" />
       </div>
-      <div class="rss-config-field large-margin">
-        <label class="rss-config-label">Refresh Interval (minutes, 0 to disable)</label>
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label">Refresh Interval (minutes, 0 to disable)</label>
         <input type="number" id="rss-refresh" value="${content.refreshInterval !== undefined ? content.refreshInterval : 5}" min="0" max="60"
-          class="rss-config-input" />
+          class="widget-dialog-input" />
       </div>
-      <div class="rss-config-actions">
-        <button id="cancel-btn" class="rss-config-btn cancel">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" class="rss-config-btn save">
+        <button id="save-btn" class="widget-dialog-button-save">
           Save
         </button>
       </div>
@@ -117,10 +117,10 @@ export class RssWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'rss-setup-container';
+    inputContainer.className = 'widget-config-screen padded';
     
     const icon = document.createElement('div');
-    icon.className = 'rss-setup-icon';
+    icon.className = 'widget-config-icon';
     icon.innerHTML = '<i class="fas fa-rss"></i>';
     
     const label = document.createElement('div');
@@ -211,7 +211,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchAndRenderFeed(container: HTMLElement, widget: Widget, feedUrl: string, maxItems: number): Promise<void> {
-    container.innerHTML = '<div class="rss-loading">Loading feed...</div>';
+    container.innerHTML = '<div class="widget-loading padded">Loading feed...</div>';
     
     try {
       // Use RSS2JSON service as a CORS proxy
@@ -231,10 +231,10 @@ export class RssWidgetRenderer implements WidgetRenderer {
       container.innerHTML = '';
       this.renderFeedItems(container, data.feed, data.items, maxItems);
     } catch (error) {
-      container.innerHTML = `<div class="rss-error">
-        <div class="rss-error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      container.innerHTML = `<div class="widget-error">
+        <div class="widget-error-icon"><i class="fas fa-exclamation-triangle"></i></div>
         <div>Failed to load RSS feed</div>
-        <div class="rss-error-detail">${error instanceof Error ? error.message : 'Unknown error'}</div>
+        <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
       </div>`;
     }
   }

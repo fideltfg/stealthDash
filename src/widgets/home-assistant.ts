@@ -160,18 +160,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     prompt.className = 'config-prompt';
     prompt.innerHTML = `
       <div class="ha-config-container">
-        <div class="ha-config-icon"><i class="fas fa-home"></i></div>
+        <div class="widget-config-icon"><i class="fas fa-home"></i></div>
         <h3 class="ha-config-title">Configure Home Assistant</h3>
         <div class="ha-config-form">
-          <div class="ha-config-field">
-            <label class="ha-config-label">Home Assistant URL:</label>
+          <div class="widget-dialog-field">
+            <label class="widget-dialog-label left-align">Home Assistant URL:</label>
             <input type="text" id="ha-url" placeholder="http://homeassistant.local:8123" 
-                   class="ha-config-input" 
+                   class="widget-dialog-input rounded" 
                    value="${content.url || ''}">
           </div>
-          <div class="ha-config-field">
-            <label class="ha-config-label">Credentials:</label>
-            <select id="ha-credential" class="ha-config-input">
+          <div class="widget-dialog-field">
+            <label class="widget-dialog-label left-align">Credentials:</label>
+            <select id="ha-credential" class="widget-dialog-input rounded">
               <option value="">Select saved credential...</option>
             </select>
             <small class="ha-config-hint">
@@ -243,7 +243,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     prompt.className = 'no-entities-prompt';
     prompt.innerHTML = `
       <div class="ha-empty-state">
-        <div class="ha-empty-icon"><i class="fas fa-home"></i></div>
+        <div class="widget-config-icon"><i class="fas fa-home"></i></div>
         <h3 class="ha-empty-title">No Entities Added</h3>
         <p class="ha-empty-text">Add Home Assistant entities to monitor and control.</p>
         <button id="add-entity-btn" class="ha-empty-button">
@@ -844,29 +844,29 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.className = 'ha-modal-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.className = 'ha-dialog';
+    dialog.className = 'widget-dialog extended large';
 
     dialog.innerHTML = `
       <h3>Add Entity</h3>
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">Search Entity:</label>
-        <input type="text" id="entity-search" placeholder="Search entities..." class="ha-dialog-input">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">Search Entity:</label>
+        <input type="text" id="entity-search" placeholder="Search entities..." class="widget-dialog-input extended">
       </div>
       <div id="entity-list-container" class="ha-entity-list">
         <div class="ha-entity-list-message">
           Loading entities...
         </div>
       </div>
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">Display Name (optional):</label>
-        <input type="text" id="display-name" placeholder="Custom display name" class="ha-dialog-input">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">Display Name (optional):</label>
+        <input type="text" id="display-name" placeholder="Custom display name" class="widget-dialog-input extended">
       </div>
-      <div class="ha-dialog-buttons">
-        <button id="cancel-entity" class="ha-dialog-button ha-dialog-button-cancel">Cancel</button>
-        <button id="save-entity" disabled class="ha-dialog-button ha-dialog-button-save">Add Entity</button>
+      <div class="widget-dialog-buttons">
+        <button id="cancel-entity" class="widget-dialog-button-cancel extended">Cancel</button>
+        <button id="save-entity" disabled class="widget-dialog-button-save extended">Add Entity</button>
       </div>
     `;
 
@@ -1056,37 +1056,37 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.className = 'ha-modal-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.className = 'ha-dialog';
+    dialog.className = 'widget-dialog extended large';
 
     dialog.innerHTML = `
       <h3>Edit Entity</h3>
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">Entity ID:</label>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">Entity ID:</label>
         <input type="text" id="edit-entity-id" placeholder="light.living_room" 
                value="${entity.entity_id}"
-               class="ha-dialog-input">
+               class="widget-dialog-input extended">
         <small class="ha-dialog-hint">Example: light.kitchen, switch.fan, sensor.temperature</small>
       </div>
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">Display Name (optional):</label>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">Display Name (optional):</label>
         <input type="text" id="edit-display-name" placeholder="Living Room Light" 
                value="${entity.display_name || ''}"
-               class="ha-dialog-input">
+               class="widget-dialog-input extended">
       </div>
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">Type:</label>
-        <select id="edit-entity-type" class="ha-dialog-input">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">Type:</label>
+        <select id="edit-entity-type" class="widget-dialog-input extended">
           <option value="light" ${entity.type === 'light' ? 'selected' : ''}>Light</option>
           <option value="switch" ${entity.type === 'switch' ? 'selected' : ''}>Switch</option>
           <option value="sensor" ${entity.type === 'sensor' ? 'selected' : ''}>Sensor</option>
         </select>
       </div>
-      <div class="ha-dialog-buttons">
-        <button id="cancel-edit-entity" class="ha-dialog-button ha-dialog-button-cancel">Cancel</button>
-        <button id="save-edit-entity" class="ha-dialog-button ha-dialog-button-save">Save Changes</button>
+      <div class="widget-dialog-buttons">
+        <button id="cancel-edit-entity" class="widget-dialog-button-cancel extended">Cancel</button>
+        <button id="save-edit-entity" class="widget-dialog-button-save extended">Save Changes</button>
       </div>
     `;
 
@@ -1172,10 +1172,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.className = 'ha-modal-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.className = 'ha-dialog';
+    dialog.className = 'widget-dialog extended large';
 
     // Load credentials for the selector
     const credentials = await credentialsService.getAll();
@@ -1188,14 +1188,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     dialog.innerHTML = `
       <h3 class="ha-dialog-title">⚙️ Home Assistant Settings</h3>
       
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Home Assistant URL
         </label>
         <input 
           type="text" 
           id="ha-url-input" 
-          class="ha-dialog-input"
+          class="widget-dialog-input extended"
           placeholder="http://homeassistant.local:8123"
           value="${content.url || ''}"
         />
@@ -1204,13 +1204,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Saved Credential
         </label>
         <select 
           id="ha-credential-select"
-          class="ha-dialog-input"
+          class="widget-dialog-input extended"
         >
           <option value="">Select saved credential...</option>
           ${credentialOptions}
@@ -1220,14 +1220,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Or Enter Token Directly (Legacy)
         </label>
         <input 
           type="password" 
           id="ha-token-input" 
-          class="ha-dialog-input"
+          class="widget-dialog-input extended"
           placeholder="Enter your access token"
           value="${content.token || ''}"
         />
@@ -1236,14 +1236,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="ha-dialog-field">
-        <label class="ha-dialog-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Refresh Interval (seconds)
         </label>
         <input 
           type="number" 
           id="ha-refresh-input" 
-          class="ha-dialog-input"
+          class="widget-dialog-input extended"
           min="1"
           max="300"
           value="${content.refreshInterval || 5}"
@@ -1253,11 +1253,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="ha-dialog-buttons">
-        <button id="cancel-settings-btn" class="ha-dialog-button ha-dialog-button-cancel">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-settings-btn" class="widget-dialog-button-cancel extended">
           Cancel
         </button>
-        <button id="save-settings-btn" class="ha-dialog-button ha-dialog-button-save">
+        <button id="save-settings-btn" class="widget-dialog-button-save extended">
           Save Settings
         </button>
       </div>
@@ -1351,10 +1351,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.className = 'ha-modal-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.className = 'ha-dialog';
+    dialog.className = 'widget-dialog extended large';
 
     // Collect all entities (ungrouped and grouped)
     const allEntities: Array<{ entity: EntityConfig; groupId: string | null; groupName: string | null }> = [];
@@ -1407,11 +1407,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     dialogHTML += `
       </div>
-      <div class="ha-dialog-buttons ha-dialog-buttons-spaced">
-        <button id="add-new-entity-btn" class="ha-dialog-button ha-dialog-button-save">
+      <div class="widget-dialog-buttons spaced">
+        <button id="add-new-entity-btn" class="widget-dialog-button-save extended">
           + Add Entity
         </button>
-        <button id="close-manage-dialog" class="ha-dialog-button ha-dialog-button-cancel">
+        <button id="close-manage-dialog" class="widget-dialog-button-cancel extended">
           Close
         </button>
       </div>

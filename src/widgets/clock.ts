@@ -7,10 +7,10 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
     
     const overlay = document.createElement('div');
-    overlay.className = 'clock-config-overlay';
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'clock-config-dialog';
+    dialog.className = 'widget-dialog scrollable';
 
     dialog.innerHTML = `
       <h3>Configure Clock</h3>
@@ -95,7 +95,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const icon = document.createElement('div');
-    icon.className = 'clock-config-icon';
+    icon.className = 'widget-config-icon';
     icon.textContent = '🕐';
     
     const label = document.createElement('div');

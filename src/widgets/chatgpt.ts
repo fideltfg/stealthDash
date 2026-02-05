@@ -281,20 +281,20 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
 
   private showSettings(container: HTMLElement, widget: Widget): void {
     const overlay = document.createElement('div');
-    overlay.className = 'chatgpt-settings-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const modal = document.createElement('div');
-    modal.className = 'chatgpt-settings-modal';
+    modal.className = 'widget-dialog extended';
 
     const settingsContainer = document.createElement('div');
     this.renderEditDialog(settingsContainer, widget);
 
     const buttonGroup = document.createElement('div');
-    buttonGroup.className = 'chatgpt-button-group';
+    buttonGroup.className = 'widget-dialog-buttons border-top';
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
-    closeBtn.className = 'chatgpt-close-button';
+    closeBtn.className = 'widget-dialog-button-cancel extended full-width';
     closeBtn.onclick = () => {
       overlay.remove();
       // Just update the header text to show the new model
@@ -345,11 +345,11 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     container.className = 'chatgpt-settings-container';
 
     container.innerHTML = `
-      <div class="chatgpt-settings-field">
-        <label class="chatgpt-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label bold">
           OpenAI Credentials <span class="chatgpt-settings-label-required">*</span>
         </label>
-        <select id="credential-select" class="chatgpt-settings-select">
+        <select id="credential-select" class="widget-dialog-input extended">
           <option value="">Select saved credential...</option>
         </select>
         <small class="chatgpt-settings-hint">
@@ -357,11 +357,11 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="chatgpt-settings-field">
-        <label class="chatgpt-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label bold">
           Model
         </label>
-        <select id="model" class="chatgpt-settings-select">
+        <select id="model" class="widget-dialog-input extended">
           <option value="gpt-3.5-turbo" ${content.model === 'gpt-3.5-turbo' ? 'selected' : ''}>GPT-3.5 Turbo (Cheaper, faster)</option>
           <option value="gpt-4" ${content.model === 'gpt-4' ? 'selected' : ''}>GPT-4 (Most capable)</option>
           <option value="gpt-4-turbo" ${content.model === 'gpt-4-turbo' ? 'selected' : ''}>GPT-4 Turbo (Faster GPT-4)</option>
@@ -372,18 +372,18 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         </select>
       </div>
 
-      <div class="chatgpt-settings-field">
-        <label class="chatgpt-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label bold">
           System Prompt
         </label>
-        <textarea id="system-prompt" rows="3" class="chatgpt-settings-textarea">${content.systemPrompt}</textarea>
+        <textarea id="system-prompt" rows="3" class="widget-dialog-input extended textarea">${content.systemPrompt}</textarea>
         <small class="chatgpt-settings-hint">
           Define the assistant's behavior and personality
         </small>
       </div>
 
-      <div class="chatgpt-settings-field">
-        <label class="chatgpt-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label bold">
           Chat History
         </label>
         <button id="clear-history" class="chatgpt-clear-button">🗑️ Clear All Messages</button>

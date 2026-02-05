@@ -6,22 +6,22 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { location: string };
     
     const overlay = document.createElement('div');
-    overlay.className = 'weather-config-overlay';
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'weather-config-dialog';
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="weather-config-title">Configure Weather</h3>
-      <div class="weather-config-field">
-        <label class="weather-config-label">Location</label>
-        <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="weather-config-input" />
+      <h3 class="widget-dialog-title">Configure Weather</h3>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Location</label>
+        <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="widget-dialog-input" />
       </div>
-      <div class="weather-config-actions">
-        <button id="cancel-btn" class="weather-config-btn-cancel">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" class="weather-config-btn-save">
+        <button id="save-btn" class="widget-dialog-button-save">
           Save
         </button>
       </div>
@@ -70,10 +70,10 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'weather-config-screen';
+    inputContainer.className = 'widget-config-screen padded';
     
     const icon = document.createElement('div');
-    icon.className = 'weather-config-icon';
+    icon.className = 'widget-config-icon';
     icon.innerHTML = '<i class="fas fa-cloud-sun"></i>';
     
     const label = document.createElement('div');
@@ -127,7 +127,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
 
   private async fetchWeatherData(container: HTMLElement, location: string): Promise<void> {
     const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'weather-loading';
+    loadingDiv.className = 'widget-loading padded';
     loadingDiv.textContent = 'Loading weather...';
     container.appendChild(loadingDiv);
     
@@ -149,11 +149,11 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     } catch (error) {
       container.innerHTML = '';
       const errorDiv = document.createElement('div');
-      errorDiv.className = 'weather-error';
+      errorDiv.className = 'widget-error';
       errorDiv.innerHTML = `
-        <div class="weather-error-icon">⚠️</div>
+        <div class="widget-error-icon">⚠️</div>
         <div>Failed to load weather data</div>
-        <div class="weather-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
+        <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
       `;
       container.appendChild(errorDiv);
     }

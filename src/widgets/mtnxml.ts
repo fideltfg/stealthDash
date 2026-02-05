@@ -44,7 +44,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     configDiv.className = 'mtnxml-config';
 
     configDiv.innerHTML = `
-      <div class="mtnxml-config-icon">⛷️</div>
+      <div class="widget-config-icon">⛷️</div>
       <div class="mtnxml-config-title">
         Mountain XML Feed
       </div>
@@ -128,7 +128,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Loading indicator
     contentArea.innerHTML = `
-      <div class="mtnxml-loading">
+      <div class="widget-loading padded centered">
         <div>Loading data...</div>
       </div>
     `;
@@ -151,11 +151,11 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       contentArea.innerHTML = `
-        <div class="mtnxml-error">
-          <div class="mtnxml-error-icon">⚠️</div>
-          <div class="mtnxml-error-title">Failed to load feed</div>
-          <div class="mtnxml-error-message">${errorMessage}</div>
-          <div class="mtnxml-error-hint">
+        <div class="widget-error simple">
+          <div class="widget-error-icon">⚠️</div>
+          <div class="widget-error-title">Failed to load feed</div>
+          <div class="widget-error-detail">${errorMessage}</div>
+          <div class="widget-error-hint">
             Check browser console (F12) for details
           </div>
           <button id="retry-btn" class="mtnxml-retry-button">
@@ -450,28 +450,28 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as MTNXMLContent;
 
     const overlay = document.createElement('div');
-    overlay.className = 'mtnxml-settings-overlay';
+    overlay.className = 'widget-overlay dark';
 
     const modal = document.createElement('div');
-    modal.className = 'mtnxml-settings-modal';
+    modal.className = 'widget-dialog extended';
 
     modal.innerHTML = `
       <h3>Mountain XML Settings</h3>
       
-      <div class="mtnxml-settings-field">
-        <label class="mtnxml-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Feed URL
         </label>
         <input
           type="text"
           id="settings-url"
           value="${content.feedUrl}"
-          class="mtnxml-settings-input"
+          class="widget-dialog-input extended"
         >
       </div>
 
-      <div class="mtnxml-settings-field">
-        <label class="mtnxml-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Refresh Interval (seconds)
         </label>
         <input
@@ -480,13 +480,13 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           value="${content.refreshInterval || 300}"
           min="0"
           step="60"
-          class="mtnxml-settings-input"
+          class="widget-dialog-input extended"
         >
         <small class="mtnxml-settings-hint">Set to 0 to disable auto-refresh</small>
       </div>
 
-      <div class="mtnxml-settings-field">
-        <label class="mtnxml-settings-label">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label medium">
           Display Options
         </label>
         <div class="mtnxml-settings-checkboxes">
@@ -509,16 +509,16 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         </div>
       </div>
 
-      <div class="mtnxml-settings-buttons">
+      <div class="widget-dialog-buttons top-margin">
         <button
           id="settings-save"
-          class="mtnxml-settings-button mtnxml-settings-button-save"
+          class="widget-dialog-button-save extended full-width"
         >
           Save & Reload
         </button>
         <button
           id="settings-close"
-          class="mtnxml-settings-button mtnxml-settings-button-close"
+          class="widget-dialog-button-cancel extended full-width"
         >
           Cancel
         </button>
