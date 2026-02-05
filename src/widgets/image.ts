@@ -6,55 +6,37 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { src: string; objectFit: string; alt?: string };
     
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure Image</h3>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Image URL</label>
+      <h3 class="widget-dialog-title">Configure Image</h3>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Image URL</label>
         <input type="text" id="image-url" value="${content.src || ''}" placeholder="https://example.com/image.jpg"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+          class="widget-dialog-input" />
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Alt Text (optional)</label>
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Alt Text (optional)</label>
         <input type="text" id="image-alt" value="${content.alt || ''}" placeholder="Description of image"
-          style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);" />
+          class="widget-dialog-input" />
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Object Fit</label>
-        <select id="image-fit" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+      <div class="widget-dialog-field">
+        <label class="widget-dialog-label">Object Fit</label>
+        <select id="image-fit" class="widget-dialog-input">
           <option value="contain" ${content.objectFit === 'contain' ? 'selected' : ''}>Contain (fit inside)</option>
           <option value="cover" ${content.objectFit === 'cover' ? 'selected' : ''}>Cover (fill space)</option>
           <option value="fill" ${content.objectFit === 'fill' ? 'selected' : ''}>Fill (stretch)</option>
           <option value="none" ${content.objectFit === 'none' ? 'selected' : ''}>None (original size)</option>
         </select>
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
         </button>
-        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
+        <button id="save-btn" class="widget-dialog-button-save">
           Save
         </button>
       </div>
@@ -111,9 +93,8 @@ export class ImageWidgetRenderer implements WidgetRenderer {
       div.appendChild(img);
     } else {
       const placeholder = document.createElement('div');
-      placeholder.innerHTML = '<i class="fas fa-image" style="margin-right: 8px;"></i> Click to configure image';
-      placeholder.style.color = 'var(--muted)';
-      placeholder.style.cursor = 'pointer';
+      placeholder.className = 'image-placeholder';
+      placeholder.innerHTML = '<i class="fas fa-image"></i> Click to configure image';
       placeholder.addEventListener('click', () => {
         this.configure(widget);
       });

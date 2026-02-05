@@ -122,15 +122,15 @@ class UnifiRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
-        <div class="unifi-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;"><i class="fas fa-wifi"></i></span>
+      <div class="unifi-widget w-100 h-100 flex flex-column gap-16 overflow-auto" style="padding: 16px; background: var(--surface);">
+        <div class="unifi-header flex space-between align-center mb-16">
+          <h3 class="unifi-title flex align-center gap-8">
+            <span class="unifi-icon"><i class="fas fa-wifi"></i></span>
             <span>UniFi Network</span>
           </h3>
         </div>
-        <div class="unifi-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
-          <div class="unifi-loading" style="text-align: center; padding: 40px; color: var(--muted);">
+        <div class="unifi-content flex-1 flex flex-column gap-12">
+          <div class="widget-loading text-center">
             Loading...
           </div>
         </div>
@@ -196,11 +196,11 @@ class UnifiRenderer implements WidgetRenderer {
       } catch (error: any) {
         console.error('Error fetching UniFi data:', error);
         contentEl.innerHTML = `
-          <div style="padding: 20px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
-            <div style="color: #ff3b30; font-weight: 500; margin-bottom: 8px;">Error loading UniFi data</div>
-            <div style="color: var(--muted); font-size: 14px; margin-bottom: 12px;">${error.message}</div>
-            <div style="color: var(--muted); font-size: 12px;">Check host: ${content.host}</div>
+          <div class="widget-error text-center">
+            <div class="widget-error-icon">⚠️</div>
+            <div class="widget-error-title" style="color: #ff3b30;">Error loading UniFi data</div>
+            <div class="widget-error-message">${error.message}</div>
+            <div class="widget-error-hint">Check host: ${content.host}</div>
           </div>
         `;
       }
@@ -216,26 +216,12 @@ class UnifiRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-wifi"></i></div>
-        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text);">UniFi Network Widget</div>
-        <div style="color: var(--muted); margin-bottom: 8px;">Configure your UniFi Controller connection</div>
-        <div style="color: var(--muted); font-size: 12px; margin-bottom: 20px;">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
-        <button 
-          class="configure-btn"
-          style="
-            padding: 10px 20px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-          "
-        >
-          Configure
-        </button>
+      <div class="widget-config-screen padded text-center h-100">
+        <div class="widget-config-icon"><i class="fas fa-wifi"></i></div>
+        <div class="unifi-config-title">UniFi Network Widget</div>
+        <div class="widget-config-description">Configure your UniFi Controller connection</div>
+        <div class="widget-config-sublabel">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
+        <button class="configure-btn widget-config-button">Configure</button>
       </div>
     `;
 
@@ -249,32 +235,10 @@ class UnifiRenderer implements WidgetRenderer {
     const content = widget.content as UnifiContent;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'widget-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 8px 32px var(--shadow);
-      max-height: 80vh;
-      overflow-y: auto;
-    `;
+    modal.className = 'widget-dialog scrollable';
 
     // Load credentials for dropdown
     const credentials = await credentialsService.getAll();
@@ -287,184 +251,86 @@ class UnifiRenderer implements WidgetRenderer {
       : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
-      <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 32px;"><i class="fas fa-wifi"></i></span>
+      <div class="unifi-config-header">
+        <span class="unifi-config-header-icon"><i class="fas fa-wifi"></i></span>
         <div>
-          <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 600; color: var(--text);">
-            UniFi Network Configuration
-          </h2>
-          <p style="margin: 0; font-size: 14px; color: var(--muted);">
-            Connect to your UniFi Controller
-          </p>
+          <h2 class="widget-dialog-title">UniFi Network Configuration</h2>
+          <p class="unifi-config-subtitle">Connect to your UniFi Controller</p>
         </div>
       </div>
 
-      <form id="unifi-config-form" style="display: flex; flex-direction: column; gap: 16px;">
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Controller Host *
-          </label>
+      <form id="unifi-config-form" class="unifi-config-form">
+        <div class="widget-dialog-field">
+          <label class="widget-dialog-label">Controller Host *</label>
           <input 
             type="text" 
             id="unifi-host" 
             value="${content.host || 'https://192.168.1.1:8443'}"
             placeholder="https://192.168.1.1:8443 or https://unifi.local:8443"
             required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            class="widget-dialog-input extended"
           />
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Include protocol (https://) and port (usually 8443)
-          </small>
+          <small class="widget-dialog-hint">Include protocol (https://) and port (usually 8443)</small>
         </div>
 
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Credentials *
-          </label>
+        <div class="widget-dialog-field">
+          <label class="widget-dialog-label">Credentials *</label>
           <select 
             id="unifi-credential"
             required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            class="widget-dialog-input extended"
           >
-            <option value="" style="background: var(--surface); color: var(--muted);">Select credentials...</option>
+            <option value="">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Create credentials from the user menu (🔐 Credentials)
-          </small>
+          <small class="widget-dialog-hint">Create credentials from the user menu (🔐 Credentials)</small>
         </div>
 
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Site Name
-          </label>
+        <div class="widget-dialog-field">
+          <label class="widget-dialog-label">Site Name</label>
           <input 
             type="text" 
             id="unifi-site" 
             value="${content.site || 'default'}"
             placeholder="default"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            class="widget-dialog-input extended"
           />
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
-            Usually "default" unless you have multiple sites
-          </small>
+          <small class="widget-dialog-hint">Usually "default" unless you have multiple sites</small>
         </div>
 
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Display Mode
-          </label>
+        <div class="widget-dialog-field">
+          <label class="widget-dialog-label">Display Mode</label>
           <select 
             id="unifi-display-mode"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            class="widget-dialog-input extended"
           >
-            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Minimal - Client count only</option>
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Compact - Key stats</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Detailed - Infrastructure view</option>
-            <option value="devices" ${content.displayMode === 'devices' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Devices - Full device list</option>
-            <option value="clients" ${content.displayMode === 'clients' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Clients - Active connections</option>
-            <option value="active" ${content.displayMode === 'active' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Most Active - Top clients by traffic</option>
-            <option value="throughput" ${content.displayMode === 'throughput' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Throughput - Network traffic analysis</option>
-            <option value="speeds" ${content.displayMode === 'speeds' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Network Speeds - WAN & client speeds</option>
-            <option value="full" ${content.displayMode === 'full' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Full - Complete overview</option>
+            <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal - Client count only</option>
+            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact - Key stats</option>
+            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed - Infrastructure view</option>
+            <option value="devices" ${content.displayMode === 'devices' ? 'selected' : ''}>Devices - Full device list</option>
+            <option value="clients" ${content.displayMode === 'clients' ? 'selected' : ''}>Clients - Active connections</option>
+            <option value="active" ${content.displayMode === 'active' ? 'selected' : ''}>Most Active - Top clients by traffic</option>
+            <option value="throughput" ${content.displayMode === 'throughput' ? 'selected' : ''}>Throughput - Network traffic analysis</option>
+            <option value="speeds" ${content.displayMode === 'speeds' ? 'selected' : ''}>Network Speeds - WAN & client speeds</option>
+            <option value="full" ${content.displayMode === 'full' ? 'selected' : ''}>Full - Complete overview</option>
           </select>
         </div>
 
-        <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
-            Refresh Interval (seconds)
-          </label>
+        <div class="widget-dialog-field">
+          <label class="widget-dialog-label">Refresh Interval (seconds)</label>
           <input 
             type="number" 
             id="unifi-refresh" 
             value="${content.refreshInterval || 30}"
             min="10"
             max="300"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            class="widget-dialog-input extended"
           />
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 8px;">
-          <button 
-            type="submit"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--accent);
-              color: white;
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
-          >
-            Save
-          </button>
-          <button 
-            type="button"
-            id="cancel-btn"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--border);
-              color: var(--text);
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
-          >
-            Cancel
-          </button>
+        <div class="widget-dialog-buttons top-margin">
+          <button type="submit" class="widget-dialog-button-save extended">Save</button>
+          <button type="button" id="cancel-btn" class="widget-dialog-button-cancel extended">Cancel</button>
         </div>
       </form>
     `;
@@ -548,13 +414,9 @@ class UnifiRenderer implements WidgetRenderer {
     const clients = (data.num_user || 0);
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; height: 100%;">
-        <div style="font-size: 48px; font-weight: 700; color: var(--accent);">
-          ${clients}
-        </div>
-        <div style="font-size: 14px; color: var(--muted); text-align: center;">
-          Connected Clients
-        </div>
+      <div class="unifi-minimal flex flex-column gap-12 align-center justify-center h-100">
+        <div class="unifi-minimal-value">${clients}</div>
+        <div class="unifi-minimal-label">Connected Clients</div>
       </div>
     `;
   }
@@ -565,47 +427,35 @@ class UnifiRenderer implements WidgetRenderer {
     const devices = (data.gateways || 0) + (data.switches || 0) + (data.access_points || 0);
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">
-              ${clients}
-            </div>
-            <div style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              Clients
-            </div>
+      <div class="unifi-compact flex flex-column gap-12">
+        <div class="unifi-stats-grid">
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value accent">${clients}</div>
+            <div class="unifi-stat-label">Clients</div>
           </div>
           
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 4px;">
-              ${guests}
-            </div>
-            <div style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              Guests
-            </div>
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value">${guests}</div>
+            <div class="unifi-stat-label">Guests</div>
           </div>
           
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 4px;">
-              ${devices}
-            </div>
-            <div style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              Devices
-            </div>
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value">${devices}</div>
+            <div class="unifi-stat-label">Devices</div>
           </div>
         </div>
         
         ${data.site_name ? `
-          <div style="padding: 12px; background: var(--bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 14px; color: var(--muted);">Site</span>
-            <span style="font-size: 14px; font-weight: 500; color: var(--text);">${data.site_name}</span>
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">Site</span>
+            <span class="unifi-info-value">${data.site_name}</span>
           </div>
         ` : ''}
         
         ${data.wan_ip ? `
-          <div style="padding: 12px; background: var(--bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 14px; color: var(--muted);">WAN IP</span>
-            <span style="font-size: 14px; font-family: monospace; color: var(--text);">${data.wan_ip}</span>
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">WAN IP</span>
+            <span class="unifi-info-value mono">${data.wan_ip}</span>
           </div>
         ` : ''}
       </div>
@@ -622,73 +472,59 @@ class UnifiRenderer implements WidgetRenderer {
     const uptime = data.uptime ? this.formatUptime(data.uptime) : 'Unknown';
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">
-              ${clients}
-            </div>
-            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              Clients
-            </div>
+      <div class="unifi-detailed flex flex-column gap-16">
+        <div class="unifi-stats-grid-small">
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value-small accent">${clients}</div>
+            <div class="unifi-stat-label-small">Clients</div>
           </div>
           
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 4px;">
-              ${guests}
-            </div>
-            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              Guests
-            </div>
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value-small">${guests}</div>
+            <div class="unifi-stat-label-small">Guests</div>
           </div>
           
-          <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 4px;">
-              ${iot}
+          <div class="unifi-stat-card">
+            <div class="unifi-stat-value-small">${iot}</div>
+            <div class="unifi-stat-label-small">IoT</div>
+          </div>
+        </div>
+        
+        <div class="unifi-section">
+          <div class="unifi-section-title">Infrastructure</div>
+          <div class="flex flex-column gap-8">
+            <div class="unifi-info-row">
+              <span class="unifi-info-label"><i class="fas fa-globe"></i> Gateways</span>
+              <span class="unifi-info-value">${gateways}</span>
             </div>
-            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">
-              IoT
+            <div class="unifi-info-row">
+              <span class="unifi-info-label"><i class="fas fa-network-wired"></i> Switches</span>
+              <span class="unifi-info-value">${switches}</span>
+            </div>
+            <div class="unifi-info-row">
+              <span class="unifi-info-label"><i class="fas fa-wifi"></i> Access Points</span>
+              <span class="unifi-info-value">${aps}</span>
             </div>
           </div>
         </div>
         
-        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
-          <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-            Infrastructure
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-globe"></i> Gateways</span>
-              <span style="font-size: 14px; font-weight: 500; color: var(--text);">${gateways}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-network-wired"></i> Switches</span>
-              <span style="font-size: 14px; font-weight: 500; color: var(--text);">${switches}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);"><i class="fas fa-wifi"></i> Access Points</span>
-              <span style="font-size: 14px; font-weight: 500; color: var(--text);">${aps}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="unifi-section">
+          <div class="flex flex-column gap-8">
             ${data.site_name ? `
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; color: var(--muted);">Site</span>
-                <span style="font-size: 14px; font-weight: 500; color: var(--text);">${data.site_name}</span>
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">Site</span>
+                <span class="unifi-info-value">${data.site_name}</span>
               </div>
             ` : ''}
             ${data.wan_ip ? `
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; color: var(--muted);">WAN IP</span>
-                <span style="font-size: 14px; font-family: monospace; color: var(--text);">${data.wan_ip}</span>
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">WAN IP</span>
+                <span class="unifi-info-value mono">${data.wan_ip}</span>
               </div>
             ` : ''}
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: var(--muted);">Uptime</span>
-              <span style="font-size: 14px; font-weight: 500; color: var(--text);">${uptime}</span>
+            <div class="unifi-info-row">
+              <span class="unifi-info-label">Uptime</span>
+              <span class="unifi-info-value">${uptime}</span>
             </div>
           </div>
         </div>
@@ -700,62 +536,60 @@ class UnifiRenderer implements WidgetRenderer {
     const devices = data.devices || [];
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; padding-bottom: 8px;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text);">Network Devices (${devices.length})</div>
-          <div style="font-size: 12px; color: var(--muted);">${(data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
+      <div class="flex flex-column gap-12 h-100 overflow-auto">
+        <div class="unifi-devices-header">
+          <div class="unifi-devices-title">Network Devices (${devices.length})</div>
+          <div class="unifi-devices-summary">${(data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
         </div>
         
         ${devices.length === 0 ? `
-          <div style="text-align: center; padding: 40px; color: var(--muted);">
-            No devices found
-          </div>
+          <div class="widget-loading text-center">No devices found</div>
         ` : devices.map(device => {
           const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
           const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
           
           return `
-            <div style="background: var(--bg); padding: 12px; border-radius: 8px; border-left: 3px solid ${statusColor};">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 20px;">${typeIcon}</span>
+            <div class="unifi-device-card" style="border-left-color: ${statusColor};">
+              <div class="unifi-device-header">
+                <div class="unifi-device-icon-wrapper">
+                  <span class="unifi-device-icon">${typeIcon}</span>
                   <div>
-                    <div style="font-size: 14px; font-weight: 600; color: var(--text);">${device.name}</div>
-                    <div style="font-size: 11px; color: var(--muted); font-family: monospace;">${device.ip}</div>
+                    <div class="unifi-device-name">${device.name}</div>
+                    <div class="unifi-device-ip">${device.ip}</div>
                   </div>
                 </div>
-                ${device.upgradable ? '<span style="font-size: 11px; background: #ff9500; color: white; padding: 2px 6px; border-radius: 4px;">Update</span>' : ''}
+                ${device.upgradable ? '<span class="unifi-device-badge">Update</span>' : ''}
               </div>
               
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Model:</span>
-                  <span style="color: var(--text); font-weight: 500;">${device.model || 'N/A'}</span>
+              <div class="unifi-device-info-grid">
+                <div class="unifi-device-info-item">
+                  <span class="widget-muted">Model:</span>
+                  <span class="widget-text-bold">${device.model || 'N/A'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Clients:</span>
-                  <span style="color: var(--text); font-weight: 500;">${device.num_sta || 0}</span>
+                <div class="unifi-device-info-item">
+                  <span class="widget-muted">Clients:</span>
+                  <span class="widget-text-bold">${device.num_sta || 0}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Uptime:</span>
-                  <span style="color: var(--text); font-weight: 500;">${this.formatUptime(device.uptime || 0)}</span>
+                <div class="unifi-device-info-item">
+                  <span class="widget-muted">Uptime:</span>
+                  <span class="widget-text-bold">${this.formatUptime(device.uptime || 0)}</span>
                 </div>
                 ${device.satisfaction !== undefined ? `
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">Score:</span>
-                    <span style="color: var(--text); font-weight: 500;">${device.satisfaction}%</span>
+                  <div class="unifi-device-info-item">
+                    <span class="widget-muted">Score:</span>
+                    <span class="widget-text-bold">${device.satisfaction}%</span>
                   </div>
                 ` : ''}
                 ${device.cpu !== undefined ? `
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">CPU:</span>
-                    <span style="color: var(--text); font-weight: 500;">${device.cpu}%</span>
+                  <div class="unifi-device-info-item">
+                    <span class="widget-muted">CPU:</span>
+                    <span class="widget-text-bold">${device.cpu}%</span>
                   </div>
                 ` : ''}
                 ${device.mem !== undefined ? `
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">Memory:</span>
-                    <span style="color: var(--text); font-weight: 500;">${device.mem}%</span>
+                  <div class="unifi-device-info-item">
+                    <span class="widget-muted">Memory:</span>
+                    <span class="widget-text-bold">${device.mem}%</span>
                   </div>
                 ` : ''}
               </div>
@@ -787,113 +621,49 @@ class UnifiRenderer implements WidgetRenderer {
       
       // Initial render - create the structure
       container.innerHTML = `
-        <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden; container-type: inline-size;">
-          <div style="padding: 8px; background: var(--surface); border-bottom: 1px solid var(--border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <div style="font-size: 14px; font-weight: 600; color: var(--text);">Active Clients (<span id="client-count">${clients.length}</span>)</div>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <button id="clear-inactive" style="
-                  padding: 4px 8px;
-                  background: transparent;
-                  color: var(--muted);
-                  border: 1px solid var(--border);
-                  border-radius: 4px;
-                  cursor: pointer;
-                  font-size: 11px;
-                  display: none;
-                " title="Clear disconnected clients">
+        <div class="unifi-clients-wrapper">
+          <div class="unifi-clients-header">
+            <div class="unifi-clients-header-row">
+              <div class="unifi-clients-title">Active Clients (<span id="client-count">${clients.length}</span>)</div>
+              <div class="flex gap-8 align-center">
+                <button id="clear-inactive" class="unifi-clear-btn" style="display: none;" title="Clear disconnected clients">
                   <i class="fas fa-trash"></i>
                 </button>
-                <div style="font-size: 12px; color: var(--muted);">
+                <div class="unifi-clients-stats">
                   ${clients.filter(c => c.is_wired).length} wired | ${clients.filter(c => !c.is_wired).length} wireless
                 </div>
               </div>
             </div>
             
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <div class="unifi-search-controls">
               <input 
                 type="text" 
                 id="client-search" 
                 placeholder="Search by name or IP..." 
-                style="
-                  flex: 1;
-                  min-width: 150px;
-                  padding: 6px 10px;
-                  background: var(--bg);
-                  border: 1px solid var(--border);
-                  border-radius: 4px;
-                  color: var(--text);
-                  font-size: 12px;
-                "
+                class="unifi-search-input"
               />
-              <select 
-                id="sort-by" 
-                style="
-                  padding: 6px 10px;
-                  background: var(--bg);
-                  border: 1px solid var(--border);
-                  border-radius: 4px 0 0 4px;
-                  color: var(--text);
-                  font-size: 12px;
-                  border-right: none;
-                "
-              >
+              <select id="sort-by" class="unifi-sort-select">
                 <option value="traffic">Sort: Traffic</option>
                 <option value="name">Sort: Name</option>
                 <option value="ip">Sort: IP</option>
                 <option value="signal">Sort: Signal</option>
                 <option value="uptime">Sort: Uptime</option>
               </select>
-              <button 
-                id="sort-reverse" 
-                style="
-                  padding: 6px 10px;
-                  background: var(--bg);
-                  border: 1px solid var(--border);
-                  border-radius: 0 4px 4px 0;
-                  color: var(--text);
-                  font-size: 12px;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                "
-                title="Reverse sort order"
-              >
+              <button id="sort-reverse" class="unifi-sort-button" title="Reverse sort order">
                 <i class="fas fa-arrow-down-wide-short"></i>
               </button>
-              <select 
-                id="connection-filter" 
-                style="
-                  padding: 6px 10px;
-                  background: var(--bg);
-                  border: 1px solid var(--border);
-                  border-radius: 4px;
-                  color: var(--text);
-                  font-size: 12px;
-                "
-              >
+              <select id="connection-filter" class="unifi-filter-select">
                 <option value="all">All</option>
                 <option value="wired">Wired</option>
                 <option value="wireless">Wireless</option>
               </select>
-              <select 
-                id="network-filter" 
-                style="
-                  padding: 6px 10px;
-                  background: var(--bg);
-                  border: 1px solid var(--border);
-                  border-radius: 4px;
-                  color: var(--text);
-                  font-size: 12px;
-                "
-              >
+              <select id="network-filter" class="unifi-filter-select">
                 ${networks.map(net => `<option value="${net}">${net}</option>`).join('')}
               </select>
             </div>
           </div>
           
-          <div id="unifi-clients-list" style="flex: 1; overflow-y: auto;"></div>
+          <div id="unifi-clients-list" class="unifi-clients-list"></div>
         </div>
       `;
       
@@ -1029,11 +799,7 @@ class UnifiRenderer implements WidgetRenderer {
 
   private updateClientsList(clientsList: HTMLElement, clients: UnifiClient[], container: HTMLElement): void {
     if (clients.length === 0) {
-      clientsList.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          No active clients
-        </div>
-      `;
+      clientsList.innerHTML = `<div class="widget-loading text-center">No active clients</div>`;
       return;
     }
     
@@ -1115,51 +881,51 @@ class UnifiRenderer implements WidgetRenderer {
         data-uptime="${client.uptime || 0}"
         data-traffic="${totalBytes}"
       >
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 16px;">${connIcon}</span>
+        <div class="unifi-device-header mb-8">
+          <div class="unifi-device-icon-wrapper">
+            <span class="unifi-client-icon">${connIcon}</span>
             <div>
-              <div style="font-size: 13px; font-weight: 600; color: var(--text);">${client.name}</div>
-              <div style="font-size: 10px; color: var(--muted); font-family: monospace;">${client.ip || 'No IP'}</div>
+              <div class="unifi-client-name">${client.name}</div>
+              <div class="unifi-client-ip">${client.ip || 'No IP'}</div>
             </div>
           </div>
-          ${client.is_guest ? '<span style="font-size: 10px; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px;">Guest</span>' : ''}
+          ${client.is_guest ? '<span class="unifi-badge unifi-badge-guest">Guest</span>' : ''}
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 10px;">
+        <div class="unifi-client-info-grid">
           ${!isWired && client.essid ? `
-            <div style="display: flex; justify-content: space-between; grid-column: 1 / -1;">
-              <span style="color: var(--muted);">Network:</span>
-              <span style="color: var(--text); font-weight: 500;">${client.essid}</span>
+            <div class="unifi-client-info-item full-width">
+              <span class="widget-muted">Network:</span>
+              <span class="widget-text-bold">${client.essid}</span>
             </div>
           ` : ''}
           ${!isWired && client.signal ? `
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--muted);">Signal:</span>
-              <span style="color: var(--text); font-weight: 500; font-family: monospace;">${signalBars} ${client.signal}dBm</span>
+            <div class="unifi-client-info-item">
+              <span class="widget-muted">Signal:</span>
+              <span class="widget-text-bold mono">${signalBars} ${client.signal}dBm</span>
             </div>
           ` : ''}
           ${!isWired && client.channel ? `
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--muted);">Channel:</span>
-              <span style="color: var(--text); font-weight: 500;">${client.channel} ${client.radio || ''}</span>
+            <div class="unifi-client-info-item">
+              <span class="widget-muted">Channel:</span>
+              <span class="widget-text-bold">${client.channel} ${client.radio || ''}</span>
             </div>
           ` : ''}
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: var(--muted);">↑ TX:</span>
-            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
+          <div class="unifi-client-info-item">
+            <span class="widget-muted">↑ TX:</span>
+            <span class="widget-text-bold">${this.formatBytes(client.tx_bytes)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: var(--muted);">↓ RX:</span>
-            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
+          <div class="unifi-client-info-item">
+            <span class="widget-muted">↓ RX:</span>
+            <span class="widget-text-bold">${this.formatBytes(client.rx_bytes)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: var(--muted);">Total:</span>
-            <span style="color: var(--text); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
+          <div class="unifi-client-info-item">
+            <span class="widget-muted">Total:</span>
+            <span class="widget-text-bold">${this.formatBytes(totalBytes)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: var(--muted);">Uptime:</span>
-            <span style="color: var(--text); font-weight: 500;">${this.formatUptime(client.uptime || 0)}</span>
+          <div class="unifi-client-info-item">
+            <span class="widget-muted">Uptime:</span>
+            <span class="widget-text-bold">${this.formatUptime(client.uptime || 0)}</span>
           </div>
         </div>
       </div>
@@ -1172,50 +938,50 @@ class UnifiRenderer implements WidgetRenderer {
     const alarms = data.alarms || [];
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+      <div class="unifi-full flex flex-column gap-16 h-100 overflow-auto">
         <!-- Summary Stats -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
-          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--accent);">${data.num_user || 0}</div>
-            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Clients</div>
+        <div class="unifi-stats-grid-full">
+          <div class="unifi-stat-card-compact">
+            <div class="unifi-stat-value-compact accent">${data.num_user || 0}</div>
+            <div class="unifi-stat-label-tiny">Clients</div>
           </div>
-          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${devices.length}</div>
-            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Devices</div>
+          <div class="unifi-stat-card-compact">
+            <div class="unifi-stat-value-compact">${devices.length}</div>
+            <div class="unifi-stat-label-tiny">Devices</div>
           </div>
-          <div style="background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${data.num_guest || 0}</div>
-            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase;">Guests</div>
+          <div class="unifi-stat-card-compact">
+            <div class="unifi-stat-value-compact">${data.num_guest || 0}</div>
+            <div class="unifi-stat-label-tiny">Guests</div>
           </div>
         </div>
 
         <!-- WAN Info -->
         ${data.wan_ip || data.xput_down ? `
-          <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">WAN</div>
-            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div class="unifi-card">
+            <div class="unifi-card-title">WAN</div>
+            <div class="unifi-card-content">
               ${data.wan_ip ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">IP:</span>
-                  <span style="color: var(--text); font-family: monospace;">${data.wan_ip}</span>
+                <div class="unifi-info-item">
+                  <span class="widget-muted">IP:</span>
+                  <span class="widget-text-bold mono">${data.wan_ip}</span>
                 </div>
               ` : ''}
               ${data.xput_down ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">↓ Download:</span>
-                  <span style="color: var(--text); font-weight: 500;">${(data.xput_down / 1000000).toFixed(1)} Mbps</span>
+                <div class="unifi-info-item">
+                  <span class="widget-muted">↓ Download:</span>
+                  <span class="widget-text-bold">${(data.xput_down / 1000000).toFixed(1)} Mbps</span>
                 </div>
               ` : ''}
               ${data.xput_up ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">↑ Upload:</span>
-                  <span style="color: var(--text); font-weight: 500;">${(data.xput_up / 1000000).toFixed(1)} Mbps</span>
+                <div class="unifi-info-item">
+                  <span class="widget-muted">↑ Upload:</span>
+                  <span class="widget-text-bold">${(data.xput_up / 1000000).toFixed(1)} Mbps</span>
                 </div>
               ` : ''}
               ${data.latency ? `
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Latency:</span>
-                  <span style="color: var(--text); font-weight: 500;">${data.latency}ms</span>
+                <div class="unifi-info-item">
+                  <span class="widget-muted">Latency:</span>
+                  <span class="widget-text-bold">${data.latency}ms</span>
                 </div>
               ` : ''}
             </div>
@@ -1225,25 +991,25 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Devices Section -->
         ${devices.length > 0 ? `
           <div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Devices (${devices.length})</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="unifi-list-title">Devices (${devices.length})</div>
+            <div class="flex flex-column gap-8">
               ${devices.slice(0, 5).map(device => {
                 const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
                 const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : '<i class="fas fa-globe"></i>';
                 
                 return `
-                  <div style="background: var(--bg); padding: 8px; border-radius: 6px; border-left: 2px solid ${statusColor};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 14px;">${typeIcon}</span>
-                        <span style="font-size: 11px; font-weight: 500; color: var(--text);">${device.name}</span>
+                  <div class="unifi-device-mini" style="border-left-color: ${statusColor};">
+                    <div class="unifi-device-mini-content">
+                      <div class="flex align-center gap-8">
+                        <span class="unifi-device-mini-icon">${typeIcon}</span>
+                        <span class="unifi-device-mini-name">${device.name}</span>
                       </div>
-                      <span style="font-size: 10px; color: var(--muted);">${device.num_sta || 0} clients</span>
+                      <span class="unifi-device-mini-clients">${device.num_sta || 0} clients</span>
                     </div>
                   </div>
                 `;
               }).join('')}
-              ${devices.length > 5 ? `<div style="text-align: center; font-size: 11px; color: var(--muted);">+${devices.length - 5} more devices</div>` : ''}
+              ${devices.length > 5 ? `<div class="unifi-more-items">+${devices.length - 5} more devices</div>` : ''}
             </div>
           </div>
         ` : ''}
@@ -1251,19 +1017,19 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Top Clients -->
         ${clients.length > 0 ? `
           <div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Top Clients</div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="unifi-list-title">Top Clients</div>
+            <div class="flex flex-column gap-8">
               ${[...clients].sort((a, b) => (b.tx_bytes + b.rx_bytes) - (a.tx_bytes + a.rx_bytes)).slice(0, 5).map(client => {
                 const connIcon = client.is_wired ? '<i class="fas fa-ethernet"></i>' : '<i class="fas fa-wifi"></i>';
                 const totalBytes = client.tx_bytes + client.rx_bytes;
                 
                 return `
-                  <div style="background: var(--bg); padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <span style="font-size: 12px;">${connIcon}</span>
-                      <span style="font-size: 11px; font-weight: 500; color: var(--text);">${client.name}</span>
+                  <div class="unifi-client-mini">
+                    <div class="flex align-center gap-8">
+                      <span class="unifi-client-mini-icon">${connIcon}</span>
+                      <span class="unifi-client-mini-name">${client.name}</span>
                     </div>
-                    <span style="font-size: 10px; color: var(--muted); font-weight: 500;">${this.formatBytes(totalBytes)}</span>
+                    <span class="unifi-client-mini-traffic">${this.formatBytes(totalBytes)}</span>
                   </div>
                 `;
               }).join('')}
@@ -1274,16 +1040,16 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Recent Alarms -->
         ${alarms.length > 0 ? `
           <div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Recent Alerts</div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="unifi-list-title">Recent Alerts</div>
+            <div class="flex flex-column gap-8">
               ${alarms.slice(0, 3).map(alarm => {
                 const date = new Date(alarm.datetime * 1000);
                 const timeAgo = this.getTimeAgo(date);
                 
                 return `
-                  <div style="background: var(--bg); padding: 8px; border-radius: 6px;">
-                    <div style="font-size: 11px; color: var(--text); margin-bottom: 2px;">${alarm.msg}</div>
-                    <div style="font-size: 9px; color: var(--muted);">${timeAgo}</div>
+                  <div class="unifi-alarm-card">
+                    <div class="unifi-alarm-message">${alarm.msg}</div>
+                    <div class="unifi-alarm-time">${timeAgo}</div>
                   </div>
                 `;
               }).join('')}

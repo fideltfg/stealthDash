@@ -61,15 +61,15 @@ class PiholeRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="pihole-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
-        <div class="pihole-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 24px; height: 20px;" />
+      <div class="pihole-widget widget-container flex flex-column">
+        <div class="pihole-header widget-header-row">
+          <h3 className="widget-title flex align-center gap-8">
+            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-icon" />
             <span>Pi-hole</span>
           </h3>
         </div>
-        <div class="pihole-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
-          <div class="pihole-loading" style="text-align: center; padding: 40px; color: var(--muted);">
+        <div class="pihole-content flex-1 flex flex-column gap-12">
+          <div class="pihole-loading widget-loading centered">
             Loading...
           </div>
         </div>
@@ -122,11 +122,11 @@ class PiholeRenderer implements WidgetRenderer {
       } catch (error) {
         console.error('Error fetching Pi-hole data:', error);
         contentEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #f44336;">
-            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Error loading Pi-hole data</div>
-            <div style="font-size: 12px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check host: ${content.host}</div>
+          <div className="widget-error">
+            <div className="widget-error-icon large">⚠️</div>
+            <div className="widget-error-title">Error loading Pi-hole data</div>
+            <div className="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
+            <div className="widget-error-hint">Check host: ${content.host}</div>
           </div>
         `;
       }
@@ -142,31 +142,20 @@ class PiholeRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
-    // Show simple prompt that opens the config dialog
     container.innerHTML = `
-      <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--surface);">
-        <div style="text-align: center; max-width: 400px;">
-          <div style="margin-bottom: 16px;">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 64px; height: 64px;" />
+      <div className="widget-container flex align-center justify-center">
+        <div className="text-center" style="max-width: 400px;">
+          <div className="mb-16">
+            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-logo" />
           </div>
-          <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">Configure Pi-hole</h3>
-          <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--muted);">
+          <h3 className="widget-title mb-12">Configure Pi-hole</h3>
+          <p className="widget-text mb-8">
             Configure your Pi-hole server connection
           </p>
-          <p style="margin: 0 0 24px 0; font-size: 12px; color: var(--muted);">
+          <p className="widget-hint mb-24">
             💡 Tip: Create credentials first from the user menu (🔐 Credentials)
           </p>
-          <button id="configure-pihole-btn" style="
-            padding: 12px 24px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: filter 0.2s;
-          ">
+          <button id="configure-pihole-btn" className="widget-button primary">
             Configure
           </button>
         </div>
@@ -183,72 +172,43 @@ class PiholeRenderer implements WidgetRenderer {
     const content = widget.content as PiholeContent;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'modal-overlay widget-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 8px 32px var(--shadow);
-    `;
+    modal.className = 'modal widget-dialog';
 
     modal.innerHTML = `
-      <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 32px; height: 32px;" />
+      <div className="pihole-config-header flex align-center gap-12 mb-20">
+        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" className="widget-icon-large" />
         <div>
-          <h2 style="margin: 0 0 4px 0; font-size: 20px; font-weight: 600; color: var(--text);">
+          <h2 className="widget-dialog-title">
             Pi-hole Configuration
           </h2>
-          <p style="margin: 0; font-size: 14px; color: var(--muted);">
+          <p className="widget-text">
             Configure your Pi-hole connection settings
           </p>
         </div>
       </div>
 
-      <form id="pihole-config-form" style="display: flex; flex-direction: column; gap: 16px;";
+      <form id="pihole-config-form" className="flex flex-column gap-16";
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Saved Credentials *
           </label>
           <select 
             id="pihole-credential-id"
             required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           >
             <option value="">Select a saved credential...</option>
           </select>
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
+          <small className="widget-dialog-hint">
             Manage credentials from the user menu (🔐 Credentials)
           </small>
         </div>
 
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Pi-hole Host *
           </label>
           <input 
@@ -257,38 +217,20 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.host || 'http://192.168.1.100'}"
             placeholder="http://192.168.1.100 or http://pi.hole"
             required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           />
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
+          <small className="widget-dialog-hint">
             Example: http://192.168.1.100 or http://pi.hole
           </small>
         </div>
 
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Display Mode
           </label>
           <select 
             id="pihole-display-mode"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
             <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
@@ -297,7 +239,7 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Refresh Interval (seconds)
           </label>
           <input 
@@ -306,52 +248,21 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.refreshInterval || 30}"
             min="5"
             max="300"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           />
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <div className="widget-dialog-buttons">
           <button 
             type="submit"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--accent);
-              color: white;
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
+            className="widget-dialog-button-save full-width"
           >
             Save
           </button>
           <button 
             type="button"
             id="cancel-btn"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--border);
-              color: var(--text);
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
+            className="widget-dialog-button-cancel full-width"
           >
             Cancel
           </button>
@@ -472,31 +383,31 @@ class PiholeRenderer implements WidgetRenderer {
     const statusColor = '#4caf50'; // Always show as active
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center; height: 100%;">
-        <div style="text-align: center;">
-          <div style="font-size: 48px; font-weight: 700; color: ${statusColor};">
+      <div className="pihole-minimal flex flex-column gap-16 align-center justify-center h-100">
+        <div className="text-center">
+          <div className="pihole-percentage" style="font-size: 48px; font-weight: 700; color: ${statusColor};">
             ${blockedPercentage}%
           </div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+          <div className="widget-hint mt-4">
             Queries Blocked
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
-          <div style="text-align: center;">
-            <div style="font-size: 20px; font-weight: 600; color: var(--text);">
+        <div className="grid grid-2 gap-12 w-100">
+          <div className="text-center">
+            <div className="pihole-stat-value">
               ${this.formatNumber(data.queries.blocked)}
             </div>
-            <div style="font-size: 10px; color: var(--muted);">Blocked</div>
+            <div className="pihole-stat-label">Blocked</div>
           </div>
-          <div style="text-align: center;">
-            <div style="font-size: 20px; font-weight: 600; color: var(--text);">
+          <div className="text-center">
+            <div className="pihole-stat-value">
               ${this.formatNumber(data.queries.total)}
             </div>
-            <div style="font-size: 10px; color: var(--muted);">Total</div>
+            <div className="pihole-stat-label">Total</div>
           </div>
         </div>
-        <div style="width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
-          <div style="width: ${blockedPercentage}%; height: 100%; background: ${statusColor}; transition: width 0.3s;"></div>
+        <div className="pihole-progress-bar">
+          <div className="pihole-progress-fill" style="width: ${blockedPercentage}%; background: ${statusColor};"></div>
         </div>
       </div>
     `;
@@ -508,20 +419,20 @@ class PiholeRenderer implements WidgetRenderer {
     const statusText = 'Active';
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div className="flex flex-column gap-16">
         <!-- Status Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--hover); border-radius: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 12px; height: 12px; border-radius: 50%; background: ${statusColor};"></div>
-            <span style="font-size: 14px; font-weight: 600; color: var(--text);">${statusText}</span>
+        <div className="pihole-status-bar">
+          <div className="flex align-center gap-8">
+            <div className="status-dot" style="background: ${statusColor};"></div>
+            <span className="pihole-status-text">${statusText}</span>
           </div>
-          <div style="font-size: 12px; color: var(--muted);">
+          <div className="widget-hint">
             ${data.clients.active} client${data.clients.active !== 1 ? 's' : ''}
           </div>
         </div>
 
         <!-- Main Stats -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+        <div className="grid grid-2 gap-12">
           ${this.createStatCard('Queries Today', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
           ${this.createStatCard('Block %', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
@@ -529,16 +440,16 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <!-- Query Types -->
-        <div style="padding: 12px; background: var(--hover); border-radius: 8px;">
-          <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Query Distribution</div>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--muted);">Forwarded:</span>
-              <span style="color: var(--text); font-weight: 500;">${this.formatNumber(data.queries.forwarded)}</span>
+        <div className="pihole-query-dist">
+          <div className="pihole-query-dist-title">Query Distribution</div>
+          <div className="pihole-query-dist-grid">
+            <div className="flex space-between">
+              <span className="widget-muted">Forwarded:</span>
+              <span className="widget-text-bold">${this.formatNumber(data.queries.forwarded)}</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--muted);">Cached:</span>
-              <span style="color: var(--text); font-weight: 500;">${this.formatNumber(data.queries.cached)}</span>
+            <div className="flex space-between">
+              <span className="widget-muted">Cached:</span>
+              <span className="widget-text-bold">${this.formatNumber(data.queries.cached)}</span>
             </div>
           </div>
         </div>
@@ -554,27 +465,27 @@ class PiholeRenderer implements WidgetRenderer {
     const gravityDate = new Date(data.gravity.last_update * 1000).toLocaleString();
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div className="flex flex-column gap-12">
         <!-- Status Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--hover); border-radius: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 12px; height: 12px; border-radius: 50%; background: ${statusColor};"></div>
-            <span style="font-size: 14px; font-weight: 600; color: var(--text);">${statusText}</span>
+        <div className="pihole-status-bar">
+          <div className="flex align-center gap-8">
+            <div className="status-dot" style="background: ${statusColor};"></div>
+            <span className="pihole-status-text">${statusText}</span>
           </div>
-          <div style="font-size: 11px; color: var(--muted);">
+          <div className="pihole-client-count">
             ${data.clients.active} / ${data.clients.total} clients
           </div>
         </div>
 
         <!-- Primary Stats -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+        <div className="grid grid-3 gap-8">
           ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3', true)}
           ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336', true)}
           ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor, true)}
         </div>
 
         <!-- Secondary Stats -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+        <div className="grid grid-2 gap-8">
           ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800', true)}
           ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0', true)}
           ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4', true)}
@@ -582,7 +493,7 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <!-- Gravity Update -->
-        <div style="padding: 8px 12px; background: var(--hover); border-radius: 8px; font-size: 11px; color: var(--muted); text-align: center;">
+        <div className="pihole-gravity-update">
           Gravity updated ${gravityDate}
         </div>
       </div>
@@ -592,18 +503,18 @@ class PiholeRenderer implements WidgetRenderer {
   private createStatCard(label: string, value: string, icon: string, color: string, compact: boolean = false): string {
     if (compact) {
       return `
-        <div style="padding: 8px; background: var(--hover); border-radius: 8px; text-align: center;">
-          <div style="font-size: 10px; color: var(--muted); margin-bottom: 4px;">${icon} ${label}</div>
-          <div style="font-size: 16px; font-weight: 600; color: ${color};">${value}</div>
+        <div className="pihole-stat-card-compact">
+          <div className="pihole-stat-card-label">${icon} ${label}</div>
+          <div className="pihole-stat-card-value" style="color: ${color};">${value}</div>
         </div>
       `;
     }
     
     return `
-      <div style="padding: 12px; background: var(--hover); border-radius: 8px; text-align: center;">
-        <div style="font-size: 24px; margin-bottom: 4px;">${icon}</div>
-        <div style="font-size: 20px; font-weight: 600; color: ${color}; margin-bottom: 4px;">${value}</div>
-        <div style="font-size: 11px; color: var(--muted);">${label}</div>
+      <div className="pihole-stat-card">
+        <div className="pihole-stat-card-icon">${icon}</div>
+        <div className="pihole-stat-card-value" style="color: ${color};">${value}</div>
+        <div className="pihole-stat-card-label">${label}</div>
       </div>
     `;
   }

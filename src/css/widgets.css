@@ -466,7 +466,6 @@
 
 .widget-header {
   padding: 12px 16px;
-  color: white;
   font-weight: bold;
   font-size: 14px;
   display: flex;
@@ -2487,4 +2486,2646 @@
 .ha-entity-item-button-remove {
   background: #f44336;
   color: white;
+}
+/* ============================================================================
+   NEW GENERIC WIDGET CLASSES - To be appended to widgets.css
+   ============================================================================
+   Created from refactoring inline styles from 8 widget files:
+   - unifi.ts (383 styles)
+   - unifi-protect.ts (88 styles)
+   - pihole.ts (82 styles)
+   - google-calendar.ts (77 styles)
+   - docker.ts (53 styles)
+   - unifi-sensor.ts (52 styles)
+   - image.ts (14 styles)
+   - mtnxml.ts (2 styles)
+   Total: 749 inline styles removed
+   ============================================================================ */
+
+
+/* ============================================================================
+   WIDGET CONTAINERS & LAYOUTS
+   ============================================================================ */
+
+/* Main widget wrapper - full size with flex column */
+.widget-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: auto;
+  background: var(--surface);
+}
+
+/* Widget wrapper variants */
+.widget-wrapper.no-padding {
+  padding: 0;
+}
+
+.widget-wrapper.overflow-hidden {
+  overflow: hidden;
+}
+
+/* Widget header section */
+.widget-header-section {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Widget title with icon */
+.widget-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-title-icon {
+  font-size: 24px;
+}
+
+/* Widget content area */
+.widget-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.widget-content-area.overflow-auto {
+  overflow: auto;
+}
+
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+
+/* Primary action button (refresh, configure, etc.) */
+.widget-button-primary {
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.widget-button-primary.small {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.widget-button-primary.large {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.widget-button-primary:hover {
+  opacity: 0.9;
+}
+
+/* Secondary button */
+.widget-button-secondary {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.widget-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Configure button for empty states */
+.widget-configure-button {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.widget-configure-button:hover {
+  filter: brightness(1.1);
+}
+
+
+/* ============================================================================
+   EMPTY STATES & CONFIG PROMPTS
+   ============================================================================ */
+
+/* Empty state container */
+.widget-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  gap: 16px;
+  background: var(--surface);
+}
+
+.widget-empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.widget-empty-state-icon.large {
+  font-size: 64px;
+}
+
+.widget-empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.widget-empty-state-description {
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-size: 14px;
+  max-width: 400px;
+}
+
+.widget-empty-state-hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.widget-loading-centered {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+
+
+/* ============================================================================
+   ERROR STATES
+   ============================================================================ */
+
+.widget-error-centered {
+  text-align: center;
+  padding: 40px;
+  color: var(--error);
+}
+
+.widget-error-icon-large {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.widget-error-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--error);
+}
+
+.widget-error-message {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.widget-error-detail {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+
+/* ============================================================================
+   STAT CARDS & METRICS
+   ============================================================================ */
+
+/* Stat card (for displaying metrics) */
+.widget-stat-card {
+  background: var(--bg);
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.widget-stat-card.compact {
+  padding: 12px;
+}
+
+.widget-stat-card.hover-effect {
+  background: var(--hover);
+}
+
+.widget-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.widget-stat-value.large {
+  font-size: 48px;
+}
+
+.widget-stat-value.medium {
+  font-size: 24px;
+}
+
+.widget-stat-value.small {
+  font-size: 20px;
+}
+
+.widget-stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.widget-stat-label.tiny {
+  font-size: 10px;
+}
+
+.widget-stat-label.small {
+  font-size: 11px;
+}
+
+/* Stat card with icon */
+.widget-stat-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+
+/* ============================================================================
+   GRID LAYOUTS
+   ============================================================================ */
+
+/* Auto-fit grid for cards */
+.widget-grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.widget-grid-auto-fit.large-cards {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.widget-grid-auto-fit.small-cards {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+.widget-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.widget-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.widget-grid-4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+
+/* ============================================================================
+   INFO ROWS & KEY-VALUE PAIRS
+   ============================================================================ */
+
+/* Info row with label and value */
+.widget-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.widget-info-row.compact {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.widget-info-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.widget-info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.widget-info-value.monospace {
+  font-family: monospace;
+}
+
+
+/* ============================================================================
+   STATUS INDICATORS
+   ============================================================================ */
+
+/* Status badge */
+.widget-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.widget-status-badge.success {
+  background: #4CAF5022;
+  color: #4CAF50;
+}
+
+.widget-status-badge.error {
+  background: #f4433622;
+  color: #f44336;
+}
+
+.widget-status-badge.warning {
+  background: #FF980022;
+  color: #FF9800;
+}
+
+.widget-status-badge.info {
+  background: #2196F322;
+  color: #2196F3;
+}
+
+.widget-status-badge.primary {
+  background: var(--primary);
+  color: white;
+}
+
+/* Status dot */
+.widget-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.widget-status-dot.small {
+  width: 8px;
+  height: 8px;
+}
+
+.widget-status-dot.error {
+  background: var(--error);
+}
+
+.widget-status-dot.warning {
+  background: var(--warning);
+}
+
+
+/* ============================================================================
+   LISTS & CARDS
+   ============================================================================ */
+
+/* Card list item */
+.widget-card-item {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.widget-card-item.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.widget-card-item.clickable:hover {
+  background: var(--surface);
+}
+
+.widget-card-item.border-left {
+  border-left: 3px solid var(--accent);
+}
+
+/* Card header within item */
+.widget-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.widget-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.widget-card-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Card details */
+.widget-card-details {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.widget-card-details > div {
+  margin-bottom: 4px;
+}
+
+.widget-card-details > div:last-child {
+  margin-bottom: 0;
+}
+
+
+/* ============================================================================
+   SECTIONS & DIVIDERS
+   ============================================================================ */
+
+/* Section container */
+.widget-section {
+  margin-bottom: 20px;
+}
+
+.widget-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.widget-section-title.small {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Divider/separator */
+.widget-divider {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+
+/* ============================================================================
+   IMAGE & MEDIA
+   ============================================================================ */
+
+/* Image container */
+.widget-image-container {
+  width: 100%;
+  height: 180px;
+  background: var(--surface);
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.widget-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Image placeholder */
+.widget-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  text-align: center;
+}
+
+
+/* ============================================================================
+   FLEX UTILITIES
+   ============================================================================ */
+
+.widget-flex-row {
+  display: flex;
+  gap: 12px;
+}
+
+.widget-flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.widget-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widget-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget-flex-gap-8 {
+  gap: 8px;
+}
+
+.widget-flex-gap-16 {
+  gap: 16px;
+}
+
+
+/* ============================================================================
+   TEXT UTILITIES
+   ============================================================================ */
+
+.widget-text-center {
+  text-align: center;
+}
+
+.widget-text-muted {
+  color: var(--muted);
+}
+
+.widget-text-small {
+  font-size: 12px;
+}
+
+.widget-text-tiny {
+  font-size: 11px;
+}
+
+.widget-text-large {
+  font-size: 18px;
+}
+
+.widget-text-bold {
+  font-weight: 600;
+}
+
+.widget-text-mono {
+  font-family: monospace;
+}
+
+
+/* ============================================================================
+   PADDING & MARGIN UTILITIES
+   ============================================================================ */
+
+.widget-p-8 {
+  padding: 8px;
+}
+
+.widget-p-12 {
+  padding: 12px;
+}
+
+.widget-p-16 {
+  padding: 16px;
+}
+
+.widget-p-20 {
+  padding: 20px;
+}
+
+.widget-mb-8 {
+  margin-bottom: 8px;
+}
+
+.widget-mb-12 {
+  margin-bottom: 12px;
+}
+
+.widget-mb-16 {
+  margin-bottom: 16px;
+}
+
+.widget-mt-8 {
+  margin-top: 8px;
+}
+
+.widget-mt-12 {
+  margin-top: 12px;
+}
+
+
+/* ============================================================================
+   RESPONSIVE CONTAINER QUERIES (for Docker, UniFi Clients, etc.)
+   ============================================================================ */
+
+.widget-container-responsive {
+  container-type: inline-size;
+}
+
+.widget-responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+@container (min-width: 600px) {
+  .widget-responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 900px) {
+  .widget-responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container (min-width: 1200px) {
+  .widget-responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
+/* ============================================================================
+   INFO BOXES / ALERT BOXES
+   ============================================================================ */
+
+.widget-info-box {
+  background: #2196F322;
+  border-left: 4px solid #2196F3;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.widget-info-box-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.widget-info-box-content {
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+
+/* ============================================================================
+   PROGRESS BARS
+   ============================================================================ */
+
+.widget-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.widget-progress-bar.medium {
+  height: 6px;
+}
+
+.widget-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+
+/* ============================================================================
+   WIDGET-SPECIFIC CLASSES (when layout is truly unique)
+   ============================================================================ */
+
+/* Docker container card (has specific layout with buttons) */
+.docker-container-card {
+  /* Inherits from widget-card-item but adds specific styles */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 0;
+  height: fit-content;
+}
+
+/* UniFi client card (has specific inactive state) */
+.unifi-client-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  height: fit-content;
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.unifi-client-card.inactive {
+  opacity: 0.4;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+/* Camera/Sensor cards (specific size constraints) */
+.widget-camera-card {
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.widget-sensor-card {
+  background: var(--widget-surface);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+  border: 1px solid var(--border);
+}
+
+/* Event/detection cards (with thumbnails) */
+.widget-detection-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.widget-detection-thumbnail {
+  width: 120px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* Calendar event cards */
+.widget-calendar-event {
+  padding: 12px;
+  background: var(--hover);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.widget-calendar-event:hover {
+  filter: brightness(1.1);
+}
+
+/* ============================================================================
+   ADDITIONAL WIDGET-SPECIFIC UTILITY CLASSES
+   ============================================================================ */
+
+/* Status colors */
+.success {
+  color: #4CAF50;
+}
+
+.error {
+  color: #f44336;
+}
+
+.status-count.success {
+  color: #4CAF50;
+}
+
+.status-count.error {
+  color: #f44336;
+}
+
+/* Image widget placeholder */
+.image-placeholder {
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Field hints */
+.widget-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* Widget checkboxes */
+.widget-checkbox {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.widget-checkbox-label {
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.widget-checkbox-label:first-child {
+  margin-top: 0;
+}
+
+/* Docker specific */
+.docker-config-info {
+  background: #2196F322;
+  border-left: 4px solid #2196F3;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.docker-config-info-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.docker-config-info-text {
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.docker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.docker-container-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.docker-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.docker-header-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.docker-container-count {
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(0, 150, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.docker-containers-list {
+  overflow-y: auto;
+}
+
+.docker-empty-icon {
+  font-size: 32px;
+}
+
+.docker-logs-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 1000px;
+  height: 80vh;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.docker-logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.docker-logs-title {
+  margin: 0;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.docker-logs-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.docker-logs-controls {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.docker-logs-control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.docker-logs-select {
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.docker-logs-container {
+  flex: 1;
+  background: #1e1e1e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  overflow: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #d4d4d4;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.docker-logs-loading,
+.docker-logs-empty,
+.docker-logs-error {
+  text-align: center;
+  padding: 20px;
+}
+
+.docker-logs-loading {
+  color: #888;
+}
+
+.docker-logs-empty {
+  color: #888;
+}
+
+.docker-logs-error {
+  color: #f44336;
+}
+
+/* Sensor specific */
+.sensor-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sensor-icon {
+  font-size: 32px;
+  margin-right: 12px;
+}
+
+.sensor-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.sensor-model {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sensor-readings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sensor-reading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.sensor-reading-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sensor-reading-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.sensor-card-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.sensor-last-seen {
+  float: right;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Widget grid auto (for sensors, cameras, etc.) */
+.widget-grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Generic modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* Generic modal */
+.modal {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+/* Form grid */
+.widget-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Widget buttons - generic */
+.widget-button {
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.widget-button-secondary {
+  padding: 6px 12px;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.widget-dialog-button-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+.widget-dialog-button-save.extended {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.widget-dialog-button-save.full-width {
+  flex: 1;
+  padding: 12px;
+  font-weight: 600;
+}
+
+/* Calendar and event displays */
+.calendar-event-compact {
+  padding: 12px;
+  background: var(--hover);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-event-detailed {
+  padding: 16px;
+  background: var(--hover);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-event-agenda {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--hover);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.widget-centered-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface);
+}
+
+.widget-centered-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.widget-config-button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.widget-button-primary {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+/* ============================================================================
+   GOOGLE CALENDAR WIDGET STYLES
+   ============================================================================ */
+
+/* Event Cards - Compact */
+.event-card {
+  padding: 12px;
+  background: var(--hover);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.event-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.event-location {
+  margin-left: 8px;
+}
+
+.event-date-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Event Cards - Detailed */
+.event-card-detailed {
+  padding: 16px;
+  background: var(--hover);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.event-title-large {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.event-location-row {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-description {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.event-attendees {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Agenda View */
+.agenda-event {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.agenda-time {
+  min-width: 60px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.agenda-divider {
+  width: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.agenda-event-title {
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-event-location {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.agenda-day-section {
+  margin-bottom: 20px;
+}
+
+.agenda-day-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+
+/* ============================================================================
+   PIHOLE WIDGET STYLES
+   ============================================================================ */
+
+/* Status Bar */
+.pihole-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--hover);
+  border-radius: 8px;
+}
+
+.pihole-status-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pihole-client-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Minimal View */
+.pihole-minimal {
+  height: 100%;
+}
+
+.pihole-percentage {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.pihole-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pihole-stat-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.pihole-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pihole-progress-fill {
+  height: 100%;
+  transition: width 0.3s;
+}
+
+/* Query Distribution */
+.pihole-query-dist {
+  padding: 12px;
+  background: var(--hover);
+  border-radius: 8px;
+}
+
+.pihole-query-dist-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.pihole-query-dist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 11px;
+}
+
+/* Stat Cards */
+.pihole-stat-card {
+  padding: 12px;
+  background: var(--hover);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.pihole-stat-card-compact {
+  padding: 8px;
+  background: var(--hover);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.pihole-stat-card-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.pihole-stat-card-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pihole-stat-card-compact .pihole-stat-card-value {
+  font-size: 16px;
+}
+
+.pihole-stat-card-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pihole-stat-card-compact .pihole-stat-card-label {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.pihole-gravity-update {
+  padding: 8px 12px;
+  background: var(--hover);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+
+/* ============================================================================
+   UNIFI PROTECT WIDGET STYLES
+   ============================================================================ */
+
+.protect-section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Detection Cards */
+.protect-detection-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.protect-detection-thumbnail {
+  width: 120px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.protect-detection-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.protect-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.protect-detection-camera {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.protect-detection-time {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.protect-detection-badge {
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.protect-detection-confidence {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.protect-detection-timestamp {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Camera Cards */
+.protect-cameras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.protect-camera-card {
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.protect-camera-snapshot {
+  width: 100%;
+  height: 180px;
+  background: var(--surface);
+  position: relative;
+}
+
+.protect-camera-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.protect-no-snapshot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.protect-rec-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.protect-rec-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.protect-motion-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(249, 115, 22, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.protect-camera-offline {
+  width: 100%;
+  height: 180px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.protect-camera-offline-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.protect-camera-offline-text {
+  font-size: 14px;
+}
+
+.protect-camera-info {
+  padding: 12px;
+}
+
+.protect-camera-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.protect-camera-status {
+  font-size: 12px;
+}
+
+.protect-camera-model {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.protect-camera-lastseen {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+
+/* ============================================================================
+   GENERIC UTILITY CLASSES (for remaining inline styles)
+   ============================================================================ */
+
+/* Common layout classes */
+.widget-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  padding: 16px;
+  overflow: auto;
+  background: var(--surface);
+}
+
+.widget-header-row {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widget-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.widget-icon {
+  width: 24px;
+  height: 20px;
+}
+
+.widget-icon-large {
+  font-size: 24px;
+}
+
+.widget-logo {
+  width: 64px;
+  height: 64px;
+}
+
+.widget-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.widget-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.widget-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.widget-button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.widget-button.secondary {
+  background: var(--primary);
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.widget-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+
+.widget-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.widget-text-bold {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.widget-muted {
+  color: var(--muted);
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Flexbox utilities */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.align-start {
+  align-items: start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.gap-4 {
+  gap: 4px;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.gap-12 {
+  gap: 12px;
+}
+
+.gap-16 {
+  gap: 16px;
+}
+
+.gap-20 {
+  gap: 20px;
+}
+
+/* Grid utilities */
+.grid {
+  display: grid;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Spacing utilities */
+.mb-4 {
+  margin-bottom: 4px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.mb-12 {
+  margin-bottom: 12px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mb-24 {
+  margin-bottom: 24px;
+}
+
+.mt-4 {
+  margin-top: 4px;
+}
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.truncate {
+  min-width: 0;
+}
+
+/* Size utilities */
+.w-100 {
+  width: 100%;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+/* Hover effect */
+.hover-effect {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hover-effect:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   UNIFI WIDGET STYLES
+   ============================================================================ */
+
+/* Config screen */
+.unifi-config-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.unifi-config-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.unifi-config-header-icon {
+  font-size: 32px;
+}
+
+.unifi-config-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.unifi-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Widget header */
+.unifi-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unifi-icon {
+  font-size: 24px;
+}
+
+/* Minimal view */
+.unifi-minimal-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.unifi-minimal-label {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Stats grids */
+.unifi-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.unifi-stats-grid-small {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+/* Stat cards */
+.unifi-stat-card {
+  background: var(--bg);
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.unifi-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.unifi-stat-value.accent {
+  color: var(--accent);
+}
+
+.unifi-stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.unifi-stat-value-small {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.unifi-stat-value-small.accent {
+  color: var(--accent);
+}
+
+.unifi-stat-label-small {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Info rows */
+.unifi-info-row {
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unifi-info-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.unifi-info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.unifi-info-value.mono {
+  font-family: monospace;
+}
+
+/* Sections */
+.unifi-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.unifi-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+/* Devices header */
+.unifi-devices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+  padding-bottom: 8px;
+}
+
+.unifi-devices-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unifi-devices-summary {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Device cards */
+.unifi-device-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid;
+}
+
+.unifi-device-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.unifi-device-icon-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unifi-device-icon {
+  font-size: 20px;
+}
+
+.unifi-device-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unifi-device-ip {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+}
+
+.unifi-device-badge {
+  font-size: 11px;
+  background: #ff9500;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.unifi-device-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 11px;
+}
+
+.unifi-device-info-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.mono {
+  font-family: monospace;
+}
+
+/* Client cards */
+.unifi-client-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.unifi-client-card.inactive {
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg),
+    var(--bg) 10px,
+    rgba(255, 0, 0, 0.05) 10px,
+    rgba(255, 0, 0, 0.05) 20px
+  );
+}
+
+/* Clients view */
+.unifi-clients-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.unifi-clients-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unifi-clients-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.unifi-clients-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unifi-clients-stats {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.unifi-search-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.unifi-clients-header {
+  padding: 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.unifi-client-icon {
+  font-size: 16px;
+}
+
+.unifi-client-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unifi-client-ip {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: monospace;
+}
+
+.unifi-client-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  font-size: 10px;
+}
+
+.unifi-client-info-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.unifi-client-info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.unifi-search-input {
+  flex: 1;
+  min-width: 150px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.unifi-sort-select {
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px 0 0 4px;
+  color: var(--text);
+  font-size: 12px;
+  border-right: none;
+}
+
+.unifi-sort-button {
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0 4px 4px 0;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unifi-filter-select {
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.unifi-clear-btn {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* Progress bars */
+.unifi-progress-bar {
+  background: var(--surface);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.unifi-progress-fill {
+  background: var(--accent);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.unifi-progress-bar-thin {
+  background: var(--surface);
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+/* Gradient cards */
+.unifi-gradient-card {
+  padding: 20px;
+  border-radius: 12px;
+  color: white;
+}
+
+.unifi-gradient-card-blue {
+  background: linear-gradient(135deg, var(--accent) 0%, #0077ff 100%);
+}
+
+.unifi-gradient-card-cyan {
+  background: linear-gradient(135deg, #0077ff 0%, #00d4ff 100%);
+}
+
+.unifi-gradient-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.unifi-gradient-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.unifi-gradient-stat-label {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.unifi-gradient-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.unifi-gradient-stat-value-large {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.unifi-gradient-stat-unit {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.unifi-gradient-divider {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+/* Empty state */
+.unifi-empty-state {
+  background: var(--bg);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px dashed var(--border);
+}
+
+.unifi-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.unifi-empty-text {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.unifi-empty-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Badge */
+.unifi-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.unifi-badge-guest {
+  background: var(--accent);
+  color: white;
+}
+
+/* Traffic bars */
+.unifi-traffic-bar {
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  min-width: 60px;
+}
+
+.unifi-traffic-bar-large {
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  min-width: 60px;
+}
+
+.unifi-traffic-bar-upload {
+  background: #ff9500;
+}
+
+.unifi-traffic-bar-download {
+  background: #34c759;
+}
+
+.unifi-traffic-bar-wired {
+  background: #0077ff;
+}
+
+.unifi-traffic-bar-wireless {
+  background: var(--accent);
+}
+
+/* Rank badges */
+.unifi-rank {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+  min-width: 20px;
+}
+
+.unifi-rank-small {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  min-width: 18px;
+}
+
+.unifi-rank-tiny {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  min-width: 18px;
+}
+/* Full view styles */
+.unifi-stats-grid-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.unifi-stat-card-compact {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.unifi-stat-value-compact {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unifi-stat-value-compact.accent {
+  color: var(--accent);
+}
+
+.unifi-stat-label-tiny {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.unifi-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.unifi-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.unifi-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.unifi-info-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.unifi-list-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.unifi-device-mini {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 2px solid;
+}
+
+.unifi-device-mini-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unifi-device-mini-icon {
+  font-size: 14px;
+}
+
+.unifi-device-mini-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.unifi-device-mini-clients {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.unifi-client-mini {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unifi-client-mini-icon {
+  font-size: 12px;
+}
+
+.unifi-client-mini-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.unifi-client-mini-traffic {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.unifi-alarm-card {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.unifi-alarm-message {
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.unifi-alarm-time {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.unifi-more-items {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
 }

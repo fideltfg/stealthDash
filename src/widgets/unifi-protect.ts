@@ -96,18 +96,16 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-protect-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
-        <div class="protect-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;"><i class="fas fa-video"></i></span>
+      <div class="unifi-protect-widget widget-container flex flex-column">
+        <div class="protect-header widget-header-row">
+          <h3 className="widget-title flex align-center gap-8">
+            <span className="widget-icon-large"><i class="fas fa-video"></i></span>
             <span>UniFi Protect</span>
           </h3>
-          <button class="refresh-btn" style="background: var(--primary); color: white; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 14px;">
-            🔄 Refresh
-          </button>
+          <button class="refresh-btn widget-button secondary">🔄 Refresh</button>
         </div>
-        <div class="protect-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px; overflow: auto;">
-          <div class="protect-loading" style="text-align: center; padding: 40px; color: var(--muted);">
+        <div class="protect-content flex-1 flex flex-column gap-12 overflow-auto">
+          <div class="protect-loading widget-loading centered">
             Loading cameras and detections...
           </div>
         </div>
@@ -155,12 +153,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
       } catch (error: any) {
         console.error('Error fetching UniFi Protect data:', error);
         contentEl.innerHTML = `
-          <div style="padding: 20px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
-            <div style="color: var(--error); font-size: 14px; margin-bottom: 8px;">
+          <div className="widget-error">
+            <div className="widget-error-icon large">⚠️</div>
+            <div className="widget-error-title" style="color: var(--error);">
               ${error.message || 'Failed to load UniFi Protect data'}
             </div>
-            <div style="font-size: 12px; color: var(--muted);">
+            <div className="widget-error-message">
               Check console connection and credentials
             </div>
           </div>
@@ -184,13 +182,13 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; background: var(--surface);">
-        <div style="font-size: 64px; margin-bottom: 16px;"><i class="fas fa-video"></i></div>
-        <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">UniFi Protect Not Configured</h3>
-        <p style="margin: 0 0 20px 0; color: var(--muted); font-size: 14px; max-width: 400px;">
+      <div className="widget-container flex flex-column align-center justify-center text-center">
+        <div className="widget-config-icon"><i class="fas fa-video"></i></div>
+        <h3 className="widget-title mb-12">UniFi Protect Not Configured</h3>
+        <p className="widget-text mb-20" style="max-width: 400px;">
           Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
         </p>
-        <button class="config-btn" style="background: var(--primary); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 500; cursor: pointer;">
+        <button class="config-btn widget-button primary">
           Configure Widget
         </button>
       </div>
@@ -214,54 +212,34 @@ class UnifiProtectRenderer implements WidgetRenderer {
     );
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      backdrop-filter: blur(4px);
-    `;
+    overlay.className = 'widget-overlay';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 24px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    `;
+    modal.className = 'widget-dialog scrollable' ;
+    modal.style.maxWidth = '600px';
 
     modal.innerHTML = `
-      <h2 style="margin: 0 0 20px 0; color: var(--text); font-size: 24px; font-weight: 600;">
+      <h2 className="widget-dialog-title large mb-20">
         Configure UniFi Protect Widget
       </h2>
       
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           UniFi Protect Console URL *
         </label>
         <input type="text" id="host-input" placeholder="https://192.168.1.1" value="${content.host || ''}"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
-        <small style="display: block; margin-top: 4px; color: var(--muted); font-size: 12px;">
+          className="widget-dialog-input">
+        <small className="widget-dialog-hint">
           URL of your UniFi Protect console (Cloud Key, UDM Pro, UNVR, etc.)
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           Credentials *
         </label>
         <select id="credential-select" 
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
+          className="widget-dialog-input">
           <option value="">Select saved credentials...</option>
           ${unifiProtectCreds.map((cred: any) => 
             `<option value="${cred.id}" ${content.credentialId === cred.id ? 'selected' : ''}>
@@ -269,58 +247,58 @@ class UnifiProtectRenderer implements WidgetRenderer {
             </option>`
           ).join('')}
         </select>
-        <small style="display: block; margin-top: 4px; color: var(--muted); font-size: 12px;">
+        <small className="widget-dialog-hint">
           Select credentials from Credentials Manager (local admin user recommended)
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           Display Mode
         </label>
         <select id="display-mode-select" 
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
+          className="widget-dialog-input">
           <option value="both" ${content.displayMode === 'both' ? 'selected' : ''}>Cameras & Detections</option>
           <option value="cameras" ${content.displayMode === 'cameras' ? 'selected' : ''}>Cameras Only</option>
           <option value="detections" ${content.displayMode === 'detections' ? 'selected' : ''}>Detections Only</option>
         </select>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           Camera View Mode
         </label>
         <select id="view-mode-select" 
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
+          className="widget-dialog-input">
           <option value="snapshots" ${content.viewMode === 'snapshots' ? 'selected' : ''}>Snapshots</option>
           <option value="streams" ${content.viewMode === 'streams' ? 'selected' : ''}>Live Streams</option>
           <option value="both" ${content.viewMode === 'both' ? 'selected' : ''}>Both</option>
         </select>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           Maximum Detections
         </label>
         <input type="number" id="max-detections-input" value="${content.maxDetections || 10}" min="1" max="50"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
+          className="widget-dialog-input">
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-weight: 500;">
+      <div className="widget-dialog-field large-margin">
+        <label className="widget-dialog-label">
           Refresh Interval (seconds)
         </label>
         <input type="number" id="refresh-input" value="${content.refreshInterval || 30}" min="5" max="300"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px;">
+          className="widget-dialog-input">
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+      <div className="widget-dialog-buttons top-margin">
         <button id="cancel-btn" 
-          style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font-size: 14px;">
+          className="widget-dialog-button-cancel">
           Cancel
         </button>
         <button id="save-btn" 
-          style="padding: 10px 20px; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer; font-size: 14px; font-weight: 500;">
+          className="widget-dialog-button-save">
           Save Configuration
         </button>
       </div>
@@ -398,20 +376,20 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     if (displayEvents.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;">✓</div>
-          <div style="font-size: 14px;">No recent detections</div>
+        <div className="widget-empty">
+          <div className="widget-empty-icon">✓</div>
+          <div className="widget-text">No recent detections</div>
         </div>
       `;
       return;
     }
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text);">
+      <div className="flex flex-column gap-12">
+        <h4 className="protect-section-title">
           Recent Detections (${displayEvents.length})
         </h4>
-        <div class="detections-list" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="detections-list flex flex-column gap-8">
           ${displayEvents.map(event => this.renderDetectionCard(event, content, data.cameras)).join('')}
         </div>
       </div>
@@ -432,30 +410,30 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : '';
 
     return `
-      <div style="display: flex; gap: 12px; padding: 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+      <div className="protect-detection-card">
         ${thumbnailUrl ? `
-          <div style="width: 120px; height: 68px; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: var(--surface);">
+          <div className="protect-detection-thumbnail">
             <img src="${thumbnailUrl}" 
-              style="width: 100%; height: 100%; object-fit: cover;"
-              onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:12px;\\'>No Image</div>'">
+              className="protect-detection-img"
+              onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'protect-no-image\\'>No Image</div>'">
           </div>
         ` : ''}
-        <div style="flex: 1; min-width: 0;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
-            <div style="font-weight: 600; font-size: 14px; color: var(--text);">${cameraName}</div>
-            <div style="font-size: 12px; color: var(--muted); white-space: nowrap;">${timeAgo}</div>
+        <div className="flex-1 truncate">
+          <div className="flex space-between align-start mb-4">
+            <div className="protect-detection-camera">${cameraName}</div>
+            <div className="protect-detection-time">${timeAgo}</div>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; text-transform: uppercase;">
+          <div className="flex align-center gap-8 mb-4">
+            <span className="protect-detection-badge">
               ${detectionType}
             </span>
             ${event.score ? `
-              <span style="font-size: 12px; color: var(--muted);">
+              <span className="protect-detection-confidence">
                 ${Math.round(event.score)}% confidence
               </span>
             ` : ''}
           </div>
-          <div style="font-size: 12px; color: var(--muted);">
+          <div className="protect-detection-timestamp">
             ${timestamp.toLocaleString()}
           </div>
         </div>
@@ -473,9 +451,9 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     if (cameras.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-video"></i></div>
-          <div style="font-size: 14px;">No cameras found</div>
+        <div className="widget-empty">
+          <div className="widget-empty-icon"><i class="fas fa-video"></i></div>
+          <div className="widget-text">No cameras found</div>
         </div>
       `;
       return;
@@ -484,11 +462,11 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const viewMode = content.viewMode || 'snapshots';
     
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text);">
+      <div className="flex flex-column gap-12">
+        <h4 className="protect-section-title">
           Cameras (${cameras.length})
         </h4>
-        <div class="cameras-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+        <div class="cameras-grid protect-cameras-grid">
           ${cameras.map(camera => this.renderCameraCard(camera, content, viewMode)).join('')}
         </div>
       </div>

@@ -69,15 +69,15 @@ class GoogleCalendarRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="calendar-widget" style="width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px; overflow: auto; background: var(--surface);">
-        <div class="calendar-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;"><i class="fas fa-calendar"></i></span>
+      <div class="calendar-widget widget-container flex flex-column">
+        <div class="calendar-header widget-header-row">
+          <h3 className="widget-title flex align-center gap-8">
+            <span className="widget-icon-large"><i class="fas fa-calendar"></i></span>
             <span>Calendar</span>
           </h3>
         </div>
-        <div class="calendar-content" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
-          <div class="calendar-loading" style="text-align: center; padding: 40px; color: var(--muted);">
+        <div class="calendar-content flex-1 flex flex-column gap-12">
+          <div class="calendar-loading widget-loading centered">
             Loading events...
           </div>
         </div>
@@ -147,11 +147,10 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       } catch (error) {
         console.error('Error fetching calendar data:', error);
         contentEl.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #f44336;">
-            <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-exclamation-triangle"></i></div>
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Error loading calendar</div>
-            <div style="font-size: 12px; color: var(--muted);">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 8px;">Check your credentials in the user menu (<i class="fas fa-key"></i> Credentials)</div>
+          <div className="widget-error">
+            <div className="widget-error-icon large" style="color: #f44336;"><i class="fas fa-exclamation-triangle"></i></div>
+            <div className="widget-error-title">${error instanceof Error ? error.message : 'Unknown error'}</div>
+            <div className="widget-error-message">Check your credentials in the user menu (<i class="fas fa-key"></i> Credentials)</div>
           </div>
         `;
       }
@@ -174,27 +173,17 @@ class GoogleCalendarRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--surface);">
-        <div style="text-align: center; max-width: 400px;">
-          <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-calendar"></i></div>
-          <h3 style="margin: 0 0 12px 0; font-size: 18px; color: var(--text);">Configure Google Calendar</h3>
-          <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--muted);">
+      <div className="widget-container flex align-center justify-center">
+        <div className="text-center" style="max-width: 400px;">
+          <div className="widget-config-icon"><i class="fas fa-calendar"></i></div>
+          <h3 className="widget-title mb-12">Configure Google Calendar</h3>
+          <p className="widget-text mb-8">
             Connect your Google Calendar to display upcoming events
           </p>
-          <p style="margin: 0 0 24px 0; font-size: 12px; color: var(--muted);">
+          <p className="widget-hint mb-24">
             <i class="fas fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fas fa-key"></i> Credentials)
           </p>
-          <button id="configure-calendar-btn" style="
-            padding: 12px 24px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: filter 0.2s;
-          ">
+          <button id="configure-calendar-btn" className="widget-button primary">
             Configure
           </button>
         </div>
@@ -211,32 +200,10 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     const content = widget.content as unknown as GoogleCalendarContent;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'modal-overlay widget-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 32px var(--shadow);
-    `;
+    modal.className = 'modal widget-dialog scrollable';
 
     // Load credentials for dropdown
     const credentials = await credentialsService.getAll();
@@ -249,58 +216,40 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
-      <div style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: var(--text);">
+      <div className="mb-20">
+        <h2 className="widget-dialog-title large">
           <i class="fas fa-calendar"></i> Google Calendar Configuration
         </h2>
-        <p style="margin: 0; font-size: 14px; color: var(--muted);">
+        <p className="widget-text">
           Configure your Google Calendar connection
         </p>
       </div>
 
-      <form id="calendar-config-form" style="display: flex; flex-direction: column; gap: 16px;">
+      <form id="calendar-config-form" className="flex flex-column gap-16">
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Credentials *
           </label>
           <select 
             id="calendar-credential"
             required
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           >
             <option value="" style="background: var(--surface); color: var(--muted);">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--muted);">
+          <small className="widget-dialog-hint">
             Create Google Calendar credentials from the user menu (<i class="fas fa-key"></i> Credentials). Include Calendar ID and API Key.
           </small>
         </div>
 
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Display Mode
           </label>
           <select 
             id="calendar-display-mode"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           >
             <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Compact</option>
             <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Detailed</option>
@@ -308,9 +257,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           </select>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div className="grid grid-2 gap-12">
           <div>
-            <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+            <label className="widget-dialog-label">
               Max Events
             </label>
             <input 
@@ -319,21 +268,12 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               value="${content.maxEvents || 10}"
               min="1"
               max="50"
-              style="
-                width: 100%;
-                padding: 10px 12px;
-                background: var(--bg);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                font-size: 14px;
-                color: var(--text);
-                box-sizing: border-box;
-              "
+              className="widget-dialog-input"
             />
           </div>
 
           <div>
-            <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+            <label className="widget-dialog-label">
               Days Ahead
             </label>
             <input 
@@ -342,22 +282,13 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               value="${content.daysAhead || 30}"
               min="1"
               max="365"
-              style="
-                width: 100%;
-                padding: 10px 12px;
-                background: var(--bg);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                font-size: 14px;
-                color: var(--text);
-                box-sizing: border-box;
-              "
+              className="widget-dialog-input"
             />
           </div>
         </div>
 
         <div>
-          <label style="display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text);">
+          <label className="widget-dialog-label">
             Refresh Interval (seconds)
           </label>
           <input 
@@ -366,52 +297,21 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             value="${content.refreshInterval || 300}"
             min="60"
             max="3600"
-            style="
-              width: 100%;
-              padding: 10px 12px;
-              background: var(--bg);
-              border: 1px solid var(--border);
-              border-radius: 6px;
-              font-size: 14px;
-              color: var(--text);
-              box-sizing: border-box;
-            "
+            className="widget-dialog-input"
           />
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <div className="widget-dialog-buttons">
           <button 
             type="submit"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--accent);
-              color: white;
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
+            className="widget-dialog-button-save full-width"
           >
             Save
           </button>
           <button 
             type="button"
             id="cancel-btn"
-            style="
-              flex: 1;
-              padding: 12px;
-              background: var(--border);
-              color: var(--text);
-              border: none;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 600;
-              cursor: pointer;
-              transition: filter 0.2s;
-            "
+            className="widget-dialog-button-cancel full-width"
           >
             Cancel
           </button>
@@ -494,9 +394,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
   private renderCompact(container: HTMLElement, events: CalendarEvent[], _content: GoogleCalendarContent): void {
     if (!events || events.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
-          <div style="font-size: 14px;">No upcoming events</div>
+        <div className="widget-empty">
+          <div className="widget-empty-icon"><i class="fas fa-inbox"></i></div>
+          <div className="widget-text">No upcoming events</div>
         </div>
       `;
       return;
@@ -513,25 +413,18 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       else if (isTomorrow) dateLabel = 'Tomorrow';
 
       return `
-        <div style="
-          padding: 12px;
-          background: var(--hover);
-          border-left: 3px solid var(--accent);
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-        " onclick="window.open('${event.htmlLink}', '_blank')">
-          <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <div className="event-card hover-effect" onclick="window.open('${event.htmlLink}', '_blank')">
+          <div className="flex space-between align-start gap-12">
+            <div className="flex-1 truncate">
+              <div className="event-title">
                 ${this.escapeHtml(event.summary)}
               </div>
-              <div style="font-size: 12px; color: var(--muted);">
+              <div className="event-time">
                 ${isAllDay ? 'All day' : this.formatTime(startDate)}
-                ${event.location ? `<span style="margin-left: 8px;"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}</span>` : ''}
+                ${event.location ? `<span className="event-location"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}</span>` : ''}
               </div>
             </div>
-            <div style="font-size: 11px; color: var(--muted); white-space: nowrap;">
+            <div className="event-date-label">
               ${dateLabel}
             </div>
           </div>
@@ -540,7 +433,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     }).join('');
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div className="flex flex-column gap-8">
         ${eventsHtml}
       </div>
     `;
@@ -549,9 +442,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
   private renderDetailed(container: HTMLElement, events: CalendarEvent[], _content: GoogleCalendarContent): void {
     if (!events || events.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
-          <div style="font-size: 14px;">No upcoming events</div>
+        <div className="widget-empty">
+          <div className="widget-empty-icon"><i class="fas fa-inbox"></i></div>
+          <div className="widget-text">No upcoming events</div>
         </div>
       `;
       return;
@@ -569,36 +462,29 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       else if (isTomorrow) dateLabel = 'Tomorrow';
 
       return `
-        <div style="
-          padding: 16px;
-          background: var(--hover);
-          border-left: 3px solid var(--accent);
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-        " onclick="window.open('${event.htmlLink}', '_blank')">
-          <div style="margin-bottom: 8px;">
-            <div style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px;">
+        <div className="event-card-detailed hover-effect" onclick="window.open('${event.htmlLink}', '_blank')">
+          <div className="mb-8">
+            <div className="event-title-large">
               ${this.escapeHtml(event.summary)}
             </div>
-            <div style="font-size: 12px; color: var(--muted);">
+            <div className="event-time">
               ${dateLabel} ${isAllDay ? '(All day)' : `at ${this.formatTime(startDate)}`}
               ${!isAllDay ? ` - ${this.formatTime(endDate)}` : ''}
             </div>
           </div>
           ${event.location ? `
-            <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <div className="event-location-row">
               <span><i class="fas fa-map-marker-alt"></i></span>
               <span>${this.escapeHtml(event.location)}</span>
             </div>
           ` : ''}
           ${event.description ? `
-            <div style="font-size: 12px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+            <div className="event-description">
               ${this.escapeHtml(event.description.substring(0, 150))}${event.description.length > 150 ? '...' : ''}
             </div>
           ` : ''}
           ${event.attendees && event.attendees.length > 0 ? `
-            <div style="font-size: 11px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+            <div className="event-attendees">
               <i class="fas fa-users"></i> ${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}
             </div>
           ` : ''}
@@ -607,7 +493,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     }).join('');
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div className="flex flex-column gap-12">
         ${eventsHtml}
       </div>
     `;
@@ -616,9 +502,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
   private renderAgenda(container: HTMLElement, events: CalendarEvent[], _content: GoogleCalendarContent): void {
     if (!events || events.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px; color: var(--muted);">
-          <div style="font-size: 48px; margin-bottom: 12px;"><i class="fas fa-inbox"></i></div>
-          <div style="font-size: 14px;">No upcoming events</div>
+        <div className="widget-empty">
+          <div className="widget-empty-icon"><i class="fas fa-inbox"></i></div>
+          <div className="widget-text">No upcoming events</div>
         </div>
       `;
       return;
@@ -649,25 +535,17 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         const isAllDay = !event.start.dateTime;
 
         return `
-          <div style="
-            display: flex;
-            gap: 12px;
-            padding: 8px 12px;
-            background: var(--surface);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-          " onclick="window.open('${event.htmlLink}', '_blank')">
-            <div style="min-width: 60px; font-size: 12px; color: var(--muted); text-align: right;">
+          <div className="agenda-event hover-effect" onclick="window.open('${event.htmlLink}', '_blank')">
+            <div className="agenda-time">
               ${isAllDay ? 'All day' : this.formatTime(startDate)}
             </div>
-            <div style="width: 3px; background: var(--accent); border-radius: 2px;"></div>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <div className="agenda-divider"></div>
+            <div className="flex-1 truncate">
+              <div className="agenda-event-title">
                 ${this.escapeHtml(event.summary)}
               </div>
               ${event.location ? `
-                <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+                <div className="agenda-event-location">
                   <i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}
                 </div>
               ` : ''}
@@ -677,11 +555,11 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       }).join('');
 
       return `
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border);">
+        <div className="agenda-day-section">
+          <div className="agenda-day-header">
             ${dateLabel}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div className="flex flex-column gap-8">
             ${eventsHtml}
           </div>
         </div>

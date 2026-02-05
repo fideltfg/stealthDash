@@ -396,9 +396,10 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     // Header showing title and open/total count
     const header = document.createElement('div');
     header.className = 'mtnxml-status-header';
+    const statusClass = openCount > 0 ? 'success' : 'error';
     header.innerHTML = `
       <span>${title}</span>
-      <span style="color: ${openCount > 0 ? '#4CAF50' : '#f44336'};">${openCount}/${totalCount}</span>
+      <span class="status-count ${statusClass}">${openCount}/${totalCount}</span>
     `;
     section.appendChild(header);
 
@@ -408,11 +409,11 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
-      const status = item.status === 'open' ? '<i class="fas fa-check-circle" style="color: #4caf50;"></i>' : '<i class="fas fa-times-circle" style="color: #f44336;"></i>';
+      const statusIcon = item.status === 'open' ? 'fas fa-check-circle success' : 'fas fa-times-circle error';
       const row = document.createElement('div');
       row.className = 'mtnxml-status-item';
       row.innerHTML = `
-        <span>${status}</span>
+        <i class="${statusIcon}"></i>
         <span class="mtnxml-status-item-name">${item.name}</span>
         ${item.difficulty ? `<span class="mtnxml-status-item-difficulty">${item.difficulty}</span>` : ''}
       `;

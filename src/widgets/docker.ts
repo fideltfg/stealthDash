@@ -70,13 +70,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as DockerContent;
 
-    container.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: var(--surface);
-      overflow: hidden;
-    `;
+    container.className = 'widget-container docker-widget';
 
     // Clear any existing refresh interval
     const existingInterval = this.refreshIntervals.get(widget.id);
@@ -100,36 +94,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
   private showEmptyState(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        padding: 24px;
-        text-align: center;
-        gap: 16px;
-      ">
-        <div style="font-size: 48px;">🐋</div>
-        <div style="font-size: 18px; font-weight: 600; color: var(--text);">
-          Docker Containers
-        </div>
-        <div style="font-size: 14px; color: var(--muted); max-width: 300px;">
-          Configure Docker host to monitor containers
-        </div>
-        <button id="configure-docker-btn" style="
-          padding: 10px 24px;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          margin-top: 8px;
-        ">
-          Configure
-        </button>
+      <div class="widget-empty-state centered">
+        <div class="widget-config-icon">🐋</div>
+        <div class="widget-empty-state-title">Docker Containers</div>
+        <div class="widget-empty-state-text">Configure Docker host to monitor containers</div>
+        <button id="configure-docker-btn" class="widget-button-primary">Configure</button>
       </div>
     `;
 
@@ -144,31 +113,10 @@ class DockerWidgetRenderer implements WidgetRenderer {
     const content = (widget.content || {}) as DockerContent;
 
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      min-width: 500px;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    `;
+    dialog.className = 'widget-dialog large';
 
     // Load credentials
     const credentials = await credentialsService.getAll();
@@ -179,29 +127,21 @@ class DockerWidgetRenderer implements WidgetRenderer {
       .join('');
 
     dialog.innerHTML = `
-      <h3 style="margin-top: 0; color: var(--text); display: flex; align-items: center; gap: 8px;">
+      <h3 class="widget-dialog-title large docker-title">
         <i class="fab fa-docker"></i> Docker Configuration
       </h3>
 
-      <div style="
-        background: #2196F322;
-        border-left: 4px solid #2196F3;
-        padding: 12px;
-        margin-bottom: 20px;
-        border-radius: 4px;
-        font-size: 13px;
-        color: var(--text);
-      ">
-        <div style="font-weight: 600; margin-bottom: 6px;"><i class="fas fa-info-circle"></i> Connection Types:</div>
-        <div style="opacity: 0.9; line-height: 1.6;">
+      <div class="docker-config-info">
+        <div class="docker-config-info-title"><i class="fas fa-info-circle"></i> Connection Types:</div>
+        <div class="docker-config-info-text">
           • <strong>Unix Socket</strong> (unix:///var/run/docker.sock): No credentials needed<br>
           • <strong>TCP</strong> (http://host:2375): No credentials needed<br>
           • <strong>TLS</strong> (https://host:2376): Create Docker credentials from user menu
         </div>
       </div>
       
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label medium">
           Docker Host URL *
         </label>
         <input 
@@ -209,49 +149,31 @@ class DockerWidgetRenderer implements WidgetRenderer {
           id="docker-host-input" 
           placeholder="unix:///var/run/docker.sock"
           value="${content.host || ''}"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
+          class="widget-dialog-input extended"
         />
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted); font-size: 12px;">
+        <small class="widget-field-hint">
           Examples: unix:///var/run/docker.sock • http://192.168.1.100:2375 • https://docker.example.com:2376
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label medium">
           TLS Credentials (Optional)
         </label>
         <select 
           id="docker-credential-select"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
+          class="widget-dialog-input extended"
         >
           <option value="">None (local socket or unsecured TCP)</option>
           ${credentialOptions}
         </select>
-        <small style="display: block; margin-top: 6px; opacity: 0.7; color: var(--muted); font-size: 12px;">
+        <small class="widget-field-hint">
           Only required for HTTPS connections. Create Docker credentials from the <i class="fas fa-user"></i> user menu.
         </small>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text);">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-dialog-label medium">
           Refresh Interval (seconds)
         </label>
         <input 
@@ -260,53 +182,27 @@ class DockerWidgetRenderer implements WidgetRenderer {
           min="10"
           max="300"
           value="${content.refreshInterval || 30}"
-          style="
-            width: 100%;
-            padding: 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            box-sizing: border-box;
-          "
+          class="widget-dialog-input extended"
         />
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+      <div class="widget-dialog-field large-margin">
+        <label class="widget-checkbox-label">
           <input 
             type="checkbox" 
             id="docker-show-all-input"
             ${content.showAll ? 'checked' : ''}
-            style="cursor: pointer;"
+            class="widget-checkbox"
           />
-          <span style="color: var(--text); font-size: 14px;">Show all containers (including stopped)</span>
+          <span>Show all containers (including stopped)</span>
         </label>
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 15px; margin-top: 20px;">
-        <button id="cancel-btn" style="
-          padding: 10px 20px;
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          font-size: 14px;
-        ">
+      <div class="widget-dialog-buttons border-top">
+        <button id="cancel-btn" class="widget-dialog-button-cancel extended">
           Cancel
         </button>
-        <button id="save-btn" style="
-          padding: 10px 20px;
-          cursor: pointer;
-          background: var(--accent);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-        ">
+        <button id="save-btn" class="widget-dialog-button-save extended">
           Save
         </button>
       </div>
@@ -370,38 +266,15 @@ class DockerWidgetRenderer implements WidgetRenderer {
       if (!containersList) {
         // Initial render - create the structure
         container.innerHTML = `
-          <div style="
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            container-type: inline-size;
-          ">
-            <div style="
-              padding: 12px 16px;
-              border-bottom: 1px solid var(--border);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            ">
-              <div style="font-weight: 600; color: var(--text);">
-                🐋 Docker Containers
-              </div>
-              <div id="container-count" style="
-                font-size: 12px;
-                color: var(--muted);
-                background: rgba(0, 150, 255, 0.1);
-                padding: 4px 8px;
-                border-radius: 4px;
-              ">
+          <div class="docker-container-wrapper">
+            <div class="docker-header">
+              <div class="docker-header-title">🐋 Docker Containers</div>
+              <div id="container-count" class="docker-container-count">
                 ${containers.length} container${containers.length !== 1 ? 's' : ''}
               </div>
             </div>
             
-            <div id="containers-list" style="
-              overflow-y: auto;
-            ">
-            </div>
+            <div id="containers-list" class="docker-containers-list"></div>
           </div>
         `;
         
@@ -467,32 +340,13 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     } catch (error) {
       container.innerHTML = `
-        <div style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          padding: 20px;
-          text-align: center;
-          color: var(--text);
-        ">
-          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-          <div style="font-weight: 600; margin-bottom: 8px;">Connection Error</div>
-          <div style="font-size: 14px; color: var(--muted); max-width: 300px;">
+        <div class="widget-error-container centered">
+          <div class="widget-error-icon">⚠️</div>
+          <div class="widget-error-title">Connection Error</div>
+          <div class="widget-error-message">
             ${error instanceof Error ? error.message : 'Failed to connect to Docker host'}
           </div>
-          <button id="retry-btn" style="
-            margin-top: 16px;
-            padding: 8px 16px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-          ">
-            Retry
-          </button>
+          <button id="retry-btn" class="widget-button-primary">Retry</button>
         </div>
       `;
 
@@ -507,16 +361,8 @@ class DockerWidgetRenderer implements WidgetRenderer {
   private updateContainersList(containersList: HTMLElement, containers: DockerContainer[], content: DockerContent): void {
     if (containers.length === 0) {
       containersList.innerHTML = `
-        <div style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          color: var(--muted);
-          gap: 8px;
-        ">
-          <div style="font-size: 32px;">📦</div>
+        <div class="widget-empty-state centered">
+          <div class="docker-empty-icon">📦</div>
           <div>No containers found</div>
         </div>
       `;
@@ -698,104 +544,45 @@ class DockerWidgetRenderer implements WidgetRenderer {
     content: DockerContent
   ): Promise<void> {
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'widget-overlay dark';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      width: 90%;
-      max-width: 1000px;
-      height: 80vh;
-      max-height: 800px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    `;
+    dialog.className = 'docker-logs-dialog';
 
     dialog.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="margin: 0; color: var(--text); display: flex; align-items: center; gap: 8px;">
+      <div class="docker-logs-header">
+        <h3 class="docker-logs-title">
           <i class="fas fa-file-alt"></i>
           ${containerName} - Logs
         </h3>
-        <div style="display: flex; gap: 8px;">
-          <button id="refresh-logs-btn" style="
-            padding: 6px 12px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-          ">
+        <div class="docker-logs-buttons">
+          <button id="refresh-logs-btn" class="widget-button">
             <i class="fas fa-sync-alt"></i> Refresh
           </button>
-          <button id="close-logs-btn" style="
-            padding: 6px 12px;
-            background: #666;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-          ">
+          <button id="close-logs-btn" class="widget-button-secondary">
             <i class="fas fa-times"></i> Close
           </button>
         </div>
       </div>
 
-      <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
-        <label style="display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px;">
+      <div class="docker-logs-controls">
+        <label class="docker-logs-control-label">
           <span>Lines:</span>
-          <select id="log-lines-select" style="
-            padding: 6px 10px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text);
-            font-size: 14px;
-          ">
+          <select id="log-lines-select" class="docker-logs-select">
             <option value="100">100</option>
             <option value="500" selected>500</option>
             <option value="1000">1000</option>
             <option value="all">All</option>
           </select>
         </label>
-        <label style="display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px;">
-          <input type="checkbox" id="follow-logs-checkbox" />
+        <label class="widget-checkbox-label">
+          <input type="checkbox" id="follow-logs-checkbox" class="widget-checkbox" />
           <span>Follow logs (auto-refresh)</span>
         </label>
       </div>
 
-      <div id="logs-container" style="
-        flex: 1;
-        background: #1e1e1e;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 12px;
-        overflow: auto;
-        font-family: 'Courier New', monospace;
-        font-size: 12px;
-        color: #d4d4d4;
-        line-height: 1.5;
-        white-space: pre-wrap;
-        word-break: break-all;
-      ">
-        <div style="text-align: center; padding: 20px; color: #888;">
+      <div id="logs-container" class="docker-logs-container">
+        <div class="docker-logs-loading">
           <i class="fas fa-spinner fa-spin"></i> Loading logs...
         </div>
       </div>
@@ -815,7 +602,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     const fetchLogs = async () => {
       try {
         const lines = linesSelect.value;
-        logsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
+        logsContainer.innerHTML = '<div class="docker-logs-loading"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
 
         const pingServerUrl = this.getPingServerUrl();
         const response = await fetch(`${pingServerUrl}/api/docker/containers/logs`, {
@@ -842,7 +629,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
         if (logs.trim()) {
           logsContainer.textContent = logs;
         } else {
-          logsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">No logs available</div>';
+          logsContainer.innerHTML = '<div class="docker-logs-empty">No logs available</div>';
         }
         
         // Auto-scroll to bottom
@@ -850,7 +637,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
       } catch (error) {
         logsContainer.innerHTML = `
-          <div style="text-align: center; padding: 20px; color: #f44336;">
+          <div class="docker-logs-error">
             <i class="fas fa-exclamation-triangle"></i> Error loading logs:<br/>
             ${error instanceof Error ? error.message : 'Unknown error'}
           </div>
