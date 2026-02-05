@@ -1,0 +1,239 @@
+/* Clock Widget Styles */
+.clock-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
+}
+
+/* Configuration Screen */
+.clock-config-icon {
+  font-size: 48px;
+}
+
+.clock-config-title {
+  color: var(--text);
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.clock-config-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
+.clock-timezone-select {
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 12px;
+}
+
+.clock-format-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.clock-format-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.clock-format-btn[data-selected="true"] {
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.clock-format-btn[data-selected="false"] {
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.clock-format-btn:hover {
+  opacity: 0.8;
+}
+
+.clock-tz-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.clock-tz-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.clock-save-btn {
+  padding: 12px 32px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.clock-save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.clock-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Clock Display */
+.clock-display-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.clock-time {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.clock-date {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.clock-timezone {
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Configuration Dialog */
+.clock-config-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.clock-config-dialog {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.clock-config-dialog h3 {
+  margin: 0 0 20px 0;
+  color: var(--text);
+}
+
+.clock-config-dialog .form-group {
+  margin-bottom: 16px;
+}
+
+.clock-config-dialog .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.clock-config-dialog .form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.clock-config-dialog .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.clock-config-dialog .checkbox-label input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.clock-config-dialog .checkbox-label span {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.clock-config-dialog .button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.clock-config-dialog .button-group button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.clock-config-dialog .button-group .cancel-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.clock-config-dialog .button-group .save-btn {
+  border: none;
+  background: var(--accent);
+  color: white;
+}
+
+.clock-config-dialog .button-group button:hover {
+  opacity: 0.8;
+}

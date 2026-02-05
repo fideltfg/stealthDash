@@ -7,61 +7,35 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
     
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
+    overlay.className = 'clock-config-overlay';
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    `;
+    dialog.className = 'clock-config-dialog';
 
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; color: var(--text);">Configure Clock</h3>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--text); font-size: 14px;">Timezone</label>
-        <select id="clock-timezone" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+      <h3>Configure Clock</h3>
+      <div class="form-group">
+        <label>Timezone</label>
+        <select id="clock-timezone">
           <option value="">-- Select Timezone --</option>
           ${TIMEZONES.map(tz => `<option value="${tz}" ${content.timezone === tz ? 'selected' : ''}>${tz.replace(/_/g, ' ')}</option>`).join('')}
         </select>
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="clock-24h" ${content.format24h ? 'checked' : ''}
-            style="width: 18px; height: 18px; cursor: pointer;" />
-          <span style="color: var(--text); font-size: 14px;">Use 24-hour format</span>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="clock-24h" ${content.format24h ? 'checked' : ''} />
+          <span>Use 24-hour format</span>
         </label>
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="clock-show-tz" ${content.showTimezone !== false ? 'checked' : ''}
-            style="width: 18px; height: 18px; cursor: pointer;" />
-          <span style="color: var(--text); font-size: 14px;">Show timezone</span>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="clock-show-tz" ${content.showTimezone !== false ? 'checked' : ''} />
+          <span>Show timezone</span>
         </label>
       </div>
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;">
-          Cancel
-        </button>
-        <button id="save-btn" style="padding: 8px 16px; border: none; border-radius: 4px; background: var(--accent); color: white; cursor: pointer;">
-          Save
-        </button>
+      <div class="button-group">
+        <button id="cancel-btn" class="cancel-btn">Cancel</button>
+        <button id="save-btn" class="save-btn">Save</button>
       </div>
     `;
 
@@ -78,6 +52,13 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
     cancelBtn.onclick = close;
     overlay.onclick = (e) => e.target === overlay && close();
+
+    // Prevent propagation for form inputs
+    [tzSelect, format24Input, showTzInput].forEach(input => {
+      input.addEventListener('pointerdown', (e) => e.stopPropagation());
+      input.addEventListener('keydown', (e) => e.stopPropagation());
+      input.addEventListener('keyup', (e) => e.stopPropagation());
+    });
 
     saveBtn.onclick = () => {
       const timezone = tzSelect.value;
@@ -102,13 +83,6 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
     const div = document.createElement('div');
     div.className = 'clock-widget';
-    div.style.height = '100%';
-    div.style.display = 'flex';
-    div.style.flexDirection = 'column';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
-    div.style.padding = '20px';
-    div.style.gap = '16px';
     
     if (!content.timezone) {
       this.renderConfigScreen(div, widget);
@@ -121,35 +95,19 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const icon = document.createElement('div');
+    icon.className = 'clock-config-icon';
     icon.textContent = '🕐';
-    icon.style.fontSize = '48px';
     
     const label = document.createElement('div');
+    label.className = 'clock-config-title';
     label.textContent = 'Configure Clock';
-    label.style.color = 'var(--text)';
-    label.style.marginBottom = '16px';
-    label.style.fontSize = '18px';
-    label.style.fontWeight = '600';
     
     const tzLabel = document.createElement('div');
+    tzLabel.className = 'clock-config-label';
     tzLabel.textContent = 'Timezone:';
-    tzLabel.style.fontSize = '14px';
-    tzLabel.style.fontWeight = '500';
-    tzLabel.style.marginBottom = '4px';
-    tzLabel.style.alignSelf = 'flex-start';
     
     const timezoneSelect = document.createElement('select');
-    timezoneSelect.style.padding = '8px 12px';
-    timezoneSelect.style.border = '2px solid var(--border)';
-    timezoneSelect.style.borderRadius = '6px';
-    timezoneSelect.style.fontFamily = 'inherit';
-    timezoneSelect.style.fontSize = '14px';
-    timezoneSelect.style.background = 'var(--bg)';
-    timezoneSelect.style.color = 'var(--text)';
-    timezoneSelect.style.cursor = 'pointer';
-    timezoneSelect.style.width = '100%';
-    timezoneSelect.style.maxWidth = '300px';
-    timezoneSelect.style.marginBottom = '12px';
+    timezoneSelect.className = 'clock-timezone-select';
     
     const placeholderOption = document.createElement('option');
     placeholderOption.value = '';
@@ -166,78 +124,42 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     });
     
     const formatLabel = document.createElement('div');
+    formatLabel.className = 'clock-config-label';
     formatLabel.textContent = 'Time Format:';
-    formatLabel.style.fontSize = '14px';
-    formatLabel.style.fontWeight = '500';
-    formatLabel.style.marginBottom = '4px';
-    formatLabel.style.alignSelf = 'flex-start';
     
     const formatContainer = document.createElement('div');
-    formatContainer.style.display = 'flex';
-    formatContainer.style.gap = '8px';
-    formatContainer.style.marginBottom = '12px';
+    formatContainer.className = 'clock-format-container';
     
     const format24h = document.createElement('button');
+    format24h.className = 'clock-format-btn';
     format24h.textContent = '24-hour';
-    format24h.style.padding = '8px 16px';
-    format24h.style.border = '2px solid var(--accent)';
-    format24h.style.borderRadius = '6px';
-    format24h.style.background = 'var(--accent)';
-    format24h.style.color = 'white';
-    format24h.style.cursor = 'pointer';
-    format24h.style.fontSize = '14px';
     format24h.dataset.selected = 'true';
     
     const format12h = document.createElement('button');
+    format12h.className = 'clock-format-btn';
     format12h.textContent = '12-hour';
-    format12h.style.padding = '8px 16px';
-    format12h.style.border = '2px solid var(--border)';
-    format12h.style.borderRadius = '6px';
-    format12h.style.background = 'var(--surface)';
-    format12h.style.color = 'var(--text)';
-    format12h.style.cursor = 'pointer';
-    format12h.style.fontSize = '14px';
     format12h.dataset.selected = 'false';
     
     format24h.addEventListener('click', () => {
       format24h.dataset.selected = 'true';
       format12h.dataset.selected = 'false';
-      format24h.style.background = 'var(--accent)';
-      format24h.style.borderColor = 'var(--accent)';
-      format24h.style.color = 'white';
-      format12h.style.background = 'var(--surface)';
-      format12h.style.borderColor = 'var(--border)';
-      format12h.style.color = 'var(--text)';
     });
     
     format12h.addEventListener('click', () => {
       format12h.dataset.selected = 'true';
       format24h.dataset.selected = 'false';
-      format12h.style.background = 'var(--accent)';
-      format12h.style.borderColor = 'var(--accent)';
-      format12h.style.color = 'white';
-      format24h.style.background = 'var(--surface)';
-      format24h.style.borderColor = 'var(--border)';
-      format24h.style.color = 'var(--text)';
     });
     
     formatContainer.appendChild(format24h);
     formatContainer.appendChild(format12h);
     
     const showTzLabel = document.createElement('label');
-    showTzLabel.style.display = 'flex';
-    showTzLabel.style.alignItems = 'center';
-    showTzLabel.style.gap = '8px';
-    showTzLabel.style.fontSize = '14px';
-    showTzLabel.style.cursor = 'pointer';
-    showTzLabel.style.marginBottom = '16px';
+    showTzLabel.className = 'clock-tz-toggle';
     
     const showTzCheckbox = document.createElement('input');
+    showTzCheckbox.className = 'clock-tz-checkbox';
     showTzCheckbox.type = 'checkbox';
     showTzCheckbox.checked = true;
-    showTzCheckbox.style.cursor = 'pointer';
-    showTzCheckbox.style.width = '18px';
-    showTzCheckbox.style.height = '18px';
     
     const showTzText = document.createElement('span');
     showTzText.textContent = 'Show timezone name';
@@ -246,26 +168,12 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     showTzLabel.appendChild(showTzText);
     
     const button = document.createElement('button');
+    button.className = 'clock-save-btn';
     button.textContent = 'Create Clock';
-    button.style.padding = '10px 24px';
-    button.style.background = 'var(--accent)';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '6px';
-    button.style.cursor = 'pointer';
-    button.style.fontSize = '14px';
-    button.style.fontWeight = '500';
-    button.style.marginTop = '16px';
     button.disabled = true;
-    button.style.opacity = '0.5';
-    button.style.cursor = 'not-allowed';
     
     timezoneSelect.addEventListener('change', () => {
-      if (timezoneSelect.value) {
-        button.disabled = false;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-      }
+      button.disabled = !timezoneSelect.value;
     });
     
     button.addEventListener('click', () => {
@@ -273,21 +181,25 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         const is24h = format24h.dataset.selected === 'true';
         const showTz = showTzCheckbox.checked;
         const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content: { timezone: timezoneSelect.value, format24h: is24h, showTimezone: showTz } }
+          detail: { 
+            id: widget.id, 
+            content: { 
+              timezone: timezoneSelect.value, 
+              format24h: is24h, 
+              showTimezone: showTz 
+            } 
+          }
         });
         document.dispatchEvent(event);
       }
     });
     
-    timezoneSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
-    timezoneSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    timezoneSelect.addEventListener('keyup', (e) => e.stopPropagation());
-    tzSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
-    tzSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    tzSelect.addEventListener('keyup', (e) => e.stopPropagation());
-    format24Input.addEventListener('pointerdown', (e) => e.stopPropagation());
-    showTzInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
+    // Prevent event propagation for interactive elements
+    [timezoneSelect, button].forEach(el => {
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      el.addEventListener('keydown', (e) => e.stopPropagation());
+      el.addEventListener('keyup', (e) => e.stopPropagation());
+    });
     
     div.appendChild(icon);
     div.appendChild(label);
@@ -300,22 +212,20 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   }
 
   private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean }): void {
+    const displayContainer = document.createElement('div');
+    displayContainer.className = 'clock-display-container';
+    
     const timeDisplay = document.createElement('div');
-    timeDisplay.style.fontSize = '48px';
-    timeDisplay.style.fontWeight = '700';
-    timeDisplay.style.fontFamily = 'monospace';
-    timeDisplay.style.letterSpacing = '2px';
-    timeDisplay.style.color = 'var(--text)';
+    timeDisplay.className = 'clock-time';
     
     const dateDisplay = document.createElement('div');
-    dateDisplay.style.fontSize = '18px';
-    dateDisplay.style.color = 'var(--muted)';
-    dateDisplay.style.fontWeight = '500';
+    dateDisplay.className = 'clock-date';
     
     const timezoneDisplay = document.createElement('div');
-    timezoneDisplay.style.fontSize = '14px';
-    timezoneDisplay.style.color = 'var(--muted)';
-    timezoneDisplay.style.display = content.showTimezone !== false ? 'block' : 'none';
+    timezoneDisplay.className = 'clock-timezone';
+    if (content.showTimezone === false) {
+      timezoneDisplay.style.display = 'none';
+    }
     
     let intervalId: number | null = null;
     
@@ -353,6 +263,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     updateTime();
     intervalId = window.setInterval(updateTime, 1000);
     
+    // Clean up interval when widget is removed
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.removedNodes.forEach((node) => {
@@ -367,9 +278,10 @@ export class ClockWidgetRenderer implements WidgetRenderer {
       observer.observe(div.parentNode, { childList: true });
     }
     
-    div.appendChild(timeDisplay);
-    div.appendChild(dateDisplay);
-    div.appendChild(timezoneDisplay);
+    displayContainer.appendChild(timeDisplay);
+    displayContainer.appendChild(dateDisplay);
+    displayContainer.appendChild(timezoneDisplay);
+    div.appendChild(displayContainer);
   }
 }
 
