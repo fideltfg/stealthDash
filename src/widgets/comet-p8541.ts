@@ -1,7 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 import JustGage from 'justgage';
-import '../css/comet-p8541.css';
 
 
 

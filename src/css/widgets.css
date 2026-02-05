@@ -1,0 +1,2731 @@
+/* ============================================================================
+   CONSOLIDATED WIDGET STYLES
+   ============================================================================
+   All widget CSS consolidated into a single optimized file.
+   Organized into common patterns and widget-specific styles.
+   ============================================================================ */
+
+
+/* ============================================================================
+   COMMON PATTERNS - Configuration Dialogs & Overlays
+   ============================================================================ */
+
+/* Configuration overlays (used by most widgets) */
+.clock-config-overlay,
+.uptime-config-overlay,
+.rss-config-overlay,
+.weather-config-overlay,
+.embed-overlay,
+.chatgpt-settings-overlay,
+.envcanada-settings-overlay,
+.mtnxml-settings-overlay,
+.ha-modal-overlay,
+.comet-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.chatgpt-settings-overlay,
+.envcanada-settings-overlay,
+.mtnxml-settings-overlay,
+.ha-modal-overlay,
+.comet-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Configuration dialogs (common structure) */
+.clock-config-dialog,
+.uptime-config-dialog,
+.rss-config-dialog,
+.weather-config-dialog,
+.embed-dialog {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.chatgpt-settings-modal,
+.envcanada-settings-modal,
+.mtnxml-settings-modal,
+.ha-dialog,
+.comet-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: var(--text);
+}
+
+.clock-config-dialog {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.comet-modal {
+  background: #1a1a1a;
+  max-width: 500px;
+  color: white;
+}
+
+.ha-dialog {
+  min-width: 500px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Dialog titles */
+.clock-config-title,
+.uptime-config-title,
+.rss-config-title,
+.weather-config-title,
+.embed-dialog-title {
+  margin: 0 0 20px 0;
+  color: var(--text);
+}
+
+.chatgpt-settings-modal h3,
+.envcanada-settings-modal h3,
+.mtnxml-settings-modal h3,
+.ha-dialog h3,
+.comet-modal-title,
+.ha-dialog-title {
+  margin: 0 0 20px 0;
+  color: var(--text);
+}
+
+.comet-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Dialog fields */
+.uptime-config-field,
+.rss-config-field,
+.weather-config-field,
+.embed-dialog-field,
+.chatgpt-settings-field,
+.envcanada-settings-field,
+.mtnxml-settings-field,
+.ha-dialog-field,
+.ha-config-field {
+  margin-bottom: 16px;
+}
+
+.weather-config-field,
+.rss-config-field.large-margin,
+.uptime-config-field-last {
+  margin-bottom: 20px;
+}
+
+.comet-modal-group {
+  margin-bottom: 15px;
+}
+
+/* Dialog labels */
+.uptime-config-label,
+.rss-config-label,
+.weather-config-label,
+.embed-dialog-label,
+.chatgpt-settings-label,
+.envcanada-settings-label,
+.mtnxml-settings-label,
+.ha-dialog-label,
+.ha-config-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.chatgpt-settings-label,
+.envcanada-settings-label,
+.mtnxml-settings-label,
+.ha-dialog-label {
+  font-weight: 500;
+}
+
+.chatgpt-settings-label {
+  font-weight: bold;
+}
+
+.ha-config-label {
+  text-align: left;
+}
+
+.comet-form-label,
+.comet-channels-label {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Dialog inputs */
+.uptime-config-input,
+.rss-config-input,
+.weather-config-input,
+.embed-dialog-input,
+.chatgpt-settings-select,
+.chatgpt-settings-textarea,
+.envcanada-settings-input,
+.envcanada-settings-select,
+.mtnxml-settings-input,
+.ha-dialog-input,
+.ha-config-input,
+.comet-modal-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.chatgpt-settings-select,
+.chatgpt-settings-textarea,
+.envcanada-settings-input,
+.envcanada-settings-select,
+.mtnxml-settings-input,
+.ha-dialog-input {
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--background);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.ha-config-input {
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.chatgpt-settings-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.comet-modal-input {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  box-sizing: border-box;
+}
+
+/* Dialog buttons */
+.uptime-config-buttons,
+.rss-config-actions,
+.weather-config-actions,
+.embed-dialog-buttons,
+.chatgpt-button-group,
+.envcanada-settings-buttons,
+.mtnxml-settings-buttons,
+.ha-dialog-buttons,
+.comet-btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.chatgpt-button-group,
+.envcanada-settings-buttons,
+.mtnxml-settings-buttons {
+  margin-top: 24px;
+}
+
+.chatgpt-button-group {
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.comet-btn-group {
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ha-dialog-buttons-spaced {
+  justify-content: space-between;
+}
+
+/* Cancel buttons */
+.uptime-config-button-cancel,
+.rss-config-btn.cancel,
+.weather-config-btn-cancel,
+.embed-dialog-button-cancel,
+.chatgpt-close-button,
+.envcanada-settings-button-close,
+.mtnxml-settings-button-close,
+.ha-dialog-button-cancel,
+.comet-btn-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chatgpt-close-button,
+.envcanada-settings-button-close,
+.mtnxml-settings-button-close,
+.ha-dialog-button-cancel {
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+
+.chatgpt-close-button,
+.envcanada-settings-button,
+.mtnxml-settings-button,
+.ha-dialog-button {
+  flex: 1;
+  padding: 12px;
+}
+
+.comet-btn-cancel {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+}
+
+.comet-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Save buttons */
+.uptime-config-button-save,
+.rss-config-btn.save,
+.weather-config-btn-save,
+.embed-dialog-button-save,
+.envcanada-settings-button-save,
+.mtnxml-settings-button-save,
+.ha-dialog-button-save,
+.comet-btn-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+.envcanada-settings-button-save,
+.mtnxml-settings-button-save,
+.ha-dialog-button-save {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ha-dialog-button-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.envcanada-settings-button,
+.mtnxml-settings-button {
+  flex: 1;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.comet-btn-save {
+  flex: 1;
+  padding: 10px;
+  background: #4CAF50;
+  font-weight: 600;
+}
+
+.comet-btn-save:hover {
+  background: #45a049;
+}
+
+/* Dialog hints */
+.chatgpt-settings-hint,
+.envcanada-settings-hint,
+.mtnxml-settings-hint,
+.ha-dialog-hint,
+.ha-config-hint {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.7;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.envcanada-settings-hint,
+.mtnxml-settings-hint {
+  margin-top: 0;
+}
+
+.ha-dialog-hint {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ha-config-hint {
+  text-align: left;
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.chatgpt-settings-hint a,
+.ha-dialog-hint a {
+  color: #2196F3;
+}
+
+
+/* ============================================================================
+   COMMON PATTERNS - Initial Configuration Screens
+   ============================================================================ */
+
+/* Configuration screen containers */
+.clock-config-screen,
+.uptime-config-screen,
+.rss-setup-container,
+.weather-config-screen,
+.embed-config-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+}
+
+.rss-setup-container,
+.weather-config-screen,
+.embed-config-container {
+  padding: 20px;
+}
+
+/* Configuration icons */
+.clock-config-icon,
+.uptime-config-icon,
+.rss-setup-icon,
+.weather-config-icon,
+.embed-config-icon,
+.envcanada-config-icon,
+.mtnxml-config-icon,
+.ha-config-icon,
+.ha-empty-icon {
+  font-size: 48px;
+}
+
+/* Configuration descriptions */
+.uptime-config-description,
+.rss-setup-label,
+.weather-config-prompt,
+.embed-config-label {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.rss-setup-label,
+.embed-config-label {
+  text-align: center;
+}
+
+/* Configuration inputs */
+.uptime-config-target-input,
+.rss-setup-input,
+.weather-input,
+.embed-config-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.weather-input,
+.embed-config-input {
+  width: 80%;
+}
+
+.rss-setup-input.number,
+.uptime-config-interval-input,
+.uptime-config-timeout-input {
+  width: 100px;
+}
+
+/* Configuration sublabels */
+.rss-setup-sublabel,
+.uptime-config-interval-label,
+.uptime-config-timeout-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* Configuration buttons */
+.uptime-config-button,
+.rss-setup-button,
+.weather-button,
+.embed-config-button {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.uptime-config-button:disabled,
+.rss-setup-button:disabled,
+.weather-button:disabled,
+.embed-config-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rss-setup-button:not(:disabled) {
+  opacity: 1;
+  cursor: pointer;
+}
+
+
+/* ============================================================================
+   COMMON PATTERNS - Loading States
+   ============================================================================ */
+
+.rss-loading,
+.weather-loading,
+.envcanada-loading,
+.mtnxml-loading,
+.comet-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+}
+
+.rss-loading,
+.weather-loading {
+  padding: 20px;
+}
+
+.comet-loading {
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+
+/* ============================================================================
+   COMMON PATTERNS - Error States
+   ============================================================================ */
+
+/* Error containers */
+.rss-error,
+.weather-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--error);
+  text-align: center;
+  padding: 20px;
+}
+
+.envcanada-error,
+.mtnxml-error,
+.comet-error {
+  padding: 20px;
+  text-align: center;
+  color: #f44336;
+}
+
+.comet-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+/* Error icons */
+.rss-error-icon,
+.weather-error-icon,
+.envcanada-error-icon,
+.mtnxml-error-icon,
+.comet-error-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.rss-error-icon {
+  margin-bottom: 12px;
+}
+
+.comet-error-icon {
+  margin-bottom: 10px;
+}
+
+/* Error messages */
+.rss-error-detail,
+.weather-error-message {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.envcanada-error-title,
+.mtnxml-error-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.envcanada-error-message,
+.mtnxml-error-message {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
+
+.envcanada-error-hint,
+.mtnxml-error-hint {
+  font-size: 11px;
+  opacity: 0.6;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.envcanada-retry-button,
+.mtnxml-retry-button {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+/* ============================================================================
+   COMMON PATTERNS - Widget Headers
+   ============================================================================ */
+
+.chatgpt-header,
+.envcanada-header,
+.mtnxml-header {
+  padding: 12px 16px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chatgpt-header {
+  background: var(--primary);
+}
+
+.envcanada-header,
+.mtnxml-header {
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.chatgpt-header-left,
+.envcanada-header-left,
+.mtnxml-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* ============================================================================
+   CLOCK WIDGET
+   ============================================================================ */
+
+.clock-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
+}
+
+.clock-config-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
+.clock-timezone-select {
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 12px;
+}
+
+.clock-format-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.clock-format-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.clock-format-btn[data-selected="true"] {
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.clock-format-btn[data-selected="false"] {
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.clock-format-btn:hover {
+  opacity: 0.8;
+}
+
+.clock-tz-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.clock-tz-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.clock-save-btn {
+  padding: 12px 32px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.clock-save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.clock-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clock-display-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.clock-time {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.clock-date {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.clock-timezone {
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clock-config-dialog .form-group {
+  margin-bottom: 16px;
+}
+
+.clock-config-dialog .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.clock-config-dialog .form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.clock-config-dialog .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.clock-config-dialog .checkbox-label input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.clock-config-dialog .checkbox-label span {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.clock-config-dialog .button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.clock-config-dialog .button-group button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.clock-config-dialog .button-group .cancel-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.clock-config-dialog .button-group .save-btn {
+  border: none;
+  background: var(--accent);
+  color: white;
+}
+
+.clock-config-dialog .button-group button:hover {
+  opacity: 0.8;
+}
+
+
+/* ============================================================================
+   UPTIME WIDGET
+   ============================================================================ */
+
+.uptime-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.uptime-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.uptime-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.uptime-target-label {
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.uptime-chart-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+}
+
+.uptime-stats-container {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.uptime-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 8px;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+}
+
+.uptime-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transition: all 150ms;
+}
+
+.uptime-bar-placeholder {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px 2px 0 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.3;
+}
+
+.uptime-bar-excellent {
+  background: #22c55e;
+}
+
+.uptime-bar-good {
+  background: #84cc16;
+}
+
+.uptime-bar-ok {
+  background: #eab308;
+}
+
+.uptime-bar-slow {
+  background: #f97316;
+}
+
+.uptime-bar-very-slow {
+  background: #ef4444;
+}
+
+.uptime-bar-failed {
+  background: #ef4444;
+  opacity: 1;
+}
+
+.uptime-bar-container:hover .uptime-bar {
+  opacity: 0.8;
+}
+
+.uptime-bar-container:hover .uptime-bar-failed {
+  opacity: 0.5;
+}
+
+.uptime-tooltip {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms;
+  z-index: 1000;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.uptime-bar-container:hover .uptime-tooltip {
+  opacity: 1;
+}
+
+
+/* ============================================================================
+   RSS WIDGET
+   ============================================================================ */
+
+.rss-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rss-feed-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rss-feed-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rss-feed-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rss-feed-description {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rss-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.rss-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition-speed);
+}
+
+.rss-item:hover {
+  background: var(--surface);
+}
+
+.rss-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.rss-item-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.rss-item-description {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+
+/* ============================================================================
+   WEATHER WIDGET
+   ============================================================================ */
+
+.weather-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.weather-current-section {
+  margin-bottom: 20px;
+}
+
+.weather-location {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.weather-current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.weather-icon {
+  font-size: 64px;
+}
+
+.weather-temp-info {
+  flex: 1;
+}
+
+.weather-temp {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.weather-description {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.weather-feels-like {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.weather-additional-info {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.weather-forecast-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.weather-forecast-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weather-forecast-day {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.weather-forecast-day-label {
+  width: 50px;
+  font-weight: 500;
+}
+
+.weather-forecast-icon {
+  font-size: 24px;
+}
+
+.weather-forecast-temps {
+  flex: 1;
+}
+
+.weather-forecast-precip {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+
+/* ============================================================================
+   COMET P8541 WIDGET
+   ============================================================================ */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes flash-error {
+  0%, 100% {
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+  50% {
+    background-color: rgba(244, 67, 54, 0.6);
+    color: #ffffff;
+  }
+}
+
+@keyframes flash-hot {
+  0%, 100% {
+    background-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+  50% {
+    background-color: rgba(244, 67, 54, 0.6);
+    color: #ffffff;
+  }
+}
+
+@keyframes flash-cold {
+  0%, 100% {
+    background-color: rgba(33, 150, 243, 0.3);
+    color: #2196F3;
+  }
+  50% {
+    background-color: rgba(33, 150, 243, 0.6);
+    color: #ffffff;
+  }
+}
+
+.comet-widget-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  position: relative;
+}
+
+.comet-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.comet-header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.comet-header {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.comet-device-info {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 2px;
+}
+
+.comet-charts-link {
+  font-size: 11px;
+  color: #4CAF50;
+  text-decoration: none;
+  margin-top: 4px;
+  display: inline-block;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.comet-charts-link:hover {
+  opacity: 1;
+}
+
+.comet-settings-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  color: var(--text, #ffffff);
+}
+
+.comet-settings-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.display-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.display-container.gauge-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+}
+
+.gauge-container {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.comet-gauge-fallback {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: white;
+}
+
+.comet-gauge-fallback-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.comet-gauge-fallback-name {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.alarm-div {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 120px;
+}
+
+.alarm-flash-error {
+  animation: flash-error 0.5s infinite alternate;
+}
+
+.alarm-flash-hot {
+  animation: flash-hot 0.5s infinite alternate;
+}
+
+.alarm-flash-cold {
+  animation: flash-cold 0.5s infinite alternate;
+}
+
+.display-container.text-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comet-channel {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.comet-channel-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.comet-channel-name {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.comet-channel-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.comet-channel-value.error {
+  color: #f44336;
+  animation: flash-error 0.5s infinite alternate;
+}
+
+.comet-channel-value.hot {
+  color: #f44336;
+  animation: flash-hot 0.5s infinite alternate;
+}
+
+.comet-channel-value.cold {
+  color: #2196F3;
+  animation: flash-cold 0.5s infinite alternate;
+}
+
+.comet-channel-value.normal {
+  color: #4CAF50;
+}
+
+.comet-channel-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.comet-channel-limits {
+  font-size: 11px;
+}
+
+.comet-channel-alarm {
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.comet-channel-alarm.normal {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.comet-error-overlay {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #f44336;
+  font-size: 14px;
+  padding: 20px;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.comet-error-overlay-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: pulse 2s infinite;
+}
+
+.comet-error-overlay-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.comet-error-overlay-message {
+  opacity: 0.8;
+  text-align: center;
+}
+
+.comet-error-overlay-retry {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 12px;
+}
+
+.comet-config-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.comet-config-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.comet-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.comet-form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.comet-form-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: white;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.comet-form-select option {
+  background: #2a2a2a;
+  color: white;
+}
+
+.comet-btn-primary {
+  padding: 10px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.comet-btn-primary:hover {
+  background: #45a049;
+}
+
+.comet-channels-group {
+  margin-bottom: 15px;
+}
+
+.comet-channel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.comet-channel-checkbox {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.comet-channel-name-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+
+/* ============================================================================
+   EMBED WIDGET
+   ============================================================================ */
+
+.embed-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.embed-widget iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+
+/* ============================================================================
+   CHATGPT WIDGET
+   ============================================================================ */
+
+.chatgpt-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chatgpt-settings-button {
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.chatgpt-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatgpt-setup-message {
+  padding: 16px;
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid #FFC107;
+  border-radius: 8px;
+  color: var(--text);
+  text-align: center;
+}
+
+.chatgpt-setup-message-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.chatgpt-setup-message-content {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.chatgpt-setup-message-content a {
+  color: #2196F3;
+}
+
+.chatgpt-input-container {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.chatgpt-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.chatgpt-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 14px;
+  resize: none;
+  min-height: 40px;
+  max-height: 100px;
+  font-family: inherit;
+}
+
+.chatgpt-send-button {
+  padding: 10px 16px;
+  background: var(--shadow);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  transition: opacity 0.2s;
+}
+
+.chatgpt-send-button:disabled {
+  opacity: 0.5;
+}
+
+.chatgpt-message {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chatgpt-message-user {
+  background: var(--accent);
+  color: white;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.chatgpt-message-assistant {
+  background: var(--surface-hover);
+  color: var(--text);
+  max-width: 90%;
+}
+
+.chatgpt-message-content {
+  white-space: pre-wrap;
+}
+
+.chatgpt-message-time {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.chatgpt-typing {
+  padding: 12px;
+  background: var(--surface-hover);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.chatgpt-settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  max-width: 500px;
+}
+
+.chatgpt-settings-label-required {
+  color: #f44336;
+}
+
+.chatgpt-clear-button {
+  padding: 8px 16px;
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  border-radius: 6px;
+  color: #f44336;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chatgpt-pricing-info {
+  padding: 12px;
+  background: rgba(33, 150, 243, 0.2);
+  border: 1px solid #2196F3;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.chatgpt-pricing-info-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.chatgpt-pricing-info-content {
+  opacity: 0.9;
+}
+
+.chatgpt-pricing-info-content a {
+  color: #2196F3;
+}
+
+
+/* ============================================================================
+   ENVIRONMENT CANADA WIDGET
+   ============================================================================ */
+
+.envcanada-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.envcanada-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  padding: 20px;
+}
+
+.envcanada-config-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.envcanada-config-description {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.envcanada-config-form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.envcanada-config-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.envcanada-config-input,
+.envcanada-config-select {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.envcanada-config-button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.envcanada-config-hint {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  max-width: 350px;
+}
+
+.envcanada-config-hint a {
+  color: var(--accent);
+}
+
+.envcanada-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.envcanada-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.envcanada-location {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text);
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--surface-hover) 0%, var(--surface) 100%);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.envcanada-location-icon {
+  font-size: 24px;
+}
+
+.envcanada-entry {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+
+.envcanada-entry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.envcanada-entry-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.envcanada-entry-title-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.envcanada-entry-icon {
+  font-size: 20px;
+}
+
+.envcanada-entry-temp {
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.envcanada-entry-temp-unit {
+  font-size: 16px;
+}
+
+.envcanada-entry-summary {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.85;
+  line-height: 1.6;
+  padding-left: 28px;
+}
+
+.envcanada-last-updated {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+
+/* ============================================================================
+   MOUNTAIN XML WIDGET
+   ============================================================================ */
+
+.mtnxml-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mtnxml-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  padding: 20px;
+}
+
+.mtnxml-config-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.mtnxml-config-description {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.mtnxml-config-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.mtnxml-config-button {
+  padding: 12px 24px;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mtnxml-config-hint {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.mtnxml-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.mtnxml-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mtnxml-resort-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--text);
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+.mtnxml-section {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.mtnxml-section-header {
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.mtnxml-section-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.mtnxml-section-row-label {
+  opacity: 0.7;
+}
+
+.mtnxml-section-row-value {
+  font-weight: 500;
+}
+
+.mtnxml-status-section {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.mtnxml-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.mtnxml-status-items {
+  max-height: 250px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--surface);
+}
+
+.mtnxml-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.mtnxml-status-item-name {
+  flex: 1;
+}
+
+.mtnxml-status-item-difficulty {
+  opacity: 0.6;
+}
+
+.mtnxml-last-updated {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.mtnxml-settings-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mtnxml-settings-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+
+/* ============================================================================
+   TEXT WIDGET
+   ============================================================================ */
+
+.text-widget {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.text-widget.editable {
+  cursor: text;
+}
+
+.text-widget::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+
+/* ============================================================================
+   DOCKER WIDGET
+   ============================================================================ */
+
+#containers-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+@container (min-width: 600px) {
+  #containers-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 900px) {
+  #containers-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container (min-width: 1200px) {
+  #containers-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.docker-container-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 0;
+  height: fit-content;
+}
+
+.docker-container-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.docker-container-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.docker-container-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docker-container-image {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docker-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.docker-status-badge.running {
+  background: #4CAF5022;
+  color: #4CAF50;
+}
+
+.docker-status-badge.stopped,
+.docker-status-badge.exited,
+.docker-status-badge.created {
+  background: #FF980022;
+  color: #FF9800;
+}
+
+.docker-status-badge.paused {
+  background: #2196F322;
+  color: #2196F3;
+}
+
+.docker-container-details {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.docker-container-details > div {
+  margin-bottom: 4px;
+}
+
+.docker-container-details > div:last-child {
+  margin-bottom: 0;
+}
+
+.docker-button-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.docker-btn {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.docker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.docker-btn.loading {
+  color: transparent;
+  pointer-events: none;
+}
+
+.docker-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  top: 50%;
+  left: 50%;
+  margin-left: -6px;
+  margin-top: -6px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: docker-btn-spin 0.6s linear infinite;
+}
+
+@keyframes docker-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.docker-btn.stop:hover:not(:disabled):not(.loading) {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.docker-btn.restart:hover:not(:disabled):not(.loading) {
+  border-color: #FF9800;
+  color: #FF9800;
+}
+
+.docker-btn.start:hover:not(:disabled):not(.loading) {
+  border-color: #4CAF50;
+  color: #4CAF50;
+}
+
+.docker-btn.logs:hover:not(:disabled):not(.loading) {
+  border-color: #2196F3;
+  color: #2196F3;
+}
+
+
+/* ============================================================================
+   UNIFI WIDGET
+   ============================================================================ */
+
+#unifi-clients-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 8px;
+}
+
+@container (min-width: 600px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@container (min-width: 900px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container (min-width: 1200px) {
+  #unifi-clients-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.unifi-client-card {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  height: fit-content;
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.unifi-client-card.inactive {
+  opacity: 0.4;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+
+/* ============================================================================
+   HOME ASSISTANT WIDGET
+   ============================================================================ */
+
+.ha-entities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  min-height: 60px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.ha-entities-grid.ha-drop-highlight {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.ha-main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ha-entity-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  transition: opacity 0.2s, border-color 0.2s, border-width 0.2s;
+  cursor: move;
+}
+
+.ha-entity-card.dragging {
+  opacity: 0.5;
+}
+
+.ha-entity-card.ha-drop-target {
+  border-color: #4CAF50;
+  border-width: 2px;
+}
+
+.ha-entity-name {
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+}
+
+.ha-toggle-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.ha-toggle-wrapper input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ha-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.ha-toggle-slider span {
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.ha-sensor-value {
+  font-size: 16px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.ha-group-section {
+  /* Commented out in original */
+}
+
+.ha-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ha-group-title {
+  font-weight: 600;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ha-group-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ha-group-controls button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  font-size: 12px;
+}
+
+.ha-group-controls button:hover {
+  opacity: 1;
+}
+
+.ha-context-menu {
+  position: fixed;
+  background: rgba(30, 30, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.ha-context-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.ha-context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ha-dropdown {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ha-entity-list {
+  margin-bottom: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+}
+
+.ha-entity-list-item {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.ha-entity-list-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ha-entity-list-item.selected {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.ha-entity-list-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ha-entity-list-item-icon {
+  font-size: 20px;
+}
+
+.ha-entity-list-item-info {
+  flex: 1;
+}
+
+.ha-entity-list-item-name {
+  font-weight: 500;
+}
+
+.ha-entity-list-item-id {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ha-entity-list-item-domain {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+
+.ha-entity-list-message {
+  padding: 20px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.ha-entity-list-error {
+  padding: 20px;
+  text-align: center;
+  color: #f44336;
+}
+
+.ha-config-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.ha-config-title {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-config-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.ha-config-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ha-config-button:hover {
+  opacity: 0.9;
+}
+
+.ha-empty-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.ha-empty-title {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-empty-text {
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.ha-empty-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ha-empty-button:hover {
+  opacity: 0.9;
+}
+
+.ha-manage-entities-list {
+  margin-bottom: 20px;
+}
+
+.ha-entity-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ha-entity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.ha-entity-item-info {
+  flex: 1;
+}
+
+.ha-entity-item-name {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.ha-entity-item-id {
+  font-size: 12px;
+  opacity: 0.7;
+  color: var(--muted);
+}
+
+.ha-entity-item-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.ha-entity-item-button:hover {
+  opacity: 0.9;
+}
+
+.ha-entity-item-button-edit {
+  background: var(--accent);
+  color: white;
+}
+
+.ha-entity-item-button-remove {
+  background: #f44336;
+  color: white;
+}

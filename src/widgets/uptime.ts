@@ -1,6 +1,5 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import '../css/uptime.css';
 
 interface PingResult {
   timestamp: number;
