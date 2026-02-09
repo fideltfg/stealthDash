@@ -618,11 +618,6 @@ class Dashboard {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    // Only select widget if shift key is pressed
-    if (e.shiftKey) {
-      this.selectWidget(widgetId);
-    }
-
     // Check if clicking resize handle
     if (target.classList.contains('resize-handle')) {
       e.preventDefault();
@@ -630,9 +625,10 @@ class Dashboard {
       return;
     }
 
-    // Start drag if clicking header or widget body (only if shift is pressed)
-    if (e.shiftKey && (target.classList.contains('widget-header') || target.classList.contains('widget'))) {
+    // Start drag if clicking header (always allow dragging from header)
+    if (target.classList.contains('widget-header') || target.classList.contains('widget-title')) {
       e.preventDefault();
+      this.selectWidget(widgetId);
       this.startDrag(widgetId, e);
     }
   }

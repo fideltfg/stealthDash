@@ -105,23 +105,32 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   };
   menuDropdown.appendChild(deleteItem);
   
+  // Prevent drag/resize when interacting with menu button and dropdown
+  menuBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  menuDropdown.addEventListener('pointerdown', (e) => e.stopPropagation());
+  
   // Toggle menu on button click
-  menuBtn.onclick = (e) => {
+  menuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    e.preventDefault();
     const isVisible = menuDropdown.style.display === 'block';
     // Close all other widget menus
     document.querySelectorAll('.widget-menu-dropdown').forEach(menu => {
       (menu as HTMLElement).style.display = 'none';
     });
     menuDropdown.style.display = isVisible ? 'none' : 'block';
-  };
+  });
   
-  // Close menu when clicking outside
-  document.addEventListener('click', (e) => {
+  // Close menu when clicking outside (use capture phase to handle this once)
+  const closeMenuHandler = (e: Event) => {
     if (!menuBtn.contains(e.target as Node) && !menuDropdown.contains(e.target as Node)) {
       menuDropdown.style.display = 'none';
     }
-  });
+  };
+  
+  // Store handler reference for cleanup if needed
+  (el as any).__menuCloseHandler = closeMenuHandler;
+  document.addEventListener('click', closeMenuHandler);
   
   headerButtons.appendChild(menuBtn);
   headerButtons.appendChild(menuDropdown);

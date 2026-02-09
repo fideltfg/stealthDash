@@ -267,13 +267,6 @@ class DockerWidgetRenderer implements WidgetRenderer {
         // Initial render - create the structure
         container.innerHTML = `
           <div class="docker-container-wrapper">
-            <div class="docker-header">
-              <div class="docker-header-title">🐋 Docker Containers</div>
-              <div id="container-count" class="docker-container-count">
-                ${containers.length} container${containers.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-            
             <div id="containers-list" class="docker-containers-list"></div>
           </div>
         `;
@@ -370,7 +363,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
     
     // Get existing cards
-    const existingCards = Array.from(containersList.querySelectorAll('.docker-container-card'));
+    const existingCards = Array.from(containersList.querySelectorAll('.card'));
     const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
     const newIds = new Set(containers.map(c => c.Id));
     
@@ -426,44 +419,42 @@ class DockerWidgetRenderer implements WidgetRenderer {
     // Show control buttons if credentials are set OR if using Unix socket (which doesn't need credentials)
     const hasControlAccess = !!credentialId || (host && host.startsWith('unix://'));
 
-    const statusText = container.Status;
-
     return `
-      <div class="docker-container-card" data-container-id="${container.Id}">
-        <div class="docker-container-header">
+      <div class="card" data-container-id="${container.Id}">
+        <div class="card-header">
           <div class="docker-container-info">
-            <div class="docker-container-name">${name}</div>
-            <div class="docker-container-image">${container.Image}</div>
+            <h4>${name}</h4>
+            <h6>${container.Image}</h6>
           </div>
-          <div class="docker-status-badge ${container.State.toLowerCase()}">${container.State}</div>
+          <div class="badge ${container.State.toLowerCase()}">${container.State}</div>
         </div>
 
         <div class="docker-container-details">
-          <div>${statusText}</div>
+          <h6>${container.Status}</h6>
           ${container.Ports && container.Ports.length > 0 ? `
-            <div><i class="fas fa-network-wired"></i> ${this.formatPorts(container.Ports)}</div>
+            <h6><i class="fas fa-network-wired"></i> ${this.formatPorts(container.Ports)}</h6>
           ` : ''}
           ${container.NetworkSettings?.Networks ? `
-            <div><i class="fas fa-globe"></i> ${Object.keys(container.NetworkSettings.Networks).join(', ')}</div>
+            <h6><i class="fas fa-globe"></i> ${Object.keys(container.NetworkSettings.Networks).join(', ')}</h6>
           ` : ''}
         </div>
 
         <div class="docker-button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
-              <button class="docker-btn stop" data-action="stop" data-id="${shortId}">
+              <button class="btn-small btn-danger" data-action="stop" data-id="${shortId}">
                 <i class="fas fa-stop"></i>
               </button>
-              <button class="docker-btn restart" data-action="restart" data-id="${shortId}">
+              <button class="btn-small btn-warning" data-action="restart" data-id="${shortId}">
                 <i class="fas fa-sync-alt"></i>
               </button>
             ` : `
-              <button class="docker-btn start" data-action="start" data-id="${shortId}">
+              <button class="btn-small btn-success" data-action="start" data-id="${shortId}">
                 <i class="fas fa-play"></i>
               </button>
             `}
           ` : ''}
-          <button class="docker-btn logs" data-action="logs" data-id="${shortId}">
+          <button class="btn-small btn-primary" data-action="logs" data-id="${shortId}">
             <i class="fas fa-file-alt"></i>
           </button>
         </div>

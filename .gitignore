@@ -20,3 +20,6 @@ dist
 # Docker volumes (if any)
 volumes/
 copilot-instructions.md
+CSS-COMPONENT-REFERENCE.md
+CSS-PHASE-2-SUMMARY.md
+CSS-REFACTORING-REPORT.md
