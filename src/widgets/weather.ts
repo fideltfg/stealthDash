@@ -12,16 +12,16 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title">Configure Weather</h3>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Location</label>
-        <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="widget-dialog-input" />
+      <h3 class="mb-4"><i class="fas fa-cloud-sun me-2"></i>Configure Weather</h3>
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="form-control" />
       </div>
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">
           Cancel
         </button>
-        <button id="save-btn" class="widget-dialog-button-save">
+        <button id="save-btn" class="btn btn-primary">
           Save
         </button>
       </div>
@@ -70,24 +70,24 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'widget-config-screen padded';
+    inputContainer.className = 'text-center p-4';
     
     const icon = document.createElement('div');
-    icon.className = 'widget-config-icon';
+    icon.className = 'display-1 mb-3';
     icon.innerHTML = '<i class="fas fa-cloud-sun"></i>';
     
     const label = document.createElement('div');
-    label.className = 'weather-config-prompt';
+    label.className = 'h5 mb-3';
     label.textContent = 'Enter location for weather';
     
     const locationInput = document.createElement('input');
     locationInput.type = 'text';
     locationInput.placeholder = 'e.g., London, New York, Tokyo';
-    locationInput.className = 'weather-input';
+    locationInput.className = 'form-control mb-3';
     
     const button = document.createElement('button');
     button.textContent = 'Get Weather';
-    button.className = 'weather-button';
+    button.className = 'btn btn-primary';
     button.disabled = true;
     
     const updateButtonState = () => {
@@ -283,6 +283,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'weather',
+  title: 'Weather',
   name: 'Weather',
   icon: '<i class="fas fa-cloud-sun"></i>',
   description: 'Display weather information',

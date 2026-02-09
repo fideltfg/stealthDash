@@ -5,29 +5,31 @@ export class PasswordRecoveryUI {
   showRequestRecoveryDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'request-recovery-dialog';
-    dialog.className = 'dialog recovery-dialog';
+    dialog.className = 'auth-container';
 
     dialog.innerHTML = `
-      <div class="dialog-container recovery-container">
-        <div class="dialog-header">
-          <h2 class="dialog-title">🔐 Password Recovery</h2>
-          <button id="close-recovery" class="dialog-close-button">×</button>
+      <div class="auth-box">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="mb-0">🔐 Password Recovery</h2>
+          <button id="close-recovery" class="btn-close" aria-label="Close"></button>
         </div>
 
-        <p class="recovery-description">
+        <p class="text-muted mb-4">
           Enter your username or email address and we'll send you a link to reset your password.
         </p>
         
-        <input
-          type="text"
-          id="recovery-input"
-          placeholder="Username or Email"
-          class="form-input recovery-input"
-        />
+        <div class="mb-3">
+          <input
+            type="text"
+            id="recovery-input"
+            placeholder="Username or Email"
+            class="form-control"
+          />
+        </div>
 
-        <button id="send-recovery-btn" class="btn btn-success btn-full recovery-button">Send Recovery Link</button>
+        <button id="send-recovery-btn" class="btn btn-success w-100">Send Recovery Link</button>
 
-        <div id="recovery-message" class="message recovery-message"></div>
+        <div id="recovery-message" class="mt-3"></div>
       </div>
     `;
 
@@ -93,13 +95,13 @@ export class PasswordRecoveryUI {
     if (!validation.valid) {
       // Show error dialog
       dialog.innerHTML = `
-        <div class="dialog-container recovery-container recovery-container-error">
-          <div class="recovery-error-icon">⚠️</div>
-          <h2 class="dialog-title recovery-title-error">Invalid Recovery Link</h2>
-          <p class="recovery-error-text">
+        <div class="auth-box text-center">
+          <div class="display-1 mb-3">⚠️</div>
+          <h2 class="mb-3">Invalid Recovery Link</h2>
+          <p class="text-danger mb-4">
             ${validation.error || 'This recovery link is invalid or has expired.'}
           </p>
-          <button id="close-btn" class="btn btn-success btn-full recovery-button">Close</button>
+          <button id="close-btn" class="btn btn-primary w-100">Close</button>
         </div>
       `;
       
@@ -123,32 +125,34 @@ export class PasswordRecoveryUI {
 
     // Show password reset form
     dialog.innerHTML = `
-      <div class="dialog-container recovery-container">
-        <div class="recovery-reset-header">
-          <div class="recovery-reset-icon">🔐</div>
-          <h2 class="dialog-title">Reset Your Password</h2>
-          <p class="recovery-username">
-            ${validation.username ? `Account: <strong>${validation.username}</strong>` : ''}
-          </p>
+      <div class="auth-box">
+        <div class="text-center mb-4">
+          <div class="display-1 mb-3">🔐</div>
+          <h2>Reset Your Password</h2>
+          ${validation.username ? `<p class="text-muted">Account: <strong>${validation.username}</strong></p>` : ''}
         </div>
 
-        <input
-          type="password"
-          id="new-password"
-          placeholder="New Password (min 6 characters)"
-          class="form-input recovery-input recovery-input-space"
-        />
+        <div class="mb-3">
+          <input
+            type="password"
+            id="new-password"
+            placeholder="New Password (min 6 characters)"
+            class="form-control"
+          />
+        </div>
 
-        <input
-          type="password"
-          id="confirm-password"
-          placeholder="Confirm New Password"
-          class="form-input recovery-input recovery-input-space-large"
-        />
+        <div class="mb-4">
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="Confirm New Password"
+            class="form-control"
+          />
+        </div>
 
-        <button id="reset-btn" class="btn btn-success btn-full recovery-button">Reset Password</button>
+        <button id="reset-btn" class="btn btn-success w-100">Reset Password</button>
 
-        <div id="message" class="message recovery-message"></div>
+        <div id="message" class="mt-3"></div>
       </div>
     `;
 
@@ -216,18 +220,25 @@ export class PasswordRecoveryUI {
     if (typeof dialogOrMessage === 'string' && typeof messageOrType === 'string') {
       const messageDiv = document.querySelector('#message') as HTMLDivElement;
       if (messageDiv) {
-        messageDiv.textContent = dialogOrMessage;
-        messageDiv.className = `message message-${messageOrType} recovery-message`;
-        messageDiv.style.display = 'block';
+        const isSuccess = messageOrType === 'success';
+        messageDiv.innerHTML = `
+          <div class="alert alert-${isSuccess ? 'success' : 'danger'}" role="alert">
+            <i class="fas fa-${isSuccess ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            ${dialogOrMessage}
+          </div>
+        `;
       }
     }
     // Overload 2: showMessage(dialog, message, isSuccess) - for request dialog
     else if (typeof messageOrType === 'string' && typeof isSuccessOrUndefined === 'boolean') {
       const messageDiv = (dialogOrMessage as HTMLElement).querySelector('#recovery-message') as HTMLDivElement;
       if (messageDiv) {
-        messageDiv.textContent = messageOrType;
-        messageDiv.className = `message message-${isSuccessOrUndefined ? 'success' : 'error'} recovery-message`;
-        messageDiv.style.display = 'block';
+        messageDiv.innerHTML = `
+          <div class="alert alert-${isSuccessOrUndefined ? 'success' : 'danger'}" role="alert">
+            <i class="fas fa-${isSuccessOrUndefined ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            ${messageOrType}
+          </div>
+        `;
       }
     }
   }

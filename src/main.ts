@@ -1,3 +1,20 @@
+// Import Bootstrap (base theme only)
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../src/css/theme.scss';
+import '../src/css/style-bootstrap.css';
+import '../src/css/widgets-bootstrap.css';
+
+// Import Bootstrap JavaScript (for modals, dropdowns, etc.)
+import * as bootstrap from 'bootstrap';
+
+// Make bootstrap available globally for widget usage
+declare global {
+  interface Window {
+    bootstrap: typeof bootstrap;
+  }
+}
+window.bootstrap = bootstrap;
+
 import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState } from './types/types';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
 import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId, generateUUID } from './components/storage';
@@ -27,6 +44,7 @@ class Dashboard {
   private touchStartTime: number = 0;
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
+  private themeToggleButton!: HTMLElement;
   private readonly SNAP_DISTANCE = 10; // pixels to snap to nearby edges
   private readonly SNAP_THRESHOLD = 15; // distance at which snapping occurs
   private readonly PAN_LIMIT = 1000; // Maximum distance to pan from origin (in pixels)
@@ -165,7 +183,76 @@ class Dashboard {
         () => this.credentialsUI.showCredentialsDialog(),
         () => this.showHelpDialog()
       );
+      
+      // Add user menu button to top-right
       document.body.appendChild(this.userMenuElement);
+      
+      // Add user menu items to controls container
+      const controlsContainer = document.getElementById('controls-container');
+      if (controlsContainer && this.currentUser) {
+        // Add separator
+        const separator = document.createElement('div');
+        separator.className = 'menu-separator';
+        controlsContainer.appendChild(separator);
+        
+        // My Dashboards
+        const dashboardsBtn = document.createElement('button');
+        dashboardsBtn.innerHTML = '<i class="fas fa-th-large"></i> My Dashboards';
+        dashboardsBtn.addEventListener('click', () => {
+          this.showDashboardManager();
+          this.closeMenu();
+        });
+        controlsContainer.appendChild(dashboardsBtn);
+        
+        // Credentials
+        const credentialsBtn = document.createElement('button');
+        credentialsBtn.innerHTML = '<i class="fas fa-key"></i> Credentials';
+        credentialsBtn.addEventListener('click', () => {
+          this.credentialsUI.showCredentialsDialog();
+          this.closeMenu();
+        });
+        controlsContainer.appendChild(credentialsBtn);
+        
+        // Help
+        const helpBtn = document.createElement('button');
+        helpBtn.innerHTML = '<i class="fas fa-question-circle"></i> Help';
+        helpBtn.addEventListener('click', () => {
+          this.showHelpDialog();
+          this.closeMenu();
+        });
+        controlsContainer.appendChild(helpBtn);
+        
+        // Settings
+        const settingsBtn = document.createElement('button');
+        settingsBtn.innerHTML = '<i class="fas fa-cog"></i> Settings';
+        settingsBtn.addEventListener('click', () => {
+          this.userSettingsUI.showSettingsDialog();
+          this.closeMenu();
+        });
+        controlsContainer.appendChild(settingsBtn);
+        
+        // Admin (if applicable)
+        if (this.currentUser.isAdmin) {
+          const adminBtn = document.createElement('button');
+          adminBtn.innerHTML = '<i class="fas fa-crown"></i> Admin';
+          adminBtn.addEventListener('click', () => {
+            this.adminDashboardUI.showAdminDashboard();
+            this.closeMenu();
+          });
+          controlsContainer.appendChild(adminBtn);
+        }
+        
+        // Logout
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'text-danger';
+        logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+        logoutBtn.addEventListener('click', () => {
+          this.closeMenu();
+          authService.logout();
+          window.location.href = '/';
+        });
+        controlsContainer.appendChild(logoutBtn);
+      }
     } else {
       console.warn('   ❌ Cannot create user menu: currentUser is null');
     }
@@ -319,7 +406,7 @@ class Dashboard {
     // FAB (Add Widget)
     const fab = document.createElement('button');
     fab.className = 'fab';
-    fab.innerHTML = '+';
+    fab.innerHTML = 'Add Widget';
     fab.setAttribute('aria-label', 'Add widget');
     fab.setAttribute('title', 'Add widget');
     fab.addEventListener('click', () => {
@@ -330,7 +417,7 @@ class Dashboard {
     // Fullscreen Toggle
     const fullscreenToggle = document.createElement('button');
     fullscreenToggle.className = 'fullscreen-toggle';
-    fullscreenToggle.innerHTML = '⛶';
+    fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
     fullscreenToggle.setAttribute('aria-label', 'Toggle fullscreen');
     fullscreenToggle.setAttribute('title', 'Toggle fullscreen');
     fullscreenToggle.addEventListener('click', () => {
@@ -339,12 +426,11 @@ class Dashboard {
     });
 
     // Theme Toggle
-    const themeToggle = document.createElement('button');
-    themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = '🌓';
-    themeToggle.setAttribute('aria-label', 'Toggle theme');
-    themeToggle.setAttribute('title', 'Toggle light/dark theme');
-    themeToggle.addEventListener('click', () => {
+    this.themeToggleButton = document.createElement('button');
+    this.themeToggleButton.className = 'theme-toggle';
+    this.updateThemeIcon();
+    this.themeToggleButton.setAttribute('aria-label', 'Toggle theme');
+    this.themeToggleButton.addEventListener('click', () => {
       this.toggleTheme();
       this.closeMenu();
     });
@@ -352,7 +438,7 @@ class Dashboard {
     // Background Toggle
     const backgroundToggle = document.createElement('button');
     backgroundToggle.className = 'background-toggle';
-    backgroundToggle.innerHTML = '◫';
+    backgroundToggle.innerHTML = '<i class="fas fa-th"></i> Background';
     backgroundToggle.setAttribute('aria-label', 'Change background pattern');
     backgroundToggle.setAttribute('title', 'Change background pattern');
     backgroundToggle.addEventListener('click', () => {
@@ -373,7 +459,7 @@ class Dashboard {
     // Reset Zoom Button
     const resetZoomButton = document.createElement('button');
     resetZoomButton.className = 'reset-zoom-toggle';
-    resetZoomButton.innerHTML = '1:1';
+    resetZoomButton.innerHTML = '<i class="fas fa-search-minus"></i> Reset Zoom';
     resetZoomButton.setAttribute('aria-label', 'Reset zoom to 100%');
     resetZoomButton.setAttribute('title', 'Reset zoom to 100%');
     resetZoomButton.addEventListener('click', () => {
@@ -384,7 +470,7 @@ class Dashboard {
     // Reset View Button
     const resetViewButton = document.createElement('button');
     resetViewButton.className = 'reset-view-toggle';
-    resetViewButton.innerHTML = '🎯';
+    resetViewButton.innerHTML = '<i class="fas fa-crosshairs"></i> Reset View';
     resetViewButton.setAttribute('aria-label', 'Reset canvas view');
     resetViewButton.setAttribute('title', 'Reset canvas position to center');
     resetViewButton.addEventListener('click', () => {
@@ -392,12 +478,13 @@ class Dashboard {
       this.closeMenu();
     });
 
-    // Add all buttons to controls container (except lock button)
+    // Add all controls to container in logical order
+    controlsContainer.appendChild(dashboardSwitcher);
     controlsContainer.appendChild(fab);
     controlsContainer.appendChild(fullscreenToggle);
     controlsContainer.appendChild(resetZoomButton);
     controlsContainer.appendChild(resetViewButton);
-    controlsContainer.appendChild(themeToggle);
+    controlsContainer.appendChild(this.themeToggleButton);
     controlsContainer.appendChild(backgroundToggle);
 
     // Dashboard navigation arrows
@@ -416,7 +503,6 @@ class Dashboard {
     nextDashboardBtn.addEventListener('click', () => this.navigateToNextDashboard());
 
     app.appendChild(this.canvas);
-    app.appendChild(dashboardSwitcher);
     app.appendChild(prevDashboardBtn);
     app.appendChild(nextDashboardBtn);
     app.appendChild(menuButton);
@@ -450,13 +536,13 @@ class Dashboard {
     const root = document.documentElement;
 
     if (this.state.theme === 'dark') {
-      root.classList.add('theme-dark');
-      root.classList.remove('theme-light');
+      root.setAttribute('data-bs-theme', 'dark');
     } else if (this.state.theme === 'light') {
-      root.classList.add('theme-light');
-      root.classList.remove('theme-dark');
+      root.setAttribute('data-bs-theme', 'light');
     } else {
-      root.classList.remove('theme-dark', 'theme-light');
+      // System: detect user preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.setAttribute('data-bs-theme', prefersDark ? 'dark' : 'light');
     }
   }
 
@@ -465,7 +551,23 @@ class Dashboard {
     const currentIndex = themes.indexOf(this.state.theme);
     this.state.theme = themes[(currentIndex + 1) % themes.length];
     this.setupTheme();
+    this.updateThemeIcon();
     this.save();
+  }
+
+  private updateThemeIcon(): void {
+    if (!this.themeToggleButton) return;
+    
+    if (this.state.theme === 'light') {
+      this.themeToggleButton.innerHTML = '<i class="fas fa-sun"></i> Light Theme';
+      this.themeToggleButton.setAttribute('title', 'Light theme (click for dark)');
+    } else if (this.state.theme === 'dark') {
+      this.themeToggleButton.innerHTML = '<i class="fas fa-moon"></i> Dark Theme';
+      this.themeToggleButton.setAttribute('title', 'Dark theme (click for system)');
+    } else {
+      this.themeToggleButton.innerHTML = '<i class="fas fa-adjust"></i> System Theme';
+      this.themeToggleButton.setAttribute('title', 'System theme (click for light)');
+    }
   }
 
   private setupBackground(): void {
@@ -492,6 +594,11 @@ class Dashboard {
     // Widget delete event
     window.addEventListener('widget-delete', ((e: CustomEvent) => {
       this.deleteWidget(e.detail.widgetId);
+    }) as EventListener);
+
+    // Widget duplicate event
+    window.addEventListener('widget-duplicate', ((e: CustomEvent) => {
+      this.duplicateWidget(e.detail.widgetId);
     }) as EventListener);
 
     // Widget copy event
@@ -630,8 +737,13 @@ class Dashboard {
       return;
     }
 
-    // Start drag if clicking header or widget body (only if shift is pressed)
-    if (e.shiftKey && (target.classList.contains('widget-header') || target.classList.contains('widget'))) {
+    // Don't start drag if clicking menu button or dropdown
+    if (target.closest('.widget-menu-btn') || target.closest('.widget-menu-dropdown')) {
+      return;
+    }
+
+    // Start drag if clicking header or widget body
+    if (target.classList.contains('widget-header') || target.classList.contains('widget')) {
       e.preventDefault();
       this.startDrag(widgetId, e);
     }
@@ -1823,31 +1935,18 @@ class Dashboard {
 
   private showHelpDialog(): void {
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    overlay.className = 'modal fade show d-block';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
 
-    const modal = document.createElement('div');
-    modal.className = 'modal help-modal';
-    modal.style.maxWidth = '800px';
+    overlay.innerHTML = `
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">❓ Dashboard Help</h2>
+            <button class="btn-close" aria-label="Close" id="close-help"></button>
+          </div>
 
-    const header = document.createElement('div');
-    header.className = 'modal-header';
-
-    const title = document.createElement('h2');
-    title.className = 'modal-title';
-    title.textContent = '❓ Dashboard Help';
-    header.appendChild(title);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close';
-    closeBtn.innerHTML = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', () => overlay.remove());
-    header.appendChild(closeBtn);
-
-    const content = document.createElement('div');
-    content.className = 'modal-content help-content';
-    
-    content.innerHTML = `
+          <div class="modal-body">
       <div class="help-section">
         <h3>🎛️ Dashboard Navigation</h3>
         <ul>
@@ -1867,15 +1966,14 @@ class Dashboard {
         <h3>🎨 Widgets</h3>
         <ul>
           <li><strong>Add Widget:</strong> Click the <strong>+</strong> button (bottom-left)</li>
-          <li><kbd>Shift</kbd> + Click to select a widget</li>
-          <li><kbd>Shift</kbd> + Click and drag the widget anywhere</li>
+          <li><strong>Move Widget:</strong> Click and drag the widget anywhere</li>
           <li><strong>Resize Widget:</strong> Drag the edges or corners (hover to reveal handles)</li>
           <li><strong>Configure:</strong> Click the ⚙️ icon in the widget header</li>
           <li><strong>Copy to Dashboard:</strong> Click the 📋 icon to copy widget to another dashboard</li>
           <li><strong>Delete:</strong> Click the × icon in the widget header</li>
           <li><strong>Keyboard Movement:</strong>
             <ul>
-              <li><kbd>Shift</kbd> + Click to select a widget</li>
+              <li><kbd>Shift</kbd> + Click to select a widget (for keyboard control)</li>
               <li>Arrow keys to move selected widget (hold <kbd>Shift</kbd> for 10x speed)</li>
               <li><kbd>Esc</kbd> to deselect widget</li>
             </ul>
@@ -1942,12 +2040,16 @@ class Dashboard {
           <li>Use the grid snap feature for perfectly aligned widgets</li>
         </ul>
       </div>
+          </div>
+        </div>
+      </div>
     `;
 
-    modal.appendChild(header);
-    modal.appendChild(content);
-    overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    // Close button handler
+    const closeBtn = overlay.querySelector('#close-help') as HTMLButtonElement;
+    closeBtn.addEventListener('click', () => overlay.remove());
 
     // Close on overlay click
     overlay.addEventListener('click', (e) => {

@@ -69,15 +69,11 @@ class UnifiSensorRenderer implements WidgetRenderer {
     }
 
     // Create widget structure
+    container.className = 'unifi-sensor-widget';
     container.innerHTML = `
-      <div class="unifi-sensor-widget widget-container">
-        <div class="widget-header">
-          <h3 class="widget-header-title"><i class="fas fa-thermometer-half"></i> Environmental Sensors</h3>
-          <button class="refresh-btn widget-button">Refresh</button>
-        </div>
-        <div class="sensor-grid widget-grid-auto">
-          <div class="loading widget-loading">Loading sensors...</div>
-        </div>
+      <button class="docker-btn restart"><i class="fa-solid fa-arrows-rotate"></i></button>
+      <div class="sensor-grid widget-grid-auto">
+        <div class="loading widget-loading">Loading sensors...</div>
       </div>
     `;
 
@@ -171,16 +167,16 @@ class UnifiSensorRenderer implements WidgetRenderer {
       const statusText = isConnected ? 'Connected' : 'Disconnected';
 
       return `
-        <div class="widget-card sensor-card">
-          <div class="sensor-card-header">
-            <div class="sensor-icon"><i class="fas fa-thermometer-half"></i></div>
+        <div class="card">
+          <div class="flex items-center gap-12 mb-12">
+            <div class="text-3xl"><i class="fas fa-thermometer-half"></i></div>
             <div class="flex-1">
-              <div class="sensor-name">${sensor.name || 'Environmental Sensor'}</div>
-              <div class="sensor-model">${sensor.model || 'Unknown Model'}</div>
+              <div class="text-lg font-semibold">${sensor.name || 'Environmental Sensor'}</div>
+              <div class="text-sm text-muted">${sensor.model || 'Unknown Model'}</div>
             </div>
           </div>
           
-          <div class="sensor-readings">
+          <div class="flex-col gap-12 mb-12">
             ${showTemp && sensor.stats?.temperature ? this.renderReading(
               'Temperature', 
               this.formatTemperature(sensor.stats.temperature.value, tempUnit)
@@ -197,12 +193,12 @@ class UnifiSensorRenderer implements WidgetRenderer {
             ) : ''}
           </div>
           
-          <div class="sensor-card-footer">
-            <span class="widget-status-badge ${statusClass}">
+          <div class="flex-between pt-12 border-t-1" style="border-top: 1px solid var(--border)">
+            <span class="status-badge ${statusClass}">
               ● ${statusText}
             </span>
             ${sensor.lastSeen ? `
-              <span class="sensor-last-seen">
+              <span class="text-xs text-muted">
                 ${this.formatTimestamp(sensor.lastSeen)}
               </span>
             ` : ''}
@@ -215,7 +211,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
   private renderReading(label: string, value: string): string {
     return `
       <div class="sensor-reading">
-        <span class="sensor-reading-label">${label}</span>
+        <span class="text-sm text-muted">${label}</span>
         <span class="sensor-reading-value">${value}</span>
       </div>
     `;
@@ -249,11 +245,11 @@ class UnifiSensorRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div class="widget-empty-state centered">
-        <div class="widget-config-icon"><i class="fas fa-thermometer-half"></i></div>
-        <h3 class="widget-empty-state-title">Environmental Sensors Not Configured</h3>
-        <p class="widget-empty-state-text">Click the button below to configure your UniFi Protect connection</p>
-        <button class="config-btn widget-button-primary">Configure Widget</button>
+      <div class="text-center p-4">
+        <div class="display-1 mb-3"><i class="fas fa-thermometer-half"></i></div>
+        <h3 class="h5 mb-3">Environmental Sensors Not Configured</h3>
+        <p class="text-muted mb-3">Click the button below to configure your UniFi Protect connection</p>
+        <button class="config-btn btn btn-primary">Configure Widget</button>
       </div>
     `;
 
@@ -279,19 +275,19 @@ class UnifiSensorRenderer implements WidgetRenderer {
     dialog.className = 'widget-overlay';
     
     dialog.innerHTML = `
-      <div class="widget-dialog extended scrollable">
-        <h3 class="widget-dialog-title large">Configure Environmental Sensors</h3>
+      <div class="widget-dialog">
+        <h3 class="mb-4"><i class="fas fa-thermometer-half me-2"></i>Configure Environmental Sensors</h3>
         
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label medium">UniFi Protect Console URL</label>
+        <div class="mb-3">
+          <label class="form-label">UniFi Protect Console URL</label>
           <input type="text" id="sensorHost" value="${content.host || 'https://192.168.1.1'}" 
-            class="widget-dialog-input extended"
+            class="form-control"
             placeholder="https://192.168.1.1">
         </div>
         
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label medium">Credentials</label>
-          <select id="sensorCredential" class="widget-dialog-input extended">
+        <div class="mb-3">
+          <label class="form-label">Credentials</label>
+          <select id="sensorCredential" class="form-select">
             <option value="">Select saved credential...</option>
             ${unifiCreds.map((c: any) => `
               <option value="${c.id}" ${c.id === content.credentialId ? 'selected' : ''}>
@@ -299,44 +295,44 @@ class UnifiSensorRenderer implements WidgetRenderer {
               </option>
             `).join('')}
           </select>
-          <small class="widget-field-hint">
+          <div class="form-text">
             ${unifiCreds.length === 0 ? 'No credentials found. Create one in Credentials Manager first.' : 'Select an existing UniFi Protect credential'}
-          </small>
+          </div>
         </div>
         
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label medium">Temperature Display</label>
-          <select id="sensorTempUnit" class="widget-dialog-input extended">
+        <div class="mb-3">
+          <label class="form-label">Temperature Display</label>
+          <select id="sensorTempUnit" class="form-select">
             <option value="both" ${content.temperatureUnit === 'both' || !content.temperatureUnit ? 'selected' : ''}>Both (°C / °F)</option>
             <option value="celsius" ${content.temperatureUnit === 'celsius' ? 'selected' : ''}>Celsius only</option>
             <option value="fahrenheit" ${content.temperatureUnit === 'fahrenheit' ? 'selected' : ''}>Fahrenheit only</option>
           </select>
         </div>
         
-        <div class="widget-dialog-field">
-          <label class="widget-checkbox-label">
-            <input type="checkbox" id="sensorShowTemp" ${content.showTemperature !== false ? 'checked' : ''} class="widget-checkbox">
-            Show Temperature
-          </label>
-          <label class="widget-checkbox-label">
-            <input type="checkbox" id="sensorShowHumidity" ${content.showHumidity !== false ? 'checked' : ''} class="widget-checkbox">
-            Show Humidity
-          </label>
-          <label class="widget-checkbox-label">
-            <input type="checkbox" id="sensorShowLight" ${content.showLight !== false ? 'checked' : ''} class="widget-checkbox">
-            Show Light Level
-          </label>
+        <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" id="sensorShowTemp" ${content.showTemperature !== false ? 'checked' : ''} class="form-check-input">
+            <label class="form-check-label" for="sensorShowTemp">Show Temperature</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="sensorShowHumidity" ${content.showHumidity !== false ? 'checked' : ''} class="form-check-input">
+            <label class="form-check-label" for="sensorShowHumidity">Show Humidity</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="sensorShowLight" ${content.showLight !== false ? 'checked' : ''} class="form-check-input">
+            <label class="form-check-label" for="sensorShowLight">Show Light Level</label>
+          </div>
         </div>
         
-        <div class="widget-dialog-field large-margin">
-          <label class="widget-dialog-label medium">Refresh Interval (seconds)</label>
+        <div class="mb-3">
+          <label class="form-label">Refresh Interval (seconds)</label>
           <input type="number" id="sensorRefresh" value="${content.refreshInterval || 30}" min="5" max="300"
-            class="widget-dialog-input extended">
+            class="form-control">
         </div>
         
-        <div class="widget-dialog-buttons">
-          <button class="cancel-btn widget-dialog-button-cancel extended">Cancel</button>
-          <button class="save-btn widget-dialog-button-save extended">Save</button>
+        <div class="d-flex gap-2 justify-content-end border-top pt-3">
+          <button class="cancel-btn btn btn-secondary">Cancel</button>
+          <button class="save-btn btn btn-primary">Save</button>
         </div>
       </div>
     `;
@@ -399,6 +395,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
 // Export the widget with metadata
 export const widget = {
   type: 'unifi-sensor',
+  title: 'Environmental Sensors',
   name: 'UniFi Environmental Sensors',
   icon: '<i class="fas fa-thermometer-half"></i>',
   description: 'Monitor temperature, humidity, and light from USL-Environmental devices',

@@ -59,19 +59,15 @@ class PiholeRenderer implements WidgetRenderer {
       clearInterval(existingInterval);
     }
 
+
+ 
+
     // Create widget structure
+    container.className = 'pihole-widget flex flex-column';
     container.innerHTML = `
-      <div class="pihole-widget widget-container flex flex-column">
-        <div class="pihole-header widget-header-row">
-          <h3 class="widget-title flex align-center gap-8">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon" />
-            <span>Pi-hole</span>
-          </h3>
-        </div>
-        <div class="pihole-content flex-1 flex flex-column gap-12">
-          <div class="pihole-loading widget-loading centered">
-            Loading...
-          </div>
+      <div class="pihole-content flex-1 flex flex-column gap-12">
+        <div class="pihole-loading widget-loading centered">
+          Loading...
         </div>
       </div>
     `;
@@ -142,23 +138,22 @@ class PiholeRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
+    container.className = 'text-center p-4';
     container.innerHTML = `
-      <div class="widget-container flex align-center justify-center">
-        <div class="text-center" style="max-width: 400px;">
-          <div class="mb-16">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-logo" />
-          </div>
-          <h3 class="widget-title mb-12">Configure Pi-hole</h3>
-          <p class="widget-text mb-8">
-            Configure your Pi-hole server connection
-          </p>
-          <p class="widget-hint mb-24">
-            💡 Tip: Create credentials first from the user menu (🔐 Credentials)
-          </p>
-          <button id="configure-pihole-btn" class="widget-button primary">
-            Configure
-          </button>
+      <div style="max-width: 400px; margin: 0 auto;">
+        <div class="mb-4">
+          <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="max-width: 120px;" />
         </div>
+        <h3 class="h5 mb-3">Configure Pi-hole</h3>
+        <p class="text-muted mb-3">
+          Configure your Pi-hole server connection
+        </p>
+        <p class="small text-muted mb-4">
+          💡 Tip: Create credentials first from the user menu (🔐 Credentials)
+        </p>
+        <button id="configure-pihole-btn" class="btn btn-primary">
+          Configure
+        </button>
       </div>
     `;
 
@@ -178,37 +173,37 @@ class PiholeRenderer implements WidgetRenderer {
     modal.className = 'modal widget-dialog';
 
     modal.innerHTML = `
-      <div class="pihole-config-header flex align-center gap-12 mb-20">
-        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon-large" />
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" style="width: 48px; height: 48px;" />
         <div>
-          <h2 class="widget-dialog-title">
+          <h2 class="h4 mb-1">
             Pi-hole Configuration
           </h2>
-          <p class="widget-text">
+          <p class="text-muted small mb-0">
             Configure your Pi-hole connection settings
           </p>
         </div>
       </div>
 
-      <form id="pihole-config-form" class="flex flex-column gap-16";
+      <form id="pihole-config-form" class="d-flex flex-column gap-3">
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Saved Credentials *
           </label>
           <select 
             id="pihole-credential-id"
             required
-            class="widget-dialog-input"
+            class="form-select"
           >
             <option value="">Select a saved credential...</option>
           </select>
-          <small class="widget-dialog-hint">
+          <div class="form-text">
             Manage credentials from the user menu (🔐 Credentials)
-          </small>
+          </div>
         </div>
 
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Pi-hole Host *
           </label>
           <input 
@@ -217,20 +212,20 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.host || 'http://192.168.1.100'}"
             placeholder="http://192.168.1.100 or http://pi.hole"
             required
-            class="widget-dialog-input"
+            class="form-control"
           />
-          <small class="widget-dialog-hint">
+          <div class="form-text">
             Example: http://192.168.1.100 or http://pi.hole
-          </small>
+          </div>
         </div>
 
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Display Mode
           </label>
           <select 
             id="pihole-display-mode"
-            class="widget-dialog-input"
+            class="form-select"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
             <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
@@ -239,7 +234,7 @@ class PiholeRenderer implements WidgetRenderer {
         </div>
 
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Refresh Interval (seconds)
           </label>
           <input 
@@ -248,23 +243,23 @@ class PiholeRenderer implements WidgetRenderer {
             value="${content.refreshInterval || 30}"
             min="5"
             max="300"
-            class="widget-dialog-input"
+            class="form-control"
           />
         </div>
 
-        <div class="widget-dialog-buttons">
-          <button 
-            type="submit"
-            class="widget-dialog-button-save full-width"
-          >
-            Save
-          </button>
+        <div class="d-flex gap-2 justify-content-end border-top pt-3">
           <button 
             type="button"
             id="cancel-btn"
-            class="widget-dialog-button-cancel full-width"
+            class="btn btn-secondary"
           >
             Cancel
+          </button>
+          <button 
+            type="submit"
+            class="btn btn-primary"
+          >
+            Save
           </button>
         </div>
       </form>
@@ -532,8 +527,9 @@ class PiholeRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'pihole',
+  title: 'Pi-hole',
   name: 'Pi-hole',
-  icon: '<i class="fas fa-shield-alt"></i>',
+  icon: 'https://docs.pi-hole.net/images/logo.svg',
   description: 'Display Pi-hole DNS statistics and blocking information',
   renderer: new PiholeRenderer(),
   defaultSize: { w: 400, h: 500 },

@@ -345,23 +345,23 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     container.className = 'chatgpt-settings-container';
 
     container.innerHTML = `
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label bold">
-          OpenAI Credentials <span class="chatgpt-settings-label-required">*</span>
+      <div class="mb-3">
+        <label class="form-label fw-bold">
+          OpenAI Credentials <span class="text-danger">*</span>
         </label>
-        <select id="credential-select" class="widget-dialog-input extended">
+        <select id="credential-select" class="form-select">
           <option value="">Select saved credential...</option>
         </select>
-        <small class="chatgpt-settings-hint">
+        <div class="form-text">
           💡 Tip: Create OpenAI credentials from the user menu (🔐 Credentials). Use type: Generic, store your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label bold">
+      <div class="mb-3">
+        <label class="form-label fw-bold">
           Model
         </label>
-        <select id="model" class="widget-dialog-input extended">
+        <select id="model" class="form-select">
           <option value="gpt-3.5-turbo" ${content.model === 'gpt-3.5-turbo' ? 'selected' : ''}>GPT-3.5 Turbo (Cheaper, faster)</option>
           <option value="gpt-4" ${content.model === 'gpt-4' ? 'selected' : ''}>GPT-4 (Most capable)</option>
           <option value="gpt-4-turbo" ${content.model === 'gpt-4-turbo' ? 'selected' : ''}>GPT-4 Turbo (Faster GPT-4)</option>
@@ -372,29 +372,29 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         </select>
       </div>
 
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label bold">
+      <div class="mb-3">
+        <label class="form-label fw-bold">
           System Prompt
         </label>
-        <textarea id="system-prompt" rows="3" class="widget-dialog-input extended textarea">${content.systemPrompt}</textarea>
-        <small class="chatgpt-settings-hint">
+        <textarea id="system-prompt" rows="3" class="form-control">${content.systemPrompt}</textarea>
+        <div class="form-text">
           Define the assistant's behavior and personality
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label bold">
+      <div class="mb-3">
+        <label class="form-label fw-bold">
           Chat History
         </label>
-        <button id="clear-history" class="chatgpt-clear-button">🗑️ Clear All Messages</button>
-        <small class="chatgpt-settings-hint" id="message-count">
+        <button id="clear-history" class="btn btn-outline-danger btn-sm">🗑️ Clear All Messages</button>
+        <div class="form-text" id="message-count">
           ${content.messages.length} message(s) in history
-        </small>
+        </div>
       </div>
 
-      <div class="chatgpt-pricing-info">
-        <div class="chatgpt-pricing-info-title">💡 Pricing Info</div>
-        <div class="chatgpt-pricing-info-content">
+      <div class="alert alert-info small">
+        <div class="fw-bold">💡 Pricing Info</div>
+        <div>
           • GPT-3.5: $0.0015/$0.002 per 1K tokens<br>
           • GPT-4o: $0.005/$0.015 per 1K tokens<br>
           • GPT-4: $0.03/$0.06 per 1K tokens<br>
@@ -472,6 +472,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'chatgpt',
+  title: 'ChatGPT',
   name: 'ChatGPT',
   icon: '<i class="fas fa-robot"></i>',
   description: 'Chat with OpenAI GPT models',

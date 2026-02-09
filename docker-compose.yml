@@ -1,6 +1,7 @@
 services:
   dashboard:
     build: .
+    image: dashboard-dashboard:latest
     container_name: dashboard-app
     ports:
       - "3000:3000"
@@ -20,6 +21,7 @@ services:
 
   ping-server:
     build: ./ping-server
+    image: dashboard-ping-server:latest
     container_name: dashboard-ping-server
     ports:
       - "3001:3001"

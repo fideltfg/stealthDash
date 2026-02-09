@@ -68,18 +68,17 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     }
 
     // Create widget structure
+    container.className = 'calendar-widget flex flex-column';
     container.innerHTML = `
-      <div class="calendar-widget widget-container flex flex-column">
-        <div class="calendar-header widget-header-row">
-          <h3 class="widget-title flex align-center gap-8">
-            <span class="widget-icon-large"><i class="fas fa-calendar"></i></span>
-            <span>Calendar</span>
-          </h3>
-        </div>
-        <div class="calendar-content flex-1 flex flex-column gap-12">
-          <div class="calendar-loading widget-loading centered">
-            Loading events...
-          </div>
+      <div class="calendar-header widget-header-row">
+        <h3 class="widget-title flex align-center gap-8">
+          <span class="widget-icon-large"><i class="fas fa-calendar"></i></span>
+          <span>Calendar</span>
+        </h3>
+      </div>
+      <div class="calendar-content flex-1 flex flex-column gap-12">
+        <div class="calendar-loading widget-loading centered">
+          Loading events...
         </div>
       </div>
     `;
@@ -172,21 +171,20 @@ class GoogleCalendarRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
+    container.className = 'text-center p-4 d-flex align-items-center justify-content-center';
     container.innerHTML = `
-      <div class="widget-container flex align-center justify-center">
-        <div class="text-center" style="max-width: 400px;">
-          <div class="widget-config-icon"><i class="fas fa-calendar"></i></div>
-          <h3 class="widget-title mb-12">Configure Google Calendar</h3>
-          <p class="widget-text mb-8">
-            Connect your Google Calendar to display upcoming events
-          </p>
-          <p class="widget-hint mb-24">
-            <i class="fas fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fas fa-key"></i> Credentials)
-          </p>
-          <button id="configure-calendar-btn" class="widget-button primary">
-            Configure
-          </button>
-        </div>
+      <div style="max-width: 400px;">
+        <div class="display-1 mb-3"><i class="fas fa-calendar"></i></div>
+        <h3 class="h5 mb-3">Configure Google Calendar</h3>
+        <p class="text-muted mb-3">
+          Connect your Google Calendar to display upcoming events
+        </p>
+        <p class="small text-muted mb-4">
+          <i class="fas fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fas fa-key"></i> Credentials)
+        </p>
+        <button id="configure-calendar-btn" class="btn btn-primary">
+          Configure
+        </button>
       </div>
     `;
 
@@ -216,50 +214,50 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
-      <div class="mb-20">
-        <h2 class="widget-dialog-title large">
-          <i class="fas fa-calendar"></i> Google Calendar Configuration
+      <div class="mb-4">
+        <h2 class="h4 mb-2">
+          <i class="fas fa-calendar me-2"></i> Google Calendar Configuration
         </h2>
-        <p class="widget-text">
+        <p class="text-muted small">
           Configure your Google Calendar connection
         </p>
       </div>
 
-      <form id="calendar-config-form" class="flex flex-column gap-16">
+      <form id="calendar-config-form" class="d-flex flex-column gap-3">
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Credentials *
           </label>
           <select 
             id="calendar-credential"
             required
-            class="widget-dialog-input"
+            class="form-select"
           >
-            <option value="" style="background: var(--surface); color: var(--muted);">Select credentials...</option>
+            <option value="">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small class="widget-dialog-hint">
+          <div class="form-text">
             Create Google Calendar credentials from the user menu (<i class="fas fa-key"></i> Credentials). Include Calendar ID and API Key.
-          </small>
+          </div>
         </div>
 
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Display Mode
           </label>
           <select 
             id="calendar-display-mode"
-            class="widget-dialog-input"
+            class="form-select"
           >
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Compact</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Detailed</option>
-            <option value="agenda" ${content.displayMode === 'agenda' ? 'selected' : ''} style="background: var(--surface); color: var(--text);">Agenda</option>
+            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
+            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed</option>
+            <option value="agenda" ${content.displayMode === 'agenda' ? 'selected' : ''}>Agenda</option>
           </select>
         </div>
 
-        <div class="grid grid-2 gap-12">
-          <div>
-            <label class="widget-dialog-label">
+        <div class="row">
+          <div class="col-6">
+            <label class="form-label">
               Max Events
             </label>
             <input 
@@ -268,12 +266,12 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               value="${content.maxEvents || 10}"
               min="1"
               max="50"
-              class="widget-dialog-input"
+              class="form-control"
             />
           </div>
 
-          <div>
-            <label class="widget-dialog-label">
+          <div class="col-6">
+            <label class="form-label">
               Days Ahead
             </label>
             <input 
@@ -282,13 +280,13 @@ class GoogleCalendarRenderer implements WidgetRenderer {
               value="${content.daysAhead || 30}"
               min="1"
               max="365"
-              class="widget-dialog-input"
+              class="form-control"
             />
           </div>
         </div>
 
         <div>
-          <label class="widget-dialog-label">
+          <label class="form-label">
             Refresh Interval (seconds)
           </label>
           <input 
@@ -297,23 +295,23 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             value="${content.refreshInterval || 300}"
             min="60"
             max="3600"
-            class="widget-dialog-input"
+            class="form-control"
           />
         </div>
 
-        <div class="widget-dialog-buttons">
-          <button 
-            type="submit"
-            class="widget-dialog-button-save full-width"
-          >
-            Save
-          </button>
+        <div class="d-flex gap-2 justify-content-end border-top pt-3">
           <button 
             type="button"
             id="cancel-btn"
-            class="widget-dialog-button-cancel full-width"
+            class="btn btn-secondary"
           >
             Cancel
+          </button>
+          <button 
+            type="submit"
+            class="btn btn-primary"
+          >
+            Save
           </button>
         </div>
       </form>
@@ -623,6 +621,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'google-calendar',
+  title: 'Google Calendar',
   name: 'Google Calendar',
   icon: '<i class="fas fa-calendar"></i>',
   description: 'Display upcoming events from Google Calendar',

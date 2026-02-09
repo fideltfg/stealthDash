@@ -17,16 +17,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   private refreshIntervals = new Map<string, number>();
 
   configure(widget: Widget): void {
-    const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
-    if (container) {
-      this.showSettings(container, widget);
-    }
+    // Simply show settings - container is only needed for reload after save
+    this.showSettings(widget);
   }
 
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
     
-    container.className = 'mtnxml-container';
+    container.className = 'd-flex flex-column h-100 p-3 overflow-hidden';
 
     if (!content.feedUrl) {
       this.renderConfigScreen(container, widget);
@@ -41,14 +39,14 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as MTNXMLContent;
     
     const configDiv = document.createElement('div');
-    configDiv.className = 'mtnxml-config';
+    configDiv.className = 'd-flex flex-column justify-content-center h-100 p-3';
 
     configDiv.innerHTML = `
-      <div class="widget-config-icon">⛷️</div>
-      <div class="mtnxml-config-title">
+      <div class="display-1 text-center mb-3">⛷️</div>
+      <div class="h4 text-center mb-2">
         Mountain XML Feed
       </div>
-      <div class="mtnxml-config-description">
+      <div class="text-center text-muted mb-4">
         Display ski resort conditions, lifts, trails, and weather from MTNXML feeds
       </div>
       <input
@@ -56,15 +54,15 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         id="feed-url"
         placeholder="https://example.com/mtn-xml/"
         value="${content.feedUrl || ''}"
-        class="mtnxml-config-input"
+        class="form-control mb-3"
       >
       <button
         id="load-feed"
-        class="mtnxml-config-button"
+        class="btn btn-primary w-100 mb-3"
       >
         Load Feed
       </button>
-      <div class="mtnxml-config-hint">
+      <div class="text-muted small text-center">
         Example: https://banffnorquay.com/mtn-xml/
       </div>
     `;
@@ -106,29 +104,17 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     
     container.innerHTML = '';
 
-    // Header with settings button
-    const header = document.createElement('div');
-    header.className = 'mtnxml-header';
-
-    const headerLeft = document.createElement('div');
-    headerLeft.className = 'mtnxml-header-left';
-    headerLeft.innerHTML = `
-      <span>⛷️</span>
-      <span>Mountain Conditions</span>
-    `;
-
- 
-
-    header.appendChild(headerLeft);
-    container.appendChild(header);
 
     // Content area
     const contentArea = document.createElement('div');
-    contentArea.className = 'mtnxml-content';
+    contentArea.className = 'flex-fill overflow-auto pe-1';
 
     // Loading indicator
     contentArea.innerHTML = `
       <div class="widget-loading padded centered">
+        <div class="spinner-border text-primary me-2" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
         <div>Loading data...</div>
       </div>
     `;
@@ -158,8 +144,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           <div class="widget-error-hint">
             Check browser console (F12) for details
           </div>
-          <button id="retry-btn" class="mtnxml-retry-button">
-            Retry
+          <button id="retry-btn" class="btn btn-primary mt-2">
+            <i class="fas fa-redo me-2"></i>Retry
           </button>
         </div>
       `;
@@ -293,17 +279,18 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'mtnxml-wrapper';
+    wrapper.className = 'd-flex flex-column gap-3';
 
-    // Resort name
+    // Resort name - large prominent header
     const resortName = document.createElement('div');
-    resortName.className = 'mtnxml-resort-name';
+    resortName.className = 'fs-4 fw-bold text-primary text-center p-3 mb-2 rounded border-start border-4 border-primary';
+    resortName.style.background = 'linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.08), rgba(var(--bs-primary-rgb), 0.02))';
     resortName.textContent = data.resort.name || 'Unknown Resort';
     wrapper.appendChild(resortName);
 
     // Snow conditions
     if (content.showSnow && data.snowReport) {
-      const snowSection = this.createSection('🌨️ Snow Report', [
+      const snowSection = this.createSection('<i class="fa-regular fa-snowflake"></i> Snow Report', [
         { label: 'Base Depth', value: `${data.snowReport.baseDepth} ${data.snowReport.units}` },
         { label: 'New Snow (24h)', value: `${data.snowReport.newSnow24} ${data.snowReport.units}` },
         { label: 'New Snow (48h)', value: `${data.snowReport.newSnow48} ${data.snowReport.units}` },
@@ -326,7 +313,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     if (content.showLifts && data.lifts.length > 0) {
       const openLifts = data.lifts.filter((l: any) => l.status === 'open').length;
       const liftsSection = this.createStatusSection(
-        '🚡 Lifts',
+        '<i class="fa-solid fa-cable-car"></i> Lifts',
         data.lifts,
         openLifts,
         data.lifts.length
@@ -338,7 +325,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     if (content.showTrails && data.trails.length > 0) {
       const openTrails = data.trails.filter((t: any) => t.status === 'open').length;
       const trailsSection = this.createStatusSection(
-        '⛷️ Trails',
+        '<i class="fa-solid fa-person-skiing"></i> Trails',
         data.trails,
         openTrails,
         data.trails.length
@@ -349,7 +336,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     // Last updated
     if (content.lastUpdated) {
       const lastUpdate = document.createElement('div');
-      lastUpdate.className = 'mtnxml-last-updated';
+      lastUpdate.className = 'text-center text-muted fst-italic mt-2';
+      lastUpdate.style.fontSize = '0.75rem';
       lastUpdate.textContent = `Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}`;
       wrapper.appendChild(lastUpdate);
     }
@@ -359,23 +347,27 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'mtnxml-section';
+    section.className = 'card border';
 
     const header = document.createElement('div');
-    header.className = 'mtnxml-section-header';
-    header.textContent = title;
+    header.className = 'card-header fw-semibold small bg-body-secondary';
+    header.innerHTML = title;
     section.appendChild(header);
+
+    const listGroup = document.createElement('div');
+    listGroup.className = 'list-group list-group-flush';
 
     items.forEach(item => {
       const row = document.createElement('div');
-      row.className = 'mtnxml-section-row';
+      row.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
       row.innerHTML = `
-        <span class="mtnxml-section-row-label">${item.label}:</span>
-        <span class="mtnxml-section-row-value">${item.value}</span>
+        <span class="small text-secondary">${item.label}:</span>
+        <span class="small fw-semibold">${item.value}</span>
       `;
-      section.appendChild(row);
+      listGroup.appendChild(row);
     });
 
+    section.appendChild(listGroup);
     return section;
   }
 
@@ -391,31 +383,32 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
    */
   private createStatusSection(title: string, items: any[], openCount: number, totalCount: number): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'mtnxml-status-section';
+    section.className = 'card border';
 
     // Header showing title and open/total count
     const header = document.createElement('div');
-    header.className = 'mtnxml-status-header';
-    const statusClass = openCount > 0 ? 'success' : 'error';
+    header.className = 'card-header d-flex justify-content-between align-items-center fw-semibold small bg-body-secondary';
+    const badgeClass = openCount > 0 ? 'bg-success' : 'bg-danger';
     header.innerHTML = `
       <span>${title}</span>
-      <span class="status-count ${statusClass}">${openCount}/${totalCount}</span>
+      <span class="badge ${badgeClass} rounded-pill fw-bold">${openCount}/${totalCount}</span>
     `;
     section.appendChild(header);
 
     // Scrollable container for all items (no limit, shows all lifts/trails)
     const itemsContainer = document.createElement('div');
-    itemsContainer.className = 'mtnxml-status-items';
+    itemsContainer.className = 'list-group list-group-flush overflow-auto';
+    itemsContainer.style.maxHeight = '250px';
 
     // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
-      const statusIcon = item.status === 'open' ? 'fas fa-check-circle success' : 'fas fa-times-circle error';
+      const statusIconClass = item.status === 'open' ? 'fas fa-check-circle text-success' : 'fas fa-times-circle text-danger';
       const row = document.createElement('div');
-      row.className = 'mtnxml-status-item';
+      row.className = 'list-group-item d-flex align-items-center gap-2 py-2 small';
       row.innerHTML = `
-        <i class="${statusIcon}"></i>
-        <span class="mtnxml-status-item-name">${item.name}</span>
-        ${item.difficulty ? `<span class="mtnxml-status-item-difficulty">${item.difficulty}</span>` : ''}
+        <i class="${statusIconClass}" style="width: 16px; flex-shrink: 0;"></i>
+        <span class="flex-fill fw-medium">${item.name}</span>
+        ${item.difficulty ? `<span class="badge bg-secondary text-uppercase" style="font-size: 0.7rem;">${item.difficulty}</span>` : ''}
       `;
       itemsContainer.appendChild(row);
     });
@@ -447,7 +440,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  private showSettings(container: HTMLElement, widget: Widget): void {
+  private showSettings(widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
 
     const overlay = document.createElement('div');
@@ -457,23 +450,24 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     modal.className = 'widget-dialog extended';
 
     modal.innerHTML = `
-      <h3>Mountain XML Settings</h3>
+      <h3 class="mb-4"><i class="fas fa-skiing me-2"></i>Mountain XML Settings</h3>
       
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label medium">
-          Feed URL
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          <i class="fas fa-link me-2"></i>Feed URL
         </label>
         <input
           type="text"
           id="settings-url"
           value="${content.feedUrl}"
-          class="widget-dialog-input extended"
+          class="form-control"
+          placeholder="https://example.com/mtn-xml/"
         >
       </div>
 
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label medium">
-          Refresh Interval (seconds)
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          <i class="fas fa-clock me-2"></i>Refresh Interval (seconds)
         </label>
         <input
           type="number"
@@ -481,47 +475,55 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           value="${content.refreshInterval || 300}"
           min="0"
           step="60"
-          class="widget-dialog-input extended"
+          class="form-control"
         >
-        <small class="mtnxml-settings-hint">Set to 0 to disable auto-refresh</small>
+        <small class="form-text text-muted">Set to 0 to disable auto-refresh</small>
       </div>
 
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label medium">
-          Display Options
+      <div class="mb-4">
+        <label class="form-label fw-semibold">
+          <i class="fas fa-eye me-2"></i>Display Options
         </label>
-        <div class="mtnxml-settings-checkboxes">
-          <label class="mtnxml-settings-checkbox-label">
-            <input type="checkbox" id="settings-snow" ${content.showSnow !== false ? 'checked' : ''}>
-            <span>Show Snow Report</span>
-          </label>
-          <label class="mtnxml-settings-checkbox-label">
-            <input type="checkbox" id="settings-weather" ${content.showWeather !== false ? 'checked' : ''}>
-            <span>Show Weather</span>
-          </label>
-          <label class="mtnxml-settings-checkbox-label">
-            <input type="checkbox" id="settings-lifts" ${content.showLifts !== false ? 'checked' : ''}>
-            <span>Show Lifts</span>
-          </label>
-          <label class="mtnxml-settings-checkbox-label">
-            <input type="checkbox" id="settings-trails" ${content.showTrails !== false ? 'checked' : ''}>
-            <span>Show Trails</span>
-          </label>
+        <div class="d-flex flex-column gap-2 mt-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="settings-snow" ${content.showSnow !== false ? 'checked' : ''}>
+            <label class="form-check-label" for="settings-snow">
+              🌨️ Show Snow Report
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="settings-weather" ${content.showWeather !== false ? 'checked' : ''}>
+            <label class="form-check-label" for="settings-weather">
+              ☁️ Show Weather
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="settings-lifts" ${content.showLifts !== false ? 'checked' : ''}>
+            <label class="form-check-label" for="settings-lifts">
+              🚡 Show Lifts
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="settings-trails" ${content.showTrails !== false ? 'checked' : ''}>
+            <label class="form-check-label" for="settings-trails">
+              ⛷️ Show Trails
+            </label>
+          </div>
         </div>
       </div>
 
-      <div class="widget-dialog-buttons top-margin">
+      <div class="d-grid gap-2">
         <button
           id="settings-save"
-          class="widget-dialog-button-save extended full-width"
+          class="btn btn-primary"
         >
-          Save & Reload
+          <i class="fas fa-save me-2"></i>Save & Reload
         </button>
         <button
           id="settings-close"
-          class="widget-dialog-button-cancel extended full-width"
+          class="btn btn-secondary"
         >
-          Cancel
+          <i class="fas fa-times me-2"></i>Cancel
         </button>
       </div>
     `;
@@ -534,6 +536,12 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const weatherCheck = modal.querySelector('#settings-weather') as HTMLInputElement;
     const liftsCheck = modal.querySelector('#settings-lifts') as HTMLInputElement;
     const trailsCheck = modal.querySelector('#settings-trails') as HTMLInputElement;
+
+    // Prevent drag interactions on form elements
+    [urlInput, refreshInput, snowCheck, weatherCheck, liftsCheck, trailsCheck, saveBtn, closeBtn].forEach(element => {
+      element.addEventListener('pointerdown', (e) => e.stopPropagation());
+      element.addEventListener('mousedown', (e) => e.stopPropagation());
+    });
 
     saveBtn.addEventListener('click', () => {
       content.feedUrl = urlInput.value.trim();
@@ -549,12 +557,21 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       document.dispatchEvent(event);
 
       overlay.remove();
-      // Reload the widget
-      this.renderData(container, widget);
+      
+      // Reload the widget by getting fresh container reference
+      const container = document.querySelector(`#widget-${widget.id} .widget-content`) as HTMLElement;
+      if (container) {
+        this.renderData(container, widget);
+      }
     });
 
     closeBtn.addEventListener('click', () => {
       overlay.remove();
+    });
+
+    // Prevent clicks inside modal from closing it
+    modal.addEventListener('click', (e) => {
+      e.stopPropagation();
     });
 
     overlay.addEventListener('click', (e) => {
@@ -570,6 +587,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'mtnxml',
+  title: 'Mountain Conditions',
   name: 'Mountain XML',
   icon: '<i class="fas fa-skiing"></i>',
   description: 'Display ski resort conditions from MTNXML feeds',

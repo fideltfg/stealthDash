@@ -12,33 +12,29 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title">Configure Image</h3>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Image URL</label>
+      <h3 class="mb-4"><i class="fas fa-image me-2"></i>Configure Image</h3>
+      <div class="mb-3">
+        <label class="form-label">Image URL</label>
         <input type="text" id="image-url" value="${content.src || ''}" placeholder="https://example.com/image.jpg"
-          class="widget-dialog-input" />
+          class="form-control" />
       </div>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Alt Text (optional)</label>
+      <div class="mb-3">
+        <label class="form-label">Alt Text (optional)</label>
         <input type="text" id="image-alt" value="${content.alt || ''}" placeholder="Description of image"
-          class="widget-dialog-input" />
+          class="form-control" />
       </div>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Object Fit</label>
-        <select id="image-fit" class="widget-dialog-input">
+      <div class="mb-4">
+        <label class="form-label">Object Fit</label>
+        <select id="image-fit" class="form-select">
           <option value="contain" ${content.objectFit === 'contain' ? 'selected' : ''}>Contain (fit inside)</option>
           <option value="cover" ${content.objectFit === 'cover' ? 'selected' : ''}>Cover (fill space)</option>
           <option value="fill" ${content.objectFit === 'fill' ? 'selected' : ''}>Fill (stretch)</option>
           <option value="none" ${content.objectFit === 'none' ? 'selected' : ''}>None (original size)</option>
         </select>
       </div>
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
-          Cancel
-        </button>
-        <button id="save-btn" class="widget-dialog-button-save">
-          Save
-        </button>
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-success">Save</button>
       </div>
     `;
 
@@ -107,6 +103,7 @@ export class ImageWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'image',
+  title: 'Image',
   name: 'Image',
   icon: '<i class="fas fa-image"></i>',
   description: 'Display images from URLs',

@@ -48,6 +48,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   getHeaderButtons(widget: Widget): HTMLElement[] {
     const entitiesBtn = document.createElement('button');
     entitiesBtn.innerHTML = '👻';
+    entitiesBtn.title = 'Manage Entities';
     entitiesBtn.className = 'widget-settings-btn';
     entitiesBtn.onclick = (e) => {
       e.stopPropagation();
@@ -55,66 +56,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     };
     entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-    // Add dropdown for bulk actions
-    const dropdown = document.createElement('select');
-    dropdown.className = 'widget-settings-btn ha-dropdown';
-    dropdown.innerHTML = `
-      <option value="">Actions...</option>
-      <option value="all-on">Turn All On</option>
-      <option value="all-off">Turn All Off</option>
-    `;
-    
-    dropdown.addEventListener('change', async (e) => {
-      const action = (e.target as HTMLSelectElement).value;
-      if (!action) return;
-
-      const content = widget.content as HomeAssistantContent;
-      const entities = content.entities || [];
-      const switchesAndLights = entities.filter(e => e.type === 'switch' || e.type === 'light');
-
-      if (switchesAndLights.length === 0) {
-        alert('No switches or lights to control');
-        dropdown.value = '';
-        return;
-      }
-
-      // Confirm action
-      const actionText = action === 'all-on' ? 'turn ON' : 'turn OFF';
-      if (!confirm(`${actionText} all ${switchesAndLights.length} switches/lights?`)) {
-        dropdown.value = '';
-        return;
-      }
-
-      // Disable dropdown during operation
-      dropdown.disabled = true;
-      dropdown.style.opacity = '0.5';
-
-      try {
-        // Toggle all entities
-        for (const entity of switchesAndLights) {
-          await this.toggleEntityToState(entity.entity_id, widget, action === 'all-on');
-        }
-
-        // Refresh states
-        await this.fetchEntityStates(widget);
-        const container = document.querySelector(`[data-widget-id="${widget.id}"]`);
-        if (container) {
-          const grid = container.querySelector('.ha-entities-grid') as HTMLElement;
-          if (grid) {
-            this.updateEntityCards(widget, grid);
-          }
-        }
-      } catch (error) {
-        alert(`Failed to ${actionText} all entities: ${error}`);
-      } finally {
-        // Re-enable dropdown
-        dropdown.disabled = false;
-        dropdown.style.opacity = '1';
-        dropdown.value = '';
-      }
-    });
-    
-    dropdown.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Add group button
     const groupBtn = document.createElement('button');
@@ -127,7 +68,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     };
     groupBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-    return [groupBtn, dropdown, entitiesBtn];
+    return [groupBtn, entitiesBtn];
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
@@ -157,28 +98,28 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     const content = widget.content as HomeAssistantContent;
     const prompt = document.createElement('div');
-    prompt.className = 'config-prompt';
+    prompt.className = 'text-center p-4';
     prompt.innerHTML = `
-      <div class="ha-config-container">
-        <div class="widget-config-icon"><i class="fas fa-home"></i></div>
-        <h3 class="ha-config-title">Configure Home Assistant</h3>
-        <div class="ha-config-form">
-          <div class="widget-dialog-field">
-            <label class="widget-dialog-label left-align">Home Assistant URL:</label>
+      <div class="mx-auto" style="max-width: 400px;">
+        <div class="display-1 mb-3"><i class="fa-regular fa-house"></i></div>
+        <h3 class="h5 mb-3">Configure Home Assistant</h3>
+        <div class="d-flex flex-column gap-3">
+          <div>
+            <label class="form-label text-start w-100">Home Assistant URL:</label>
             <input type="text" id="ha-url" placeholder="http://homeassistant.local:8123" 
-                   class="widget-dialog-input rounded" 
+                   class="form-control" 
                    value="${content.url || ''}">
           </div>
-          <div class="widget-dialog-field">
-            <label class="widget-dialog-label left-align">Credentials:</label>
-            <select id="ha-credential" class="widget-dialog-input rounded">
+          <div>
+            <label class="form-label text-start w-100">Credentials:</label>
+            <select id="ha-credential" class="form-select">
               <option value="">Select saved credential...</option>
             </select>
-            <small class="ha-config-hint">
+            <div class="form-text text-start">
               <i class="fas fa-lightbulb"></i> Tip: Create Home Assistant credentials from the user menu (<i class="fas fa-key"></i> Credentials). Store your long-lived access token from Profile → Security → Long-Lived Access Tokens
-            </small>
+            </div>
           </div>
-          <button id="save-ha-config" class="ha-config-button">
+          <button id="save-ha-config" class="btn btn-primary">
             Save Configuration
           </button>
         </div>
@@ -240,13 +181,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private renderNoEntitiesPrompt(container: HTMLElement, widget: Widget): void {
     const prompt = document.createElement('div');
-    prompt.className = 'no-entities-prompt';
+    prompt.className = 'text-center p-4';
     prompt.innerHTML = `
-      <div class="ha-empty-state">
-        <div class="widget-config-icon"><i class="fas fa-home"></i></div>
-        <h3 class="ha-empty-title">No Entities Added</h3>
-        <p class="ha-empty-text">Add Home Assistant entities to monitor and control.</p>
-        <button id="add-entity-btn" class="ha-empty-button">
+      <div>
+        <div class="display-1 mb-3"><i class="fas fa-home"></i></div>
+        <h3 class="h5 mb-3">No Entities Added</h3>
+        <p class="text-muted mb-3">Add Home Assistant entities to monitor and control.</p>
+        <button id="add-entity-btn" class="btn btn-primary">
           + Add Entity
         </button>
       </div>
@@ -265,7 +206,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create main container
     const mainContainer = document.createElement('div');
-    mainContainer.className = 'ha-main-container';
+    mainContainer.className = 'flex flex-col gap-16';
     container.appendChild(mainContainer);
 
     const entities = content.entities || [];
@@ -274,7 +215,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Render ungrouped entities (without a section header)
     if (entities.length > 0) {
       const ungroupedGrid = document.createElement('div');
-      ungroupedGrid.className = 'ha-entities-grid';
+      ungroupedGrid.className = 'grid-auto gap-8';
 
       // Make it a drop zone for ungrouped entities
       ungroupedGrid.addEventListener('dragover', (e) => {
@@ -316,7 +257,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const groupSection = this.createSection(group.label, group, widget);
       mainContainer.appendChild(groupSection);
       
-      const groupGrid = groupSection.querySelector('.ha-entities-grid') as HTMLElement;
+      const groupGrid = groupSection.querySelector('.grid-auto') as HTMLElement;
       group.entities.forEach((entity, index) => {
         const card = this.createEntityCard(entity, widget, `${group.id}-${index}`, group.id);
         groupGrid.appendChild(card);
@@ -340,7 +281,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const widgetStates = this.entityStates.get(widget.id) || new Map();
     const state = widgetStates.get(entity.entity_id);
     const card = document.createElement('div');
-    card.className = 'ha-entity-card';
+    card.className = 'card flex-between items-center';
     card.draggable = true;
     card.dataset.cardId = cardId;
     card.dataset.entityId = entity.entity_id;
@@ -452,7 +393,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Entity name
     const name = document.createElement('div');
-    name.className = 'ha-entity-name';
+    name.className = 'text-base text-white flex-1';
     name.textContent = entity.display_name || state?.attributes.friendly_name || entity.entity_id;
     card.appendChild(name);
 
@@ -528,7 +469,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     } else if (entity.type === 'sensor') {
       // Display sensor value
       const valueDisplay = document.createElement('div');
-      valueDisplay.className = 'ha-sensor-value';
+      valueDisplay.className = 'text-sm text-white';
       
       if (state) {
         const unit = state.attributes.unit_of_measurement || '';
@@ -565,7 +506,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       if (!state) return;
 
       // Update entity name if we got friendly name from state
-      const nameDiv = htmlCard.querySelector('.ha-entity-name') as HTMLElement;
+      const nameDiv = htmlCard.querySelector('.text-base.text-white.flex-1') as HTMLElement;
       if (nameDiv && state.attributes.friendly_name) {
         nameDiv.textContent = state.attributes.friendly_name;
       }
@@ -590,7 +531,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
       
       // Update sensor value
-      const valueDisplay = htmlCard.querySelector('.ha-sensor-value') as HTMLElement;
+      const valueDisplay = htmlCard.querySelector('.text-sm.text-white') as HTMLElement;
       if (valueDisplay) {
         const unit = state.attributes.unit_of_measurement || '';
         const stateValue = state.state.toLowerCase();
@@ -855,8 +796,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         <label class="widget-dialog-label medium">Search Entity:</label>
         <input type="text" id="entity-search" placeholder="Search entities..." class="widget-dialog-input extended">
       </div>
-      <div id="entity-list-container" class="ha-entity-list">
-        <div class="ha-entity-list-message">
+      <div id="entity-list-container" class="flex flex-col gap-8 p-8 overflow-auto" style="max-height: 300px;">
+        <div class="text-center text-gray">
           Loading entities...
         </div>
       </div>
@@ -888,7 +829,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       if (allEntities.length === 0) {
         entityListContainer.innerHTML = `
-          <div class="ha-entity-list-message">
+          <div class="text-center text-gray">
             No entities found in Home Assistant
           </div>
         `;
@@ -897,7 +838,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
     } catch (error) {
       entityListContainer.innerHTML = `
-        <div class="ha-entity-list-error">
+        <div class="text-center text-gray">
           Failed to load entities: ${error}
         </div>
       `;
@@ -906,7 +847,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     function renderEntityList(entities: HomeAssistantEntity[]) {
       if (entities.length === 0) {
         entityListContainer.innerHTML = `
-          <div class="ha-entity-list-message">
+          <div class="text-center text-gray">
             No matching entities found
           </div>
         `;
@@ -916,25 +857,26 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       entityListContainer.innerHTML = '';
       entities.forEach(entity => {
         const item = document.createElement('div');
-        item.className = 'ha-entity-list-item';
+        item.className = 'card cursor-pointer';
+        item.style.padding = '8px';
         
         const domain = entity.entity_id.split('.')[0];
         const icon = domain === 'light' ? '<i class="fas fa-lightbulb"></i>' : domain === 'switch' ? '<i class="fas fa-plug"></i>' : domain === 'sensor' ? '<i class="fas fa-chart-bar"></i>' : '<i class="fas fa-home"></i>';
         
         item.innerHTML = `
-          <div class="ha-entity-list-item-content">
-            <div class="ha-entity-list-item-icon">${icon}</div>
-            <div class="ha-entity-list-item-info">
-              <div class="ha-entity-list-item-name">${entity.attributes.friendly_name || entity.entity_id}</div>
-              <div class="ha-entity-list-item-id">${entity.entity_id}</div>
+          <div class="flex items-center gap-12">
+            <div class="text-accent">${icon}</div>
+            <div class="flex-1">
+              <div class="text-base text-white">${entity.attributes.friendly_name || entity.entity_id}</div>
+              <div class="text-xs text-gray">${entity.entity_id}</div>
             </div>
-            <div class="ha-entity-list-item-domain">${domain}</div>
+            <div class="status-badge">${domain}</div>
           </div>
         `;
 
         item.addEventListener('click', () => {
           // Deselect all
-          entityListContainer.querySelectorAll('.ha-entity-list-item').forEach(el => {
+          entityListContainer.querySelectorAll('.card').forEach(el => {
             el.classList.remove('selected');
           });
 
@@ -1540,7 +1482,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private createSection(label: string, group: EntityGroup | null, widget: Widget): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'ha-group-section';
+    section.className = 'flex flex-col gap-8';
     
     if (group) {
       section.dataset.groupId = group.id;
@@ -1548,17 +1490,17 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Header with label and controls
     const header = document.createElement('div');
-    header.className = 'ha-group-header';
+    header.className = 'flex-between items-center';
 
     const labelEl = document.createElement('div');
-    labelEl.className = 'ha-group-title';
+    labelEl.className = 'text-lg text-white';
     labelEl.textContent = label;
     header.appendChild(labelEl);
 
     // Controls for groups (not ungrouped)
     if (group) {
       const controls = document.createElement('div');
-      controls.className = 'ha-group-controls';
+      controls.className = 'flex gap-8';
 
       const deleteBtn = document.createElement('button');
       deleteBtn.innerHTML = '🗑️';
@@ -1580,7 +1522,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Grid for entities with drop zone
     const grid = document.createElement('div');
-    grid.className = 'ha-entities-grid';
+    grid.className = 'grid-auto gap-8';
 
     // Make the grid a drop zone
     grid.addEventListener('dragover', (e) => {
@@ -1802,6 +1744,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
 // Plugin configuration
 export const widget = {
+  title: 'Home Assistant',
   type: 'home-assistant',
   name: 'Home Assistant',
   icon: '<i class="fas fa-home"></i>',

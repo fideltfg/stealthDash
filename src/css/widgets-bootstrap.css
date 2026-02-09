@@ -1,0 +1,174 @@
+/* ===== Widget Framework ===== */
+
+.widget {
+  position: absolute;
+  background-color: var(--bs-card-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  transition: box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.widget:hover {
+  box-shadow: var(--bs-box-shadow-lg);
+}
+
+.widget.selected {
+  box-shadow: 0 0 0 2px var(--bs-primary);
+  z-index: 100;
+}
+
+/* Widget Header */
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: var(--bs-card-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+  cursor: move;
+}
+
+.widget-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.widget-title-icon {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.widget-title-icon-img {
+  width: auto;
+  height: 1rem;
+  object-fit: contain;
+}
+
+/* Widget Header Buttons */
+.widget-header-buttons {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.widget-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--bs-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget-menu-btn:hover {
+  opacity: 1;
+  background-color: var(--bs-secondary-bg);
+  border-radius: var(--bs-border-radius-sm);
+}
+
+.widget-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  background-color: var(--bs-dropdown-bg);
+  border: 1px solid var(--bs-dropdown-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  min-width: 180px;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.widget-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.widget-menu-item:hover {
+  background-color: var(--bs-secondary-bg);
+}
+
+.widget-menu-item-danger:hover {
+  background: rgba(var(--bs-danger-rgb), 0.1);
+  color: var(--bs-danger);
+}
+
+.widget-menu-icon {
+  font-size: 1rem;
+  width: 1.25rem;
+}
+
+/* Widget Content */
+.widget-content {
+  width: 100%;
+  height: calc(100% - 49px);
+  padding: 1rem;
+  overflow: auto;
+}
+
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  z-index: 100;
+}
+
+.resize-n, .resize-s { width: 100%; height: 8px; cursor: ns-resize; }
+.resize-e, .resize-w { width: 8px; height: 100%; cursor: ew-resize; }
+.resize-n { top: 0; left: 0; }
+.resize-s { bottom: 0; left: 0; }
+.resize-e { top: 0; right: 0; }
+.resize-w { top: 0; left: 0; }
+.resize-ne, .resize-sw { width: 16px; height: 16px; }
+.resize-nw, .resize-se { width: 16px; height: 16px; }
+.resize-ne { top: 0; right: 0; cursor: nesw-resize; }
+.resize-nw { top: 0; left: 0; cursor: nwse-resize; }
+.resize-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.resize-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+
+/* ===== Comet Widget Gauges ===== */
+/* Preserve gauge styling for comet widget */
+.gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.gauge-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.gauge-label {
+  font-size: 0.875rem;
+  color: var(--bs-secondary-color);
+  margin-top: 0.25rem;
+}

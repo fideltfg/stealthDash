@@ -70,7 +70,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as DockerContent;
 
-    container.className = 'widget-container docker-widget';
+    container.className = 'docker-widget';
 
     // Clear any existing refresh interval
     const existingInterval = this.refreshIntervals.get(widget.id);
@@ -94,11 +94,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
   private showEmptyState(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div class="widget-empty-state centered">
-        <div class="widget-config-icon">🐋</div>
-        <div class="widget-empty-state-title">Docker Containers</div>
-        <div class="widget-empty-state-text">Configure Docker host to monitor containers</div>
-        <button id="configure-docker-btn" class="widget-button-primary">Configure</button>
+      <div class="text-center p-4">
+        <div class="display-1 mb-3">🐋</div>
+        <h5 class="mb-3">Docker Containers</h5>
+        <p class="text-muted mb-3">Configure Docker host to monitor containers</p>
+        <button id="configure-docker-btn" class="btn btn-primary">Configure</button>
       </div>
     `;
 
@@ -127,21 +127,21 @@ class DockerWidgetRenderer implements WidgetRenderer {
       .join('');
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title large docker-title">
-        <i class="fab fa-docker"></i> Docker Configuration
+      <h3 class="mb-4">
+        <i class="fab fa-docker me-2"></i> Docker Configuration
       </h3>
 
-      <div class="docker-config-info">
-        <div class="docker-config-info-title"><i class="fas fa-info-circle"></i> Connection Types:</div>
-        <div class="docker-config-info-text">
+      <div class="alert alert-info mb-3">
+        <div class="fw-bold"><i class="fas fa-info-circle me-2"></i>Connection Types:</div>
+        <div class="small">
           • <strong>Unix Socket</strong> (unix:///var/run/docker.sock): No credentials needed<br>
           • <strong>TCP</strong> (http://host:2375): No credentials needed<br>
           • <strong>TLS</strong> (https://host:2376): Create Docker credentials from user menu
         </div>
       </div>
       
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label medium">
+      <div class="mb-3">
+        <label class="form-label">
           Docker Host URL *
         </label>
         <input 
@@ -149,31 +149,31 @@ class DockerWidgetRenderer implements WidgetRenderer {
           id="docker-host-input" 
           placeholder="unix:///var/run/docker.sock"
           value="${content.host || ''}"
-          class="widget-dialog-input extended"
+          class="form-control"
         />
-        <small class="widget-field-hint">
+        <div class="form-text">
           Examples: unix:///var/run/docker.sock • http://192.168.1.100:2375 • https://docker.example.com:2376
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label medium">
+      <div class="mb-3">
+        <label class="form-label">
           TLS Credentials (Optional)
         </label>
         <select 
           id="docker-credential-select"
-          class="widget-dialog-input extended"
+          class="form-select"
         >
           <option value="">None (local socket or unsecured TCP)</option>
           ${credentialOptions}
         </select>
-        <small class="widget-field-hint">
+        <div class="form-text">
           Only required for HTTPS connections. Create Docker credentials from the <i class="fas fa-user"></i> user menu.
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label medium">
+      <div class="mb-3">
+        <label class="form-label">
           Refresh Interval (seconds)
         </label>
         <input 
@@ -182,27 +182,29 @@ class DockerWidgetRenderer implements WidgetRenderer {
           min="10"
           max="300"
           value="${content.refreshInterval || 30}"
-          class="widget-dialog-input extended"
+          class="form-control"
         />
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-checkbox-label">
+      <div class="mb-3">
+        <div class="form-check">
           <input 
             type="checkbox" 
             id="docker-show-all-input"
             ${content.showAll ? 'checked' : ''}
-            class="widget-checkbox"
+            class="form-check-input"
           />
-          <span>Show all containers (including stopped)</span>
-        </label>
+          <label class="form-check-label" for="docker-show-all-input">
+            Show all containers (including stopped)
+          </label>
+        </div>
       </div>
 
-      <div class="widget-dialog-buttons border-top">
-        <button id="cancel-btn" class="widget-dialog-button-cancel extended">
+      <div class="d-flex gap-2 justify-content-end border-top pt-3">
+        <button id="cancel-btn" class="btn btn-secondary">
           Cancel
         </button>
-        <button id="save-btn" class="widget-dialog-button-save extended">
+        <button id="save-btn" class="btn btn-primary">
           Save
         </button>
       </div>
@@ -267,13 +269,6 @@ class DockerWidgetRenderer implements WidgetRenderer {
         // Initial render - create the structure
         container.innerHTML = `
           <div class="docker-container-wrapper">
-            <div class="docker-header">
-              <div class="docker-header-title">🐋 Docker Containers</div>
-              <div id="container-count" class="docker-container-count">
-                ${containers.length} container${containers.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-            
             <div id="containers-list" class="docker-containers-list"></div>
           </div>
         `;
@@ -371,7 +366,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     
     // Get existing cards
     const existingCards = Array.from(containersList.querySelectorAll('.docker-container-card'));
-    const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
+    //const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
     const newIds = new Set(containers.map(c => c.Id));
     
     // Remove containers that no longer exist
@@ -429,16 +424,16 @@ class DockerWidgetRenderer implements WidgetRenderer {
     const statusText = container.Status;
 
     return `
-      <div class="docker-container-card" data-container-id="${container.Id}">
-        <div class="docker-container-header">
-          <div class="docker-container-info">
-            <div class="docker-container-name">${name}</div>
-            <div class="docker-container-image">${container.Image}</div>
+      <div class="card" data-container-id="${container.Id}">
+        <div class="flex-between mb-8">
+          <div class="flex-1">
+            <div class="text-base font-semibold truncate">${name}</div>
+            <div class="text-sm text-muted truncate">${container.Image}</div>
           </div>
-          <div class="docker-status-badge ${container.State.toLowerCase()}">${container.State}</div>
+          <div class="status-badge ${container.State.toLowerCase()}">${container.State}</div>
         </div>
 
-        <div class="docker-container-details">
+        <div class="flex-col gap-1 text-sm text-muted mb-8">
           <div>${statusText}</div>
           ${container.Ports && container.Ports.length > 0 ? `
             <div><i class="fas fa-network-wired"></i> ${this.formatPorts(container.Ports)}</div>
@@ -448,22 +443,22 @@ class DockerWidgetRenderer implements WidgetRenderer {
           ` : ''}
         </div>
 
-        <div class="docker-button-group">
+        <div class="button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
-              <button class="docker-btn stop" data-action="stop" data-id="${shortId}">
+              <button class="btn stop" data-action="stop" data-id="${shortId}">
                 <i class="fas fa-stop"></i>
               </button>
-              <button class="docker-btn restart" data-action="restart" data-id="${shortId}">
+              <button class="btn restart" data-action="restart" data-id="${shortId}">
                 <i class="fas fa-sync-alt"></i>
               </button>
             ` : `
-              <button class="docker-btn start" data-action="start" data-id="${shortId}">
+              <button class="btn start" data-action="start" data-id="${shortId}">
                 <i class="fas fa-play"></i>
               </button>
             `}
           ` : ''}
-          <button class="docker-btn logs" data-action="logs" data-id="${shortId}">
+          <button class="btn logs" data-action="logs" data-id="${shortId}">
             <i class="fas fa-file-alt"></i>
           </button>
         </div>
@@ -695,8 +690,9 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'docker',
-  name: 'Docker',
-  icon: '<i class="fab fa-docker"></i>',
+  title: 'Docker Containers',
+  name: 'Docker Contrainers',
+  icon: '🐋',
   description: 'Monitor and manage Docker containers',
   renderer: new DockerWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },

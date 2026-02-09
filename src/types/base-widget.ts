@@ -10,6 +10,7 @@ export interface WidgetRenderer {
 export interface WidgetPlugin {
   type: string;
   name: string;
+  title?: string; // Optional title to display in widget header
   icon: string;
   description?: string;
   renderer: WidgetRenderer;

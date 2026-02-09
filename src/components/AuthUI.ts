@@ -13,56 +13,60 @@ export class AuthUI {
   showLoginDialog(): void {
     const dialog = document.createElement('div');
     dialog.id = 'auth-dialog';
-    dialog.className = 'dialog';
+    dialog.className = 'auth-container';
 
     dialog.innerHTML = `
-      <div class="dialog-container auth-container">
-        <h2 class="dialog-title auth-title">
+      <div class="auth-box">
+        <h2 class="auth-title text-center mb-4">
           🔐 Dashboard Login
         </h2>
         
-        <div class="auth-tabs">
-          <button id="login-tab" class="auth-tab active">Login</button>
-          <button id="register-tab" class="auth-tab">Register</button>
-        </div>
+        <ul class="nav nav-tabs mb-4" role="tablist">
+          <li class="nav-item flex-fill" role="presentation">
+            <button id="login-tab" class="nav-link active w-100" type="button">Login</button>
+          </li>
+          <li class="nav-item flex-fill" role="presentation">
+            <button id="register-tab" class="nav-link w-100" type="button">Register</button>
+          </li>
+        </ul>
 
         <!-- Login Form -->
-        <div id="login-form" class="auth-form">
-          <div class="form-group">
+        <div id="login-form">
+          <div class="mb-3">
             <label class="form-label">Username</label>
-            <input type="text" id="login-username" class="form-input">
+            <input type="text" id="login-username" class="form-control" autocomplete="username">
           </div>
-          <div class="form-group">
+          <div class="mb-3">
             <label class="form-label">Password</label>
-            <input type="password" id="login-password" class="form-input">
+            <input type="password" id="login-password" class="form-control" autocomplete="current-password">
           </div>
-          <div class="form-group auth-form-group-right">
-            <a href="#" id="forgot-password-link" class="auth-link">Forgot Password?</a>
+          <div class="mb-3 text-end">
+            <a href="#" id="forgot-password-link" class="text-decoration-none">Forgot Password?</a>
           </div>
-          <button id="login-btn" class="btn btn-primary btn-full">Login</button>
+          <button id="login-btn" class="btn btn-primary w-100">Login</button>
         </div>
 
         <!-- Register Form -->
-        <div id="register-form" class="auth-form hidden">
-          <div class="form-group">
+        <div id="register-form" class="d-none">
+          <div class="mb-3">
             <label class="form-label">Username</label>
-            <input type="text" id="register-username" class="form-input">
+            <input type="text" id="register-username" class="form-control" autocomplete="username">
           </div>
-          <div class="form-group">
+          <div class="mb-3">
             <label class="form-label">Email</label>
-            <input type="email" id="register-email" class="form-input">
+            <input type="email" id="register-email" class="form-control" autocomplete="email">
           </div>
-          <div class="form-group">
+          <div class="mb-3">
             <label class="form-label">Password</label>
-            <input type="password" id="register-password" class="form-input">
-            <small class="form-hint">Minimum 6 characters</small>
+            <input type="password" id="register-password" class="form-control" autocomplete="new-password">
+            <div class="form-text">Minimum 6 characters</div>
           </div>
-          <button id="register-btn" class="btn btn-primary btn-full">Create Account</button>
+          <button id="register-btn" class="btn btn-primary w-100">Create Account</button>
         </div>
 
-        <div id="auth-error" class="message message-error auth-error"></div>
+        <div id="auth-error" class="auth-error mt-3"></div>
 
-        <div class="auth-footer-note">
+        <div class="text-center text-muted mt-4" style="font-size: 0.875rem;">
           Your dashboard data will be saved to your account
         </div>
       </div>
@@ -87,16 +91,16 @@ export class AuthUI {
     loginTab.addEventListener('click', () => {
       loginTab.classList.add('active');
       registerTab.classList.remove('active');
-      loginForm.classList.remove('hidden');
-      registerForm.classList.add('hidden');
+      loginForm.classList.remove('d-none');
+      registerForm.classList.add('d-none');
       this.hideError();
     });
 
     registerTab.addEventListener('click', () => {
       registerTab.classList.add('active');
       loginTab.classList.remove('active');
-      registerForm.classList.remove('hidden');
-      loginForm.classList.add('hidden');
+      registerForm.classList.remove('d-none');
+      loginForm.classList.add('d-none');
       this.hideError();
     });
 
@@ -182,15 +186,19 @@ export class AuthUI {
   private showError(message: string): void {
     const errorDiv = document.querySelector('#auth-error') as HTMLElement;
     if (errorDiv) {
-      errorDiv.textContent = message;
-      errorDiv.classList.add('visible');
+      errorDiv.innerHTML = `
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <div>${message}</div>
+        </div>
+      `;
     }
   }
 
   private hideError(): void {
     const errorDiv = document.querySelector('#auth-error') as HTMLElement;
     if (errorDiv) {
-      errorDiv.classList.remove('visible');
+      errorDiv.innerHTML = '';
     }
   }
 
@@ -199,41 +207,44 @@ export class AuthUI {
     container.className = 'user-menu';
 
     container.innerHTML = `
-      <div id="user-menu-toggle" class="user-avatar-button" title="${user.username}">
-        ${user.username.charAt(0).toUpperCase()}
-      </div>
-      <div id="user-dropdown" class="user-dropdown">
-        <div class="user-dropdown-header">
-          <div class="user-dropdown-username">${user.username}</div>
-          ${user.isAdmin ? '<div class="user-dropdown-admin-badge">👑 Administrator</div>' : ''}
+      <button id="user-menu-toggle" class="user-menu-button d-flex align-items-center gap-2" title="${user.username}">
+        <div class="user-avatar">
+          ${user.username.charAt(0).toUpperCase()}
         </div>
-        <div class="user-dropdown-body">
-          <button id="manage-dashboards-btn" class="user-dropdown-button">
-            <span>🎛️</span>
-            <span>My Dashboards</span>
+        <span class="d-none d-sm-inline">${user.username}</span>
+      </button>
+      <div id="user-dropdown" class="user-menu-dropdown">
+        <div class="px-3 py-2 border-bottom">
+          <div class="fw-semibold">${user.username}</div>
+          ${user.isAdmin ? '<div class="badge bg-warning text-dark mt-1"><i class="fas fa-crown me-1"></i>Administrator</div>' : ''}
+        </div>
+        <div class="py-1">
+          <button id="manage-dashboards-btn" class="user-menu-item">
+            <i class="fas fa-th-large user-menu-icon"></i>
+            <span class="user-menu-label">My Dashboards</span>
           </button>
-          <button id="credentials-btn" class="user-dropdown-button">
-            <span>🔐</span>
-            <span>Credentials</span>
+          <button id="credentials-btn" class="user-menu-item">
+            <i class="fas fa-key user-menu-icon"></i>
+            <span class="user-menu-label">Credentials</span>
           </button>
-          <button id="help-btn" class="user-dropdown-button">
-            <span>❓</span>
-            <span>Help</span>
+          <button id="help-btn" class="user-menu-item">
+            <i class="fas fa-question-circle user-menu-icon"></i>
+            <span class="user-menu-label">Help</span>
           </button>
-          <button id="settings-btn" class="user-dropdown-button user-dropdown-button-primary">
-            <span>⚙️</span>
-            <span>Settings</span>
+          <button id="settings-btn" class="user-menu-item">
+            <i class="fas fa-cog user-menu-icon"></i>
+            <span class="user-menu-label">Settings</span>
           </button>
           ${user.isAdmin ? `
-            <button id="admin-btn" class="user-dropdown-button user-dropdown-button-warning">
-              <span>👑</span>
-              <span>Admin</span>
+            <button id="admin-btn" class="user-menu-item">
+              <i class="fas fa-crown user-menu-icon"></i>
+              <span class="user-menu-label">Admin</span>
             </button>
           ` : ''}
-          <div class="user-dropdown-separator"></div>
-          <button id="logout-btn" class="user-dropdown-button user-dropdown-button-danger">
-            <span>🚪</span>
-            <span>Logout</span>
+          <div class="user-menu-separator"></div>
+          <button id="logout-btn" class="user-menu-item text-danger">
+            <i class="fas fa-sign-out-alt user-menu-icon"></i>
+            <span class="user-menu-label">Logout</span>
           </button>
         </div>
       </div>

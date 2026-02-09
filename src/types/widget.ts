@@ -23,17 +23,43 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   const header = document.createElement('div');
   header.className = 'widget-header';
   
+  // Get plugin and renderer for later use
+  const plugin = getWidgetPlugin(widget.type);
+  const renderer = getWidgetRenderer(widget.type);
+  
   const title = document.createElement('div');
   title.className = 'widget-title';
-  title.textContent = widget.meta?.title || widget.type.toUpperCase();
+  
+  // Add widget icon if available
+  if (plugin?.icon) {
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'widget-title-icon';
+    
+    // Check if icon is an image URL or path
+    const isImageUrl = /^(https?:\/\/|\/|data:image\/)/.test(plugin.icon);
+    
+    if (isImageUrl) {
+      // Create img element for image URLs
+      const img = document.createElement('img');
+      img.src = plugin.icon;
+      img.alt = widget.type;
+      img.className = 'widget-title-icon-img';
+      iconSpan.appendChild(img);
+    } else {
+      // Use innerHTML for HTML/emoji icons
+      iconSpan.innerHTML = plugin.icon;
+    }
+    
+    title.appendChild(iconSpan);
+  }
+  
+  const titleText = document.createElement('span');
+  titleText.textContent = widget.meta?.title || plugin?.title || plugin?.name || widget.type.toUpperCase();
+  title.appendChild(titleText);
   
   // Header buttons container
   const headerButtons = document.createElement('div');
   headerButtons.className = 'widget-header-buttons';
-  
-  // Get plugin and renderer for later use
-  const plugin = getWidgetPlugin(widget.type);
-  const renderer = getWidgetRenderer(widget.type);
   
   // Create menu button
   const menuBtn = document.createElement('button');
@@ -78,6 +104,18 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
     menuDropdown.appendChild(settingsItem);
   }
   
+  // Duplicate menu item
+  const duplicateItem = document.createElement('button');
+  duplicateItem.className = 'widget-menu-item';
+  duplicateItem.innerHTML = '<span class="widget-menu-icon">📑</span><span class="widget-menu-label">Duplicate</span>';
+  duplicateItem.onclick = (e) => {
+    e.stopPropagation();
+    menuDropdown.style.display = 'none';
+    const event = new CustomEvent('widget-duplicate', { detail: { widgetId: widget.id } });
+    window.dispatchEvent(event);
+  };
+  menuDropdown.appendChild(duplicateItem);
+  
   // Copy to Dashboard menu item
   const copyItem = document.createElement('button');
   copyItem.className = 'widget-menu-item';
@@ -104,6 +142,16 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
     }
   };
   menuDropdown.appendChild(deleteItem);
+  
+  // Prevent menu button from triggering widget drag
+  menuBtn.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
+  
+  // Prevent menu dropdown from triggering widget drag
+  menuDropdown.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
   
   // Toggle menu on button click
   menuBtn.onclick = (e) => {

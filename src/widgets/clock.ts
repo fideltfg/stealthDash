@@ -10,32 +10,32 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     overlay.className = 'widget-overlay';
 
     const dialog = document.createElement('div');
-    dialog.className = 'widget-dialog scrollable';
+    dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3>Configure Clock</h3>
-      <div class="form-group">
-        <label>Timezone</label>
-        <select id="clock-timezone">
+      <h3 class="mb-4"><i class="fas fa-clock me-2"></i>Configure Clock</h3>
+      <div class="mb-3">
+        <label class="form-label">Timezone</label>
+        <select id="clock-timezone" class="form-select">
           <option value="">-- Select Timezone --</option>
           ${TIMEZONES.map(tz => `<option value="${tz}" ${content.timezone === tz ? 'selected' : ''}>${tz.replace(/_/g, ' ')}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="clock-24h" ${content.format24h ? 'checked' : ''} />
-          <span>Use 24-hour format</span>
-        </label>
+      <div class="mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="clock-24h" ${content.format24h ? 'checked' : ''} />
+          <label class="form-check-label" for="clock-24h">Use 24-hour format</label>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="clock-show-tz" ${content.showTimezone !== false ? 'checked' : ''} />
-          <span>Show timezone</span>
-        </label>
+      <div class="mb-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="clock-show-tz" ${content.showTimezone !== false ? 'checked' : ''} />
+          <label class="form-check-label" for="clock-show-tz">Show timezone</label>
+        </div>
       </div>
-      <div class="button-group">
-        <button id="cancel-btn" class="cancel-btn">Cancel</button>
-        <button id="save-btn" class="save-btn">Save</button>
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-primary">Save</button>
       </div>
     `;
 
@@ -94,83 +94,46 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   }
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
-    const icon = document.createElement('div');
-    icon.className = 'widget-config-icon';
-    icon.textContent = '🕐';
+    div.innerHTML = `
+      <div class="text-center p-4">
+        <div class="widget-config-icon mb-3">🕐</div>
+        <h5 class="mb-3">Configure Clock</h5>
+        
+        <div class="mb-3">
+          <label class="form-label">Timezone:</label>
+          <select id="clock-timezone-select" class="form-select">
+            <option value="" disabled selected>-- Select Timezone --</option>
+            ${TIMEZONES.map(tz => `<option value="${tz}">${tz.replace(/_/g, ' ')}</option>`).join('')}
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Time Format:</label>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="format" id="format-24h" value="24" checked>
+            <label class="btn btn-outline-primary" for="format-24h">24-hour</label>
+            <input type="radio" class="btn-check" name="format" id="format-12h" value="12">
+            <label class="btn btn-outline-primary" for="format-12h">12-hour</label>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="show-tz-checkbox" checked>
+            <label class="form-check-label" for="show-tz-checkbox">Show timezone name</label>
+          </div>
+        </div>
+        
+        <button id="clock-save-btn" class="btn btn-primary" disabled>
+          <i class="fas fa-check me-2"></i>Create Clock
+        </button>
+      </div>
+    `;
     
-    const label = document.createElement('div');
-    label.className = 'clock-config-title';
-    label.textContent = 'Configure Clock';
-    
-    const tzLabel = document.createElement('div');
-    tzLabel.className = 'clock-config-label';
-    tzLabel.textContent = 'Timezone:';
-    
-    const timezoneSelect = document.createElement('select');
-    timezoneSelect.className = 'clock-timezone-select';
-    
-    const placeholderOption = document.createElement('option');
-    placeholderOption.value = '';
-    placeholderOption.textContent = '-- Select Timezone --';
-    placeholderOption.disabled = true;
-    placeholderOption.selected = true;
-    timezoneSelect.appendChild(placeholderOption);
-    
-    TIMEZONES.forEach(tz => {
-      const option = document.createElement('option');
-      option.value = tz;
-      option.textContent = tz.replace(/_/g, ' ');
-      timezoneSelect.appendChild(option);
-    });
-    
-    const formatLabel = document.createElement('div');
-    formatLabel.className = 'clock-config-label';
-    formatLabel.textContent = 'Time Format:';
-    
-    const formatContainer = document.createElement('div');
-    formatContainer.className = 'clock-format-container';
-    
-    const format24h = document.createElement('button');
-    format24h.className = 'clock-format-btn';
-    format24h.textContent = '24-hour';
-    format24h.dataset.selected = 'true';
-    
-    const format12h = document.createElement('button');
-    format12h.className = 'clock-format-btn';
-    format12h.textContent = '12-hour';
-    format12h.dataset.selected = 'false';
-    
-    format24h.addEventListener('click', () => {
-      format24h.dataset.selected = 'true';
-      format12h.dataset.selected = 'false';
-    });
-    
-    format12h.addEventListener('click', () => {
-      format12h.dataset.selected = 'true';
-      format24h.dataset.selected = 'false';
-    });
-    
-    formatContainer.appendChild(format24h);
-    formatContainer.appendChild(format12h);
-    
-    const showTzLabel = document.createElement('label');
-    showTzLabel.className = 'clock-tz-toggle';
-    
-    const showTzCheckbox = document.createElement('input');
-    showTzCheckbox.className = 'clock-tz-checkbox';
-    showTzCheckbox.type = 'checkbox';
-    showTzCheckbox.checked = true;
-    
-    const showTzText = document.createElement('span');
-    showTzText.textContent = 'Show timezone name';
-    
-    showTzLabel.appendChild(showTzCheckbox);
-    showTzLabel.appendChild(showTzText);
-    
-    const button = document.createElement('button');
-    button.className = 'clock-save-btn';
-    button.textContent = 'Create Clock';
-    button.disabled = true;
+    const timezoneSelect = div.querySelector('#clock-timezone-select') as HTMLSelectElement;
+    const button = div.querySelector('#clock-save-btn') as HTMLButtonElement;
+    const format24Input = div.querySelector('#format-24h') as HTMLInputElement;
+    const showTzCheckbox = div.querySelector('#show-tz-checkbox') as HTMLInputElement;
     
     timezoneSelect.addEventListener('change', () => {
       button.disabled = !timezoneSelect.value;
@@ -178,7 +141,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     
     button.addEventListener('click', () => {
       if (timezoneSelect.value) {
-        const is24h = format24h.dataset.selected === 'true';
+        const is24h = format24Input.checked;
         const showTz = showTzCheckbox.checked;
         const event = new CustomEvent('widget-update', {
           detail: { 
@@ -200,15 +163,6 @@ export class ClockWidgetRenderer implements WidgetRenderer {
       el.addEventListener('keydown', (e) => e.stopPropagation());
       el.addEventListener('keyup', (e) => e.stopPropagation());
     });
-    
-    div.appendChild(icon);
-    div.appendChild(label);
-    div.appendChild(tzLabel);
-    div.appendChild(timezoneSelect);
-    div.appendChild(formatLabel);
-    div.appendChild(formatContainer);
-    div.appendChild(showTzLabel);
-    div.appendChild(button);
   }
 
   private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean }): void {
@@ -287,6 +241,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'clock',
+  title: 'Clock',
   name: 'Clock',
   icon: '<i class="fas fa-clock"></i>',
   description: 'World clock with timezone support',

@@ -95,19 +95,18 @@ class UnifiProtectRenderer implements WidgetRenderer {
     }
 
     // Create widget structure
+    container.className = 'unifi-protect-widget flex flex-column';
     container.innerHTML = `
-      <div class="unifi-protect-widget widget-container flex flex-column">
-        <div class="protect-header widget-header-row">
-          <h3 class="widget-title flex align-center gap-8">
-            <span class="widget-icon-large"><i class="fas fa-video"></i></span>
-            <span>UniFi Protect</span>
-          </h3>
-          <button class="refresh-btn widget-button secondary">🔄 Refresh</button>
-        </div>
-        <div class="protect-content flex-1 flex flex-column gap-12 overflow-auto">
-          <div class="protect-loading widget-loading centered">
-            Loading cameras and detections...
-          </div>
+      <div class="protect-header widget-header-row">
+        <h3 class="widget-title flex align-center gap-8">
+          <span class="widget-icon-large"><i class="fas fa-video"></i></span>
+          <span>UniFi Protect</span>
+        </h3>
+        <button class="refresh-btn widget-button secondary">🔄 Refresh</button>
+      </div>
+      <div class="protect-content flex-1 flex flex-column gap-12 overflow-auto">
+        <div class="protect-loading widget-loading centered">
+          Loading cameras and detections...
         </div>
       </div>
     `;
@@ -181,17 +180,16 @@ class UnifiProtectRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
+    container.className = 'flex flex-column align-center justify-center text-center';
     container.innerHTML = `
-      <div class="widget-container flex flex-column align-center justify-center text-center">
-        <div class="widget-config-icon"><i class="fas fa-video"></i></div>
-        <h3 class="widget-title mb-12">UniFi Protect Not Configured</h3>
-        <p class="widget-text mb-20" style="max-width: 400px;">
-          Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
-        </p>
-        <button class="config-btn widget-button primary">
-          Configure Widget
-        </button>
-      </div>
+      <div class="widget-config-icon"><i class="fas fa-video"></i></div>
+      <h3 class="widget-title mb-12">UniFi Protect Not Configured</h3>
+      <p class="widget-text mb-20" style="max-width: 400px;">
+        Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
+      </p>
+      <button class="config-btn widget-button primary">
+        Configure Widget
+      </button>
     `;
 
     const configBtn = container.querySelector('.config-btn');
@@ -219,27 +217,27 @@ class UnifiProtectRenderer implements WidgetRenderer {
     modal.style.maxWidth = '600px';
 
     modal.innerHTML = `
-      <h2 class="widget-dialog-title large mb-20">
-        Configure UniFi Protect Widget
+      <h2 class="mb-4">
+        <i class="fas fa-video me-2"></i>Configure UniFi Protect Widget
       </h2>
       
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           UniFi Protect Console URL *
         </label>
         <input type="text" id="host-input" placeholder="https://192.168.1.1" value="${content.host || ''}"
-          class="widget-dialog-input">
-        <small class="widget-dialog-hint">
+          class="form-control">
+        <div class="form-text">
           URL of your UniFi Protect console (Cloud Key, UDM Pro, UNVR, etc.)
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           Credentials *
         </label>
         <select id="credential-select" 
-          class="widget-dialog-input">
+          class="form-select">
           <option value="">Select saved credentials...</option>
           ${unifiProtectCreds.map((cred: any) => 
             `<option value="${cred.id}" ${content.credentialId === cred.id ? 'selected' : ''}>
@@ -247,58 +245,58 @@ class UnifiProtectRenderer implements WidgetRenderer {
             </option>`
           ).join('')}
         </select>
-        <small class="widget-dialog-hint">
+        <div class="form-text">
           Select credentials from Credentials Manager (local admin user recommended)
-        </small>
+        </div>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           Display Mode
         </label>
         <select id="display-mode-select" 
-          class="widget-dialog-input">
+          class="form-select">
           <option value="both" ${content.displayMode === 'both' ? 'selected' : ''}>Cameras & Detections</option>
           <option value="cameras" ${content.displayMode === 'cameras' ? 'selected' : ''}>Cameras Only</option>
           <option value="detections" ${content.displayMode === 'detections' ? 'selected' : ''}>Detections Only</option>
         </select>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           Camera View Mode
         </label>
         <select id="view-mode-select" 
-          class="widget-dialog-input">
+          class="form-select">
           <option value="snapshots" ${content.viewMode === 'snapshots' ? 'selected' : ''}>Snapshots</option>
           <option value="streams" ${content.viewMode === 'streams' ? 'selected' : ''}>Live Streams</option>
           <option value="both" ${content.viewMode === 'both' ? 'selected' : ''}>Both</option>
         </select>
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           Maximum Detections
         </label>
         <input type="number" id="max-detections-input" value="${content.maxDetections || 10}" min="1" max="50"
-          class="widget-dialog-input">
+          class="form-control">
       </div>
 
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">
+      <div class="mb-3">
+        <label class="form-label">
           Refresh Interval (seconds)
         </label>
         <input type="number" id="refresh-input" value="${content.refreshInterval || 30}" min="5" max="300"
-          class="widget-dialog-input">
+          class="form-control">
       </div>
 
-      <div class="widget-dialog-buttons top-margin">
+      <div class="d-flex gap-2 justify-content-end border-top pt-3">
         <button id="cancel-btn" 
-          class="widget-dialog-button-cancel">
+          class="btn btn-secondary">
           Cancel
         </button>
         <button id="save-btn" 
-          class="widget-dialog-button-save">
+          class="btn btn-primary">
           Save Configuration
         </button>
       </div>
@@ -410,30 +408,31 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : '';
 
     return `
-      <div class="protect-detection-card">
+      <div class="card flex gap-12">
         ${thumbnailUrl ? `
-          <div class="protect-detection-thumbnail">
+          <div class="flex-shrink-0" style="width: 120px; height: 90px;">
             <img src="${thumbnailUrl}" 
-              class="protect-detection-img"
-              onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'protect-no-image\\'>No Image</div>'">
+              class="w-100 h-100 rounded-8"
+              style="object-fit: cover;"
+              onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-100 text-gray\\'>No Image</div>'">
           </div>
         ` : ''}
         <div class="flex-1 truncate">
-          <div class="flex space-between align-start mb-4">
-            <div class="protect-detection-camera">${cameraName}</div>
-            <div class="protect-detection-time">${timeAgo}</div>
+          <div class="flex-between items-start mb-4">
+            <div class="text-base text-white">${cameraName}</div>
+            <div class="text-xs text-gray">${timeAgo}</div>
           </div>
-          <div class="flex align-center gap-8 mb-4">
-            <span class="protect-detection-badge">
+          <div class="flex items-center gap-8 mb-4">
+            <span class="status-badge">
               ${detectionType}
             </span>
             ${event.score ? `
-              <span class="protect-detection-confidence">
+              <span class="text-xs text-gray">
                 ${Math.round(event.score)}% confidence
               </span>
             ` : ''}
           </div>
-          <div class="protect-detection-timestamp">
+          <div class="text-xs text-gray">
             ${timestamp.toLocaleString()}
           </div>
         </div>
@@ -600,6 +599,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'unifi-protect',
+  title: 'UniFi Protect',
   name: 'UniFi Protect',
   icon: '<i class="fas fa-video"></i>',
   description: 'View UniFi Protect cameras and motion detections',

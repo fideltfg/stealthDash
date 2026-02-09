@@ -22,27 +22,27 @@ export class RssWidgetRenderer implements WidgetRenderer {
     dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title">Configure RSS Feed</h3>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Feed URL</label>
+      <h3 class="mb-4"><i class="fas fa-rss me-2"></i>Configure RSS Feed</h3>
+      <div class="mb-3">
+        <label class="form-label">Feed URL</label>
         <input type="text" id="rss-url" value="${content.feedUrl || ''}" placeholder="https://example.com/feed.xml"
-          class="widget-dialog-input" />
+          class="form-control" />
       </div>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Max Items</label>
+      <div class="mb-3">
+        <label class="form-label">Max Items</label>
         <input type="number" id="rss-max-items" value="${content.maxItems || 10}" min="1" max="50"
-          class="widget-dialog-input" />
+          class="form-control" />
       </div>
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">Refresh Interval (minutes, 0 to disable)</label>
+      <div class="mb-3">
+        <label class="form-label">Refresh Interval (minutes, 0 to disable)</label>
         <input type="number" id="rss-refresh" value="${content.refreshInterval !== undefined ? content.refreshInterval : 5}" min="0" max="60"
-          class="widget-dialog-input" />
+          class="form-control" />
       </div>
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">
           Cancel
         </button>
-        <button id="save-btn" class="widget-dialog-button-save">
+        <button id="save-btn" class="btn btn-primary">
           Save
         </button>
       </div>
@@ -117,45 +117,45 @@ export class RssWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'widget-config-screen padded';
+    inputContainer.className = 'text-center p-4';
     
     const icon = document.createElement('div');
-    icon.className = 'widget-config-icon';
+    icon.className = 'display-1 mb-3';
     icon.innerHTML = '<i class="fas fa-rss"></i>';
     
     const label = document.createElement('div');
-    label.className = 'rss-setup-label';
+    label.className = 'h5 mb-3';
     label.textContent = 'Enter RSS Feed URL';
     
     const urlInput = document.createElement('input');
-    urlInput.className = 'rss-setup-input';
+    urlInput.className = 'form-control mb-3';
     urlInput.type = 'text';
     urlInput.placeholder = 'https://example.com/feed.xml';
     
-    const maxItemsLabel = document.createElement('div');
-    maxItemsLabel.className = 'rss-setup-sublabel';
+    const maxItemsLabel = document.createElement('label');
+    maxItemsLabel.className = 'form-label mt-2';
     maxItemsLabel.textContent = 'Max items to display';
     
     const maxItemsInput = document.createElement('input');
-    maxItemsInput.className = 'rss-setup-input number';
+    maxItemsInput.className = 'form-control mb-3';
     maxItemsInput.type = 'number';
     maxItemsInput.value = '10';
     maxItemsInput.min = '1';
     maxItemsInput.max = '50';
     
-    const refreshLabel = document.createElement('div');
-    refreshLabel.className = 'rss-setup-sublabel';
+    const refreshLabel = document.createElement('label');
+    refreshLabel.className = 'form-label mt-2';
     refreshLabel.textContent = 'Auto-refresh (minutes, 0 = disabled)';
     
     const refreshInput = document.createElement('input');
-    refreshInput.className = 'rss-setup-input number';
+    refreshInput.className = 'form-control mb-3';
     refreshInput.type = 'number';
     refreshInput.value = '5';
     refreshInput.min = '0';
     refreshInput.max = '1440';
     
     const button = document.createElement('button');
-    button.className = 'rss-setup-button';
+    button.className = 'btn btn-primary';
     button.textContent = 'Load Feed';
     button.disabled = true;
     
@@ -323,6 +323,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'rss',
+  title: 'RSS Feed',
   name: 'RSS Feed',
   icon: '<i class="fas fa-rss"></i>',
   description: 'Display RSS/Atom feeds',

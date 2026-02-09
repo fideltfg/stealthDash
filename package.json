@@ -8,10 +8,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "sass": "^1.69.5",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.3",
     "d3": "^7.8.5",
     "justgage": "^2.0.1",
     "marked": "^11.0.0"

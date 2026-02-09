@@ -12,18 +12,14 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title">Configure Embed</h3>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">URL to Embed</label>
-        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="widget-dialog-input" />
+      <h3 class="mb-4"><i class="fas fa-code me-2"></i>Configure Embed</h3>
+      <div class="mb-4">
+        <label class="form-label">URL to Embed</label>
+        <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="form-control" />
       </div>
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
-          Cancel
-        </button>
-        <button id="save-btn" class="widget-dialog-button-save">
-          Save
-        </button>
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-success">Save</button>
       </div>
     `;
 
@@ -148,6 +144,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'embed',
+  title: 'Embed',
   name: 'Embed',
   icon: '<i class="fas fa-globe"></i>',
   description: 'Embed websites via iframe',

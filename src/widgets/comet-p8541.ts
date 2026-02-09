@@ -655,11 +655,11 @@ export class CometP8541Renderer implements WidgetRenderer {
     const content = widget.content as unknown as CometP8541Content;
 
     const form = document.createElement('div');
-    form.className = 'comet-config-form';
+    form.className = 'p-4';
 
     const title = document.createElement('div');
-    title.className = 'comet-config-title';
-    title.innerHTML = '<i class="fas fa-thermometer-half"></i> Configure Comet P8541';
+    title.className = 'h5 mb-4 text-center';
+    title.innerHTML = '<i class="fas fa-thermometer-half me-2"></i> Configure Comet P8541';
     form.appendChild(title);
 
     const fields = [
@@ -674,17 +674,17 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     fields.forEach(field => {
       const group = document.createElement('div');
-      group.className = 'comet-form-group';
+      group.className = 'mb-3';
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.className = 'widget-dialog-label small';
+      label.className = 'form-label';
 
       const input = document.createElement('input');
       input.type = field.type;
       input.placeholder = field.placeholder;
       input.value = field.value?.toString() || (content as any)[field.key] || '';
-      input.className = 'comet-form-input';
+      input.className = 'form-control';
 
       inputs[field.key] = input;
       group.appendChild(label);
@@ -694,7 +694,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save & Connect';
-    saveBtn.className = 'comet-btn-primary';
+    saveBtn.className = 'btn btn-primary w-100';
 
     saveBtn.onclick = () => {
       const newContent = {
@@ -1032,6 +1032,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
 export const widget: WidgetPlugin = {
   type: 'comet-p8541',
+  title: 'Comet P8541',
   name: 'Comet P8541',
   icon: '<i class="fas fa-temperature-high"></i>',
   description: 'Multi-channel temperature and humidity sensor (Modbus TCP)',

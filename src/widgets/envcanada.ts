@@ -49,63 +49,61 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     configDiv.className = 'envcanada-config';
 
     configDiv.innerHTML = `
-      <div class="widget-config-icon">🍁</div>
-      <div class="envcanada-config-title">
+      <div class="display-1 text-center mb-3">🍁</div>
+      <div class="h4 text-center mb-2">
         Environment Canada Weather
       </div>
-      <div class="envcanada-config-description">
+      <div class="text-center text-muted mb-4">
         Enter latitude and longitude coordinates to display weather forecasts
       </div>
       
-      <div class="envcanada-config-form">
-        <div class="envcanada-config-field">
-          <label>
-            Latitude
-          </label>
-          <input
-            type="text"
-            id="latitude"
-            placeholder="51.179"
-            value="${content.latitude || ''}"
-            class="envcanada-config-input"
-          >
-        </div>
-        
-        <div class="envcanada-config-field">
-          <label>
-            Longitude
-          </label>
-          <input
-            type="text"
-            id="longitude"
-            placeholder="-115.569"
-            value="${content.longitude || ''}"
-            class="envcanada-config-input"
-          >
-        </div>
-        
-        <div class="envcanada-config-field">
-          <label>
-            Language
-          </label>
-          <select
-            id="language"
-            class="envcanada-config-select"
-          >
-            <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
-            <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
-          </select>
-        </div>
+      <div class="mb-3">
+        <label class="form-label">
+          Latitude
+        </label>
+        <input
+          type="text"
+          id="latitude"
+          placeholder="51.179"
+          value="${content.latitude || ''}"
+          class="form-control"
+        >
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label">
+          Longitude
+        </label>
+        <input
+          type="text"
+          id="longitude"
+          placeholder="-115.569"
+          value="${content.longitude || ''}"
+          class="form-control"
+        >
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label">
+          Language
+        </label>
+        <select
+          id="language"
+          class="form-select"
+        >
+          <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
+          <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
+        </select>
       </div>
       
       <button
         id="load-forecast"
-        class="envcanada-config-button"
+        class="btn btn-primary w-100 mb-3"
       >
         Load Forecast
       </button>
       
-      <div class="envcanada-config-hint">
+      <div class="text-muted small text-center">
         Example: Banff, AB = 51.179, -115.569<br>
         Find coordinates at <a href="https://weather.gc.ca" target="_blank">weather.gc.ca</a>
       </div>
@@ -157,20 +155,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     
     container.innerHTML = '';
 
-    // Header with settings button
-    const header = document.createElement('div');
-    header.className = 'envcanada-header';
-
-    const headerLeft = document.createElement('div');
-    headerLeft.className = 'envcanada-header-left';
-    headerLeft.innerHTML = `
-      <span>🍁</span>
-      <span>Weather Forecast</span>
-    `;
-
-
-    header.appendChild(headerLeft);
-    container.appendChild(header);
+ 
 
     // Content area
     const contentArea = document.createElement('div');
@@ -572,8 +557,9 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'envcanada',
+  title: 'Environment Canada',
   name: 'Environment Canada',
-  icon: '<i class="fas fa-leaf"></i>',
+  icon: '🍁',
   description: 'Display weather forecasts from Environment Canada',
   renderer: new EnvCanadaWidgetRenderer(),
   defaultSize: { w: 350, h: 500 },

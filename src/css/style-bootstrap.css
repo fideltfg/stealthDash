@@ -1,0 +1,237 @@
+/* ===== Base Layout ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ===== Canvas ===== */
+.canvas-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.canvas {
+  width: 4000px;
+  height: 4000px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+/* ===== Toolbar Controls ===== */
+.menu-button,
+.lock-toggle,
+.user-menu-button {
+  position: fixed;
+  top: 1rem;
+  z-index: 1000;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.menu-button {
+  left: 1rem;
+}
+
+.lock-toggle {
+  right: 5rem;
+}
+
+.user-menu-button {
+  right: 1rem;
+}
+
+.menu-button:hover,
+.lock-toggle:hover,
+.user-menu-button:hover {
+  background-color: var(--bs-secondary-bg);
+}
+
+/* ===== Controls Sidebar ===== */
+.controls-container {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background-color: var(--bs-body-bg);
+  border-right: 1px solid var(--bs-border-color);
+  padding: 1rem;
+  z-index: 999;
+  transition: left 0.3s;
+  overflow-y: auto;
+}
+
+.controls-container.open {
+  left: 0;
+}
+
+.controls-container button {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controls-container .dashboard-switcher {
+  margin-bottom: 1rem;
+}
+
+/* ===== FAB (Floating Action Button) ===== */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 1000;
+}
+
+/* ===== Navigation Arrows ===== */
+.nav-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 998;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.nav-arrow:hover {
+  opacity: 1;
+  background-color: var(--bs-secondary-bg);
+}
+
+.nav-arrow-left {
+  left: 1rem;
+}
+
+.nav-arrow-right {
+  right: 1rem;
+}
+
+/* ===== User Menu Dropdown ===== */
+.user-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  background-color: var(--bs-dropdown-bg);
+  border: 1px solid var(--bs-dropdown-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  min-width: 200px;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-menu-item:hover {
+  background-color: var(--bs-secondary-bg);
+}
+
+/* ===== Dashboard Switcher ===== */
+.dashboard-switcher select {
+  width: 100%;
+}
+
+/* ===== Modal Backdrop Override ===== */
+.modal.d-block {
+  z-index: 10000;
+}
+
+/* ===== Auth Container (Login Screen) ===== */
+.auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.auth-box {
+  background-color: var(--bs-body-bg);
+  border-radius: var(--bs-border-radius);
+  padding: 2rem;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: var(--bs-box-shadow-lg);
+  border: 1px solid var(--bs-border-color);
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+}
+
+.auth-error {
+  padding: 0.75rem;
+  border-radius: var(--bs-border-radius);
+  background-color: rgba(var(--bs-danger-rgb), 0.1);
+  color: var(--bs-danger);
+  font-size: 0.875rem;
+  display: none;
+}
+
+.auth-error:not(:empty) {
+  display: block;
+}
+
+/* ===== Minimal Overrides for Better UX ===== */
+kbd {
+  background-color: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.font-monospace {
+  font-family: 'Courier New', Consolas, monospace;
+}

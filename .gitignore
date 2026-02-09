@@ -20,3 +20,8 @@ dist
 # Docker volumes (if any)
 volumes/
 copilot-instructions.md
+MIGRATION_PROGRESS.md
+MIGRATION_COMPLETE_SUMMARY.md
+DESIGN_SYSTEM_UPDATE.md
+BOOTSTRAP_QUICK_REFERENCE.md
+BOOTSTRAP_MIGRATION_GUIDE.md

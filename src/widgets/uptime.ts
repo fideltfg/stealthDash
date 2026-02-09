@@ -22,26 +22,22 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     dialog.className = 'widget-dialog';
 
     dialog.innerHTML = `
-      <h3 class="widget-dialog-title">Configure Uptime Monitor</h3>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Target (URL or IP)</label>
-        <input type="text" id="uptime-target" class="widget-dialog-input" value="${content.target || ''}" placeholder="example.com or 192.168.1.1" />
+      <h3 class="mb-4"><i class="fas fa-heartbeat me-2"></i>Configure Uptime Monitor</h3>
+      <div class="mb-3">
+        <label class="form-label">Target (URL or IP)</label>
+        <input type="text" id="uptime-target" class="form-control" value="${content.target || ''}" placeholder="example.com or 192.168.1.1" />
       </div>
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Ping Interval (seconds)</label>
-        <input type="number" id="uptime-interval" class="widget-dialog-input" value="${content.interval || 30}" min="5" max="300" />
+      <div class="mb-3">
+        <label class="form-label">Ping Interval (seconds)</label>
+        <input type="number" id="uptime-interval" class="form-control" value="${content.interval || 30}" min="5" max="300" />
       </div>
-      <div class="widget-dialog-field large-margin">
-        <label class="widget-dialog-label">Timeout (milliseconds)</label>
-        <input type="number" id="uptime-timeout" class="widget-dialog-input" value="${content.timeout || 5000}" min="1000" max="30000" step="1000" />
+      <div class="mb-4">
+        <label class="form-label">Timeout (milliseconds)</label>
+        <input type="number" id="uptime-timeout" class="form-control" value="${content.timeout || 5000}" min="1000" max="30000" step="1000" />
       </div>
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
-          Cancel
-        </button>
-        <button id="save-btn" class="widget-dialog-button-save">
-          Save
-        </button>
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-success">Save</button>
       </div>
     `;
 
@@ -406,6 +402,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'uptime',
+  title: 'Uptime Monitor',
   name: 'Uptime Monitor',
   icon: '<i class="fas fa-chart-bar"></i>',
   description: 'Monitor uptime via ping',

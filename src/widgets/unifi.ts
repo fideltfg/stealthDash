@@ -122,13 +122,7 @@ class UnifiRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-widget w-100 h-100 flex flex-column gap-16 overflow-auto" style="padding: 16px; background: var(--surface);">
-        <div class="unifi-header flex space-between align-center mb-16">
-          <h3 class="unifi-title flex align-center gap-8">
-            <span class="unifi-icon"><i class="fas fa-wifi"></i></span>
-            <span>UniFi Network</span>
-          </h3>
-        </div>
+      <div class="unifi-widget " style="">
         <div class="unifi-content flex-1 flex flex-column gap-12">
           <div class="widget-loading text-center">
             Loading...
@@ -216,12 +210,14 @@ class UnifiRenderer implements WidgetRenderer {
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
     container.innerHTML = `
-      <div class="widget-config-screen padded text-center h-100">
-        <div class="widget-config-icon"><i class="fas fa-wifi"></i></div>
-        <div class="unifi-config-title">UniFi Network Widget</div>
-        <div class="widget-config-description">Configure your UniFi Controller connection</div>
-        <div class="widget-config-sublabel">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
-        <button class="configure-btn widget-config-button">Configure</button>
+      <div class="text-center p-4 h-100 d-flex align-items-center justify-content-center">
+        <div>
+          <div class="display-1 mb-3"><i class="fas fa-wifi"></i></div>
+          <h5 class="mb-3">UniFi Network Widget</h5>
+          <p class="text-muted mb-3">Configure your UniFi Controller connection</p>
+          <p class="small text-muted mb-4">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</p>
+          <button class="configure-btn btn btn-primary">Configure</button>
+        </div>
       </div>
     `;
 
@@ -251,58 +247,58 @@ class UnifiRenderer implements WidgetRenderer {
       : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
-      <div class="unifi-config-header">
-        <span class="unifi-config-header-icon"><i class="fas fa-wifi"></i></span>
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="display-4"><i class="fas fa-wifi"></i></div>
         <div>
-          <h2 class="widget-dialog-title">UniFi Network Configuration</h2>
-          <p class="unifi-config-subtitle">Connect to your UniFi Controller</p>
+          <h2 class="h4 mb-1">UniFi Network Configuration</h2>
+          <p class="text-muted small mb-0">Connect to your UniFi Controller</p>
         </div>
       </div>
 
-      <form id="unifi-config-form" class="unifi-config-form">
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Controller Host *</label>
+      <form id="unifi-config-form">
+        <div class="mb-3">
+          <label class="form-label">Controller Host *</label>
           <input 
             type="text" 
             id="unifi-host" 
             value="${content.host || 'https://192.168.1.1:8443'}"
             placeholder="https://192.168.1.1:8443 or https://unifi.local:8443"
             required
-            class="widget-dialog-input extended"
+            class="form-control"
           />
-          <small class="widget-dialog-hint">Include protocol (https://) and port (usually 8443)</small>
+          <div class="form-text">Include protocol (https://) and port (usually 8443)</div>
         </div>
 
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Credentials *</label>
+        <div class="mb-3">
+          <label class="form-label">Credentials *</label>
           <select 
             id="unifi-credential"
             required
-            class="widget-dialog-input extended"
+            class="form-select"
           >
             <option value="">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small class="widget-dialog-hint">Create credentials from the user menu (🔐 Credentials)</small>
+          <div class="form-text">Create credentials from the user menu (🔐 Credentials)</div>
         </div>
 
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Site Name</label>
+        <div class="mb-3">
+          <label class="form-label">Site Name</label>
           <input 
             type="text" 
             id="unifi-site" 
             value="${content.site || 'default'}"
             placeholder="default"
-            class="widget-dialog-input extended"
+            class="form-control"
           />
-          <small class="widget-dialog-hint">Usually "default" unless you have multiple sites</small>
+          <div class="form-text">Usually "default" unless you have multiple sites</div>
         </div>
 
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Display Mode</label>
+        <div class="mb-3">
+          <label class="form-label">Display Mode</label>
           <select 
             id="unifi-display-mode"
-            class="widget-dialog-input extended"
+            class="form-select"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal - Client count only</option>
             <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact - Key stats</option>
@@ -316,21 +312,21 @@ class UnifiRenderer implements WidgetRenderer {
           </select>
         </div>
 
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Refresh Interval (seconds)</label>
+        <div class="mb-3">
+          <label class="form-label">Refresh Interval (seconds)</label>
           <input 
             type="number" 
             id="unifi-refresh" 
             value="${content.refreshInterval || 30}"
             min="10"
             max="300"
-            class="widget-dialog-input extended"
+            class="form-control"
           />
         </div>
 
-        <div class="widget-dialog-buttons top-margin">
-          <button type="submit" class="widget-dialog-button-save extended">Save</button>
-          <button type="button" id="cancel-btn" class="widget-dialog-button-cancel extended">Cancel</button>
+        <div class="d-flex gap-2 justify-content-end border-top pt-3">
+          <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
     `;
@@ -414,9 +410,9 @@ class UnifiRenderer implements WidgetRenderer {
     const clients = (data.num_user || 0);
     
     container.innerHTML = `
-      <div class="unifi-minimal flex flex-column gap-12 align-center justify-center h-100">
-        <div class="unifi-minimal-value">${clients}</div>
-        <div class="unifi-minimal-label">Connected Clients</div>
+      <div class="flex flex-col gap-12 items-center justify-center h-100">
+        <div class="text-4xl text-white">${clients}</div>
+        <div class="text-sm text-gray">Connected Clients</div>
       </div>
     `;
   }
@@ -427,35 +423,35 @@ class UnifiRenderer implements WidgetRenderer {
     const devices = (data.gateways || 0) + (data.switches || 0) + (data.access_points || 0);
     
     container.innerHTML = `
-      <div class="unifi-compact flex flex-column gap-12">
-        <div class="unifi-stats-grid">
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value accent">${clients}</div>
-            <div class="unifi-stat-label">Clients</div>
+      <div class="flex flex-col gap-12">
+        <div class="grid-auto gap-12">
+          <div class="card text-center">
+            <div class="text-2xl text-accent">${clients}</div>
+            <div class="text-xs text-gray">Clients</div>
           </div>
           
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value">${guests}</div>
-            <div class="unifi-stat-label">Guests</div>
+          <div class="card text-center">
+            <div class="text-2xl text-white">${guests}</div>
+            <div class="text-xs text-gray">Guests</div>
           </div>
           
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value">${devices}</div>
-            <div class="unifi-stat-label">Devices</div>
+          <div class="card text-center">
+            <div class="text-2xl text-white">${devices}</div>
+            <div class="text-xs text-gray">Devices</div>
           </div>
         </div>
         
         ${data.site_name ? `
-          <div class="unifi-info-row">
-            <span class="unifi-info-label">Site</span>
-            <span class="unifi-info-value">${data.site_name}</span>
+          <div class="flex-between">
+            <span class="text-sm text-gray">Site</span>
+            <span class="text-sm text-white">${data.site_name}</span>
           </div>
         ` : ''}
         
         ${data.wan_ip ? `
-          <div class="unifi-info-row">
-            <span class="unifi-info-label">WAN IP</span>
-            <span class="unifi-info-value mono">${data.wan_ip}</span>
+          <div class="flex-between">
+            <span class="text-sm text-gray">WAN IP</span>
+            <span class="text-sm text-white mono">${data.wan_ip}</span>
           </div>
         ` : ''}
       </div>
@@ -472,60 +468,58 @@ class UnifiRenderer implements WidgetRenderer {
     const uptime = data.uptime ? this.formatUptime(data.uptime) : 'Unknown';
     
     container.innerHTML = `
-      <div class="unifi-detailed flex flex-column gap-16">
-        <div class="unifi-stats-grid-small">
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value-small accent">${clients}</div>
-            <div class="unifi-stat-label-small">Clients</div>
+      <div class="flex flex-col gap-16">
+        <div class="grid-auto gap-8">
+          <div class="card text-center">
+            <div class="text-xl text-accent">${clients}</div>
+            <div class="text-xs text-gray">Clients</div>
           </div>
           
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value-small">${guests}</div>
-            <div class="unifi-stat-label-small">Guests</div>
+          <div class="card text-center">
+            <div class="text-xl text-white">${guests}</div>
+            <div class="text-xs text-gray">Guests</div>
           </div>
           
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value-small">${iot}</div>
-            <div class="unifi-stat-label-small">IoT</div>
+          <div class="card text-center">
+            <div class="text-xl text-white">${iot}</div>
+            <div class="text-xs text-gray">IoT</div>
           </div>
         </div>
         
-        <div class="unifi-section">
-          <div class="unifi-section-title">Infrastructure</div>
-          <div class="flex flex-column gap-8">
-            <div class="unifi-info-row">
-              <span class="unifi-info-label"><i class="fas fa-globe"></i> Gateways</span>
-              <span class="unifi-info-value">${gateways}</span>
+        <div class="flex flex-col gap-8">
+          <div class="text-base text-white mb-8">Infrastructure</div>
+          <div class="flex flex-col gap-8">
+            <div class="flex-between">
+              <span class="text-sm text-gray"><i class="fas fa-globe"></i> Gateways</span>
+              <span class="text-sm text-white">${gateways}</span>
             </div>
-            <div class="unifi-info-row">
-              <span class="unifi-info-label"><i class="fas fa-network-wired"></i> Switches</span>
-              <span class="unifi-info-value">${switches}</span>
+            <div class="flex-between">
+              <span class="text-sm text-gray"><i class="fas fa-network-wired"></i> Switches</span>
+              <span class="text-sm text-white">${switches}</span>
             </div>
-            <div class="unifi-info-row">
-              <span class="unifi-info-label"><i class="fas fa-wifi"></i> Access Points</span>
-              <span class="unifi-info-value">${aps}</span>
+            <div class="flex-between">
+              <span class="text-sm text-gray"><i class="fas fa-wifi"></i> Access Points</span>
+              <span class="text-sm text-white">${aps}</span>
             </div>
           </div>
         </div>
         
-        <div class="unifi-section">
-          <div class="flex flex-column gap-8">
-            ${data.site_name ? `
-              <div class="unifi-info-row">
-                <span class="unifi-info-label">Site</span>
-                <span class="unifi-info-value">${data.site_name}</span>
-              </div>
-            ` : ''}
-            ${data.wan_ip ? `
-              <div class="unifi-info-row">
-                <span class="unifi-info-label">WAN IP</span>
-                <span class="unifi-info-value mono">${data.wan_ip}</span>
-              </div>
-            ` : ''}
-            <div class="unifi-info-row">
-              <span class="unifi-info-label">Uptime</span>
-              <span class="unifi-info-value">${uptime}</span>
+        <div class="flex flex-col gap-8">
+          ${data.site_name ? `
+            <div class="flex-between">
+              <span class="text-sm text-gray">Site</span>
+              <span class="text-sm text-white">${data.site_name}</span>
             </div>
+          ` : ''}
+          ${data.wan_ip ? `
+            <div class="flex-between">
+              <span class="text-sm text-gray">WAN IP</span>
+              <span class="text-sm text-white mono">${data.wan_ip}</span>
+            </div>
+          ` : ''}
+          <div class="flex-between">
+            <span class="text-sm text-gray">Uptime</span>
+            <span class="text-sm text-white">${uptime}</span>
           </div>
         </div>
       </div>
@@ -536,10 +530,10 @@ class UnifiRenderer implements WidgetRenderer {
     const devices = data.devices || [];
     
     container.innerHTML = `
-      <div class="flex flex-column gap-12 h-100 overflow-auto">
-        <div class="unifi-devices-header">
-          <div class="unifi-devices-title">Network Devices (${devices.length})</div>
-          <div class="unifi-devices-summary">${(data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
+      <div class="flex flex-col gap-12 h-100 overflow-auto">
+        <div class="flex-between">
+          <div class="text-lg text-white">Network Devices (${devices.length})</div>
+          <div class="text-xs text-gray">${ (data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
         </div>
         
         ${devices.length === 0 ? `
@@ -549,47 +543,47 @@ class UnifiRenderer implements WidgetRenderer {
           const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
           
           return `
-            <div class="unifi-device-card" style="border-left-color: ${statusColor};">
-              <div class="unifi-device-header">
-                <div class="unifi-device-icon-wrapper">
-                  <span class="unifi-device-icon">${typeIcon}</span>
+            <div class="card" style="border-left: 3px solid ${statusColor};">
+              <div class="flex-between mb-12">
+                <div class="flex items-center gap-12">
+                  <span class="text-xl">${typeIcon}</span>
                   <div>
-                    <div class="unifi-device-name">${device.name}</div>
-                    <div class="unifi-device-ip">${device.ip}</div>
+                    <div class="text-base text-white">${device.name}</div>
+                    <div class="text-xs text-gray">${device.ip}</div>
                   </div>
                 </div>
-                ${device.upgradable ? '<span class="unifi-device-badge">Update</span>' : ''}
+                ${device.upgradable ? '<span class="status-badge warning">Update</span>' : ''}
               </div>
               
-              <div class="unifi-device-info-grid">
-                <div class="unifi-device-info-item">
-                  <span class="widget-muted">Model:</span>
-                  <span class="widget-text-bold">${device.model || 'N/A'}</span>
+              <div class="grid-auto gap-8" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                <div class="flex flex-col gap-4">
+                  <span class="text-xs text-gray">Model:</span>
+                  <span class="text-sm text-white">${device.model || 'N/A'}</span>
                 </div>
-                <div class="unifi-device-info-item">
-                  <span class="widget-muted">Clients:</span>
-                  <span class="widget-text-bold">${device.num_sta || 0}</span>
+                <div class="flex flex-col gap-4">
+                  <span class="text-xs text-gray">Clients:</span>
+                  <span class="text-sm text-white">${device.num_sta || 0}</span>
                 </div>
-                <div class="unifi-device-info-item">
-                  <span class="widget-muted">Uptime:</span>
-                  <span class="widget-text-bold">${this.formatUptime(device.uptime || 0)}</span>
+                <div class="flex flex-col gap-4">
+                  <span class="text-xs text-gray">Uptime:</span>
+                  <span class="text-sm text-white">${this.formatUptime(device.uptime || 0)}</span>
                 </div>
                 ${device.satisfaction !== undefined ? `
-                  <div class="unifi-device-info-item">
-                    <span class="widget-muted">Score:</span>
-                    <span class="widget-text-bold">${device.satisfaction}%</span>
+                  <div class="flex flex-col gap-4">
+                    <span class="text-xs text-gray">Score:</span>
+                    <span class="text-sm text-white">${device.satisfaction}%</span>
                   </div>
                 ` : ''}
                 ${device.cpu !== undefined ? `
-                  <div class="unifi-device-info-item">
-                    <span class="widget-muted">CPU:</span>
-                    <span class="widget-text-bold">${device.cpu}%</span>
+                  <div class="flex flex-col gap-4">
+                    <span class="text-xs text-gray">CPU:</span>
+                    <span class="text-sm text-white">${device.cpu}%</span>
                   </div>
                 ` : ''}
                 ${device.mem !== undefined ? `
-                  <div class="unifi-device-info-item">
-                    <span class="widget-muted">Memory:</span>
-                    <span class="widget-text-bold">${device.mem}%</span>
+                  <div class="flex flex-col gap-4">
+                    <span class="text-xs text-gray">Memory:</span>
+                    <span class="text-sm text-white">${device.mem}%</span>
                   </div>
                 ` : ''}
               </div>
@@ -1535,6 +1529,7 @@ class UnifiRenderer implements WidgetRenderer {
 
 export const widget = {
   type: 'unifi',
+  title: 'UniFi Network',
   name: 'UniFi Network',
   icon: '<i class="fas fa-wifi"></i>',
   description: 'Monitor UniFi network statistics and connected devices',

@@ -14,52 +14,68 @@ export class AdminDashboardUI {
 
     const dialog = document.createElement('div');
     dialog.id = 'admin-dashboard';
-    dialog.className = 'dialog admin-dialog';
+    dialog.className = 'modal fade show d-block';
+    dialog.style.backgroundColor = 'rgba(0,0,0,0.8)';
 
     dialog.innerHTML = `
-      <div class="dialog-container admin-container">
-        <div class="dialog-header">
-          <h2 class="dialog-title">👑 Admin Dashboard</h2>
-          <button id="close-admin" class="dialog-close-button">×</button>
-        </div>
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">👑 Admin Dashboard</h2>
+            <button id="close-admin" class="btn-close" aria-label="Close"></button>
+          </div>
 
         <!-- Stats -->
         ${stats ? `
-          <div class="admin-stats">
-            <div class="admin-stat-card admin-stat-card-purple">
-              <div class="admin-stat-label">Total Users</div>
-              <div class="admin-stat-value">${stats.totalUsers}</div>
-            </div>
-            <div class="admin-stat-card admin-stat-card-pink">
-              <div class="admin-stat-label">Active Dashboards</div>
-              <div class="admin-stat-value">${stats.totalDashboards}</div>
-            </div>
-            <div class="admin-stat-card admin-stat-card-blue">
-              <div class="admin-stat-label">Administrators</div>
-              <div class="admin-stat-value">${stats.totalAdmins}</div>
+          <div class="modal-body border-bottom">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="card border-start border-primary border-4">
+                  <div class="card-body text-center">
+                    <div class="text-uppercase text-muted small fw-semibold mb-2">Total Users</div>
+                    <div class="display-4 fw-bold">${stats.totalUsers}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card border-start border-success border-4">
+                  <div class="card-body text-center">
+                    <div class="text-uppercase text-muted small fw-semibold mb-2">Active Dashboards</div>
+                    <div class="display-4 fw-bold">${stats.totalDashboards}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card border-start border-warning border-4">
+                  <div class="card-body text-center">
+                    <div class="text-uppercase text-muted small fw-semibold mb-2">Administrators</div>
+                    <div class="display-4 fw-bold">${stats.totalAdmins}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ` : ''}
 
         <!-- Users Table -->
-        <div class="section admin-table-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 class="section-title">User Management</h3>
-            <button id="create-user-btn" class="action-btn action-btn-success" style="margin: 0;">
+        <div class="modal-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h5 mb-0">User Management</h3>
+            <button id="create-user-btn" class="btn btn-success">
               ➕ Create User
             </button>
           </div>
           
-          <div class="admin-table-wrapper">
-            <table class="admin-table">
-              <thead>
-                <tr class="admin-table-header">
-                  <th class="admin-table-th">ID</th>
-                  <th class="admin-table-th">Username</th>
-                  <th class="admin-table-th">Email</th>
-                  <th class="admin-table-th">Role</th>
-                  <th class="admin-table-th">Created</th>
-                  <th class="admin-table-th">Actions</th>
+          <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Created</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="users-table-body">
@@ -67,10 +83,11 @@ export class AdminDashboardUI {
               </tbody>
             </table>
           </div>
-        </div>
 
-        <div id="admin-message" class="message"></div>
+          <div id="admin-message" class="alert d-none" role="alert"></div>
+        </div>
       </div>
+    </div>
     `;
 
     document.body.appendChild(dialog);
@@ -96,31 +113,31 @@ export class AdminDashboardUI {
     const currentUser = authService.getUser();
     
     return users.map(user => `
-      <tr class="admin-table-row">
-        <td class="admin-table-td">${user.id}</td>
-        <td class="admin-table-td">
+      <tr>
+        <td>${user.id}</td>
+        <td>
           ${user.username}
-          ${user.id === currentUser?.id ? '<span class="admin-current-user">(You)</span>' : ''}
+          ${user.id === currentUser?.id ? '<span class="text-muted small ms-2">(You)</span>' : ''}
         </td>
-        <td class="admin-table-td">${user.email}</td>
-        <td class="admin-table-td">
-          ${user.is_admin ? '<span class="admin-role-badge">👑 Admin</span>' : 'User'}
+        <td>${user.email}</td>
+        <td>
+          ${user.is_admin ? '<span class="badge bg-warning text-dark">👑 Admin</span>' : '<span class="badge bg-secondary">User</span>'}
         </td>
-        <td class="admin-table-td admin-table-td-date">
+        <td class="text-muted small">
           ${new Date(user.created_at).toLocaleDateString()}
         </td>
-        <td class="admin-table-td">
-          <div class="admin-actions">
+        <td>
+          <div class="d-flex gap-2 flex-wrap">
             ${!user.is_admin ? `
-              <button class="action-btn action-btn-success admin-action-btn make-admin-btn" data-user-id="${user.id}" data-username="${user.username}">Make Admin</button>
+              <button class="btn btn-sm btn-success make-admin-btn" data-user-id="${user.id}" data-username="${user.username}">Make Admin</button>
             ` : user.id !== currentUser?.id ? `
-              <button class="action-btn action-btn-warning admin-action-btn remove-admin-btn" data-user-id="${user.id}" data-username="${user.username}">Remove Admin</button>
+              <button class="btn btn-sm btn-warning remove-admin-btn" data-user-id="${user.id}" data-username="${user.username}">Remove Admin</button>
             ` : ''}
             
-            <button class="action-btn action-btn-info admin-action-btn reset-password-btn" data-user-id="${user.id}" data-username="${user.username}">Reset Password</button>
+            <button class="btn btn-sm btn-info reset-password-btn" data-user-id="${user.id}" data-username="${user.username}">Reset Password</button>
             
             ${user.id !== currentUser?.id ? `
-              <button class="action-btn action-btn-danger admin-action-btn delete-user-btn" data-user-id="${user.id}" data-username="${user.username}">Delete</button>
+              <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="${user.id}" data-username="${user.username}">Delete</button>
             ` : ''}
           </div>
         </td>
@@ -213,69 +230,70 @@ export class AdminDashboardUI {
 
   private showCreateUserDialog(adminDialog: HTMLElement): void {
     const dialog = document.createElement('div');
-    dialog.className = 'dialog';
+    dialog.className = 'modal fade show d-block';
+    dialog.style.backgroundColor = 'rgba(0,0,0,0.8)';
     dialog.innerHTML = `
-      <div class="dialog-container" style="max-width: 500px;">
-        <div class="dialog-header">
-          <h2 class="dialog-title">➕ Create New User</h2>
-          <button id="close-create-user" class="dialog-close-button">×</button>
-        </div>
-        
-        <div class="section">
-          <form id="create-user-form">
-            <div class="form-group">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">➕ Create New User</h2>
+            <button id="close-create-user" class="btn-close" aria-label="Close"></button>
+          </div>
+          
+          <form id="create-user-form" class="modal-body">
+            <div class="mb-3">
               <label class="form-label">Username</label>
               <input 
                 type="text" 
                 id="new-username" 
-                class="form-input" 
+                class="form-control" 
                 placeholder="Enter username"
                 required
               />
             </div>
 
-            <div class="form-group">
+            <div class="mb-3">
               <label class="form-label">Email</label>
               <input 
                 type="email" 
                 id="new-email" 
-                class="form-input" 
+                class="form-control" 
                 placeholder="user@example.com"
                 required
               />
             </div>
 
-            <div class="form-group">
+            <div class="mb-3">
               <label class="form-label">Password</label>
               <input 
                 type="password" 
                 id="new-password" 
-                class="form-input" 
+                class="form-control" 
                 placeholder="At least 6 characters"
                 minlength="6"
                 required
               />
-              <small class="form-hint">Minimum 6 characters</small>
+              <div class="form-text">Minimum 6 characters</div>
             </div>
 
-            <div class="form-group">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                <input type="checkbox" id="new-is-admin" style="cursor: pointer;" />
-                <span>Make this user an administrator</span>
+            <div class="mb-3 form-check">
+              <input type="checkbox" id="new-is-admin" class="form-check-input" />
+              <label class="form-check-label" for="new-is-admin">
+                Make this user an administrator
               </label>
             </div>
 
-            <div id="create-user-message" class="message"></div>
-
-            <div style="display: flex; gap: 12px; margin-top: 24px;">
-              <button type="button" id="cancel-create-user" class="btn btn-info" style="flex: 1;">
-                Cancel
-              </button>
-              <button type="submit" class="btn btn-success" style="flex: 1;">
-                Create User
-              </button>
-            </div>
+            <div id="create-user-message" class="alert d-none" role="alert"></div>
           </form>
+
+          <div class="modal-footer">
+            <button type="button" id="cancel-create-user" class="btn btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" form="create-user-form" class="btn btn-success">
+              Create User
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -308,7 +326,7 @@ export class AdminDashboardUI {
 
       if (!username || !email || !password) {
         messageDiv.textContent = 'All fields are required';
-        messageDiv.className = 'message message-error';
+        messageDiv.className = 'alert alert-danger';
         return;
       }
 
@@ -316,7 +334,7 @@ export class AdminDashboardUI {
       
       if (result.success) {
         messageDiv.textContent = `User ${username} created successfully!`;
-        messageDiv.className = 'message message-success';
+        messageDiv.className = 'alert alert-success';
         
         setTimeout(() => {
           dialog.remove();
@@ -324,7 +342,7 @@ export class AdminDashboardUI {
         }, 1500);
       } else {
         messageDiv.textContent = result.error || 'Failed to create user';
-        messageDiv.className = 'message message-error';
+        messageDiv.className = 'alert alert-danger';
       }
     });
   }
@@ -339,11 +357,10 @@ export class AdminDashboardUI {
   private showMessage(dialog: HTMLElement, message: string, success: boolean): void {
     const messageDiv = dialog.querySelector('#admin-message') as HTMLElement;
     messageDiv.textContent = message;
-    messageDiv.classList.remove('message-success', 'message-error');
-    messageDiv.classList.add(success ? 'message-success' : 'message-error', 'visible');
+    messageDiv.className = success ? 'alert alert-success' : 'alert alert-danger';
 
     setTimeout(() => {
-      messageDiv.classList.remove('visible');
+      messageDiv.className = 'alert d-none';
     }, 5000);
   }
 }
