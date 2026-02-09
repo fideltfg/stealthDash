@@ -25,8 +25,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
-    
-    container.className = 'mtnxml-container';
+
+    container.className = 'widget-content';
 
     if (!content.feedUrl) {
       this.renderConfigScreen(container, widget);
@@ -39,7 +39,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private renderConfigScreen(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
-    
+
     const configDiv = document.createElement('div');
     configDiv.className = 'mtnxml-config';
 
@@ -82,7 +82,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         content.showTrails = content.showTrails !== false;
         content.showSnow = content.showSnow !== false;
         content.showWeather = content.showWeather !== false;
-        
+
         const event = new CustomEvent('widget-update', {
           detail: { id: widget.id, content }
         });
@@ -103,24 +103,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private async renderData(container: HTMLElement, widget: Widget): Promise<void> {
     const content = widget.content as unknown as MTNXMLContent;
-    
+
     container.innerHTML = '';
-
-    // Header with settings button
-    const header = document.createElement('div');
-    header.className = 'mtnxml-header';
-
-    const headerLeft = document.createElement('div');
-    headerLeft.className = 'mtnxml-header-left';
-    headerLeft.innerHTML = `
-      <span>⛷️</span>
-      <span>Mountain Conditions</span>
-    `;
-
- 
-
-    header.appendChild(headerLeft);
-    container.appendChild(header);
 
     // Content area
     const contentArea = document.createElement('div');
@@ -139,17 +123,17 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       const data = await this.fetchFeed(content.feedUrl);
       content.cachedData = data;
       content.lastUpdated = Date.now();
-      
+
       // Render the mountain data
       this.renderMountainData(contentArea, data, content);
-      
+
       // Note: We don't dispatch widget-update here as it causes a re-render loop
       // The content is already updated by reference, and will be saved by the dashboard
-      
+
     } catch (error) {
       console.error('Widget render error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       contentArea.innerHTML = `
         <div class="widget-error simple">
           <div class="widget-error-icon">⚠️</div>
@@ -163,7 +147,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
           </button>
         </div>
       `;
-      
+
       const retryBtn = contentArea.querySelector('#retry-btn') as HTMLButtonElement;
       retryBtn.addEventListener('click', () => {
         this.renderData(container, widget);
@@ -174,15 +158,15 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   private async fetchFeed(url: string): Promise<any> {
     // Use proxy by default to avoid CORS errors in console
     const proxyUrl = `http://internal.norquay.local:3001/proxy?url=${encodeURIComponent(url)}`;
-    
+
     const response = await fetch(proxyUrl);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const xmlText = await response.text();
-    
+
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -254,7 +238,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
         lastSnowfall: '',
         units: data.resort.units === 'metric' ? 'cm' : 'in'
       };
-      
+
       data.weather = {
         condition: location.getAttribute('weatherConditions') || '',
         temperature: location.getAttribute('temperature') || '',
@@ -296,14 +280,19 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     wrapper.className = 'mtnxml-wrapper';
 
     // Resort name
-    const resortName = document.createElement('div');
+    const resortName = document.createElement('h4');
     resortName.className = 'mtnxml-resort-name';
     resortName.textContent = data.resort.name || 'Unknown Resort';
     wrapper.appendChild(resortName);
-
+    // Last updated
+    if (content.lastUpdated) {
+      const lastUpdate = document.createElement('subtitle');
+      lastUpdate.textContent = `Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}`;
+      wrapper.appendChild(lastUpdate);
+    }
     // Snow conditions
     if (content.showSnow && data.snowReport) {
-      const snowSection = this.createSection('🌨️ Snow Report', [
+      const snowSection = this.createSection('Snow Report', [
         { label: 'Base Depth', value: `${data.snowReport.baseDepth} ${data.snowReport.units}` },
         { label: 'New Snow (24h)', value: `${data.snowReport.newSnow24} ${data.snowReport.units}` },
         { label: 'New Snow (48h)', value: `${data.snowReport.newSnow48} ${data.snowReport.units}` },
@@ -314,7 +303,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     // Weather
     if (content.showWeather && data.weather && data.weather.temperature) {
-      const weatherSection = this.createSection('<i class="fas fa-cloud-sun"></i> Current Weather', [
+      const weatherSection = this.createSection('Weather', [
         { label: 'Condition', value: data.weather.condition || 'N/A' },
         { label: 'Temperature', value: `${data.weather.temperature}°` },
         { label: 'Wind', value: `${data.weather.windSpeed} ${data.weather.windDirection}` }
@@ -326,7 +315,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     if (content.showLifts && data.lifts.length > 0) {
       const openLifts = data.lifts.filter((l: any) => l.status === 'open').length;
       const liftsSection = this.createStatusSection(
-        '🚡 Lifts',
+        'Lifts',
         data.lifts,
         openLifts,
         data.lifts.length
@@ -338,7 +327,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     if (content.showTrails && data.trails.length > 0) {
       const openTrails = data.trails.filter((t: any) => t.status === 'open').length;
       const trailsSection = this.createStatusSection(
-        '⛷️ Trails',
+        'Trails',
         data.trails,
         openTrails,
         data.trails.length
@@ -346,32 +335,26 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       wrapper.appendChild(trailsSection);
     }
 
-    // Last updated
-    if (content.lastUpdated) {
-      const lastUpdate = document.createElement('div');
-      lastUpdate.className = 'mtnxml-last-updated';
-      lastUpdate.textContent = `Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}`;
-      wrapper.appendChild(lastUpdate);
-    }
+
 
     container.appendChild(wrapper);
   }
 
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'mtnxml-section';
-
+    section.className = 'card';
+    section.style.marginTop = '6px';
     const header = document.createElement('div');
-    header.className = 'mtnxml-section-header';
+    header.className = 'card-header';
     header.textContent = title;
     section.appendChild(header);
 
     items.forEach(item => {
       const row = document.createElement('div');
-      row.className = 'mtnxml-section-row';
+      row.className = 'card-row';
       row.innerHTML = `
-        <span class="mtnxml-section-row-label">${item.label}:</span>
-        <span class="mtnxml-section-row-value">${item.value}</span>
+        <span class="card-row-label">${item.label}:</span>
+        <span class="card-row-value">${item.value}</span>
       `;
       section.appendChild(row);
     });
@@ -383,7 +366,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
    * Creates a scrollable section for displaying lifts or trails status
    * Shows all items with a scrollable container (max 250px height)
    * 
-   * @param title - Section title (e.g., "🚡 Lifts" or "⛷️ Trails")
+   * @param title - Section title 
    * @param items - Array of lift/trail objects with name, status, and optional difficulty
    * @param openCount - Number of items with 'open' status
    * @param totalCount - Total number of items
@@ -391,31 +374,50 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
    */
   private createStatusSection(title: string, items: any[], openCount: number, totalCount: number): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'mtnxml-status-section';
+    section.className = 'card';
+
+    section.style.marginTop = '6px';
 
     // Header showing title and open/total count
     const header = document.createElement('div');
-    header.className = 'mtnxml-status-header';
+    header.className = 'card-header';
     const statusClass = openCount > 0 ? 'success' : 'error';
     header.innerHTML = `
       <span>${title}</span>
-      <span class="status-count ${statusClass}">${openCount}/${totalCount}</span>
+      <span class="badge badge-${statusClass}">${openCount}/${totalCount}</span>
     `;
     section.appendChild(header);
 
     // Scrollable container for all items (no limit, shows all lifts/trails)
     const itemsContainer = document.createElement('div');
-    itemsContainer.className = 'mtnxml-status-items';
+    itemsContainer.className = 'card-items';
 
     // Render all items with status indicator and difficulty (if available)
     items.forEach(item => {
       const statusIcon = item.status === 'open' ? 'fas fa-check-circle success' : 'fas fa-times-circle error';
       const row = document.createElement('div');
-      row.className = 'mtnxml-status-item';
+      row.className = 'card-item';
+
+     
+
       row.innerHTML = `
-        <i class="${statusIcon}"></i>
-        <span class="mtnxml-status-item-name">${item.name}</span>
-        ${item.difficulty ? `<span class="mtnxml-status-item-difficulty">${item.difficulty}</span>` : ''}
+        <i class="${statusIcon}"></i>`;
+       var badgeClass = '';
+ switch (item.difficulty) {
+        case 'beginner':
+           badgeClass= ('badge badge-success');
+          break;
+        case 'intermediate':
+          badgeClass= ('badge badge-info');
+          break;
+        case 'advanced':
+          badgeClass= ('badge badge-secondary');
+          break;
+      }
+
+      row.innerHTML += `
+        <span class="card-item-name">${item.name}</span>
+        ${item.difficulty ? `<span class="${badgeClass}">${item.difficulty}</span>` : ''}
       `;
       itemsContainer.appendChild(row);
     });
@@ -427,7 +429,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
   private setupAutoRefresh(widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
-    
+
     // Clear existing interval
     const existingInterval = this.refreshIntervals.get(widget.id);
     if (existingInterval) {

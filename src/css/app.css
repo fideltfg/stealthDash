@@ -1029,6 +1029,51 @@ body {
   color: var(--muted);
 }
 
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.card-row-label {
+  color: var(--muted);
+}
+
+.card-row-value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card-items {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.card-item-name {
+  flex: 1;
+  color: var(--text);
+}
+
+.card-item-difficulty {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--hover);
+  color: var(--muted);
+}
+
+
 /* === BADGES === */
 .badge {
   display: inline-block;
