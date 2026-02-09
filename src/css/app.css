@@ -79,6 +79,10 @@ button {
   border-radius: 9px;
 }
 
+subtitle {
+  font-size: x-small;
+  color: var(--muted);
+}
 /* === SCROLLBARS === */
 * {
   scrollbar-width: thin;
@@ -180,6 +184,7 @@ body {
   cursor: default;
   overflow: hidden;
   transition: box-shadow var(--transition);
+  padding-bottom: 40px;
 }
 
 .widget:hover,
@@ -227,19 +232,6 @@ body {
   overflow: auto;
 }
 
-/* Docker widget needs special overflow handling */
-.widget-content.docker-widget {
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 45px;
-  left: 0;
-  right: 0;
-  bottom: 0px;
-  height: auto;
-}
 
 /* Widget Menu Button */
 .widget-menu-btn {
@@ -350,7 +342,7 @@ body {
 .resize-w {
   top: 50%;
   transform: translateY(-50%);
-  width: 12px;
+  width: 10px;
   height: 95%;
   cursor: ew-resize;
 }

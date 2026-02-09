@@ -9,7 +9,7 @@ interface PiholeContent {
   password?: string; // Deprecated: Legacy field for backward compatibility
   credentialId?: number; // ID of saved credential to use
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
-  displayMode?: 'compact' | 'detailed' | 'minimal'; // Display style
+  displayMode?: 'detailed' | 'minimal'; // Display style
   showCharts?: boolean; // Show mini charts for blocked queries
 }
 
@@ -61,19 +61,11 @@ class PiholeRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="pihole-widget widget-container flex flex-column">
-        <div class="pihole-header widget-header-row">
-          <h3 class="widget-title flex align-center gap-8">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon" />
-            <span>Pi-hole</span>
-          </h3>
-        </div>
         <div class="pihole-content flex-1 flex flex-column gap-12">
           <div class="pihole-loading widget-loading centered">
             Loading...
           </div>
         </div>
-      </div>
     `;
 
     const contentEl = container.querySelector('.pihole-content') as HTMLElement;
@@ -109,14 +101,13 @@ class PiholeRenderer implements WidgetRenderer {
         //console.log('Pi-hole data received:', data);
 
         // Render based on display mode
-        const mode = content.displayMode || 'compact';
+        const mode = content.displayMode || 'detailed';
         
         if (mode === 'minimal') {
           this.renderMinimal(contentEl, data, content);
-        } else if (mode === 'detailed') {
-          this.renderDetailed(contentEl, data, content);
         } else {
-          this.renderCompact(contentEl, data, content);
+          // Default to detailed (compact mode removed)
+          this.renderDetailed(contentEl, data, content);
         }
 
       } catch (error) {
@@ -233,8 +224,7 @@ class PiholeRenderer implements WidgetRenderer {
             class="widget-dialog-input"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
-            <option value="compact" ${content.displayMode === 'compact' ? 'selected' : ''}>Compact</option>
-            <option value="detailed" ${content.displayMode === 'detailed' ? 'selected' : ''}>Detailed</option>
+            <option value="detailed" ${(content.displayMode === 'detailed' || !content.displayMode) ? 'selected' : ''}>Detailed</option>
           </select>
         </div>
 
@@ -333,7 +323,7 @@ class PiholeRenderer implements WidgetRenderer {
       const newContent: PiholeContent = {
         host,
         credentialId: parseInt(credentialId),
-        displayMode: displayMode as 'minimal' | 'compact' | 'detailed',
+        displayMode: displayMode as 'minimal' | 'detailed',
         refreshInterval,
         showCharts: content.showCharts,
         // Clear any legacy password fields
@@ -413,108 +403,45 @@ class PiholeRenderer implements WidgetRenderer {
     `;
   }
   
-  private renderCompact(container: HTMLElement, data: PiholeSummary, content: PiholeContent): void {
-    const blockedPercentage = data.queries.percent_blocked.toFixed(1);
-    const statusColor = '#4caf50';
-    const statusText = 'Active';
-
-    container.innerHTML = `
-      <div class="flex flex-column gap-16">
-        <!-- Status Bar -->
-        <div class="pihole-status-bar">
-          <div class="flex align-center gap-8">
-            <div class="status-dot" style="background: ${statusColor};"></div>
-            <span class="pihole-status-text">${statusText}</span>
-          </div>
-          <div class="widget-hint">
-            ${data.clients.active} client${data.clients.active !== 1 ? 's' : ''}
-          </div>
-        </div>
-
-        <!-- Main Stats -->
-        <div class="grid grid-2 gap-12">
-          ${this.createStatCard('Queries Today', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
-          ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
-          ${this.createStatCard('Block %', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
-          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
-        </div>
-
-        <!-- Query Types -->
-        <div class="pihole-query-dist">
-          <div class="pihole-query-dist-title">Query Distribution</div>
-          <div class="pihole-query-dist-grid">
-            <div class="flex space-between">
-              <span class="widget-muted">Forwarded:</span>
-              <span class="widget-text-bold">${this.formatNumber(data.queries.forwarded)}</span>
-            </div>
-            <div class="flex space-between">
-              <span class="widget-muted">Cached:</span>
-              <span class="widget-text-bold">${this.formatNumber(data.queries.cached)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
 
   private renderDetailed(container: HTMLElement, data: PiholeSummary, content: PiholeContent): void {
     const blockedPercentage = data.queries.percent_blocked.toFixed(1);
     const statusColor = '#4caf50';
-    const statusText = 'Active';
 
     const gravityDate = new Date(data.gravity.last_update * 1000).toLocaleString();
 
     container.innerHTML = `
       <div class="flex flex-column gap-12">
-        <!-- Status Header -->
-        <div class="pihole-status-bar">
-          <div class="flex align-center gap-8">
-            <div class="status-dot" style="background: ${statusColor};"></div>
-            <span class="pihole-status-text">${statusText}</span>
-          </div>
-          <div class="pihole-client-count">
-            ${data.clients.active} / ${data.clients.total} clients
-          </div>
-        </div>
 
         <!-- Primary Stats -->
         <div class="grid grid-3 gap-8">
-          ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3', true)}
-          ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336', true)}
-          ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor, true)}
+          ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
+          ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
+          ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
         </div>
 
         <!-- Secondary Stats -->
-        <div class="grid grid-2 gap-8">
-          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800', true)}
-          ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0', true)}
-          ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4', true)}
-          ${this.createStatCard('Cached', this.formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b', true)}
+        <div class="grid grid-4 gap-4">
+          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
+          ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0')}
+          ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4')}
+          ${this.createStatCard('Cached', this.formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b')}
         </div>
 
         <!-- Gravity Update -->
-        <div class="pihole-gravity-update">
+        <subtitle class="mt-12">
           Gravity updated ${gravityDate}
-        </div>
+        </subtitle>
       </div>
     `;
   }
 
-  private createStatCard(label: string, value: string, icon: string, color: string, compact: boolean = false): string {
-    if (compact) {
-      return `
-        <div class="pihole-stat-card-compact">
-          <div class="pihole-stat-card-label">${icon} ${label}</div>
-          <div class="pihole-stat-card-value" style="color: ${color};">${value}</div>
-        </div>
-      `;
-    }
-    
+  private createStatCard(label: string, value: string, icon: string, color: string): string {
     return `
-      <div class="pihole-stat-card">
-        <div class="pihole-stat-card-icon">${icon}</div>
-        <div class="pihole-stat-card-value" style="color: ${color};">${value}</div>
-        <div class="pihole-stat-card-label">${label}</div>
+      <div class="card">
+        <div class="">${icon}</div>
+        <h4 style="color: ${color};">${value}</h4>
+        <subtitle>${label}</subtitle>
       </div>
     `;
   }
@@ -540,7 +467,7 @@ export const widget = {
   defaultContent: {
     host: 'http://pi.hole',
     refreshInterval: 30,
-    displayMode: 'compact',
+    displayMode: 'detailed',
     showCharts: false
   }
 };

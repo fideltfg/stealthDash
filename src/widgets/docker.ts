@@ -70,7 +70,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as DockerContent;
 
-    container.className = 'widget-content docker-widget';
+    container.className = 'widget-content';
 
     // Clear any existing refresh interval
     const existingInterval = this.refreshIntervals.get(widget.id);
@@ -266,7 +266,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
       if (!containersList) {
         // Initial render - create the structure
         container.innerHTML = `
-          <div class="docker-container-wrapper">
+          <div class="xdocker-container-wrapper">
             <div id="containers-list" class="docker-containers-list"></div>
           </div>
         `;
@@ -427,8 +427,8 @@ class DockerWidgetRenderer implements WidgetRenderer {
       <div class="card" data-container-id="${container.Id}">
         <div class="card-header">
           <div class="docker-container-info">
-            <h4>${name}</h4>
-            <h6>${container.Image}</h6>
+            <h5>${name}</h5>
+            <subtitle>${container.Image}</subtitle>
           </div>
           <div class="badge ${container.State.toLowerCase()}">${container.State}</div>
         </div>
