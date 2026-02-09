@@ -70,7 +70,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = (widget.content || {}) as DockerContent;
 
-    container.className = 'widget-container docker-widget';
+    container.className = 'widget-content docker-widget';
 
     // Clear any existing refresh interval
     const existingInterval = this.refreshIntervals.get(widget.id);
@@ -276,14 +276,14 @@ class DockerWidgetRenderer implements WidgetRenderer {
         // Set up event delegation once
         containersList.addEventListener('pointerdown', (e) => {
           const target = e.target as HTMLElement;
-          if (target.closest('.docker-btn')) {
+          if (target.closest('.btn-small')) {
             e.stopPropagation();
           }
         });
 
         containersList.addEventListener('click', (e) => {
           const target = e.target as HTMLElement;
-          const button = target.closest('.docker-btn') as HTMLButtonElement;
+          const button = target.closest('.btn-small') as HTMLButtonElement;
           
           if (!button || button.disabled || button.classList.contains('loading')) {
             return;
@@ -310,11 +310,15 @@ class DockerWidgetRenderer implements WidgetRenderer {
             button.classList.add('loading');
             button.disabled = true;
             
-            this.controlContainer(fullContainer.Id, action as 'start' | 'stop' | 'restart', content, container, widget)
-              .finally(() => {
-                button.classList.remove('loading');
-                button.disabled = false;
-              });
+            // Replace icon with spinner - don't restore, let the next render update it
+            const icon = button.querySelector('i');
+            if (icon) {
+              icon.className = 'fas fa-spinner fa-spin';
+            }
+            
+            // Don't remove loading state - let the button stay in loading state
+            // until it's replaced by the next container list update
+            this.controlContainer(fullContainer.Id, action as 'start' | 'stop' | 'restart', content, container, widget);
           }
         });
       }
@@ -442,19 +446,19 @@ class DockerWidgetRenderer implements WidgetRenderer {
         <div class="docker-button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
-              <button class="btn-small btn-danger" data-action="stop" data-id="${shortId}">
+              <button class=" btn btn-small btn-danger" data-action="stop" data-id="${shortId}">
                 <i class="fas fa-stop"></i>
               </button>
-              <button class="btn-small btn-warning" data-action="restart" data-id="${shortId}">
+              <button class=" btn btn-small btn-warning" data-action="restart" data-id="${shortId}">
                 <i class="fas fa-sync-alt"></i>
               </button>
             ` : `
-              <button class="btn-small btn-success" data-action="start" data-id="${shortId}">
+              <button class=" btn btn-small btn-success" data-action="start" data-id="${shortId}">
                 <i class="fas fa-play"></i>
               </button>
             `}
           ` : ''}
-          <button class="btn-small btn-primary" data-action="logs" data-id="${shortId}">
+          <button class=" btn btn-small btn-primary" data-action="logs" data-id="${shortId}">
             <i class="fas fa-file-alt"></i>
           </button>
         </div>
