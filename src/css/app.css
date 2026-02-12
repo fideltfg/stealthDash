@@ -28,8 +28,12 @@
   --hover: #f0f0f0;
   --success: #4CAF50;
   --error: #cf3328;
+  --info: #007bff;
   --bg-success: rgba(76, 175, 80, 0.2);
   --bg-error: rgba(244, 67, 54, 0.2); 
+  --bg-info: rgba(0, 123, 255, 0.2);
+
+  --card-background: rgb(173 173 173 / 25%);
 
   /* Layout */
   --grid-size: 8px;
@@ -116,20 +120,22 @@
 .theme-sunset {
   --bg: #2d5a52;
   --surface: #3d6a62;
-  --text: #f9e9d8;
+  --text: #e6b45f;
   --muted: #e8c07d;
   --accent: #ea5f7e;
   --ring: #ea5f7e;
   --shadow: rgba(0, 0, 0, 0.4);
   --border: #4a7a72;
   --hover: #4a7a72;
+  --info: #4db6ac;
+  --bg-info: rgba(77, 182, 172, 0.2); 
 }
 
 /* Peachy Theme - Soft pastel palette with warm coral and peach tones */
 .theme-peachy {
-  --bg: #fff8f0;
-  --surface: #ffede0;
-  --text: #3d2f2f;
+  --bg: #edc1a1;
+  --surface: #FFE5B4;
+  --text: #9b601c;
   --muted: #9d857a;
   --accent: #ff8a7a;
   --ring: #ff8a7a;
@@ -1177,7 +1183,7 @@ body {
 
 /* === CARDS === */
 .card {
-  background: rgba(14, 13, 13, 0.25);
+  background: var(--card-background);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
@@ -1294,8 +1300,8 @@ body {
 }
 
 .badge-info {
-  background: #2196F322;
-  color: #2196F3;
+  background: var(--bg-info);
+  color: var(--info);
 }
 
 .badge-secondary {

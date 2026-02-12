@@ -341,7 +341,7 @@ class Dashboard {
     // Theme Toggle
     const themeToggle = document.createElement('button');
     themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = '�';
+    themeToggle.innerHTML = '<i class="fa-solid fa-circle-half-stroke"></i>';
     themeToggle.setAttribute('aria-label', 'Select theme');
     themeToggle.setAttribute('title', 'Select theme');
     themeToggle.addEventListener('click', (e) => {
@@ -384,7 +384,7 @@ class Dashboard {
     // Reset View Button
     const resetViewButton = document.createElement('button');
     resetViewButton.className = 'reset-view-toggle';
-    resetViewButton.innerHTML = '🎯';
+    resetViewButton.innerHTML = '<i class="fa-solid fa-group-arrows-rotate"></i>';
     resetViewButton.setAttribute('aria-label', 'Reset canvas view');
     resetViewButton.setAttribute('title', 'Reset canvas position to center');
     resetViewButton.addEventListener('click', () => {
@@ -484,24 +484,23 @@ class Dashboard {
     menu.className = 'theme-menu-dropdown';
 
     const themes: Array<{ value: Theme; label: string; icon: string }> = [
-      { value: 'light', label: 'Light', icon: '☀️' },
-      { value: 'dark', label: 'Dark', icon: '🌙' },
-      { value: 'gruvbox', label: 'Gruvbox', icon: '🟠' },
-      { value: 'tokyo-night', label: 'Tokyo Night', icon: '🌃' },
-      { value: 'catppuccin', label: 'Catppuccin', icon: '💜' },
-      { value: 'forest', label: 'Forest', icon: '🌲' },
-      { value: 'sunset', label: 'Sunset', icon: '🌅' },
-      { value: 'peachy', label: 'Peachy', icon: '🍑' },
-      { value: 'system', label: 'System', icon: '💻' }
+      { value: 'light', label: 'Light', icon: 'fa-solid fa-sun' },
+      { value: 'dark', label: 'Dark', icon: 'fa-solid fa-moon' },
+      { value: 'gruvbox', label: 'Gruvbox', icon: 'fa-solid fa-palette' },
+      { value: 'tokyo-night', label: 'Tokyo Night', icon: 'fa-solid fa-city' },
+      { value: 'catppuccin', label: 'Catppuccin', icon: 'fa-solid fa-mug-hot' },
+      { value: 'forest', label: 'Forest', icon: 'fa-solid fa-tree' },
+      { value: 'sunset', label: 'Sunset', icon: 'fa-solid fa-cloud-sun' },
+      { value: 'peachy', label: 'Peachy', icon: 'fa-solid fa-heart' },
+      { value: 'system', label: 'System', icon: 'fa-solid fa-desktop' }
     ];
 
     themes.forEach(theme => {
       const item = document.createElement('button');
       item.className = 'theme-menu-item';
       
-      const icon = document.createElement('span');
-      icon.className = 'theme-menu-icon';
-      icon.textContent = theme.icon;
+      const icon = document.createElement('i');
+      icon.className = `theme-menu-icon ${theme.icon}`;
       
       const label = document.createElement('span');
       label.className = 'theme-menu-label';
