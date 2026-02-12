@@ -28,7 +28,7 @@ class Dashboard {
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
   private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
-  private readonly PAN_LIMIT = 1000; // Maximum distance to pan from origin (in pixels)
+  private readonly PAN_LIMIT = 10000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
   private isPanModeActive: boolean = false; // Track if spacebar is held for panning
   private authUI: AuthUI;
@@ -600,9 +600,13 @@ class Dashboard {
       this.showCopyWidgetDialog(e.detail.widgetId);
     }) as EventListener);
 
-    // Global pan mode (spacebar + click anywhere)
+    // Global pan mode (spacebar + click anywhere, middle mouse, or click outside canvas)
     document.addEventListener('pointerdown', (e) => {
-      if (this.isPanModeActive || e.button === 1) {
+      const target = e.target as HTMLElement;
+      const isOutsideCanvas = !this.canvas.contains(target);
+      
+      // Allow panning if: spacebar held, middle mouse, or clicking outside the canvas
+      if (this.isPanModeActive || e.button === 1 || isOutsideCanvas) {
         e.preventDefault();
         this.startPan(e);
         return;
@@ -2053,7 +2057,7 @@ class Dashboard {
         <h3>🔍 Canvas Controls</h3>
         <ul>
           <li><strong>Zoom:</strong> <kbd>Ctrl</kbd> + Mouse Wheel or pinch gesture</li>
-          <li><strong>Pan:</strong> Click and drag on empty canvas area, or hold <kbd>Space</kbd> and drag anywhere, or use middle mouse button</li>
+          <li><strong>Pan:</strong> Click and drag outside the canvas, on empty canvas areas, hold <kbd>Space</kbd> and drag anywhere, or use middle mouse button</li>
           <li><strong>Reset Zoom:</strong> Click the <strong>1:1</strong> button (left menu)</li>
           <li><strong>Reset View:</strong> Click the 🎯 button to center canvas</li>
         </ul>
