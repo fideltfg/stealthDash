@@ -104,21 +104,21 @@
   --hover: #4a6e49;
 }
 
-/* Emerald Theme - Deep emerald palette with vibrant green accents */
-.theme-emerald {
-  --bg: #2b2226;
-  --surface: #083b14;
-  --text: #9bbedf;
-  --muted: #8ca225;
-  --accent: #208e1f;
-  --ring: #208e1f;
-  --shadow: rgba(0, 0, 0, 0.6);
-  --border: #3e5b33;
-  --hover: #464958;
+/* Sunset Theme - Vibrant tropical palette with coral and teal tones */
+.theme-sunset {
+  --bg: #2d5a52;
+  --surface: #3d6a62;
+  --text: #f9e9d8;
+  --muted: #e8c07d;
+  --accent: #ea5f7e;
+  --ring: #ea5f7e;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #4a7a72;
+  --hover: #4a7a72;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-emerald) {
+  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-sunset) {
     --bg: #1a1a1a;
     --surface: #2a2a2a;
     --text: #f5f5f5;
