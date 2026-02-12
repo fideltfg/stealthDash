@@ -127,15 +127,15 @@
 
 /* Peachy Theme - Soft pastel palette with warm coral and peach tones */
 .theme-peachy {
-  --bg: #fef8f3;
-  --surface: #fff4eb;
-  --text: #2d2d2d;
-  --muted: #8a7a6a;
-  --accent: #ff6b7a;
-  --ring: #ff6b7a;
-  --shadow: rgba(0, 0, 0, 0.08);
-  --border: #f5d5b8;
-  --hover: #ffe9d6;
+  --bg: #fff8f0;
+  --surface: #ffede0;
+  --text: #3d2f2f;
+  --muted: #9d857a;
+  --accent: #ff8a7a;
+  --ring: #ff8a7a;
+  --shadow: rgba(255, 138, 122, 0.15);
+  --border: #ffd4bd;
+  --hover: #ffe4d4;
 }
 
 @media (prefers-color-scheme: dark) {
