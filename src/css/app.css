@@ -26,6 +26,10 @@
   --shadow: rgba(0, 0, 0, 0.1);
   --border: #e0e0e0;
   --hover: #f0f0f0;
+  --success: #4CAF50;
+  --error: #cf3328;
+  --bg-success: rgba(76, 175, 80, 0.2);
+  --bg-error: rgba(244, 67, 54, 0.2); 
 
   /* Layout */
   --grid-size: 8px;
@@ -93,15 +97,19 @@
 
 /* Forest Theme - Natural green palette inspired by forests and nature */
 .theme-forest {
-  --bg: #2a512a;
+  --bg: #284428;
   --surface: #3a6139;
-  --text: #bbcd9d;
-  --muted: #888b50;
+  --text: #d3dbc5;
+  --muted: #bdc448;
   --accent: #589d98;
   --ring: #589d98;
   --shadow: rgba(0, 0, 0, 0.5);
   --border: #4a6e49;
   --hover: #4a6e49;
+  --success: #4CAF50;
+  --error: #ffffff;
+  --bg-success: rgba(76, 175, 80, 0.2);
+  --bg-error: rgba(244, 67, 54, 0.2);
 }
 
 /* Sunset Theme - Vibrant tropical palette with coral and teal tones */
@@ -117,8 +125,21 @@
   --hover: #4a7a72;
 }
 
+/* Peachy Theme - Soft pastel palette with warm coral and peach tones */
+.theme-peachy {
+  --bg: #fef8f3;
+  --surface: #fff4eb;
+  --text: #2d2d2d;
+  --muted: #8a7a6a;
+  --accent: #ff6b7a;
+  --ring: #ff6b7a;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --border: #f5d5b8;
+  --hover: #ffe9d6;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-sunset) {
+  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-sunset):not(.theme-peachy) {
     --bg: #1a1a1a;
     --surface: #2a2a2a;
     --text: #f5f5f5;
@@ -1257,8 +1278,8 @@ body {
 
 .badge.running,
 .badge-success {
-  background: #4CAF5022;
-  color: #4CAF50;
+  background: var(--bg-success);
+  color: var(--success);
 }
 
 .badge-warning {
@@ -1266,9 +1287,10 @@ body {
   color: #FF9800;
 }
 
+.badge.exited,
 .badge-danger {
-  background: #cf332822;
-  color: #cf3328;
+  background: var(--bg-error);
+  color: var(--error);
 }
 
 .badge-info {

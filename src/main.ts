@@ -450,7 +450,7 @@ class Dashboard {
     const root = document.documentElement;
     
     // Remove all theme classes first
-    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-sunset');
+    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-sunset', 'theme-peachy');
 
     if (this.state.theme === 'dark') {
       root.classList.add('theme-dark');
@@ -466,6 +466,8 @@ class Dashboard {
       root.classList.add('theme-forest');
     } else if (this.state.theme === 'sunset') {
       root.classList.add('theme-sunset');
+    } else if (this.state.theme === 'peachy') {
+      root.classList.add('theme-peachy');
     }
     // If 'system', no class is added (uses @media prefers-color-scheme)
   }
@@ -489,6 +491,7 @@ class Dashboard {
       { value: 'catppuccin', label: 'Catppuccin', icon: '💜' },
       { value: 'forest', label: 'Forest', icon: '🌲' },
       { value: 'sunset', label: 'Sunset', icon: '🌅' },
+      { value: 'peachy', label: 'Peachy', icon: '🍑' },
       { value: 'system', label: 'System', icon: '💻' }
     ];
 
