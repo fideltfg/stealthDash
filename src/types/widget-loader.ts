@@ -39,6 +39,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'unifi-protect': () => import('../widgets/unifi-protect'),
   'unifi-sensor': () => import('../widgets/unifi-sensor'),
   'docker': () => import('../widgets/docker'),
+  'gmail': () => import('../widgets/gmail'),
 };
 
 // Track which widgets have been loaded

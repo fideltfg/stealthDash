@@ -96,15 +96,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-protect-widget widget-container flex flex-column">
-        <div class="protect-header widget-header-row">
-          <h3 class="widget-title flex align-center gap-8">
-            <span class="widget-icon-large"><i class="fas fa-video"></i></span>
-            <span>UniFi Protect</span>
-          </h3>
-          <button class="refresh-btn widget-button secondary">🔄 Refresh</button>
-        </div>
-        <div class="protect-content flex-1 flex flex-column gap-12 overflow-auto">
+      <div class="unifi-protect-widget">
+        <div class="protect-content card-list">
           <div class="protect-loading widget-loading centered">
             Loading cameras and detections...
           </div>
@@ -113,7 +106,6 @@ class UnifiProtectRenderer implements WidgetRenderer {
     `;
 
     const contentEl = container.querySelector('.protect-content') as HTMLElement;
-    const refreshBtn = container.querySelector('.refresh-btn') as HTMLButtonElement;
     
     const fetchAndRender = async () => {
       try {
@@ -166,10 +158,6 @@ class UnifiProtectRenderer implements WidgetRenderer {
       }
     };
 
-    // Refresh button handler
-    refreshBtn.addEventListener('click', () => {
-      fetchAndRender();
-    });
 
     // Initial fetch
     fetchAndRender();
@@ -292,6 +280,25 @@ class UnifiProtectRenderer implements WidgetRenderer {
           class="widget-dialog-input">
       </div>
 
+      <div class="widget-dialog-field large-margin" id="camera-selection-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label class="widget-dialog-label" style="margin-bottom: 0;">
+            Select Cameras to Display
+          </label>
+          <button id="toggle-all-cameras" class="widget-dialog-button" style="padding: 4px 12px; font-size: 12px; display: none;">
+            Select All
+          </button>
+        </div>
+        <div id="camera-selection-loading" class="widget-dialog-hint" style="padding: 12px; text-align: center;">
+          Loading cameras...
+        </div>
+        <div id="camera-selection-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; display: none;">
+        </div>
+        <small class="widget-dialog-hint">
+          Leave all unchecked to display all cameras
+        </small>
+      </div>
+
       <div class="widget-dialog-buttons top-margin">
         <button id="cancel-btn" 
           class="widget-dialog-button-cancel">
@@ -306,6 +313,126 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    // Function to fetch and display cameras
+    const loadCameras = async (host: string, credentialId: number) => {
+      const container = modal.querySelector('#camera-selection-container') as HTMLElement;
+      const loading = modal.querySelector('#camera-selection-loading') as HTMLElement;
+      const list = modal.querySelector('#camera-selection-list') as HTMLElement;
+      
+      if (!host || !credentialId) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      loading.style.display = 'block';
+      list.style.display = 'none';
+      list.innerHTML = '';
+
+      try {
+        const proxyUrl = new URL('/api/unifi-protect/bootstrap', window.location.origin.replace(':3000', ':3001'));
+        proxyUrl.searchParams.set('host', host);
+        proxyUrl.searchParams.set('credentialId', credentialId.toString());
+        
+        const response = await fetch(proxyUrl.toString(), {
+          headers: {
+            'Authorization': `Bearer ${authService.getToken() || ''}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch cameras: ${response.statusText}`);
+        }
+
+        const data: ProtectBootstrap = await response.json();
+        const cameras = data.cameras || [];
+
+        if (cameras.length === 0) {
+          list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--muted);">No cameras found</div>';
+        } else {
+          const selectedCameras = content.selectedCameras || [];
+          list.innerHTML = cameras.map(camera => `
+            <div style="padding: 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border);">
+              <input type="checkbox" 
+                id="camera-${camera.id}" 
+                value="${camera.id}" 
+                class="camera-checkbox"
+                ${selectedCameras.length === 0 || selectedCameras.includes(camera.id) ? 'checked' : ''}>
+              <label for="camera-${camera.id}" style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 500;">${camera.name}</span>
+                <span style="color: var(--muted); font-size: 12px;">${camera.model}</span>
+                ${camera.isConnected ? '<span style="color: var(--success); font-size: 12px;">●</span>' : '<span style="color: var(--error); font-size: 12px;">●</span>'}
+              </label>
+            </div>
+          `).join('');
+        }
+
+        loading.style.display = 'none';
+        list.style.display = 'block';
+        
+        // Show toggle button and update its text
+        const toggleBtn = modal.querySelector('#toggle-all-cameras') as HTMLButtonElement;
+        if (toggleBtn) {
+          toggleBtn.style.display = 'block';
+          
+          // Function to update button text based on checkbox states
+          const updateToggleButtonText = () => {
+            const checkboxes = modal.querySelectorAll('.camera-checkbox') as NodeListOf<HTMLInputElement>;
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            toggleBtn.textContent = allChecked ? 'Deselect All' : 'Select All';
+          };
+          
+          // Set initial text
+          updateToggleButtonText();
+          
+          // Add listeners to checkboxes to update button text
+          const checkboxes = modal.querySelectorAll('.camera-checkbox') as NodeListOf<HTMLInputElement>;
+          checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateToggleButtonText);
+          });
+        }
+      } catch (error: any) {
+        console.error('Error loading cameras:', error);
+        list.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--error);">Failed to load cameras: ${error.message}</div>`;
+        loading.style.display = 'none';
+        list.style.display = 'block';
+      }
+    };
+
+    // Load cameras if host and credential are already set
+    if (content.host && content.credentialId) {
+      loadCameras(content.host, content.credentialId);
+    }
+
+    // Listen for credential changes to reload cameras
+    const hostInput = modal.querySelector('#host-input') as HTMLInputElement;
+    const credentialSelect = modal.querySelector('#credential-select') as HTMLSelectElement;
+    
+    const onConfigChange = () => {
+      const host = hostInput.value.trim();
+      const credentialId = parseInt(credentialSelect.value);
+      if (host && credentialId) {
+        loadCameras(host, credentialId);
+      }
+    };
+
+    hostInput.addEventListener('blur', onConfigChange);
+    credentialSelect.addEventListener('change', onConfigChange);
+
+    // Handle toggle all cameras
+    const toggleAllBtn = modal.querySelector('#toggle-all-cameras') as HTMLButtonElement;
+    toggleAllBtn?.addEventListener('click', () => {
+      const checkboxes = modal.querySelectorAll('.camera-checkbox') as NodeListOf<HTMLInputElement>;
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+      });
+      
+      // Update button text
+      toggleAllBtn.textContent = allChecked ? 'Select All' : 'Deselect All';
+    });
 
     // Handle save
     const saveBtn = modal.querySelector('#save-btn');
@@ -324,6 +451,15 @@ class UnifiProtectRenderer implements WidgetRenderer {
       const maxDetections = parseInt(maxDetectionsInput.value);
       const refreshInterval = parseInt(refreshInput.value);
 
+      // Get selected cameras
+      const cameraCheckboxes = modal.querySelectorAll('.camera-checkbox') as NodeListOf<HTMLInputElement>;
+      const selectedCameras: string[] = [];
+      cameraCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          selectedCameras.push(checkbox.value);
+        }
+      });
+
       if (!host) {
         alert('Please enter UniFi Protect console URL');
         return;
@@ -341,7 +477,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
         viewMode: viewMode as 'snapshots' | 'streams' | 'both',
         maxDetections,
         refreshInterval,
-        selectedCameras: content.selectedCameras || [],
+        selectedCameras: selectedCameras.length > 0 ? selectedCameras : [],
         detectionTypes: content.detectionTypes || [],
         autoRefreshDetections: content.autoRefreshDetections ?? true
       };
@@ -389,7 +525,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
         <h4 class="protect-section-title">
           Recent Detections (${displayEvents.length})
         </h4>
-        <div class="detections-list flex flex-column gap-8">
+        <div class="list">
           ${displayEvents.map(event => this.renderDetectionCard(event, content, data.cameras)).join('')}
         </div>
       </div>
@@ -410,12 +546,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : '';
 
     return `
-      <div class="protect-detection-card">
+      <div class="list-item">
         ${thumbnailUrl ? `
           <div class="protect-detection-thumbnail">
             <img src="${thumbnailUrl}" 
               class="protect-detection-img"
-              onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'protect-no-image\\'>No Image</div>'">
+              onerror="this.onerror=null; this.src='https://placehold.co/60';">
           </div>
         ` : ''}
         <div class="flex-1 truncate">
@@ -462,20 +598,15 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const viewMode = content.viewMode || 'snapshots';
     
     container.innerHTML = `
-      <div class="flex flex-column gap-12">
-        <h4 class="protect-section-title">
-          Cameras (${cameras.length})
-        </h4>
-        <div class="cameras-grid protect-cameras-grid">
-          ${cameras.map(camera => this.renderCameraCard(camera, content, viewMode)).join('')}
-        </div>
+      <div class="card-list">
+        ${cameras.map(camera => this.renderCameraCard(camera, content, viewMode)).join('')}
       </div>
     `;
   }
 
   private renderCameraCard(camera: ProtectCamera, content: UnifiProtectContent, viewMode: string): string {
     const isOnline = camera.isConnected;
-    const statusColor = isOnline ? 'var(--success)' : 'var(--error)';
+    const statusColor = isOnline ? 'badge-success' : 'badge-error';
     const statusText = isOnline ? 'Online' : 'Offline';
     
     const snapshotUrl = isOnline 
@@ -483,7 +614,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : '';
 
     return `
-      <div style="background: var(--bg); border-radius: 8px; border: 1px solid var(--border); overflow: hidden;">
+      <div class="card" style="overflow: hidden;">
         ${(viewMode === 'snapshots' || viewMode === 'both') && isOnline ? `
           <div style="width: 100%; height: 180px; background: var(--surface); position: relative;">
             <img src="${snapshotUrl}" 
@@ -513,18 +644,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
             <div style="font-weight: 600; font-size: 14px; color: var(--text);">${camera.name}</div>
             <div style="display: flex; align-items: center; gap: 4px;">
-              <span style="width: 8px; height: 8px; background: ${statusColor}; border-radius: 50%;"></span>
-              <span style="font-size: 12px; color: ${statusColor};">${statusText}</span>
+            <div class="badge ${statusColor}">${statusText}</div>
             </div>
           </div>
-          <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">
-            ${camera.model}
+          <div><subtitle style="float: left;">${camera.model}</subtitle><subtitle style="float: right;">Last seen: ${this.getTimeAgo(new Date(camera.lastSeen))}
+            </subtitle>
           </div>
-          ${isOnline && camera.lastSeen ? `
-            <div style="font-size: 11px; color: var(--muted);">
-              Last seen: ${this.getTimeAgo(new Date(camera.lastSeen))}
-            </div>
-          ` : ''}
         </div>
       </div>
     `;
@@ -544,20 +669,20 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const viewMode = content.viewMode || 'snapshots';
 
     container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 20px; height: 100%;">
         ${cameras.length > 0 ? `
-          <div>
-            <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: var(--text);">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: var(--text); flex-shrink: 0;">
               Cameras (${cameras.length})
             </h4>
-            <div class="cameras-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+            <div class="card-list" style="flex: 1;">
               ${cameras.map(camera => this.renderCameraCard(camera, content, viewMode)).join('')}
             </div>
           </div>
         ` : ''}
         
         ${displayEvents.length > 0 ? `
-          <div>
+          <div style="flex-shrink: 0;">
             <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: var(--text);">
               Recent Detections (${displayEvents.length})
             </h4>

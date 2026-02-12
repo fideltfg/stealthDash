@@ -28,7 +28,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as EnvCanadaContent;
     
-    container.className = 'envcanada-container';
+    container.className = 'widget-content';
 
     if (!content.latitude || !content.longitude) {
       this.renderConfigScreen(container, widget);
@@ -164,10 +164,8 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const headerLeft = document.createElement('div');
     headerLeft.className = 'envcanada-header-left';
     headerLeft.innerHTML = `
-      <span>🍁</span>
-      <span>Weather Forecast</span>
+      <span>🍁Weather Forecast</span>
     `;
-
 
     header.appendChild(headerLeft);
     container.appendChild(header);
@@ -329,9 +327,19 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const wrapper = document.createElement('div');
     wrapper.className = 'envcanada-wrapper';
 
+      // Last updated with icon
+    if (content.lastUpdated) {
+      const lastUpdate = document.createElement('div');
+      lastUpdate.className = 'envcanada-last-updated';
+      lastUpdate.innerHTML = `
+        <subtitle>Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}</subtitle>
+      `;
+      wrapper.appendChild(lastUpdate);
+    }
+
     // Location header with icon
     const locationDiv = document.createElement('div');
-    locationDiv.className = 'envcanada-location';
+    locationDiv.className = 'card';
     locationDiv.innerHTML = `
       <span class="envcanada-location-icon">📍</span>
       <span>${data.location || 'Weather Forecast'}</span>
@@ -341,30 +349,30 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     // Forecast entries with improved visual design
     data.entries.forEach((entry: any) => {
       const entryDiv = document.createElement('div');
-      entryDiv.className = 'envcanada-entry';
+      entryDiv.className = 'card';
 
       // Title row with temperature
       const titleDiv = document.createElement('div');
-      titleDiv.className = 'envcanada-entry-title';
+      titleDiv.className = 'card-header';
       
       const titleText = document.createElement('span');
-      titleText.className = 'envcanada-entry-title-text';
+      titleText.className = 'card-title-text';
       
       // Add weather icon based on title
       const weatherIcon = this.getWeatherIcon(entry.title);
       titleText.innerHTML = `
-        <span class="envcanada-entry-icon">${weatherIcon}</span>
+        <span class="card-icon">${weatherIcon}</span>
         <span>${entry.title}</span>
       `;
       titleDiv.appendChild(titleText);
       
       if (entry.temperature) {
         const tempSpan = document.createElement('span');
-        tempSpan.className = 'envcanada-entry-temp';
+        tempSpan.className = 'card-temp';
         tempSpan.style.color = this.getTempColor(entry.temperature);
         tempSpan.innerHTML = `
           <span>${entry.temperature}</span>
-          <span class="envcanada-entry-temp-unit">°C</span>
+          <span class="card-temp-unit">°C</span>
         `;
         titleDiv.appendChild(tempSpan);
       }
@@ -373,23 +381,14 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
 
       // Summary text with better formatting
       const summaryDiv = document.createElement('div');
-      summaryDiv.className = 'envcanada-entry-summary';
+      summaryDiv.className = 'card-summary';
       summaryDiv.textContent = entry.summary;
       entryDiv.appendChild(summaryDiv);
 
       wrapper.appendChild(entryDiv);
     });
 
-    // Last updated with icon
-    if (content.lastUpdated) {
-      const lastUpdate = document.createElement('div');
-      lastUpdate.className = 'envcanada-last-updated';
-      lastUpdate.innerHTML = `
-        <span>🕐</span>
-        <span>Updated: ${new Date(content.lastUpdated).toLocaleTimeString()}</span>
-      `;
-      wrapper.appendChild(lastUpdate);
-    }
+  
 
     container.appendChild(wrapper);
   }
@@ -518,15 +517,13 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons top-margin">
-        <button
+        <div
           id="settings-save"
-          class="widget-dialog-button-save extended full-width"
-        >
-          Save & Reload
-        </button>
+          class="btn btn-small btn-primary"
+        >Save</div>
         <button
           id="settings-close"
-          class="widget-dialog-button-cancel extended full-width"
+          class="btn btn-small btn-secondary"
         >
           Cancel
         </button>

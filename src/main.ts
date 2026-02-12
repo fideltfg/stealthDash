@@ -1,4 +1,4 @@
-import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState } from './types/types';
+import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState, Theme } from './types/types';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
 import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId, generateUUID } from './components/storage';
 import { createHistoryManager, shouldCoalesceAction } from './components/history';
@@ -448,20 +448,26 @@ class Dashboard {
 
   private setupTheme(): void {
     const root = document.documentElement;
+    
+    // Remove all theme classes first
+    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin');
 
     if (this.state.theme === 'dark') {
       root.classList.add('theme-dark');
-      root.classList.remove('theme-light');
     } else if (this.state.theme === 'light') {
       root.classList.add('theme-light');
-      root.classList.remove('theme-dark');
-    } else {
-      root.classList.remove('theme-dark', 'theme-light');
+    } else if (this.state.theme === 'gruvbox') {
+      root.classList.add('theme-gruvbox');
+    } else if (this.state.theme === 'tokyo-night') {
+      root.classList.add('theme-tokyo-night');
+    } else if (this.state.theme === 'catppuccin') {
+      root.classList.add('theme-catppuccin');
     }
+    // If 'system', no class is added (uses @media prefers-color-scheme)
   }
 
   private toggleTheme(): void {
-    const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    const themes: Array<Theme> = ['light', 'dark', 'gruvbox', 'tokyo-night', 'catppuccin', 'system'];
     const currentIndex = themes.indexOf(this.state.theme);
     this.state.theme = themes[(currentIndex + 1) % themes.length];
     this.setupTheme();
@@ -492,6 +498,11 @@ class Dashboard {
     // Widget delete event
     window.addEventListener('widget-delete', ((e: CustomEvent) => {
       this.deleteWidget(e.detail.widgetId);
+    }) as EventListener);
+
+    // Widget duplicate event
+    window.addEventListener('widget-duplicate', ((e: CustomEvent) => {
+      this.duplicateWidget(e.detail.widgetId);
     }) as EventListener);
 
     // Widget copy event
@@ -1414,6 +1425,44 @@ class Dashboard {
     this.save();
   }
 
+  private duplicateWidget(widgetId: string): void {
+    const widget = this.state.widgets.find(w => w.id === widgetId);
+    if (!widget) return;
+
+    // Create a copy of the widget with a new ID and offset position
+    const OFFSET = 20; // pixels to offset the duplicate
+    const maxZ = Math.max(...this.state.widgets.map(w => w.z));
+    
+    const newWidget: Widget = {
+      ...widget,
+      id: generateUUID(),
+      position: {
+        x: widget.position.x + OFFSET,
+        y: widget.position.y + OFFSET
+      },
+      z: maxZ + 1, // Place on top
+      meta: {
+        ...widget.meta,
+        title: widget.meta?.title ? `${widget.meta.title} (copy)` : widget.meta?.title,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+    };
+
+    // Add to current dashboard
+    this.state.widgets.push(newWidget);
+
+    // Create and add the element to DOM
+    const element = createWidgetElement(newWidget, 1);
+    this.canvasContent.appendChild(element);
+
+    // Select the new widget
+    this.selectWidget(newWidget.id);
+
+    this.saveHistory();
+    this.save();
+  }
+
   private toggleAutoSize(widgetId: string): void {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
@@ -1467,7 +1516,8 @@ class Dashboard {
 
     // Fetch widget metadata from server (no need to load widget code)
     try {
-      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 
+        (typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : 'http://localhost:3001');
       const response = await fetch(`${apiUrl}/widgets/metadata`);
       const data = await response.json();
 
@@ -1690,32 +1740,35 @@ class Dashboard {
     }
 
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    overlay.className = 'dialog';
 
-    const modal = document.createElement('div');
-    modal.className = 'modal';
+    const container = document.createElement('div');
+    container.className = 'dialog-container';
+    container.style.minWidth = '500px';
+    container.style.maxWidth = '600px';
 
     const header = document.createElement('div');
-    header.className = 'modal-header';
+    header.className = 'dialog-header';
 
     const title = document.createElement('h2');
-    title.className = 'modal-title';
+    title.className = 'dialog-title';
     title.textContent = 'Copy Widget to Dashboard';
     header.appendChild(title);
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close';
+    closeBtn.className = 'dialog-close-button';
     closeBtn.innerHTML = '×';
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.addEventListener('click', () => overlay.remove());
     header.appendChild(closeBtn);
 
-    const content = document.createElement('div');
-    content.className = 'modal-content';
+    container.appendChild(header);
 
     const description = document.createElement('p');
+    description.style.marginBottom = '20px';
+    description.style.color = 'var(--muted)';
     description.textContent = `Select a dashboard to copy "${widget.meta?.title || widget.type}" to:`;
-    content.appendChild(description);
+    container.appendChild(description);
 
     // List of dashboards (excluding current one)
     const currentDashboardId = this.multiState.activeDashboardId;
@@ -1723,30 +1776,37 @@ class Dashboard {
 
     if (otherDashboards.length === 0) {
       const noDashboards = document.createElement('p');
-      noDashboards.className = 'modal-no-data';
+      noDashboards.style.padding = '40px 20px';
+      noDashboards.style.textAlign = 'center';
+      noDashboards.style.color = 'var(--muted)';
       noDashboards.textContent = 'No other dashboards available. Create a new dashboard first.';
-      content.appendChild(noDashboards);
+      container.appendChild(noDashboards);
     } else {
       const dashboardList = document.createElement('div');
-      dashboardList.className = 'dashboard-list';
+      dashboardList.className = 'widget-types';
 
       otherDashboards.forEach(dashboard => {
         const item = document.createElement('button');
-        item.className = 'widget-type-row dashboard-list-item';
+        item.className = 'widget-type-row';
+
+        const icon = document.createElement('div');
+        icon.className = 'widget-type-icon';
+        icon.textContent = '📊';
 
         const itemContent = document.createElement('div');
-        itemContent.className = 'dashboard-list-item-content';
+        itemContent.className = 'widget-type-content';
 
         const dashName = document.createElement('div');
-        dashName.className = 'dashboard-list-item-name';
+        dashName.className = 'widget-type-name';
         dashName.textContent = dashboard.name;
 
         const dashInfo = document.createElement('div');
-        dashInfo.className = 'dashboard-list-item-info';
+        dashInfo.className = 'widget-type-description';
         dashInfo.textContent = `${dashboard.state.widgets.length} widget${dashboard.state.widgets.length !== 1 ? 's' : ''}`;
 
         itemContent.appendChild(dashName);
         itemContent.appendChild(dashInfo);
+        item.appendChild(icon);
         item.appendChild(itemContent);
 
         item.addEventListener('click', () => {
@@ -1757,24 +1817,10 @@ class Dashboard {
         dashboardList.appendChild(item);
       });
 
-      content.appendChild(dashboardList);
+      container.appendChild(dashboardList);
     }
 
-    // Add cancel button
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'modal-button-container';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'modal-cancel-btn';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.addEventListener('click', () => overlay.remove());
-
-    buttonContainer.appendChild(cancelBtn);
-    content.appendChild(buttonContainer);
-
-    modal.appendChild(header);
-    modal.appendChild(content);
-    overlay.appendChild(modal);
+    overlay.appendChild(container);
     document.body.appendChild(overlay);
 
     // Close on overlay click

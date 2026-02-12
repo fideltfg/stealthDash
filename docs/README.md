@@ -527,19 +527,6 @@ MIT License - see LICENSE file for details
 
 Built with TypeScript and Docker
 
-## Widget Types
-
-### Image Widget
-
-- Click placeholder to add image URL
-- Supports `contain` and `cover` object-fit modes
-- Includes alt text for accessibility
-
-### Embed Widget
-
-- Embeds external websites in sandboxed iframe
-- Security restrictions apply
-- Click to set URL
 
 ## Architecture
 
@@ -568,31 +555,7 @@ Dashboard/
 - **Vanilla JS** - No framework dependencies
 - **CSS Custom Properties** - Dynamic theming
 - **Pointer Events** - Modern drag/resize
-- **localStorage** - Client-side persistence
 
-## Browser Support
-
-Modern browsers with support for:
-- ES2020
-- CSS Custom Properties
-- Pointer Events
-- localStorage
-
-Tested on:
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-
-## Accessibility
-
-**WCAG AA Compliant**
-
-- Keyboard navigation for all features
-- Visible focus indicators
-- ARIA labels and roles
-- Screen reader announcements
-- High contrast ratios
-- Reduced motion support
 
 ## Customization
 
@@ -605,7 +568,6 @@ See [THEMING.md](./THEMING.md) for details on:
 
 ## Known Limitations
 
-- No server-side persistence (v1)
 - No real-time collaboration (v1)
 - No widget templates/library (v1)
 - Auto-size feature is placeholder (v1)
@@ -628,7 +590,7 @@ MIT
 
 ## Contributing
 
-This is a demonstration project. Feel free to fork and customize for your needs.
+Feel free to fork and customize for your needs.
 
 ## Support
 

@@ -163,6 +163,19 @@ const widgetMetadata = [
     defaultSize: { w: 400, h: 500 },
     defaultContent: {},
     hasSettings: true
+  },
+  {
+    type: 'gmail',
+    name: 'Gmail',
+    icon: '📧',
+    description: 'Display Gmail inbox with unread messages and quick actions',
+    defaultSize: { w: 400, h: 600 },
+    defaultContent: {
+      labelIds: ['INBOX'],
+      maxResults: 20,
+      refreshInterval: 300
+    },
+    hasSettings: true
   }
 ];
 

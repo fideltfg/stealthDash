@@ -47,74 +47,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   getHeaderButtons(widget: Widget): HTMLElement[] {
     const entitiesBtn = document.createElement('button');
-    entitiesBtn.innerHTML = '👻';
+    entitiesBtn.innerHTML = '<i class="fa-solid fa-ghost"></i>';
+    entitiesBtn.title = 'Entities';
     entitiesBtn.className = 'widget-settings-btn';
     entitiesBtn.onclick = (e) => {
       e.stopPropagation();
       this.showManageEntitiesDialog(widget);
     };
     entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-
-    // Add dropdown for bulk actions
-    const dropdown = document.createElement('select');
-    dropdown.className = 'widget-settings-btn ha-dropdown';
-    dropdown.innerHTML = `
-      <option value="">Actions...</option>
-      <option value="all-on">Turn All On</option>
-      <option value="all-off">Turn All Off</option>
-    `;
-    
-    dropdown.addEventListener('change', async (e) => {
-      const action = (e.target as HTMLSelectElement).value;
-      if (!action) return;
-
-      const content = widget.content as HomeAssistantContent;
-      const entities = content.entities || [];
-      const switchesAndLights = entities.filter(e => e.type === 'switch' || e.type === 'light');
-
-      if (switchesAndLights.length === 0) {
-        alert('No switches or lights to control');
-        dropdown.value = '';
-        return;
-      }
-
-      // Confirm action
-      const actionText = action === 'all-on' ? 'turn ON' : 'turn OFF';
-      if (!confirm(`${actionText} all ${switchesAndLights.length} switches/lights?`)) {
-        dropdown.value = '';
-        return;
-      }
-
-      // Disable dropdown during operation
-      dropdown.disabled = true;
-      dropdown.style.opacity = '0.5';
-
-      try {
-        // Toggle all entities
-        for (const entity of switchesAndLights) {
-          await this.toggleEntityToState(entity.entity_id, widget, action === 'all-on');
-        }
-
-        // Refresh states
-        await this.fetchEntityStates(widget);
-        const container = document.querySelector(`[data-widget-id="${widget.id}"]`);
-        if (container) {
-          const grid = container.querySelector('.ha-entities-grid') as HTMLElement;
-          if (grid) {
-            this.updateEntityCards(widget, grid);
-          }
-        }
-      } catch (error) {
-        alert(`Failed to ${actionText} all entities: ${error}`);
-      } finally {
-        // Re-enable dropdown
-        dropdown.disabled = false;
-        dropdown.style.opacity = '1';
-        dropdown.value = '';
-      }
-    });
-    
-    dropdown.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Add group button
     const groupBtn = document.createElement('button');
@@ -127,7 +67,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     };
     groupBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-    return [groupBtn, dropdown, entitiesBtn];
+    return [groupBtn, entitiesBtn];
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
@@ -163,13 +103,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         <div class="widget-config-icon"><i class="fas fa-home"></i></div>
         <h3 class="ha-config-title">Configure Home Assistant</h3>
         <div class="ha-config-form">
-          <div class="widget-dialog-field">
+          <div class="card">
             <label class="widget-dialog-label left-align">Home Assistant URL:</label>
             <input type="text" id="ha-url" placeholder="http://homeassistant.local:8123" 
                    class="widget-dialog-input rounded" 
                    value="${content.url || ''}">
           </div>
-          <div class="widget-dialog-field">
+          <div class="card">
             <label class="widget-dialog-label left-align">Credentials:</label>
             <select id="ha-credential" class="widget-dialog-input rounded">
               <option value="">Select saved credential...</option>
@@ -697,7 +637,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       let response;
       if (content.credentialId) {
         // Use credentialId (new method)
-        response = await fetch(`${pingServerUrl}/home-assistant/service?credentialId=${content.credentialId}`, {
+        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -705,6 +645,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           },
           body: JSON.stringify({
             url: content.url,
+            credentialId: content.credentialId,
             domain,
             service,
             entity_id: entityId
@@ -832,7 +773,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
 
       const allStates: HomeAssistantEntity[] = await response.json();
-      return allStates;
+      
+      // Filter for sensors and switches only
+      const filtered = allStates.filter(entity => {
+        const domain = entity.entity_id.split('.')[0];
+        return domain === 'sensor' || domain === 'switch';
+      });
+      
+      return filtered;
     } catch (error) {
       console.error('Failed to fetch all entities:', error);
       throw error;
@@ -851,7 +799,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     dialog.innerHTML = `
       <h3>Add Entity</h3>
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">Search Entity:</label>
         <input type="text" id="entity-search" placeholder="Search entities..." class="widget-dialog-input extended">
       </div>
@@ -860,7 +808,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           Loading entities...
         </div>
       </div>
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">Display Name (optional):</label>
         <input type="text" id="display-name" placeholder="Custom display name" class="widget-dialog-input extended">
       </div>
@@ -923,12 +871,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         
         item.innerHTML = `
           <div class="ha-entity-list-item-content">
-            <div class="ha-entity-list-item-icon">${icon}</div>
-            <div class="ha-entity-list-item-info">
-              <div class="ha-entity-list-item-name">${entity.attributes.friendly_name || entity.entity_id}</div>
+            <div class="card">
+              <div class="ha-entity-list-item-name">${icon} ${entity.attributes.friendly_name || entity.entity_id}</div>
               <div class="ha-entity-list-item-id">${entity.entity_id}</div>
             </div>
-            <div class="ha-entity-list-item-domain">${domain}</div>
           </div>
         `;
 
@@ -1063,20 +1009,20 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     dialog.innerHTML = `
       <h3>Edit Entity</h3>
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">Entity ID:</label>
         <input type="text" id="edit-entity-id" placeholder="light.living_room" 
                value="${entity.entity_id}"
                class="widget-dialog-input extended">
         <small class="ha-dialog-hint">Example: light.kitchen, switch.fan, sensor.temperature</small>
       </div>
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">Display Name (optional):</label>
         <input type="text" id="edit-display-name" placeholder="Living Room Light" 
                value="${entity.display_name || ''}"
                class="widget-dialog-input extended">
       </div>
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">Type:</label>
         <select id="edit-entity-type" class="widget-dialog-input extended">
           <option value="light" ${entity.type === 'light' ? 'selected' : ''}>Light</option>
@@ -1186,9 +1132,9 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       .join('');
 
     dialog.innerHTML = `
-      <h3 class="ha-dialog-title">⚙️ Home Assistant Settings</h3>
+      <h3 class="ha-dialog-title"><i class="fa-solid fa-gear"></i> Home Assistant Settings</h3>
       
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">
           Home Assistant URL
         </label>
@@ -1204,7 +1150,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">
           Saved Credential
         </label>
@@ -1220,7 +1166,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">
           Or Enter Token Directly (Legacy)
         </label>
@@ -1236,7 +1182,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </small>
       </div>
 
-      <div class="widget-dialog-field">
+      <div class="card">
         <label class="widget-dialog-label medium">
           Refresh Interval (seconds)
         </label>
@@ -1254,12 +1200,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons">
-        <button id="cancel-settings-btn" class="widget-dialog-button-cancel extended">
+        <div class="btn btn-small btn-secondary" id="cancel-settings-btn">
           Cancel
-        </button>
-        <button id="save-settings-btn" class="widget-dialog-button-save extended">
+        </div>
+        <div id="save-settings-btn" class="btn btn-small btn-primary">
           Save Settings
-        </button>
+        </div>
       </div>
     `;
 
@@ -1381,25 +1327,23 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     } else {
       dialogHTML += `<div class="ha-entity-items">`;
       allEntities.forEach((item, index) => {
-        const groupBadge = item.groupName ? `<span class="ha-entity-group-badge">${item.groupName}</span>` : '<span class="ha-entity-group-badge ha-entity-ungrouped">Ungrouped</span>';
         dialogHTML += `
-          <div class="ha-entity-item">
+          <div class="card">
             <div class="ha-entity-item-info">
-              <div class="ha-entity-item-name">${item.entity.display_name || item.entity.entity_id}</div>
-              <div class="ha-entity-item-id">${item.entity.entity_id} (${item.entity.type}) ${groupBadge}</div>
-            </div>
-            <button 
-              class="edit-entity-btn ha-entity-item-button ha-entity-item-button-edit" 
-              data-index="${index}"
-              data-group-id="${item.groupId || ''}"
-            >Edit</button>
-            <button 
-              class="remove-entity-btn ha-entity-item-button ha-entity-item-button-remove" 
+              <div class="ha-entity-item-name">${item.entity.display_name || item.entity.entity_id}<span style="float: right; margin-left: 5px;"
+              class="remove-entity-btn btn btn-small btn-danger" 
               data-index="${index}"
               data-group-id="${item.groupId || ''}"
               data-entity-id="${item.entity.entity_id}"
-            >Remove</button>
-          </div>
+            ><i class="fa-regular fa-trash-can"></i></span><span 
+              class="edit-entity-btn btn btn-small btn-warning"  style="float: right; margin-left: 5px;"
+              data-index="${index}"
+              data-group-id="${item.groupId || ''}"
+            ><i class="fa-regular fa-pen-to-square"></i></span>
+            </div>
+            
+            
+          </div></div>
         `;
       });
       dialogHTML += `</div>`;
@@ -1408,12 +1352,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     dialogHTML += `
       </div>
       <div class="widget-dialog-buttons spaced">
-        <button id="add-new-entity-btn" class="widget-dialog-button-save extended">
+        <div id="add-new-entity-btn" class="btn btn-small btn-primary">
           + Add Entity
-        </button>
-        <button id="close-manage-dialog" class="widget-dialog-button-cancel extended">
+        </div>
+        <div id="close-manage-dialog" class="btn btn-small btn-secondary">
           Close
-        </button>
+        </div>
       </div>
     `;
 
@@ -1540,7 +1484,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
   private createSection(label: string, group: EntityGroup | null, widget: Widget): HTMLElement {
     const section = document.createElement('div');
-    section.className = 'ha-group-section';
+    section.className = 'card';
     
     if (group) {
       section.dataset.groupId = group.id;
@@ -1548,10 +1492,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Header with label and controls
     const header = document.createElement('div');
-    header.className = 'ha-group-header';
+    header.className = 'card-header';
 
     const labelEl = document.createElement('div');
-    labelEl.className = 'ha-group-title';
+    labelEl.className = 'card-title';
     labelEl.textContent = label;
     header.appendChild(labelEl);
 
@@ -1560,8 +1504,9 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const controls = document.createElement('div');
       controls.className = 'ha-group-controls';
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.innerHTML = '🗑️';
+      const deleteBtn = document.createElement('div');
+      deleteBtn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+      deleteBtn.className = 'btn btn-small';
       deleteBtn.title = 'Delete group';
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();

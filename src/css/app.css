@@ -6,7 +6,9 @@
    ============================================================================ */
 
 /* === RESET & BASE === */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -24,12 +26,12 @@
   --shadow: rgba(0, 0, 0, 0.1);
   --border: #e0e0e0;
   --hover: #f0f0f0;
-  
+
   /* Layout */
   --grid-size: 8px;
   --radius: 8px;
   --transition: 150ms;
-  
+
   /* Z-index */
   --z-widget: 1;
   --z-selected: 100;
@@ -50,8 +52,47 @@
   --hover: #333333;
 }
 
+/* Gruvbox Dark Theme - Warm retro colors inspired by Gruvbox */
+.theme-gruvbox {
+  --bg: #282828;
+  --surface: #3c3836;
+  --text: #ebdbb2;
+  --muted: #a89984;
+  --accent: #fe8019;
+  --ring: #fe8019;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #504945;
+  --hover: #504945;
+}
+
+/* Tokyo Night Theme - Cool purple/blue night theme */
+.theme-tokyo-night {
+  --bg: #1a1b26;
+  --surface: #24283b;
+  --text: #c0caf5;
+  --muted: #9aa5ce;
+  --accent: #7aa2f7;
+  --ring: #7aa2f7;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #414868;
+  --hover: #2f3549;
+}
+
+/* Catppuccin Mocha Theme - Soft pastel theme with lavender accents */
+.theme-catppuccin {
+  --bg: #1e1e2e;
+  --surface: #313244;
+  --text: #cdd6f4;
+  --muted: #a6adc8;
+  --accent: #cba6f7;
+  --ring: #cba6f7;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #45475a;
+  --hover: #45475a;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not(.theme-light) {
+  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin) {
     --bg: #1a1a1a;
     --surface: #2a2a2a;
     --text: #f5f5f5;
@@ -65,7 +106,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -83,6 +127,7 @@ subtitle {
   font-size: x-small;
   color: var(--muted);
 }
+
 /* === SCROLLBARS === */
 * {
   scrollbar-width: thin;
@@ -335,8 +380,13 @@ body {
   cursor: ns-resize;
 }
 
-.resize-n { top: -6px; }
-.resize-s { bottom: -6px; }
+.resize-n {
+  top: -6px;
+}
+
+.resize-s {
+  bottom: -6px;
+}
 
 .resize-e,
 .resize-w {
@@ -347,8 +397,13 @@ body {
   cursor: ew-resize;
 }
 
-.resize-e { right: -6px; }
-.resize-w { left: -6px; }
+.resize-e {
+  right: -6px;
+}
+
+.resize-w {
+  left: -6px;
+}
 
 .resize-ne,
 .resize-nw,
@@ -358,10 +413,29 @@ body {
   height: 16px;
 }
 
-.resize-ne { top: -8px; right: -8px; cursor: nesw-resize; }
-.resize-nw { top: -8px; left: -8px; cursor: nwse-resize; }
-.resize-se { bottom: -8px; right: -8px; cursor: nwse-resize; }
-.resize-sw { bottom: -8px; left: -8px; cursor: nesw-resize; }
+.resize-ne {
+  top: -8px;
+  right: -8px;
+  cursor: nesw-resize;
+}
+
+.resize-nw {
+  top: -8px;
+  left: -8px;
+  cursor: nwse-resize;
+}
+
+.resize-se {
+  bottom: -8px;
+  right: -8px;
+  cursor: nwse-resize;
+}
+
+.resize-sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: nesw-resize;
+}
 
 /* === SNAP GUIDES === */
 .snap-guide {
@@ -593,14 +667,14 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100000;
-  padding: 20px;
+  padding: 0px;
 }
 
 .dialog-container {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 40px;
+  padding: 20px;
   box-shadow: 0 8px 32px var(--shadow);
   max-height: 90vh;
   overflow-y: auto;
@@ -660,7 +734,7 @@ body {
 .widget-dialog {
   background: var(--surface);
   border-radius: 8px;
-  padding: 24px;
+  padding: 12px;
   max-width: 500px;
   width: 90%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -736,8 +810,7 @@ body {
   resize: vertical;
 }
 
-.form-hint,
-.widget-dialog-hint {
+.form-hint {
   display: block;
   margin-top: 4px;
   opacity: 0.7;
@@ -766,31 +839,34 @@ body {
   transform: translateY(0);
 }
 
-.btn-primary,
-.widget-dialog-button-save {
+.btn-primary {
   background: var(--accent);
+  border: 1px solid var(--border);
   color: white;
   font-weight: bold;
 }
 
 .btn-success {
   background: #4CAF50;
+  border: 1px solid var(--border);
   color: white;
 }
 
 .btn-warning {
+  border: 1px solid var(--border);
   background: #FFC107;
   color: #000;
   font-weight: bold;
 }
 
 .btn-danger {
+  border: 1px solid var(--border);
   background: #cf3328;
   color: white;
 }
 
-.btn-secondary,
-.widget-dialog-button-cancel {
+.btn-secondary{
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--border);
   color: var(--text);
@@ -800,7 +876,7 @@ body {
   padding: 4px 6px;
   font-size: 16px;
   border-radius: 4px;
-  border-color: #333333;
+  border-color: var(--border);
   position: relative;
   transition: opacity 0.2s ease;
 }
@@ -820,6 +896,7 @@ body {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -833,7 +910,7 @@ body {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
 /* === MESSAGES === */
@@ -986,7 +1063,7 @@ body {
 
 /* === CARDS === */
 .card {
-  background: var(--bg);
+  background: rgba(14, 13, 13, 0.25);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
@@ -1084,6 +1161,7 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
 .badge.running,
 .badge-success {
   background: #4CAF5022;
@@ -1149,10 +1227,21 @@ body {
   container-type: inline-size;
 }
 
-.grid-1 { grid-template-columns: 1fr; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-1 {
+  grid-template-columns: 1fr;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 .grid-auto {
   grid-template-columns: 1fr;
@@ -1421,12 +1510,29 @@ a:hover {
   transition: all 150ms;
 }
 
-.uptime-bar-excellent { background: #22c55e; }
-.uptime-bar-good { background: #84cc16; }
-.uptime-bar-ok { background: #eab308; }
-.uptime-bar-slow { background: #f97316; }
-.uptime-bar-very-slow { background: #ef4444; }
-.uptime-bar-failed { background: #ef4444; }
+.uptime-bar-excellent {
+  background: #22c55e;
+}
+
+.uptime-bar-good {
+  background: #84cc16;
+}
+
+.uptime-bar-ok {
+  background: #eab308;
+}
+
+.uptime-bar-slow {
+  background: #f97316;
+}
+
+.uptime-bar-very-slow {
+  background: #ef4444;
+}
+
+.uptime-bar-failed {
+  background: #ef4444;
+}
 
 /* RSS Widget */
 .rss-items-list {
@@ -1521,8 +1627,13 @@ a:hover {
 }
 
 @keyframes flash {
-  from { opacity: 0.3; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.3;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ChatGPT Widget */
@@ -1555,6 +1666,219 @@ a:hover {
   max-width: 90%;
 }
 
+/* Gmail Widget */
+.gmail-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.gmail-header {
+  flex-shrink: 0;
+}
+
+.gmail-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gmail-messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gmail-message {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gmail-message:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+.gmail-message-unread {
+  background: rgba(66, 133, 244, 0.05);
+  border-left: 3px solid var(--accent);
+}
+
+.gmail-message-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.gmail-message-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.gmail-message-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gmail-message-from {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmail-message-subject {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmail-message-snippet {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gmail-message-date {
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.gmail-message-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gmail-message:hover .gmail-message-actions {
+  opacity: 1;
+}
+
+.gmail-labels-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.gmail-label-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.gmail-label-option:hover {
+  background: var(--hover);
+}
+
+.gmail-label-option input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.gmail-label-option span {
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* Gmail Wizard */
+.gmail-wizard {
+  max-width: 700px !important;
+}
+
+.gmail-wizard-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gmail-wizard-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.gmail-wizard-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.gmail-wizard-step-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.gmail-wizard-step-content {
+  flex: 1;
+}
+
+.gmail-wizard-step-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.gmail-wizard-step-content p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.gmail-wizard-step-content .form-group {
+  margin-bottom: 12px;
+}
+
+.gmail-wizard-step-content .form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gmail-wizard-step-content .form-label i {
+  color: var(--accent);
+}
+
 /* Docker Widget */
 .docker-container-wrapper {
   height: 100%;
@@ -1562,8 +1886,8 @@ a:hover {
   container-type: inline-size;
 }
 
-#containers-list,
-.docker-containers-list {
+
+.card-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 8px;
@@ -1607,6 +1931,11 @@ a:hover {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   padding: 12px;
+  background-color: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s;
 }
 
 .ha-entity-card {
@@ -1632,36 +1961,156 @@ a:hover {
   opacity: 0.5;
 }
 
+/* Home Assistant Toggle Slider Switch */
+.ha-toggle-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 54px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.ha-toggle-wrapper input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.ha-toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #666;
+  border-radius: 28px;
+  transition: background-color 0.3s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.ha-toggle-slider span {
+  position: absolute;
+  content: '';
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: left 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ha-toggle-wrapper:hover .ha-toggle-slider span {
+  transform: scale(1.05);
+}
+
+.ha-toggle-wrapper:active .ha-toggle-slider span {
+  transform: scale(0.95);
+}
+
 /* === UTILITY CLASSES === */
-.flex { display: flex; }
-.flex-column { display: flex; flex-direction: column; }
-.flex-1 { flex: 1; }
-.align-center { align-items: center; }
-.justify-center { justify-content: center; }
-.space-between { justify-content: space-between; }
-.gap-4 { gap: 4px; }
-.gap-8 { gap: 8px; }
-.gap-12 { gap: 12px; }
-.gap-16 { gap: 16px; }
+.flex {
+  display: flex;
+}
 
-.mb-4 { margin-bottom: 4px; }
-.mb-8 { margin-bottom: 8px; }
-.mb-12 { margin-bottom: 12px; }
-.mb-16 { margin-bottom: 16px; }
-.mb-20 { margin-bottom: 20px; }
-.mt-8 { margin-top: 8px; }
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
 
-.text-center { text-align: center; }
-.w-100 { width: 100%; }
-.h-100 { height: 100%; }
-.overflow-auto { overflow: auto; }
+.flex-1 {
+  flex: 1;
+}
 
-.hidden { display: none; }
-.visible { display: block; }
+.align-center {
+  align-items: center;
+}
 
-.success { color: #4CAF50; }
-.error { color: #cf3328; }
-.warning { color: #FFC107; }
+.justify-center {
+  justify-content: center;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.gap-4 {
+  gap: 4px;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.gap-12 {
+  gap: 12px;
+}
+
+.gap-16 {
+  gap: 16px;
+}
+
+.mb-4 {
+  margin-bottom: 4px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.mb-12 {
+  margin-bottom: 12px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: block;
+}
+
+.success {
+  color: #4CAF50;
+}
+
+.error {
+  color: #cf3328;
+}
+
+.warning {
+  color: #FFC107;
+}
 
 .sr-only {
   position: absolute;
@@ -1682,12 +2131,25 @@ a:hover {
 
 /* === ANIMATIONS === */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
-}
 
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}

@@ -67,7 +67,7 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   if (plugin?.hasSettings !== false && renderer?.configure) {
     const settingsItem = document.createElement('button');
     settingsItem.className = 'widget-menu-item';
-    settingsItem.innerHTML = '<span class="widget-menu-icon">⚙️</span><span class="widget-menu-label">Configure</span>';
+    settingsItem.innerHTML = '<span class="widget-menu-icon"><i class="fa-solid fa-gear"></i></span><span class="widget-menu-label">Configure</span>';
     settingsItem.onclick = (e) => {
       e.stopPropagation();
       menuDropdown.style.display = 'none';
@@ -78,10 +78,22 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
     menuDropdown.appendChild(settingsItem);
   }
   
+  // Duplicate on this dashboard menu item
+  const duplicateItem = document.createElement('button');
+  duplicateItem.className = 'widget-menu-item';
+  duplicateItem.innerHTML = '<span class="widget-menu-icon"><i class="fa-regular fa-copy"></i></span><span class="widget-menu-label">Duplicate</span>';
+  duplicateItem.onclick = (e) => {
+    e.stopPropagation();
+    menuDropdown.style.display = 'none';
+    const event = new CustomEvent('widget-duplicate', { detail: { widgetId: widget.id } });
+    window.dispatchEvent(event);
+  };
+  menuDropdown.appendChild(duplicateItem);
+  
   // Copy to Dashboard menu item
   const copyItem = document.createElement('button');
   copyItem.className = 'widget-menu-item';
-  copyItem.innerHTML = '<span class="widget-menu-icon">📋</span><span class="widget-menu-label">Copy</span>';
+  copyItem.innerHTML = '<span class="widget-menu-icon"><i class="fa-regular fa-clipboard"></i></span><span class="widget-menu-label">Copy to...</span>';
   copyItem.onclick = (e) => {
     e.stopPropagation();
     menuDropdown.style.display = 'none';
@@ -93,7 +105,7 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   // Delete menu item
   const deleteItem = document.createElement('button');
   deleteItem.className = 'widget-menu-item widget-menu-item-danger';
-  deleteItem.innerHTML = '<span class="widget-menu-icon">🗑️</span><span class="widget-menu-label">Delete</span>';
+  deleteItem.innerHTML = '<span class="widget-menu-icon"><i class="fa-regular fa-trash-can"></i></span><span class="widget-menu-label">Delete</span>';
   deleteItem.onclick = (e) => {
     e.stopPropagation();
     menuDropdown.style.display = 'none';

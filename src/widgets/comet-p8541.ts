@@ -2,11 +2,6 @@ import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 import JustGage from 'justgage';
 
-
-
-
-
-
 interface CometP8541Content {
   host: string;
   port?: number;
@@ -115,8 +110,7 @@ export class CometP8541Renderer implements WidgetRenderer {
       this.renderConfigPrompt(container, widget);
       return;
     }
-
-    const wrapper = this.createWrapper();
+    const wrapper = document.createElement('div');
     // const headerRow = this.createHeader(content, container, widget);
     // wrapper.appendChild(headerRow);
 
@@ -388,7 +382,7 @@ export class CometP8541Renderer implements WidgetRenderer {
                 return;
               }
             }
-            
+
             // Create new gauge ONLY if it doesn't exist
             if (!this.gauges.has(gaugeId) && gaugeContainer) {
               // Use requestAnimationFrame to ensure DOM is fully updated
@@ -399,24 +393,24 @@ export class CometP8541Renderer implements WidgetRenderer {
                   console.warn(`Gauge element ${gaugeId} not found in DOM after requestAnimationFrame`);
                   return;
                 }
-                
+
                 // Ensure we don't already have a gauge (race condition check)
                 if (this.gauges.has(gaugeId)) {
                   return;
                 }
-                
+
                 try {
                   // Get actual container dimensions for consistent gauge sizing
                   // This ensures gauges render at the correct size every time
                   const containerWidth = element.offsetWidth || 300;
                   const containerHeight = element.offsetHeight || 150;
-                  
+
                   // Don't create gauge if container has no size
                   if (containerWidth === 0 || containerHeight === 0) {
                     console.warn(`Gauge container ${gaugeId} has zero dimensions, skipping creation`);
                     return;
                   }
-                  
+
                   const config = {
                     id: gaugeId,
                     value: reading.sensorError ? 0 : reading.value,
@@ -467,7 +461,7 @@ export class CometP8541Renderer implements WidgetRenderer {
                     labelFontColor: '#cccccc',
                     shadowOpacity: 0
                   } as any;
-                  
+
                   const gauge = new JustGage(config);
                   this.gauges.set(gaugeId, gauge);
                   //console.log(`Successfully created gauge: ${gaugeId}`);
@@ -573,36 +567,36 @@ export class CometP8541Renderer implements WidgetRenderer {
 
         // Check if we already have a display - if so, just show error overlay instead of destroying everything
         const existingDisplayContainer = wrapper.querySelector('.display-container');
-        
+
         if (existingDisplayContainer) {
           // We have existing gauges - just show a temporary error overlay
           let errorOverlay = wrapper.querySelector('.error-overlay') as HTMLElement;
-          
+
           if (!errorOverlay) {
             errorOverlay = document.createElement('div');
             errorOverlay.className = 'widget-error overlay';
             wrapper.appendChild(errorOverlay);
           }
-          
+
           // Update error message
-          const errorMessage = error.name === 'AbortError' 
-            ? 'Connection timeout - device not responding' 
+          const errorMessage = error.name === 'AbortError'
+            ? 'Connection timeout - device not responding'
             : (error.message || 'Failed to read sensor');
-          
+
           errorOverlay.innerHTML = `
             <div class="widget-error-icon large animated"><i class="fas fa-exclamation-triangle"></i></div>
             <div class="widget-error-title">Temporary Connection Error</div>
             <div class="widget-error-detail">${errorMessage}</div>
             <div class="widget-error-retry">Retrying in ${content.refreshInterval || 10} seconds...</div>
           `;
-          
+
           // Remove error overlay after a delay to show the next attempt
           setTimeout(() => {
             if (errorOverlay && errorOverlay.parentNode) {
               errorOverlay.remove();
             }
           }, Math.min((content.refreshInterval || 10) * 1000 - 1000, 9000));
-          
+
           return; // Keep existing gauges and header
         }
 
@@ -966,11 +960,7 @@ export class CometP8541Renderer implements WidgetRenderer {
   }
 
   // Helper method to create wrapper element
-  private createWrapper(): HTMLElement {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'comet-widget-wrapper';
-    return wrapper;
-  }
+
 
   // Helper method to create header with settings button
   private createHeader(content: CometP8541Content, container: HTMLElement, widget: Widget, deviceName?: string): HTMLElement {
@@ -982,50 +972,20 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const header = document.createElement('div');
     header.className = 'comet-header';
-    header.innerHTML = '<i class="fas fa-thermometer-half"></i> ' + (deviceName || content.deviceName || 'Comet P8541');
+    header.innerHTML = '' + (deviceName || content.deviceName || 'Comet P8541');
 
-    const deviceInfo = document.createElement('div');
+    const deviceInfo = document.createElement('subtitle');
     deviceInfo.className = 'comet-device-info';
     deviceInfo.textContent = content.host;
 
     // Add "View Charts" link
-    const chartsLink = document.createElement('a');
-    chartsLink.href = 'http://sensors.norquay.local:8889/';
-    chartsLink.target = '_blank';
-    chartsLink.textContent = 'View Charts';
-    chartsLink.className = 'comet-charts-link';
 
     headerLeft.appendChild(header);
     headerLeft.appendChild(deviceInfo);
-    headerLeft.appendChild(chartsLink);
 
-    const settingsBtn = document.createElement('button');
-    settingsBtn.innerHTML = '<i class="fas fa-cog"></i>';
-    settingsBtn.className = 'widget-settings-btn comet-settings-btn';
-    settingsBtn.onclick = () => this.showSettings(container, widget);
-
-    // Show settings button when widget is selected
-    const updateSettingsVisibility = () => {
-      const widgetElement = container.closest('.widget');
-      if (widgetElement?.classList.contains('selected')) {
-        settingsBtn.classList.add('visible');
-      } else {
-        settingsBtn.classList.remove('visible');
-      }
-    };
-
-    // Initial check
-    updateSettingsVisibility();
-
-    // Watch for class changes
-    const observer = new MutationObserver(updateSettingsVisibility);
-    const widgetElement = container.closest('.widget');
-    if (widgetElement) {
-      observer.observe(widgetElement, { attributes: true, attributeFilter: ['class'] });
-    }
+    
 
     headerRow.appendChild(headerLeft);
-    headerRow.appendChild(settingsBtn);
     return headerRow;
   }
 }

@@ -199,12 +199,12 @@ class DockerWidgetRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons border-top">
-        <button id="cancel-btn" class="widget-dialog-button-cancel extended">
+        <div id="cancel-btn" class="btn btn-small btn-secondary">
           Cancel
-        </button>
-        <button id="save-btn" class="widget-dialog-button-save extended">
+        </div>
+        <div id="save-btn" class="btn btn-small btn-primary">
           Save
-        </button>
+        </div>
       </div>
     `;
 
@@ -266,9 +266,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
       if (!containersList) {
         // Initial render - create the structure
         container.innerHTML = `
-          <div class="xdocker-container-wrapper">
-            <div id="containers-list" class="docker-containers-list"></div>
-          </div>
+            <div id="containers-list" class="card-list"></div>
         `;
         
         containersList = container.querySelector('#containers-list') as HTMLElement;
@@ -368,7 +366,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     
     // Get existing cards
     const existingCards = Array.from(containersList.querySelectorAll('.card'));
-    const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
+    //const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
     const newIds = new Set(containers.map(c => c.Id));
     
     // Remove containers that no longer exist

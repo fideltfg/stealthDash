@@ -70,15 +70,9 @@ class UnifiSensorRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-sensor-widget widget-container">
-        <div class="widget-header">
-          <h3 class="widget-header-title"><i class="fas fa-thermometer-half"></i> Environmental Sensors</h3>
-          <button class="refresh-btn widget-button">Refresh</button>
-        </div>
-        <div class="sensor-grid widget-grid-auto">
+        <div class="grid grid-auto sensor-grid widget-grid-auto">
           <div class="loading widget-loading">Loading sensors...</div>
         </div>
-      </div>
     `;
 
     // Add refresh button listener
@@ -171,12 +165,12 @@ class UnifiSensorRenderer implements WidgetRenderer {
       const statusText = isConnected ? 'Connected' : 'Disconnected';
 
       return `
-        <div class="widget-card sensor-card">
-          <div class="sensor-card-header">
+        <div class="card">
+          <div class="card-header">
             <div class="sensor-icon"><i class="fas fa-thermometer-half"></i></div>
             <div class="flex-1">
-              <div class="sensor-name">${sensor.name || 'Environmental Sensor'}</div>
-              <div class="sensor-model">${sensor.model || 'Unknown Model'}</div>
+              <h4>${sensor.name || 'Environmental Sensor'}</h4>
+              <subtitle>${sensor.model || 'Unknown Model'}</subtitle>
             </div>
           </div>
           
@@ -197,8 +191,8 @@ class UnifiSensorRenderer implements WidgetRenderer {
             ) : ''}
           </div>
           
-          <div class="sensor-card-footer">
-            <span class="widget-status-badge ${statusClass}">
+          <div class="card-footer">
+            <span class="${statusClass}">
               ● ${statusText}
             </span>
             ${sensor.lastSeen ? `

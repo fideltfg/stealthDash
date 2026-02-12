@@ -513,18 +513,16 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons top-margin">
-        <button
+        <div
           id="settings-save"
-          class="widget-dialog-button-save extended full-width"
-        >
-          Save & Reload
-        </button>
-        <button
+          class="btn btn-small btn-primary"
+        >Save</div>
+        <div
           id="settings-close"
-          class="widget-dialog-button-cancel extended full-width"
+          class="btn btn-small btn-secondary"
         >
           Cancel
-        </button>
+        </div>
       </div>
     `;
 
