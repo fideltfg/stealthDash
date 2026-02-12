@@ -181,12 +181,6 @@
   }
 }
 
-button {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-  border-radius: 9px;
-}
 
 subtitle {
   font-size: x-small;
@@ -576,6 +570,52 @@ body {
   background: var(--accent) !important;
   color: white !important;
   border: none !important;
+}
+
+/* Controls Container - Slide-out menu */
+.controls-container {
+  position: fixed;
+  bottom: 80px;
+  left: -200px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--shadow);
+  z-index: calc(var(--z-fab) + 1);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.controls-container.open {
+  left: 16px;
+}
+
+.controls-container button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all var(--transition);
+}
+
+.controls-container button:hover {
+  background: var(--hover);
+  transform: scale(1.05);
+}
+
+.controls-container button:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 /* Theme Menu Dropdown */

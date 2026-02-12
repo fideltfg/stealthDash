@@ -455,7 +455,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
               </button>
             `}
           ` : ''}
-          <button class=" btn btn-small btn-primary" data-action="logs" data-id="${shortId}">
+          <button class=" btn btn-small btn-secondary" data-action="logs" data-id="${shortId}">
             <i class="fas fa-file-alt"></i>
           </button>
         </div>
