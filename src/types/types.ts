@@ -139,5 +139,5 @@ export interface HistoryState {
 // like compact clocks, icons, status indicators, and mini gauges
 export const MIN_WIDGET_SIZE = { w: 50, h: 50 };
 export const DEFAULT_WIDGET_SIZE = { w: 600, h: 400 };
-export const DEFAULT_GRID_SIZE = 8;
+export const DEFAULT_GRID_SIZE = 10;
 export const DEFAULT_ZOOM = 1.0;

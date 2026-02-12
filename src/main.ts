@@ -27,8 +27,7 @@ class Dashboard {
   private touchStartTime: number = 0;
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
-  private readonly SNAP_DISTANCE = 10; // pixels to snap to nearby edges
-  private readonly SNAP_THRESHOLD = 15; // distance at which snapping occurs
+  private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
   private readonly PAN_LIMIT = 1000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
   private authUI: AuthUI;
@@ -922,6 +921,12 @@ class Dashboard {
     }
 
     newSize = constrainSize(newSize);
+
+    // Apply grid snapping to size and position
+    newSize.w = snapToGrid(newSize.w, this.state.grid);
+    newSize.h = snapToGrid(newSize.h, this.state.grid);
+    newPos.x = snapToGrid(newPos.x, this.state.grid);
+    newPos.y = snapToGrid(newPos.y, this.state.grid);
 
     // Temporarily update widget for snap detection
     widget.size = newSize;

@@ -16,6 +16,9 @@
 
 /* === DESIGN TOKENS === */
 :root {
+
+  --font-body: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Consolas', monospace;
+
   /* Colors */
   --bg: #f5f5f5;
   --surface: #ffffff;
@@ -59,6 +62,8 @@
   --border: #404040;
   --hover: #333333;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --card-background: rgba(66, 66, 66, 0.25);
+
 }
 
 /* Gruvbox Dark Theme - Warm retro colors inspired by Gruvbox */
@@ -2059,7 +2064,7 @@ a:hover {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   padding: 12px;
-  background-color: #1a1a1a;
+  background-color: var(--card-background);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
@@ -2067,7 +2072,7 @@ a:hover {
 }
 
 .ha-entity-card {
-  background: var(--bg);
+  background: var(--card-background);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;

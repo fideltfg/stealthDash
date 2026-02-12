@@ -277,7 +277,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'mtnxml-wrapper';
+    wrapper.className = 'card-list';
 
     // Resort name
     const resortName = document.createElement('h4');
@@ -343,7 +343,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
   private createSection(title: string, items: Array<{ label: string; value: string }>): HTMLElement {
     const section = document.createElement('div');
     section.className = 'card';
-    section.style.marginTop = '6px';
     const header = document.createElement('div');
     header.className = 'card-header';
     header.textContent = title;
