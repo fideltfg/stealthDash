@@ -28,7 +28,7 @@ class Dashboard {
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
   private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
-  private readonly PAN_LIMIT = 10000; // Maximum distance to pan from origin (in pixels)
+  private readonly PAN_LIMIT = 3000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
   private isPanModeActive: boolean = false; // Track if spacebar is held for panning
   private authUI: AuthUI;
@@ -600,13 +600,14 @@ class Dashboard {
       this.showCopyWidgetDialog(e.detail.widgetId);
     }) as EventListener);
 
-    // Global pan mode (spacebar + click anywhere, middle mouse, or click outside canvas)
+    // Global pan mode (spacebar + click anywhere, middle mouse, or click on app background)
     document.addEventListener('pointerdown', (e) => {
       const target = e.target as HTMLElement;
-      const isOutsideCanvas = !this.canvas.contains(target);
+      const app = document.getElementById('app');
+      const isAppBackground = target === app; // Clicking directly on #app (the margins)
       
-      // Allow panning if: spacebar held, middle mouse, or clicking outside the canvas
-      if (this.isPanModeActive || e.button === 1 || isOutsideCanvas) {
+      // Allow panning if: spacebar held, middle mouse, or clicking on app background
+      if (this.isPanModeActive || e.button === 1 || isAppBackground) {
         e.preventDefault();
         this.startPan(e);
         return;
