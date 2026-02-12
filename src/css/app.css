@@ -36,7 +36,7 @@
   --card-background: rgb(173 173 173 / 25%);
 
   /* Layout */
-  --grid-size: 8px;
+  --grid-size: 10px;
   --radius: 8px;
   --transition: 150ms;
 
@@ -58,6 +58,7 @@
   --shadow: rgba(0, 0, 0, 0.3);
   --border: #404040;
   --hover: #333333;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Gruvbox Dark Theme - Warm retro colors inspired by Gruvbox */
@@ -71,6 +72,7 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --border: #504945;
   --hover: #504945;
+  --font-body: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Consolas', monospace;
 }
 
 /* Tokyo Night Theme - Cool blue night theme with cyan undertones */
@@ -84,6 +86,7 @@
   --shadow: rgba(0, 0, 0, 0.5);
   --border: #3b4261;
   --hover: #24283b;
+  --font-body: 'Inter', -apple-system, 'Helvetica Neue', 'Arial', sans-serif;
 }
 
 /* Catppuccin Mocha Theme - Warm purple theme with lavender accents */
@@ -97,6 +100,7 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --border: #494d64;
   --hover: #494d64;
+  --font-body: ui-rounded, 'SF Pro Rounded', 'Atkinson Hyperlegible', system-ui, sans-serif;
 }
 
 /* Forest Theme - Natural green palette inspired by forests and nature */
@@ -114,6 +118,7 @@
   --error: #ffffff;
   --bg-success: rgba(76, 175, 80, 0.2);
   --bg-error: rgba(244, 67, 54, 0.2);
+  --font-body: 'Optima', 'Palatino', 'Georgia', 'Baskerville', serif;
 }
 
 /* Sunset Theme - Vibrant tropical palette with coral and teal tones */
@@ -128,7 +133,8 @@
   --border: #4a7a72;
   --hover: #4a7a72;
   --info: #4db6ac;
-  --bg-info: rgba(77, 182, 172, 0.2); 
+  --bg-info: rgba(77, 182, 172, 0.2);
+  --font-body: 'Avenir Next', 'Avenir', 'Trebuchet MS', 'Verdana', sans-serif; 
 }
 
 /* Peachy Theme - Soft pastel palette with warm coral and peach tones */
@@ -142,6 +148,7 @@
   --shadow: rgba(255, 138, 122, 0.15);
   --border: #ffd4bd;
   --hover: #ffe4d4;
+  --font-body: ui-rounded, 'Montserrat', 'Quicksand', 'Comfortaa', 'Raleway', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -208,7 +215,7 @@ subtitle {
 /* === BODY & APP === */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
