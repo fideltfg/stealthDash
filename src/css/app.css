@@ -1315,7 +1315,7 @@ body {
 .badge-danger {
   background: var(--bg-error);
   color: var(--error);
-  animation: flash 0.5s infinite alternate;
+  animation: flash 1s ease-in-out infinite alternate;
 }
 
 .badge-info {
@@ -1754,7 +1754,7 @@ a:hover {
 .alarm-flash-hot,
 .alarm-flash-cold,
 .alarm-flash-error {
-  animation: flash 0.6s ease-in-out infinite alternate;
+  animation: flash 1s ease-in-out infinite alternate;
 }
 
 @keyframes flash {
@@ -1763,9 +1763,14 @@ a:hover {
     filter: brightness(1);
   }
 
-  100% {
+  50% {
     opacity: 0.3;
     filter: brightness(1.5);
+  }
+
+  100% {
+    opacity: 1;
+    filter: brightness(1);
   }
 }
 
