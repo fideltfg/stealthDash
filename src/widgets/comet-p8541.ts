@@ -328,7 +328,7 @@ export class CometP8541Renderer implements WidgetRenderer {
               gaugeWrapper = document.createElement('div');
               gaugeWrapper.setAttribute('data-gauge-index', String(index));
               gaugeWrapper.classList.add('gauge-wrapper');
-
+              gaugeWrapper.classList.add('card');
               // Create gauge container
               gaugeContainer = document.createElement('div');
               gaugeContainer.id = gaugeId;
@@ -336,7 +336,6 @@ export class CometP8541Renderer implements WidgetRenderer {
 
               // Create alarm status div
               alarmDiv = document.createElement('div');
-              alarmDiv.classList.add('alarm-div');
 
               gaugeWrapper.appendChild(gaugeContainer);
               gaugeWrapper.appendChild(alarmDiv);
@@ -351,8 +350,7 @@ export class CometP8541Renderer implements WidgetRenderer {
             let alarmText = "Norminal";
 
             // Remove previous alarm classes
-            alarmDiv.className = 'alarm-div';
-
+            alarmDiv.className = 'badge alarm-div running';
             if (reading.sensorError) {
               alarmText = "SENSOR ERROR";
               alarmDiv.classList.add('alarm-flash-error');

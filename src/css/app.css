@@ -575,12 +575,12 @@ body {
 /* Controls Container - Slide-out menu */
 .controls-container {
   position: fixed;
-  bottom: 24px;
-  left: -400px;
+  bottom: 80px;
+  left: -200px;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px;
+  padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -590,7 +590,7 @@ body {
 }
 
 .controls-container.open {
-  left: 120px;
+  left: 16px;
 }
 
 .controls-container button {
@@ -1310,10 +1310,12 @@ body {
   color: #FF9800;
 }
 
+.alarm-flash-error,
 .badge.exited,
 .badge-danger {
   background: var(--bg-error);
   color: var(--error);
+  animation: flash 0.5s infinite alternate;
 }
 
 .badge-info {
@@ -1748,15 +1750,6 @@ a:hover {
   align-items: center;
 }
 
-.alarm-div {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-}
 
 .alarm-flash-hot,
 .alarm-flash-cold,
@@ -1766,11 +1759,13 @@ a:hover {
 
 @keyframes flash {
   from {
-    opacity: 0.3;
+    opacity: 1;
+    transform: scale(1);
   }
 
   to {
-    opacity: 1;
+    opacity: 0.4;
+    transform: scale(1.02);
   }
 }
 

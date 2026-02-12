@@ -600,24 +600,26 @@ class Dashboard {
       this.showCopyWidgetDialog(e.detail.widgetId);
     }) as EventListener);
 
+    // Global pan mode (spacebar + click anywhere, middle mouse, or click on app background)
+    document.addEventListener('pointerdown', (e) => {
+      const target = e.target as HTMLElement;
+      const app = document.getElementById('app');
+      const isAppBackground = target === app; // Clicking directly on #app (the margins)
+      
+      // Allow panning if: spacebar held, middle mouse, or clicking on app background
+      if (this.isPanModeActive || e.button === 1 || isAppBackground) {
+        e.preventDefault();
+        this.startPan(e);
+        return;
+      }
+    });
+
     // Pointer events for drag/resize on canvas
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
     document.addEventListener('pointerup', () => this.handlePointerUp());
 
-    // Pan mode handlers - only on #app element to avoid interfering with buttons
-    const app = document.getElementById('app')!;
-    app.addEventListener('pointerdown', (e) => {
-      const target = e.target as HTMLElement;
-      
-      // Only pan if clicking directly on #app background (margins) or spacebar/middle mouse
-      if (target === app || this.isPanModeActive || e.button === 1) {
-        e.preventDefault();
-        this.startPan(e);
-      }
-    });
-
-    // Prevent default middle mouse button behavior globally
+    // Prevent default middle mouse button behavior
     document.addEventListener('mousedown', (e) => {
       if (e.button === 1) {
         e.preventDefault();
@@ -2476,12 +2478,12 @@ class Dashboard {
       activeDashboard.state = this.state;
       activeDashboard.updatedAt = Date.now();
 
-      // console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
-      //   id: w.id,
-      //   type: w.type,
-      //   groups: w.content?.groups?.length || 0,
-      //   entities: w.content?.entities?.length || 0
-      // })));
+      console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
+        id: w.id,
+        type: w.type,
+        groups: w.content?.groups?.length || 0,
+        entities: w.content?.entities?.length || 0
+      })));
 
       // Save to server if authenticated (immediate save for widget updates)
       if (authService.isAuthenticated()) {
