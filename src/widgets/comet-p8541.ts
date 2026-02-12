@@ -350,7 +350,7 @@ export class CometP8541Renderer implements WidgetRenderer {
             let alarmText = "Norminal";
 
             // Remove previous alarm classes
-            alarmDiv.className = 'badge alarm-div running';
+            alarmDiv.className = 'badge  running alarm-div';
             if (reading.sensorError) {
               alarmText = "SENSOR ERROR";
               alarmDiv.classList.add('alarm-flash-error');
@@ -532,10 +532,10 @@ export class CometP8541Renderer implements WidgetRenderer {
               alarmLabel.classList.add('alarm-flash-error');
             } else if (reading.alarm === "hi") {
               alarmLabel.textContent = "TOO HOT";
-              alarmLabel.classList.add('alarm-flash-hot');
+              alarmLabel.classList.add('alarm-flash-error');
             } else if (reading.alarm === "lo") {
               alarmLabel.textContent = "TOO COLD";
-              alarmLabel.classList.add('alarm-flash-cold');
+              alarmLabel.classList.add('alarm-flash-error');
             } else {
               alarmLabel.textContent = "Normal";
               alarmLabel.classList.add('normal');
