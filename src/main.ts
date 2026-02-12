@@ -450,7 +450,7 @@ class Dashboard {
     const root = document.documentElement;
     
     // Remove all theme classes first
-    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-twilight');
+    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-emerald');
 
     if (this.state.theme === 'dark') {
       root.classList.add('theme-dark');
@@ -464,8 +464,8 @@ class Dashboard {
       root.classList.add('theme-catppuccin');
     } else if (this.state.theme === 'forest') {
       root.classList.add('theme-forest');
-    } else if (this.state.theme === 'twilight') {
-      root.classList.add('theme-twilight');
+    } else if (this.state.theme === 'emerald') {
+      root.classList.add('theme-emerald');
     }
     // If 'system', no class is added (uses @media prefers-color-scheme)
   }
@@ -488,7 +488,7 @@ class Dashboard {
       { value: 'tokyo-night', label: 'Tokyo Night', icon: '🌃' },
       { value: 'catppuccin', label: 'Catppuccin', icon: '💜' },
       { value: 'forest', label: 'Forest', icon: '🌲' },
-      { value: 'twilight', label: 'Twilight', icon: '🌆' },
+      { value: 'emerald', label: 'Emerald', icon: '💎' },
       { value: 'system', label: 'System', icon: '💻' }
     ];
 
