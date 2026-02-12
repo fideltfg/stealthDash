@@ -104,8 +104,21 @@
   --hover: #4a6e49;
 }
 
+/* Twilight Theme - Deep purple and blue palette inspired by dusk */
+.theme-twilight {
+  --bg: #240d91;
+  --surface: #2e1bac;
+  --text: #baf2d9;
+  --muted: #888b50;
+  --accent: #396dac;
+  --ring: #396dac;
+  --shadow: rgba(0, 0, 0, 0.6);
+  --border: #672bd4;
+  --hover: #3a2aa8;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest) {
+  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-twilight) {
     --bg: #1a1a1a;
     --surface: #2a2a2a;
     --text: #f5f5f5;
