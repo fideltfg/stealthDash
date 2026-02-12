@@ -2,7 +2,7 @@
 
 // Dynamic widget type - widgets register themselves via the plugin system
 export type WidgetType = string;
-export type Theme = 'light' | 'dark' | 'system' | 'gruvbox' | 'tokyo-night' | 'catppuccin';
+export type Theme = 'light' | 'dark' | 'system' | 'gruvbox' | 'tokyo-night' | 'catppuccin' | 'forest';
 export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid';
 
 export interface Vec2 {

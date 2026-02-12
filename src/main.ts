@@ -341,12 +341,12 @@ class Dashboard {
     // Theme Toggle
     const themeToggle = document.createElement('button');
     themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = '🌓';
-    themeToggle.setAttribute('aria-label', 'Toggle theme');
-    themeToggle.setAttribute('title', 'Toggle light/dark theme');
-    themeToggle.addEventListener('click', () => {
-      this.toggleTheme();
-      this.closeMenu();
+    themeToggle.innerHTML = '�';
+    themeToggle.setAttribute('aria-label', 'Select theme');
+    themeToggle.setAttribute('title', 'Select theme');
+    themeToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.showThemeMenu(themeToggle);
     });
 
     // Background Toggle
@@ -450,7 +450,7 @@ class Dashboard {
     const root = document.documentElement;
     
     // Remove all theme classes first
-    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin');
+    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest');
 
     if (this.state.theme === 'dark') {
       root.classList.add('theme-dark');
@@ -462,16 +462,83 @@ class Dashboard {
       root.classList.add('theme-tokyo-night');
     } else if (this.state.theme === 'catppuccin') {
       root.classList.add('theme-catppuccin');
+    } else if (this.state.theme === 'forest') {
+      root.classList.add('theme-forest');
     }
     // If 'system', no class is added (uses @media prefers-color-scheme)
   }
 
-  private toggleTheme(): void {
-    const themes: Array<Theme> = ['light', 'dark', 'gruvbox', 'tokyo-night', 'catppuccin', 'system'];
-    const currentIndex = themes.indexOf(this.state.theme);
-    this.state.theme = themes[(currentIndex + 1) % themes.length];
-    this.setupTheme();
-    this.save();
+  private showThemeMenu(button: HTMLElement): void {
+    // Remove any existing theme menu
+    const existing = document.querySelector('.theme-menu-dropdown');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'theme-menu-dropdown';
+
+    const themes: Array<{ value: Theme; label: string; icon: string }> = [
+      { value: 'light', label: 'Light', icon: '☀️' },
+      { value: 'dark', label: 'Dark', icon: '🌙' },
+      { value: 'gruvbox', label: 'Gruvbox', icon: '🟠' },
+      { value: 'tokyo-night', label: 'Tokyo Night', icon: '🌃' },
+      { value: 'catppuccin', label: 'Catppuccin', icon: '💜' },
+      { value: 'forest', label: 'Forest', icon: '🌲' },
+      { value: 'system', label: 'System', icon: '💻' }
+    ];
+
+    themes.forEach(theme => {
+      const item = document.createElement('button');
+      item.className = 'theme-menu-item';
+      
+      const icon = document.createElement('span');
+      icon.className = 'theme-menu-icon';
+      icon.textContent = theme.icon;
+      
+      const label = document.createElement('span');
+      label.className = 'theme-menu-label';
+      label.textContent = theme.label;
+      
+      const check = document.createElement('span');
+      check.className = 'theme-menu-check';
+      check.innerHTML = this.state.theme === theme.value ? '✓' : '';
+      
+      item.appendChild(icon);
+      item.appendChild(label);
+      item.appendChild(check);
+      
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.state.theme = theme.value;
+        this.setupTheme();
+        this.save();
+        menu.remove();
+      });
+      
+      menu.appendChild(item);
+    });
+
+    // Position menu above the button
+    const rect = button.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+    menu.style.left = `${rect.left}px`;
+
+    document.body.appendChild(menu);
+
+    // Close menu when clicking outside
+    const closeMenu = (e: MouseEvent) => {
+      if (!menu.contains(e.target as Node) && e.target !== button) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    };
+    
+    setTimeout(() => {
+      document.addEventListener('click', closeMenu);
+    }, 0);
   }
 
   private setupBackground(): void {
