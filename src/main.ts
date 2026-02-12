@@ -30,6 +30,7 @@ class Dashboard {
   private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
   private readonly PAN_LIMIT = 1000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
+  private isPanModeActive: boolean = false; // Track if spacebar is held for panning
   private authUI: AuthUI;
   private userSettingsUI: UserSettingsUI;
   private adminDashboardUI: AdminDashboardUI;
@@ -560,6 +561,24 @@ class Dashboard {
   private setupEventListeners(): void {
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+    
+    // Pan mode toggle (spacebar)
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !e.repeat && e.target === document.body) {
+        e.preventDefault(); // Prevent page scrolling
+        this.isPanModeActive = true;
+        this.canvas.style.cursor = 'grab';
+      }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        this.isPanModeActive = false;
+        if (!this.panState) {
+          this.canvas.style.cursor = '';
+        }
+      }
+    });
 
     // Widget events
     document.addEventListener('widget-update', ((e: CustomEvent) => {
@@ -585,6 +604,13 @@ class Dashboard {
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
     document.addEventListener('pointerup', () => this.handlePointerUp());
+
+    // Prevent default middle mouse button behavior
+    this.canvas.addEventListener('mousedown', (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    });
 
     // Click outside to deselect
     this.canvas.addEventListener('click', (e) => {
@@ -685,6 +711,13 @@ class Dashboard {
 
     const target = e.target as HTMLElement;
 
+    // Pan mode: spacebar held or middle mouse button
+    if (this.isPanModeActive || e.button === 1) {
+      e.preventDefault();
+      this.startPan(e);
+      return;
+    }
+
     // Find widget element
     const widgetEl = target.closest('.widget') as HTMLElement;
     if (!widgetEl) {
@@ -746,9 +779,9 @@ class Dashboard {
     // Clear snap guides
     this.clearSnapGuides();
 
-    // Reset cursor
+    // Reset cursor (keep 'grab' if spacebar still held)
     if (this.canvas) {
-      this.canvas.style.cursor = '';
+      this.canvas.style.cursor = this.isPanModeActive ? 'grab' : '';
     }
   }
 
@@ -2015,7 +2048,7 @@ class Dashboard {
         <h3>🔍 Canvas Controls</h3>
         <ul>
           <li><strong>Zoom:</strong> <kbd>Ctrl</kbd> + Mouse Wheel or pinch gesture</li>
-          <li><strong>Pan:</strong> Click and drag on empty canvas area</li>
+          <li><strong>Pan:</strong> Click and drag on empty canvas area, or hold <kbd>Space</kbd> and drag anywhere, or use middle mouse button</li>
           <li><strong>Reset Zoom:</strong> Click the <strong>1:1</strong> button (left menu)</li>
           <li><strong>Reset View:</strong> Click the 🎯 button to center canvas</li>
         </ul>
