@@ -567,7 +567,7 @@ class Dashboard {
       if (e.code === 'Space' && !e.repeat && e.target === document.body) {
         e.preventDefault(); // Prevent page scrolling
         this.isPanModeActive = true;
-        this.canvas.style.cursor = 'grab';
+        document.body.style.cursor = 'grab';
       }
     });
     
@@ -575,7 +575,7 @@ class Dashboard {
       if (e.code === 'Space') {
         this.isPanModeActive = false;
         if (!this.panState) {
-          this.canvas.style.cursor = '';
+          document.body.style.cursor = '';
         }
       }
     });
@@ -600,13 +600,22 @@ class Dashboard {
       this.showCopyWidgetDialog(e.detail.widgetId);
     }) as EventListener);
 
-    // Pointer events for drag/resize
+    // Global pan mode (spacebar + click anywhere)
+    document.addEventListener('pointerdown', (e) => {
+      if (this.isPanModeActive || e.button === 1) {
+        e.preventDefault();
+        this.startPan(e);
+        return;
+      }
+    });
+
+    // Pointer events for drag/resize on canvas
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
     document.addEventListener('pointermove', (e) => this.handlePointerMove(e));
     document.addEventListener('pointerup', () => this.handlePointerUp());
 
     // Prevent default middle mouse button behavior
-    this.canvas.addEventListener('mousedown', (e) => {
+    document.addEventListener('mousedown', (e) => {
       if (e.button === 1) {
         e.preventDefault();
       }
@@ -711,10 +720,8 @@ class Dashboard {
 
     const target = e.target as HTMLElement;
 
-    // Pan mode: spacebar held or middle mouse button
+    // Pan mode is handled globally now, skip it here
     if (this.isPanModeActive || e.button === 1) {
-      e.preventDefault();
-      this.startPan(e);
       return;
     }
 
@@ -780,9 +787,7 @@ class Dashboard {
     this.clearSnapGuides();
 
     // Reset cursor (keep 'grab' if spacebar still held)
-    if (this.canvas) {
-      this.canvas.style.cursor = this.isPanModeActive ? 'grab' : '';
-    }
+    document.body.style.cursor = this.isPanModeActive ? 'grab' : '';
   }
 
   private showSnapGuides(snapTargets: { x: number | null; y: number | null }): void {
@@ -1030,7 +1035,7 @@ class Dashboard {
       startScrollY: this.canvasContent.offsetTop,
       startMousePos: { x: e.clientX, y: e.clientY }
     };
-    this.canvas.style.cursor = 'grabbing';
+    document.body.style.cursor = 'grabbing';
   }
 
   private updatePan(e: PointerEvent): void {
