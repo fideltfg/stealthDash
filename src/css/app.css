@@ -575,12 +575,12 @@ body {
 /* Controls Container - Slide-out menu */
 .controls-container {
   position: fixed;
-  bottom: 80px;
-  left: -200px;
+  bottom: 24px;
+  left: -400px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -590,7 +590,7 @@ body {
 }
 
 .controls-container.open {
-  left: 16px;
+  left: 120px;
 }
 
 .controls-container button {

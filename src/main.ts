@@ -2476,12 +2476,12 @@ class Dashboard {
       activeDashboard.state = this.state;
       activeDashboard.updatedAt = Date.now();
 
-      console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
-        id: w.id,
-        type: w.type,
-        groups: w.content?.groups?.length || 0,
-        entities: w.content?.entities?.length || 0
-      })));
+      // console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
+      //   id: w.id,
+      //   type: w.type,
+      //   groups: w.content?.groups?.length || 0,
+      //   entities: w.content?.entities?.length || 0
+      // })));
 
       // Save to server if authenticated (immediate save for widget updates)
       if (authService.isAuthenticated()) {
