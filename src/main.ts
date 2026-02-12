@@ -606,6 +606,11 @@ class Dashboard {
       const app = document.getElementById('app');
       const isAppBackground = target === app; // Clicking directly on #app (the margins)
       
+      // Don't interfere with buttons, controls, or interactive elements
+      if (target.closest('button, .menu-button, .controls-container, .dashboard-switcher, .lock-toggle, .dashboard-nav-btn')) {
+        return;
+      }
+      
       // Allow panning if: spacebar held, middle mouse, or clicking on app background
       if (this.isPanModeActive || e.button === 1 || isAppBackground) {
         e.preventDefault();
@@ -1055,7 +1060,7 @@ class Dashboard {
     // Apply pan limits to prevent dragging too far from origin
     // Limit how far the canvas can be panned in any direction
     newX = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newX));
-    newY = Math.max(-this.PAN_LIMIT, Math.min(this.PAN_LIMIT, newY));
+    newY = Math.max(-(this.PAN_LIMIT -1000), Math.min(this.PAN_LIMIT - 1000, newY));
 
     this.canvasContent.style.left = `${newX}px`;
     this.canvasContent.style.top = `${newY}px`;

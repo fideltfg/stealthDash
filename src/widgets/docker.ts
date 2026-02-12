@@ -46,20 +46,20 @@ class DockerWidgetRenderer implements WidgetRenderer {
     this.showConfigDialog(widget);
   }
 
-  private formatPorts(ports: Array<{IP?: string; PrivatePort: number; PublicPort?: number; Type: string}>): string {
+  private formatPorts(ports: Array<{ IP?: string; PrivatePort: number; PublicPort?: number; Type: string }>): string {
     if (!ports || ports.length === 0) return 'No exposed ports';
-    
+
     // Get unique public ports
     const uniquePorts = new Set<string>();
-    
+
     ports.forEach(port => {
       if (port.PublicPort) {
         uniquePorts.add(`${port.PublicPort}/${port.Type}`);
       }
     });
-    
+
     if (uniquePorts.size === 0) return 'No exposed ports';
-    
+
     return Array.from(uniquePorts).sort((a, b) => {
       const aNum = parseInt(a.split('/')[0]);
       const bNum = parseInt(b.split('/')[0]);
@@ -259,18 +259,18 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     try {
       const containers = await this.fetchContainers(content);
-      
+
       // Check if we need to do initial render
       let containersList = container.querySelector('#containers-list') as HTMLElement;
-      
+
       if (!containersList) {
         // Initial render - create the structure
         container.innerHTML = `
             <div id="containers-list" class="card-list"></div>
         `;
-        
+
         containersList = container.querySelector('#containers-list') as HTMLElement;
-        
+
         // Set up event delegation once
         containersList.addEventListener('pointerdown', (e) => {
           const target = e.target as HTMLElement;
@@ -282,14 +282,14 @@ class DockerWidgetRenderer implements WidgetRenderer {
         containersList.addEventListener('click', (e) => {
           const target = e.target as HTMLElement;
           const button = target.closest('.btn-small') as HTMLButtonElement;
-          
+
           if (!button || button.disabled || button.classList.contains('loading')) {
             return;
           }
 
           const action = button.dataset.action;
           const containerId = button.dataset.id;
-          
+
           if (!action || !containerId) {
             return;
           }
@@ -297,7 +297,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
           // Get stored containers from the element
           const storedContainers = (containersList as any).__containers || [];
           const fullContainer = storedContainers.find((c: DockerContainer) => c.Id.startsWith(containerId));
-          
+
           if (!fullContainer) {
             return;
           }
@@ -307,29 +307,29 @@ class DockerWidgetRenderer implements WidgetRenderer {
           } else if (action === 'start' || action === 'stop' || action === 'restart') {
             button.classList.add('loading');
             button.disabled = true;
-            
+
             // Replace icon with spinner - don't restore, let the next render update it
             const icon = button.querySelector('i');
             if (icon) {
               icon.className = 'fas fa-spinner fa-spin';
             }
-            
+
             // Don't remove loading state - let the button stay in loading state
             // until it's replaced by the next container list update
             this.controlContainer(fullContainer.Id, action as 'start' | 'stop' | 'restart', content, container, widget);
           }
         });
       }
-      
+
       // Store containers for event handlers
       (containersList as any).__containers = containers;
-      
+
       // Update container count
       const countEl = container.querySelector('#container-count');
       if (countEl) {
         countEl.textContent = `${containers.length} container${containers.length !== 1 ? 's' : ''}`;
       }
-      
+
       // Update containers individually
       this.updateContainersList(containersList, containers, content);
 
@@ -363,12 +363,12 @@ class DockerWidgetRenderer implements WidgetRenderer {
       `;
       return;
     }
-    
+
     // Get existing cards
     const existingCards = Array.from(containersList.querySelectorAll('.card'));
     //const existingIds = new Set(existingCards.map(card => card.getAttribute('data-container-id')));
     const newIds = new Set(containers.map(c => c.Id));
-    
+
     // Remove containers that no longer exist
     existingCards.forEach(card => {
       const cardId = card.getAttribute('data-container-id');
@@ -376,18 +376,18 @@ class DockerWidgetRenderer implements WidgetRenderer {
         card.remove();
       }
     });
-    
+
     // Update or add containers
     containers.forEach((container, index) => {
       const existingCard = containersList.querySelector(`[data-container-id="${container.Id}"]`);
       const cardHtml = this.renderContainerCard(container, content.credentialId, content.host);
-      
+
       if (existingCard) {
         // Update existing card
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = cardHtml;
         const newCard = tempDiv.firstElementChild as HTMLElement;
-        
+
         // Only update if content has changed
         if (existingCard.innerHTML !== newCard.innerHTML) {
           existingCard.innerHTML = newCard.innerHTML;
@@ -397,7 +397,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = cardHtml;
         const newCard = tempDiv.firstElementChild as HTMLElement;
-        
+
         // Insert at the correct position to maintain order
         if (index === 0) {
           containersList.insertBefore(newCard, containersList.firstChild);
@@ -417,20 +417,19 @@ class DockerWidgetRenderer implements WidgetRenderer {
   private renderContainerCard(container: DockerContainer, credentialId?: number | null, host?: string): string {
     const isRunning = container.State === 'running';
     const shortId = container.Id.substring(0, 12);
-    const name = container.Names[0]?.replace(/^\//,  '') || 'unknown';
+    const name = container.Names[0]?.replace(/^\//, '') || 'unknown';
     // Show control buttons if credentials are set OR if using Unix socket (which doesn't need credentials)
     const hasControlAccess = !!credentialId || (host && host.startsWith('unix://'));
 
     return `
       <div class="card" data-container-id="${container.Id}">
         <div class="card-header">
-          <div class="docker-container-info">
+          <div>
             <h5>${name}</h5>
-            <subtitle>${container.Image}</subtitle>
+            
           </div>
           <div class="badge ${container.State.toLowerCase()}">${container.State}</div>
         </div>
-
         <div class="docker-container-details">
           <h6>${container.Status}</h6>
           ${container.Ports && container.Ports.length > 0 ? `
@@ -440,7 +439,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
             <h6><i class="fas fa-globe"></i> ${Object.keys(container.NetworkSettings.Networks).join(', ')}</h6>
           ` : ''}
         </div>
-
+        <div><subtitle>${container.Image}</subtitle></div>
         <div class="docker-button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
@@ -470,7 +469,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     }
 
     const pingServerUrl = this.getPingServerUrl();
-    
+
     const response = await fetch(`${pingServerUrl}/api/docker/containers`, {
       method: 'POST',
       headers: {
@@ -501,7 +500,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   ): Promise<void> {
     try {
       const pingServerUrl = this.getPingServerUrl();
-      
+
       const response = await fetch(`${pingServerUrl}/api/docker/containers/${action}`, {
         method: 'POST',
         headers: {
@@ -618,13 +617,13 @@ class DockerWidgetRenderer implements WidgetRenderer {
         }
 
         const logs = await response.text();
-        
+
         if (logs.trim()) {
           logsContainer.textContent = logs;
         } else {
           logsContainer.innerHTML = '<div class="docker-logs-empty">No logs available</div>';
         }
-        
+
         // Auto-scroll to bottom
         logsContainer.scrollTop = logsContainer.scrollHeight;
 
@@ -665,7 +664,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     refreshBtn.addEventListener('click', fetchLogs);
     linesSelect.addEventListener('change', fetchLogs);
-    
+
     followCheckbox.addEventListener('change', () => {
       if (followCheckbox.checked) {
         startFollow();

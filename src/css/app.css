@@ -278,7 +278,7 @@ body {
   min-width: 100%;
   min-height: 100%;
   width: 5000px;
-  height: 5000px;
+  height: 2000px;
   border: 3px dashed var(--muted);
   box-sizing: border-box;
   transition: transform 100ms;
@@ -565,46 +565,11 @@ body {
   outline-offset: 2px;
 }
 
-.controls-container {
-  position: fixed;
-  bottom: 24px;
-  left: -500px;
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 4px 16px var(--shadow);
-  z-index: calc(var(--z-fab) + 1);
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 40px;
-  align-items: center;
-}
+ 
 
-.controls-container.open {
-  left: 120px;
-}
+ 
 
-.controls-container button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all var(--transition);
-}
-
-.controls-container button:hover {
-  transform: scale(1.1);
-  background: var(--hover);
-}
+ 
 
 .fab {
   font-size: 20px !important;
@@ -2022,7 +1987,7 @@ a:hover {
 
 .card-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
   padding: 8px;
   overflow-y: auto;
@@ -2031,12 +1996,6 @@ a:hover {
   height: 100%;
 }
 
-.docker-container-card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-}
 
 .docker-button-group {
   display: flex;
