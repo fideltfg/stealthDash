@@ -600,16 +600,18 @@ class Dashboard {
       this.showCopyWidgetDialog(e.detail.widgetId);
     }) as EventListener);
 
-    // Global pan mode (spacebar + click anywhere, middle mouse, or click on app background)
+    // Global pan mode (bubbling phase to let buttons handle clicks first)
     document.addEventListener('pointerdown', (e) => {
       const target = e.target as HTMLElement;
       const app = document.getElementById('app');
-      const isAppBackground = target === app; // Clicking directly on #app (the margins)
       
-      // Don't interfere with buttons, controls, or interactive elements
-      if (target.closest('button, .menu-button, .controls-container, .dashboard-switcher, .lock-toggle, .dashboard-nav-btn')) {
+      // Skip if clicking on any interactive elements
+      if (target.matches('button, input, select, textarea, a') || 
+          target.closest('button, .controls-container, .dashboard-switcher, .user-menu, .modal, input, select, textarea, a')) {
         return;
       }
+      
+      const isAppBackground = target === app; // Clicking directly on #app (the margins)
       
       // Allow panning if: spacebar held, middle mouse, or clicking on app background
       if (this.isPanModeActive || e.button === 1 || isAppBackground) {
@@ -617,7 +619,7 @@ class Dashboard {
         this.startPan(e);
         return;
       }
-    });
+    }, false); // Explicitly use bubbling phase
 
     // Pointer events for drag/resize on canvas
     this.canvasContent.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
