@@ -1,7 +1,10 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { formatTimeAgo } from '../utils/formatting';
+import { stopAllDragPropagation } from '../utils/dom';
 
 interface UnifiSensorContent {
   host: string; // UniFi Protect Console host (e.g., 'https://192.168.1.1')
@@ -47,7 +50,7 @@ interface ProtectBootstrap {
 }
 
 class UnifiSensorRenderer implements WidgetRenderer {
-  private updateIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
@@ -60,12 +63,6 @@ class UnifiSensorRenderer implements WidgetRenderer {
     if (!content || !content.host || !content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
-    }
-
-    // Clear existing interval
-    const existingInterval = this.updateIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
     }
 
     // Create widget structure
@@ -81,16 +78,9 @@ class UnifiSensorRenderer implements WidgetRenderer {
       refreshBtn.addEventListener('click', () => this.fetchAndRenderSensors(widget, container));
     }
 
-    // Initial load
-    this.fetchAndRenderSensors(widget, container);
-
-    // Setup auto-refresh
+    // Start polling (fires immediately, then every refreshInterval)
     const refreshInterval = (content.refreshInterval || 30) * 1000;
-    const intervalId = window.setInterval(() => {
-      this.fetchAndRenderSensors(widget, container);
-    }, refreshInterval);
-    
-    this.updateIntervals.set(widget.id, intervalId);
+    this.poller.start(widget.id, () => this.fetchAndRenderSensors(widget, container), refreshInterval);
   }
 
   private async fetchAndRenderSensors(widget: Widget, container: HTMLElement): Promise<void> {
@@ -100,22 +90,13 @@ class UnifiSensorRenderer implements WidgetRenderer {
     if (!sensorGrid) return;
 
     try {
-      // Get auth token
-      const token = authService.getToken();
-      if (!token) {
-        sensorGrid.innerHTML = '<div class="widget-error">Authentication required</div>';
-        return;
-      }
-
-      // Fetch bootstrap data from ping-server (port 3001)
-      const proxyUrl = new URL('/api/unifi-protect/bootstrap', window.location.origin.replace(':3000', ':3001'));
+      // Fetch bootstrap data from ping-server
+      const proxyUrl = new URL('/api/unifi-protect/bootstrap', getPingServerUrl());
       proxyUrl.searchParams.set('host', content.host);
       proxyUrl.searchParams.set('credentialId', (content.credentialId || '').toString());
 
       const response = await fetch(proxyUrl.toString(), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: getAuthHeaders(false)
       });
 
       if (!response.ok) {
@@ -197,7 +178,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
             </span>
             ${sensor.lastSeen ? `
               <span class="sensor-last-seen">
-                ${this.formatTimestamp(sensor.lastSeen)}
+                ${formatTimeAgo(sensor.lastSeen)}
               </span>
             ` : ''}
           </div>
@@ -227,18 +208,6 @@ class UnifiSensorRenderer implements WidgetRenderer {
       default:
         return `${celsius.toFixed(1)}°C / ${fahrenheit.toFixed(1)}°F`;
     }
-  }
-
-  private formatTimestamp(timestamp: number): string {
-    const date = new Date(timestamp);
-    const now = Date.now();
-    const diff = now - timestamp;
-    
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    
-    return date.toLocaleDateString();
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
@@ -337,6 +306,9 @@ class UnifiSensorRenderer implements WidgetRenderer {
 
     document.body.appendChild(dialog);
 
+    // Prevent drag propagation on all interactive elements
+    stopAllDragPropagation(dialog);
+
     // Handle cancel
     dialog.querySelector('.cancel-btn')?.addEventListener('click', () => {
       document.body.removeChild(dialog);
@@ -382,11 +354,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
   }
 
   cleanup(widget: Widget): void {
-    const intervalId = this.updateIntervals.get(widget.id);
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.updateIntervals.delete(widget.id);
-    }
+    this.poller.stop(widget.id);
   }
 }
 

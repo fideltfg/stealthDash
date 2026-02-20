@@ -1,6 +1,9 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 import JustGage from 'justgage';
+import { getPingServerUrl } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { stopAllDragPropagation } from '../utils/dom';
 
 interface CometP8541Content {
   host: string;
@@ -72,7 +75,7 @@ const SNMP_OIDS = {
 };
 
 export class CometP8541Renderer implements WidgetRenderer {
-  private intervals = new Map<string, number>();
+  private poller = new WidgetPoller();
   private abortControllers = new Map<string, AbortController>();
   private gauges = new Map<string, any>(); // Store gauge instances by widget ID
 
@@ -81,22 +84,6 @@ export class CometP8541Renderer implements WidgetRenderer {
     if (container) {
       this.showSettings(container, widget);
     }
-  }
-
-  // Get the ping-server base URL (works for both localhost and remote deployments)
-  private getPingServerUrl(): string {
-    // Check if we're in development (localhost) or production
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-
-    // Use environment variable if available, otherwise construct from current host
-    const envUrl = (import.meta as any).env?.VITE_PING_SERVER_URL;
-    if (envUrl) {
-      return envUrl;
-    }
-
-    // Default to port 3001 on the same host as the dashboard
-    return `${protocol}//${hostname}:3001`;
   }
 
   // Styles are now loaded from ../css/comet-p8541.css
@@ -154,7 +141,7 @@ export class CometP8541Renderer implements WidgetRenderer {
             oids: nameOids
           });
 
-          const nameResponse = await fetch(`${this.getPingServerUrl()}/snmp/get?${params}`, {
+          const nameResponse = await fetch(`${getPingServerUrl()}/snmp/get?${params}`, {
             signal: controller.signal
           });
 
@@ -243,7 +230,7 @@ export class CometP8541Renderer implements WidgetRenderer {
               oids: oids
             });
 
-            const response = await fetch(`${this.getPingServerUrl()}/snmp/get?${params}`, {
+            const response = await fetch(`${getPingServerUrl()}/snmp/get?${params}`, {
               signal: controller.signal
             });
 
@@ -630,9 +617,7 @@ export class CometP8541Renderer implements WidgetRenderer {
       }
     };
 
-    fetchData();
-    const intervalId = window.setInterval(fetchData, (content.refreshInterval || 10) * 1000);
-    this.intervals.set(widget.id, intervalId);
+    this.poller.start(widget.id, fetchData, (content.refreshInterval || 10) * 1000);
     this.setupCleanupObserver(container, widget.id);
   }
 
@@ -757,10 +742,6 @@ export class CometP8541Renderer implements WidgetRenderer {
       input.value = field.value?.toString() || '';
       input.className = 'widget-dialog-input dark-theme';
 
-      // Prevent arrow keys from moving the widget
-      input.addEventListener('keydown', (e) => e.stopPropagation());
-      input.addEventListener('keyup', (e) => e.stopPropagation());
-
       inputs[field.key] = input;
       group.appendChild(label);
       group.appendChild(input);
@@ -777,10 +758,6 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const tempSelect = document.createElement('select');
     tempSelect.className = 'comet-form-select';
-
-    // Prevent arrow keys from moving the widget
-    tempSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    tempSelect.addEventListener('keyup', (e) => e.stopPropagation());
 
     ['C', 'F'].forEach(unit => {
       const option = document.createElement('option');
@@ -804,10 +781,6 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const displaySelect = document.createElement('select');
     displaySelect.className = 'comet-form-select';
-
-    // Prevent arrow keys from moving the widget
-    displaySelect.addEventListener('keydown', (e) => e.stopPropagation());
-    displaySelect.addEventListener('keyup', (e) => e.stopPropagation());
 
     ['gauge', 'text'].forEach(mode => {
       const option = document.createElement('option');
@@ -849,10 +822,6 @@ export class CometP8541Renderer implements WidgetRenderer {
       nameInput.placeholder = channelDefaultNames[idx];
       nameInput.value = content.channelNames?.[ch as keyof typeof content.channelNames] || '';
       nameInput.className = 'comet-channel-name-input';
-
-      // Prevent arrow keys from moving the widget
-      nameInput.addEventListener('keydown', (e) => e.stopPropagation());
-      nameInput.addEventListener('keyup', (e) => e.stopPropagation());
 
       channelInputs[ch] = checkbox;
       channelNameInputs[ch] = nameInput;
@@ -922,14 +891,13 @@ export class CometP8541Renderer implements WidgetRenderer {
     };
 
     document.body.appendChild(overlay);
+
+    // Prevent drag propagation on all interactive elements
+    stopAllDragPropagation(modal);
   }
 
   private cleanup(widgetId: string): void {
-    const interval = this.intervals.get(widgetId);
-    if (interval) {
-      clearInterval(interval);
-      this.intervals.delete(widgetId);
-    }
+    this.poller.stop(widgetId);
     const controller = this.abortControllers.get(widgetId);
     if (controller) {
       controller.abort();

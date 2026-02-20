@@ -337,4 +337,26 @@ router.get('/public/:dashboardId', async (req, res) => {
   }
 });
 
+// Lightweight version check - returns only timestamps per dashboard
+router.get('/versions', authMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT dashboard_id, EXTRACT(EPOCH FROM updated_at) as version 
+       FROM dashboards 
+       WHERE user_id = $1`,
+      [req.user.userId]
+    );
+    
+    const versions = {};
+    for (const row of result.rows) {
+      versions[row.dashboard_id] = parseFloat(row.version);
+    }
+    
+    res.json({ success: true, versions });
+  } catch (error) {
+    console.error('Version check error:', error);
+    res.status(500).json({ error: 'Failed to check versions' });
+  }
+});
+
 module.exports = router;

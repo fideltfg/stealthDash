@@ -1,7 +1,10 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { dispatchWidgetUpdate, stopAllDragPropagation } from '../utils/dom';
+import { formatBytes, formatUptime, formatNumber, formatTimeAgo } from '../utils/formatting';
 
 interface UnifiContent {
   host: string; // UniFi Controller host (e.g., 'https://192.168.1.1:8443')
@@ -96,7 +99,7 @@ interface UnifiStats {
 }
 
 class UnifiRenderer implements WidgetRenderer {
-  private updateIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
@@ -112,12 +115,6 @@ class UnifiRenderer implements WidgetRenderer {
     if (!content.host || !content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
-    }
-
-    // Clear existing interval
-    const existingInterval = this.updateIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
     }
 
     // Create widget structure
@@ -147,18 +144,13 @@ class UnifiRenderer implements WidgetRenderer {
         }
 
         // Use the ping-server proxy to avoid CORS issues
-        const proxyUrl = new URL('/api/unifi/stats', window.location.origin.replace(':3000', ':3001'));
+        const proxyUrl = new URL('/api/unifi/stats', getPingServerUrl());
         proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('site', content.site || 'default');
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        //console.log('Using saved credential ID:', content.credentialId);
-        //console.log('Fetching UniFi data via proxy:', proxyUrl.toString());
-        
         const response = await fetch(proxyUrl.toString(), {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          }
+          headers: getAuthHeaders(false)
         });
 
         if (!response.ok) {
@@ -206,12 +198,8 @@ class UnifiRenderer implements WidgetRenderer {
       }
     };
 
-    // Initial fetch
-    fetchAndRender();
-
-    // Set up refresh interval
-    const interval = window.setInterval(fetchAndRender, (content.refreshInterval || 30) * 1000);
-    this.updateIntervals.set(widget.id, interval);
+    // Start polling (fires immediately, then every interval)
+    this.poller.start(widget.id, fetchAndRender, (content.refreshInterval || 30) * 1000);
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
@@ -349,17 +337,8 @@ class UnifiRenderer implements WidgetRenderer {
       const displayModeSelect = document.getElementById('unifi-display-mode') as HTMLSelectElement;
       const refreshInput = document.getElementById('unifi-refresh') as HTMLInputElement;
 
-      // Prevent arrow keys from moving the widget
-      hostInput.addEventListener('keydown', (e) => e.stopPropagation());
-      hostInput.addEventListener('keyup', (e) => e.stopPropagation());
-      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      siteInput.addEventListener('keydown', (e) => e.stopPropagation());
-      siteInput.addEventListener('keyup', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
+      // Prevent drag propagation on all interactive elements
+      stopAllDragPropagation(modal);
       
       const host = hostInput.value.trim();
       const credentialId = parseInt(credentialSelect.value);
@@ -388,10 +367,7 @@ class UnifiRenderer implements WidgetRenderer {
       console.log('New content being saved');
 
       // Dispatch update event
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: newContent }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, newContent);
 
       overlay.remove();
     });
@@ -469,7 +445,7 @@ class UnifiRenderer implements WidgetRenderer {
     const gateways = (data.gateways || 0);
     const switches = (data.switches || 0);
     const aps = (data.access_points || 0);
-    const uptime = data.uptime ? this.formatUptime(data.uptime) : 'Unknown';
+    const uptime = data.uptime ? formatUptime(data.uptime) : 'Unknown';
     
     container.innerHTML = `
       <div class="unifi-detailed flex flex-column gap-16">
@@ -572,7 +548,7 @@ class UnifiRenderer implements WidgetRenderer {
                 </div>
                 <div class="unifi-device-info-item">
                   <span class="widget-muted">Uptime:</span>
-                  <span class="widget-text-bold">${this.formatUptime(device.uptime || 0)}</span>
+                  <span class="widget-text-bold">${formatUptime(device.uptime || 0)}</span>
                 </div>
                 ${device.satisfaction !== undefined ? `
                   <div class="unifi-device-info-item">
@@ -913,19 +889,19 @@ class UnifiRenderer implements WidgetRenderer {
           ` : ''}
           <div class="unifi-client-info-item">
             <span class="widget-muted">↑ TX:</span>
-            <span class="widget-text-bold">${this.formatBytes(client.tx_bytes)}</span>
+            <span class="widget-text-bold">${formatBytes(client.tx_bytes)}</span>
           </div>
           <div class="unifi-client-info-item">
             <span class="widget-muted">↓ RX:</span>
-            <span class="widget-text-bold">${this.formatBytes(client.rx_bytes)}</span>
+            <span class="widget-text-bold">${formatBytes(client.rx_bytes)}</span>
           </div>
           <div class="unifi-client-info-item">
             <span class="widget-muted">Total:</span>
-            <span class="widget-text-bold">${this.formatBytes(totalBytes)}</span>
+            <span class="widget-text-bold">${formatBytes(totalBytes)}</span>
           </div>
           <div class="unifi-client-info-item">
             <span class="widget-muted">Uptime:</span>
-            <span class="widget-text-bold">${this.formatUptime(client.uptime || 0)}</span>
+            <span class="widget-text-bold">${formatUptime(client.uptime || 0)}</span>
           </div>
         </div>
       </div>
@@ -1029,7 +1005,7 @@ class UnifiRenderer implements WidgetRenderer {
                       <span class="unifi-client-mini-icon">${connIcon}</span>
                       <span class="unifi-client-mini-name">${client.name}</span>
                     </div>
-                    <span class="unifi-client-mini-traffic">${this.formatBytes(totalBytes)}</span>
+                    <span class="unifi-client-mini-traffic">${formatBytes(totalBytes)}</span>
                   </div>
                 `;
               }).join('')}
@@ -1044,7 +1020,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div class="flex flex-column gap-8">
               ${alarms.slice(0, 3).map(alarm => {
                 const date = new Date(alarm.datetime * 1000);
-                const timeAgo = this.getTimeAgo(date);
+                const timeAgo = formatTimeAgo(date);
                 
                 return `
                   <div class="unifi-alarm-card">
@@ -1077,7 +1053,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Active Clients</div>
           </div>
           <div style="background: var(--bg); padding: 16px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${this.formatBytes(totalTraffic)}</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--text);">${formatBytes(totalTraffic)}</div>
             <div style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Total Traffic</div>
           </div>
         </div>
@@ -1108,7 +1084,7 @@ class UnifiRenderer implements WidgetRenderer {
                       </div>
                     </div>
                     <div style="text-align: right;">
-                      <div style="font-size: 14px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalBytes)}</div>
+                      <div style="font-size: 14px; font-weight: 700; color: var(--accent);">${formatBytes(totalBytes)}</div>
                       <div style="font-size: 10px; color: var(--muted);">${percentage.toFixed(1)}%</div>
                     </div>
                   </div>
@@ -1121,11 +1097,11 @@ class UnifiRenderer implements WidgetRenderer {
                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
                     <div style="display: flex; justify-content: space-between;">
                       <span style="color: var(--muted);">↑ Upload:</span>
-                      <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.tx_bytes)}</span>
+                      <span style="color: var(--text); font-weight: 500;">${formatBytes(client.tx_bytes)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                       <span style="color: var(--muted);">↓ Download:</span>
-                      <span style="color: var(--text); font-weight: 500;">${this.formatBytes(client.rx_bytes)}</span>
+                      <span style="color: var(--text); font-weight: 500;">${formatBytes(client.rx_bytes)}</span>
                     </div>
                     ${!client.is_wired && client.signal ? `
                       <div style="display: flex; justify-content: space-between;">
@@ -1162,7 +1138,7 @@ class UnifiRenderer implements WidgetRenderer {
                     <span style="font-size: 12px;">${connIcon}</span>
                     <span style="font-size: 12px; font-weight: 500; color: var(--text);">${client.name}</span>
                   </div>
-                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${this.formatBytes(client.tx_bytes)}</span>
+                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${formatBytes(client.tx_bytes)}</span>
                 </div>
               `;
             }).join('')}
@@ -1185,7 +1161,7 @@ class UnifiRenderer implements WidgetRenderer {
                     <span style="font-size: 12px;">${connIcon}</span>
                     <span style="font-size: 12px; font-weight: 500; color: var(--text);">${client.name}</span>
                   </div>
-                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${this.formatBytes(client.rx_bytes)}</span>
+                  <span style="font-size: 12px; color: var(--accent); font-weight: 600;">${formatBytes(client.rx_bytes)}</span>
                 </div>
               `;
             }).join('')}
@@ -1221,16 +1197,16 @@ class UnifiRenderer implements WidgetRenderer {
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             <div>
               <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↑ UPLOAD</div>
-              <div style="font-size: 28px; font-weight: 700;">${this.formatBytes(traffic.tx_bytes)}</div>
+              <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.tx_bytes)}</div>
             </div>
             <div>
               <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↓ DOWNLOAD</div>
-              <div style="font-size: 28px; font-weight: 700;">${this.formatBytes(traffic.rx_bytes)}</div>
+              <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.rx_bytes)}</div>
             </div>
           </div>
           <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; font-size: 12px;">
-            <span>Total: <strong>${this.formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
-            <span>Packets: <strong>${this.formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>
+            <span>Total: <strong>${formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
+            <span>Packets: <strong>${formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>
           </div>
         </div>
 
@@ -1240,12 +1216,12 @@ class UnifiRenderer implements WidgetRenderer {
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
             <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
               <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY DEVICES</div>
-              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalDeviceTraffic)}</div>
+              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalDeviceTraffic)}</div>
               <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${devices.length} devices</div>
             </div>
             <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
               <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY CLIENTS</div>
-              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${this.formatBytes(totalClientTraffic)}</div>
+              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalClientTraffic)}</div>
               <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${clients.length} clients</div>
             </div>
           </div>
@@ -1271,7 +1247,7 @@ class UnifiRenderer implements WidgetRenderer {
                         </div>
                       </div>
                       <div style="text-align: right;">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--accent);">${this.formatBytes(device.total)}</div>
+                        <div style="font-size: 13px; font-weight: 700; color: var(--accent);">${formatBytes(device.total)}</div>
                         <div style="font-size: 9px; color: var(--muted);">${percentage.toFixed(1)}%</div>
                       </div>
                     </div>
@@ -1281,8 +1257,8 @@ class UnifiRenderer implements WidgetRenderer {
                     </div>
                     
                     <div style="display: flex; justify-content: space-between; font-size: 10px;">
-                      <span style="color: var(--muted);">↑ ${this.formatBytes(device.tx)}</span>
-                      <span style="color: var(--muted);">↓ ${this.formatBytes(device.rx)}</span>
+                      <span style="color: var(--muted);">↑ ${formatBytes(device.tx)}</span>
+                      <span style="color: var(--muted);">↓ ${formatBytes(device.rx)}</span>
                     </div>
                   </div>
                 `;
@@ -1296,10 +1272,10 @@ class UnifiRenderer implements WidgetRenderer {
           <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Upload/Download Ratio</div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <div style="flex: ${traffic.tx_bytes}; background: #ff9500; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
-              ${traffic.tx_bytes > 0 ? this.formatBytes(traffic.tx_bytes) : '0'}
+              ${traffic.tx_bytes > 0 ? formatBytes(traffic.tx_bytes) : '0'}
             </div>
             <div style="flex: ${traffic.rx_bytes}; background: #34c759; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
-              ${traffic.rx_bytes > 0 ? this.formatBytes(traffic.rx_bytes) : '0'}
+              ${traffic.rx_bytes > 0 ? formatBytes(traffic.rx_bytes) : '0'}
             </div>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 8px;">

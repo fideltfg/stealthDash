@@ -1,5 +1,8 @@
 import type { Widget, WidgetContent } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { WidgetPoller } from '../utils/polling';
+import { renderConfigPrompt, renderLoading, renderError } from '../utils/widgetRendering';
 
 export interface MTNXMLContent extends WidgetContent {
   feedUrl: string;
@@ -14,7 +17,7 @@ export interface MTNXMLContent extends WidgetContent {
 }
 
 class MTNXMLWidgetRenderer implements WidgetRenderer {
-  private refreshIntervals = new Map<string, number>();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
@@ -28,77 +31,21 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
 
     container.className = 'widget-content';
 
+    // Stop any existing polling
+    this.poller.stop(widget.id);
+
     if (!content.feedUrl) {
-      this.renderConfigScreen(container, widget);
+      const btn = renderConfigPrompt(container, '⛷️', 'Mountain XML Feed', 'Display ski resort conditions from MTNXML feeds');
+      btn.addEventListener('click', () => this.configure(widget));
       return;
     }
 
-    this.renderData(container, widget);
-    this.setupAutoRefresh(widget);
-  }
-
-  private renderConfigScreen(container: HTMLElement, widget: Widget): void {
-    const content = widget.content as unknown as MTNXMLContent;
-
-    const configDiv = document.createElement('div');
-    configDiv.className = 'mtnxml-config';
-
-    configDiv.innerHTML = `
-      <div class="widget-config-icon">⛷️</div>
-      <div class="mtnxml-config-title">
-        Mountain XML Feed
-      </div>
-      <div class="mtnxml-config-description">
-        Display ski resort conditions, lifts, trails, and weather from MTNXML feeds
-      </div>
-      <input
-        type="text"
-        id="feed-url"
-        placeholder="https://example.com/mtn-xml/"
-        value="${content.feedUrl || ''}"
-        class="mtnxml-config-input"
-      >
-      <button
-        id="load-feed"
-        class="mtnxml-config-button"
-      >
-        Load Feed
-      </button>
-      <div class="mtnxml-config-hint">
-        Example: https://banffnorquay.com/mtn-xml/
-      </div>
-    `;
-
-    const input = configDiv.querySelector('#feed-url') as HTMLInputElement;
-    const button = configDiv.querySelector('#load-feed') as HTMLButtonElement;
-
-    const loadFeed = () => {
-      const url = input.value.trim();
-      if (url) {
-        content.feedUrl = url;
-        content.refreshInterval = content.refreshInterval || 300; // 5 minutes default
-        content.displayMode = content.displayMode || 'summary';
-        content.showLifts = content.showLifts !== false;
-        content.showTrails = content.showTrails !== false;
-        content.showSnow = content.showSnow !== false;
-        content.showWeather = content.showWeather !== false;
-
-        const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content }
-        });
-        document.dispatchEvent(event);
-      }
-    };
-
-    button.addEventListener('click', loadFeed);
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadFeed();
-    });
-
-    input.addEventListener('pointerdown', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
-
-    container.appendChild(configDiv);
+    // Start polling - calls renderData immediately, then on interval
+    if (content.refreshInterval > 0) {
+      this.poller.start(widget.id, () => this.renderData(container, widget), content.refreshInterval * 1000);
+    } else {
+      this.renderData(container, widget);
+    }
   }
 
   private async renderData(container: HTMLElement, widget: Widget): Promise<void> {
@@ -111,11 +58,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     contentArea.className = 'mtnxml-content';
 
     // Loading indicator
-    contentArea.innerHTML = `
-      <div class="widget-loading padded centered">
-        <div>Loading data...</div>
-      </div>
-    `;
+    renderLoading(contentArea, 'Loading data...');
 
     container.appendChild(contentArea);
 
@@ -134,21 +77,12 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       console.error('Widget render error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      contentArea.innerHTML = `
-        <div class="widget-error simple">
-          <div class="widget-error-icon">⚠️</div>
-          <div class="widget-error-title">Failed to load feed</div>
-          <div class="widget-error-detail">${errorMessage}</div>
-          <div class="widget-error-hint">
-            Check browser console (F12) for details
-          </div>
-          <button id="retry-btn" class="mtnxml-retry-button">
-            Retry
-          </button>
-        </div>
-      `;
+      renderError(contentArea, 'Failed to load feed', errorMessage, 'Check browser console (F12) for details');
 
-      const retryBtn = contentArea.querySelector('#retry-btn') as HTMLButtonElement;
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'mtnxml-retry-button';
+      retryBtn.textContent = 'Retry';
+      contentArea.querySelector('.widget-error')?.appendChild(retryBtn);
       retryBtn.addEventListener('click', () => {
         this.renderData(container, widget);
       });
@@ -426,28 +360,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     return section;
   }
 
-  private setupAutoRefresh(widget: Widget): void {
-    const content = widget.content as unknown as MTNXMLContent;
-
-    // Clear existing interval
-    const existingInterval = this.refreshIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
-
-    // Set up new interval if refresh is enabled
-    if (content.refreshInterval > 0) {
-      const intervalId = window.setInterval(() => {
-        const container = document.querySelector(`#widget-${widget.id} .widget-content`) as HTMLElement;
-        if (container) {
-          this.renderData(container, widget);
-        }
-      }, content.refreshInterval * 1000);
-
-      this.refreshIntervals.set(widget.id, intervalId);
-    }
-  }
-
   private showSettings(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as MTNXMLContent;
 
@@ -534,6 +446,8 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const liftsCheck = modal.querySelector('#settings-lifts') as HTMLInputElement;
     const trailsCheck = modal.querySelector('#settings-trails') as HTMLInputElement;
 
+    stopAllDragPropagation(modal);
+
     saveBtn.addEventListener('click', () => {
       content.feedUrl = urlInput.value.trim();
       content.refreshInterval = parseInt(refreshInput.value) || 300;
@@ -542,10 +456,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
       content.showLifts = liftsCheck.checked;
       content.showTrails = trailsCheck.checked;
 
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, content as Record<string, any>);
 
       overlay.remove();
       // Reload the widget

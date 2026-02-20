@@ -1,5 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { WidgetPoller } from '../utils/polling';
+import { renderLoading, renderError } from '../utils/widgetRendering';
 
 interface RssFeedItem {
   title: string;
@@ -10,7 +13,7 @@ interface RssFeedItem {
 }
 
 export class RssWidgetRenderer implements WidgetRenderer {
-  private refreshIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     const content = widget.content as { feedUrl?: string; maxItems?: number; refreshInterval?: number };
@@ -65,17 +68,11 @@ export class RssWidgetRenderer implements WidgetRenderer {
     saveBtn.onclick = () => {
       const feedUrl = urlInput.value.trim();
       if (feedUrl) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: {
-              feedUrl,
-              maxItems: parseInt(maxItemsInput.value) || 10,
-              refreshInterval: parseInt(refreshInput.value)
-            }
-          }
+        dispatchWidgetUpdate(widget.id, {
+          feedUrl,
+          maxItems: parseInt(maxItemsInput.value) || 10,
+          refreshInterval: parseInt(refreshInput.value)
         });
-        document.dispatchEvent(event);
         close();
       }
     };
@@ -92,27 +89,17 @@ export class RssWidgetRenderer implements WidgetRenderer {
       const maxItems = content.maxItems || 10;
       const refreshInterval = content.refreshInterval !== undefined ? content.refreshInterval : 5; // Default to 5 minutes
       
-      this.fetchAndRenderFeed(div, widget, content.feedUrl, maxItems);
-      
-      // Set up auto-refresh if enabled (0 = disabled)
       if (refreshInterval > 0) {
-        this.clearRefreshInterval(widget.id);
-        const intervalId = window.setInterval(() => {
+        // poller.start fires immediately, then at interval
+        this.poller.start(widget.id, () => {
           this.fetchAndRenderFeed(div, widget, content.feedUrl!, maxItems);
-        }, refreshInterval * 60 * 1000); // Convert minutes to milliseconds
-        this.refreshIntervals.set(widget.id, intervalId);
+        }, refreshInterval * 60 * 1000);
+      } else {
+        this.fetchAndRenderFeed(div, widget, content.feedUrl, maxItems);
       }
     }
     
     container.appendChild(div);
-  }
-
-  private clearRefreshInterval(widgetId: string): void {
-    const intervalId = this.refreshIntervals.get(widgetId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.refreshIntervals.delete(widgetId);
-    }
   }
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
@@ -170,13 +157,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       const refreshInterval = parseInt(refreshInput.value) || 0;
       
       if (feedUrl) {
-        const event = new CustomEvent('widget-update', {
-          detail: { 
-            id: widget.id, 
-            content: { feedUrl, maxItems, refreshInterval } 
-          }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { feedUrl, maxItems, refreshInterval });
       }
     };
     
@@ -188,16 +169,10 @@ export class RssWidgetRenderer implements WidgetRenderer {
       }
     });
     
-    urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    urlInput.addEventListener('keydown', (e) => e.stopPropagation());
-    urlInput.addEventListener('keyup', (e) => e.stopPropagation());
-    maxItemsInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    maxItemsInput.addEventListener('keydown', (e) => e.stopPropagation());
-    maxItemsInput.addEventListener('keyup', (e) => e.stopPropagation());
-    refreshInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
-    refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(urlInput);
+    stopWidgetDragPropagation(maxItemsInput);
+    stopWidgetDragPropagation(refreshInput);
+    stopWidgetDragPropagation(button);
     
     inputContainer.appendChild(icon);
     inputContainer.appendChild(label);
@@ -211,7 +186,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchAndRenderFeed(container: HTMLElement, widget: Widget, feedUrl: string, maxItems: number): Promise<void> {
-    container.innerHTML = '<div class="widget-loading padded">Loading feed...</div>';
+    renderLoading(container, 'Loading feed...');
     
     try {
       // Use RSS2JSON service as a CORS proxy
@@ -231,11 +206,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       container.innerHTML = '';
       this.renderFeedItems(container, data.feed, data.items, maxItems);
     } catch (error) {
-      container.innerHTML = `<div class="widget-error">
-        <div class="widget-error-icon"><i class="fas fa-exclamation-triangle"></i></div>
-        <div>Failed to load RSS feed</div>
-        <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
-      </div>`;
+      renderError(container, 'Failed to load RSS feed', error);
     }
   }
 

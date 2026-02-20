@@ -1,8 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { preventWidgetKeyboardDrag } from '../types/widget';
 import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 
 export interface ChatGPTContent {
   apiKey?: string; // Deprecated - use credentialId
@@ -173,15 +173,12 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         let response;
         if (content.credentialId) {
           // Use proxy with credential
-          const proxyUrl = new URL('/api/openai/chat', window.location.origin.replace(':3000', ':3001'));
+          const proxyUrl = new URL('/api/openai/chat', getPingServerUrl());
           proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
           
           response = await fetch(proxyUrl.toString(), {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authService.getToken() || ''}`
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(requestPayload)
           });
         } else if (content.apiKey) {
@@ -220,10 +217,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         // Trigger save
-        const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, content as Record<string, any>);
 
       } catch (error) {
         typingIndicator.remove();
@@ -248,11 +242,8 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       }
     });
 
-    // Prevent widget dragging when interacting with input
-    input.addEventListener('pointerdown', (e) => e.stopPropagation());
-    input.addEventListener('keydown', (e) => e.stopPropagation());
-    input.addEventListener('keyup', (e) => e.stopPropagation());
-    sendBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    // Prevent widget dragging when interacting with inputs
+    stopAllDragPropagation(container);
   }
 
   private createMessageElement(message: {
@@ -439,14 +430,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
       content.systemPrompt = systemPromptInput.value;
       
       // Dispatch update event to save changes
-      const event = new CustomEvent('widget-update', {
-        bubbles: true,
-        detail: { 
-          id: widget.id, 
-          content: content 
-        }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, content as Record<string, any>);
     };
 
     credentialSelect.addEventListener('change', updateContent);
@@ -454,11 +438,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     systemPromptInput.addEventListener('input', updateContent);
 
     // Prevent keyboard events from moving the widget
-    credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
-    preventWidgetKeyboardDrag(systemPromptInput);
-    modelSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    modelSelect.addEventListener('keyup', (e) => e.stopPropagation());
+    stopAllDragPropagation(container);
 
     clearHistoryBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all chat messages?')) {

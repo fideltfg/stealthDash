@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 
 export class ImageWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -52,12 +53,9 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
 
     // Prevent arrow keys from moving the widget
-    urlInput.addEventListener('keydown', (e) => e.stopPropagation());
-    urlInput.addEventListener('keyup', (e) => e.stopPropagation());
-    altInput.addEventListener('keydown', (e) => e.stopPropagation());
-    altInput.addEventListener('keyup', (e) => e.stopPropagation());
-    fitSelect.addEventListener('keydown', (e) => e.stopPropagation());
-    fitSelect.addEventListener('keyup', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(urlInput);
+    stopWidgetDragPropagation(altInput);
+    stopWidgetDragPropagation(fitSelect);
 
     const close = () => overlay.remove();
 
@@ -65,17 +63,11 @@ export class ImageWidgetRenderer implements WidgetRenderer {
     overlay.onclick = (e) => e.target === overlay && close();
 
     saveBtn.onclick = () => {
-      const event = new CustomEvent('widget-update', {
-        detail: {
-          id: widget.id,
-          content: {
-            src: urlInput.value,
-            alt: altInput.value,
-            objectFit: fitSelect.value
-          }
-        }
+      dispatchWidgetUpdate(widget.id, {
+        src: urlInput.value,
+        alt: altInput.value,
+        objectFit: fitSelect.value
       });
-      document.dispatchEvent(event);
       close();
     };
   }

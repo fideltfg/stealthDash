@@ -1,7 +1,11 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { renderConfigPrompt, renderError } from '../utils/widgetRendering';
+import { formatNumber } from '../utils/formatting';
+import { populateCredentialSelect } from '../utils/credentials';
 
 interface PiholeContent {
   host: string; // Pi-hole host (e.g., 'http://pi.hole' or 'http://192.168.1.100')
@@ -35,7 +39,7 @@ interface PiholeSummary {
 }
 
 class PiholeRenderer implements WidgetRenderer {
-  private updateIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
@@ -48,15 +52,13 @@ class PiholeRenderer implements WidgetRenderer {
     //console.log('Pi-hole widget render - Has credentialId?', !!content.credentialId);
     
     // If widget has no host or credential configured, show configuration prompt
-    if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
-      this.renderConfigPrompt(container, widget);
-      return;
-    }
+    // Stop any existing polling
+    this.poller.stop(widget.id);
 
-    // Clear existing interval
-    const existingInterval = this.updateIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
+    if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
+      const btn = renderConfigPrompt(container, '🛡️', 'Configure Pi-hole', 'Configure your Pi-hole server connection. Tip: Create credentials first from the user menu (🔐 Credentials)');
+      btn.addEventListener('click', () => this.showConfigDialog(widget));
+      return;
     }
 
     // Create widget structure
@@ -78,17 +80,12 @@ class PiholeRenderer implements WidgetRenderer {
         }
 
         // Use the ping-server proxy to avoid CORS issues
-        const proxyUrl = new URL('/api/pihole', window.location.origin.replace(':3000', ':3001'));
+        const proxyUrl = new URL('/api/pihole', getPingServerUrl());
         proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
-        //console.log('Using saved credential ID:', content.credentialId);
-        //console.log('Fetching Pi-hole data via proxy:', proxyUrl.toString());
-        
         const response = await fetch(proxyUrl.toString(), {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          }
+          headers: getAuthHeaders(false)
         });
 
         if (!response.ok) {
@@ -112,51 +109,13 @@ class PiholeRenderer implements WidgetRenderer {
 
       } catch (error) {
         console.error('Error fetching Pi-hole data:', error);
-        contentEl.innerHTML = `
-          <div class="widget-error">
-            <div class="widget-error-icon large">⚠️</div>
-            <div class="widget-error-title">Error loading Pi-hole data</div>
-            <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
-            <div class="widget-error-hint">Check host: ${content.host}</div>
-          </div>
-        `;
+        renderError(contentEl, 'Error loading Pi-hole data', error, `Check host: ${content.host}`);
       }
     };
 
-    // Initial fetch
-    fetchAndRender();
-
-    // Set up auto-refresh
+    // Start polling (fires immediately, then every refreshInterval)
     const refreshInterval = (content.refreshInterval || 30) * 1000;
-    const intervalId = window.setInterval(fetchAndRender, refreshInterval);
-    this.updateIntervals.set(widget.id, intervalId);
-  }
-
-  private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
-    container.innerHTML = `
-      <div class="widget-container flex align-center justify-center">
-        <div class="text-center" style="max-width: 400px;">
-          <div class="mb-16">
-            <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-logo" />
-          </div>
-          <h3 class="widget-title mb-12">Configure Pi-hole</h3>
-          <p class="widget-text mb-8">
-            Configure your Pi-hole server connection
-          </p>
-          <p class="widget-hint mb-24">
-            💡 Tip: Create credentials first from the user menu (🔐 Credentials)
-          </p>
-          <button id="configure-pihole-btn" class="widget-button primary">
-            Configure
-          </button>
-        </div>
-      </div>
-    `;
-
-    const configBtn = container.querySelector('#configure-pihole-btn');
-    configBtn?.addEventListener('click', () => {
-      this.showConfigDialog(widget);
-    });
+    this.poller.start(widget.id, fetchAndRender, refreshInterval);
   }
 
   private showConfigDialog(widget: Widget): void {
@@ -265,27 +224,10 @@ class PiholeRenderer implements WidgetRenderer {
 
     // Load and populate credentials
     const credentialSelect = document.getElementById('pihole-credential-id') as HTMLSelectElement;
+    populateCredentialSelect(credentialSelect, 'pihole', content.credentialId);
 
-    (async () => {
-      try {
-        const credentials = await credentialsService.getAll();
-        const piholeCredentials = credentials.filter(c => c.service_type === 'pihole');
-        
-        piholeCredentials.forEach(cred => {
-          const option = document.createElement('option');
-          option.value = cred.id.toString();
-          option.textContent = `🛡️ ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
-          credentialSelect.appendChild(option);
-        });
-
-        // Set current credential if exists
-        if (content.credentialId) {
-          credentialSelect.value = content.credentialId.toString();
-        }
-      } catch (error) {
-        console.error('Failed to load credentials:', error);
-      }
-    })();
+    // Prevent widget drag on all interactive elements
+    stopAllDragPropagation(modal);
 
     // Handle form submission
     const form = modal.querySelector('#pihole-config-form') as HTMLFormElement;
@@ -296,16 +238,6 @@ class PiholeRenderer implements WidgetRenderer {
       const credentialSelect = document.getElementById('pihole-credential-id') as HTMLSelectElement;
       const displayModeSelect = document.getElementById('pihole-display-mode') as HTMLSelectElement;
       const refreshInput = document.getElementById('pihole-refresh') as HTMLInputElement;
-
-      // Prevent arrow keys from moving the widget
-      hostInput.addEventListener('keydown', (e) => e.stopPropagation());
-      hostInput.addEventListener('keyup', (e) => e.stopPropagation());
-      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
       
       const host = hostInput.value.trim();
       const credentialId = credentialSelect.value;
@@ -336,11 +268,7 @@ class PiholeRenderer implements WidgetRenderer {
         credentialId: newContent.credentialId
       });
 
-      // Dispatch update event
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: newContent }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, newContent);
 
       overlay.remove();
     });
@@ -385,13 +313,13 @@ class PiholeRenderer implements WidgetRenderer {
         <div class="grid grid-2 gap-12 w-100">
           <div class="text-center">
             <div class="pihole-stat-value">
-              ${this.formatNumber(data.queries.blocked)}
+              ${formatNumber(data.queries.blocked)}
             </div>
             <div class="pihole-stat-label">Blocked</div>
           </div>
           <div class="text-center">
             <div class="pihole-stat-value">
-              ${this.formatNumber(data.queries.total)}
+              ${formatNumber(data.queries.total)}
             </div>
             <div class="pihole-stat-label">Total</div>
           </div>
@@ -415,17 +343,17 @@ class PiholeRenderer implements WidgetRenderer {
 
         <!-- Primary Stats -->
         <div class="grid grid-3 gap-8">
-          ${this.createStatCard('Total Queries', this.formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
-          ${this.createStatCard('Blocked', this.formatNumber(data.queries.blocked), '🛡️', '#f44336')}
+          ${this.createStatCard('Total Queries', formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
+          ${this.createStatCard('Blocked', formatNumber(data.queries.blocked), '🛡️', '#f44336')}
           ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
         </div>
 
         <!-- Secondary Stats -->
         <div class="grid grid-4 gap-4">
-          ${this.createStatCard('Blocklist', this.formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
-          ${this.createStatCard('Unique Domains', this.formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0')}
-          ${this.createStatCard('Forwarded', this.formatNumber(data.queries.forwarded), '↗️', '#00bcd4')}
-          ${this.createStatCard('Cached', this.formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b')}
+          ${this.createStatCard('Blocklist', formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
+          ${this.createStatCard('Unique Domains', formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0')}
+          ${this.createStatCard('Forwarded', formatNumber(data.queries.forwarded), '↗️', '#00bcd4')}
+          ${this.createStatCard('Cached', formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b')}
         </div>
 
         <!-- Gravity Update -->
@@ -446,15 +374,6 @@ class PiholeRenderer implements WidgetRenderer {
     `;
   }
 
-  private formatNumber(num: number): string {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-  }
 }
 
 export const widget = {

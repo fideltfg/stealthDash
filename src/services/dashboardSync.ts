@@ -1,10 +1,12 @@
 /**
  * Dashboard Synchronization Service
  * 
- * Handles cross-tab communication for dashboard updates using BroadcastChannel.
- * When a dashboard is updated in one tab, other tabs viewing the SAME dashboard
- * are notified and prevented from making conflicting changes.
+ * Handles cross-tab communication for dashboard updates using:
+ * 1. BroadcastChannel - instant sync within the same browser
+ * 2. Server polling - sync across different browsers/incognito windows
  */
+
+import { authService } from './auth';
 
 export type DashboardUpdateMessage = {
   type: 'dashboard-updated';
@@ -27,17 +29,17 @@ export class DashboardSyncService {
   private syncStatus: SyncStatus = { isOutOfSync: false };
   private listeners: Set<(status: SyncStatus) => void> = new Set();
   private dashboardVersions: Map<string, number> = new Map();
+  private pollInterval: number | undefined;
+  private readonly POLL_INTERVAL_MS = 15000; // Check server every 15 seconds
 
   constructor() {
     // Generate unique tab ID
     this.tabId = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // Initialize BroadcastChannel if supported
+    // Initialize BroadcastChannel if supported (for same-browser instant sync)
     if (typeof BroadcastChannel !== 'undefined') {
       this.channel = new BroadcastChannel('dashboard-sync');
       this.setupMessageListener();
-    } else {
-      console.warn('⚠️ BroadcastChannel not supported in this browser');
     }
 
     console.log('🔄 Dashboard sync service initialized, tab ID:', this.tabId);
@@ -57,6 +59,9 @@ export class DashboardSyncService {
     
     // Reset sync status when switching dashboards
     this.updateSyncStatus({ isOutOfSync: false });
+
+    // Start/restart server polling
+    this.startPolling();
   }
 
   /**
@@ -130,7 +135,61 @@ export class DashboardSyncService {
   }
 
   /**
-   * Setup message listener for BroadcastChannel
+   * Start polling the server for version changes (cross-browser sync)
+   */
+  private startPolling(): void {
+    this.stopPolling();
+
+    if (!authService.isAuthenticated()) return;
+
+    this.pollInterval = window.setInterval(() => {
+      this.pollServerVersions();
+    }, this.POLL_INTERVAL_MS);
+  }
+
+  /**
+   * Stop server polling
+   */
+  private stopPolling(): void {
+    if (this.pollInterval !== undefined) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = undefined;
+    }
+  }
+
+  /**
+   * Check server for version changes on the current dashboard
+   */
+  private async pollServerVersions(): Promise<void> {
+    // Don't poll if already out of sync or no dashboard selected
+    if (this.syncStatus.isOutOfSync || !this.currentDashboardId) return;
+    if (!authService.isAuthenticated()) return;
+
+    try {
+      const serverVersions = await authService.checkDashboardVersions();
+      if (!serverVersions) return;
+
+      const currentId = this.currentDashboardId;
+      const localVersion = this.dashboardVersions.get(currentId);
+      const serverVersion = serverVersions[currentId];
+
+      if (localVersion !== undefined && serverVersion !== undefined && serverVersion > localVersion + 1) {
+        console.warn('⚠️ Server version mismatch for dashboard', currentId,
+                      '- local:', localVersion, 'server:', serverVersion);
+        
+        this.updateSyncStatus({
+          isOutOfSync: true,
+          lastServerUpdate: serverVersion * 1000,
+          conflictingDashboardId: currentId
+        });
+      }
+    } catch (error) {
+      // Silently ignore polling errors (network issues, etc.)
+    }
+  }
+
+  /**
+   * Setup message listener for BroadcastChannel (same-browser instant sync)
    */
   private setupMessageListener(): void {
     if (!this.channel) return;
@@ -168,6 +227,11 @@ export class DashboardSyncService {
       ...status
     };
 
+    // Stop polling once we're out of sync (no need to keep checking)
+    if (this.syncStatus.isOutOfSync) {
+      this.stopPolling();
+    }
+
     // Notify all listeners
     this.listeners.forEach(callback => {
       try {
@@ -182,6 +246,7 @@ export class DashboardSyncService {
    * Cleanup resources
    */
   destroy(): void {
+    this.stopPolling();
     if (this.channel) {
       this.channel.close();
       this.channel = null;

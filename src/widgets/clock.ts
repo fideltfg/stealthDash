@@ -1,6 +1,7 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { TIMEZONES } from './timezones';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 
 export class ClockWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -55,25 +56,17 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
     // Prevent propagation for form inputs
     [tzSelect, format24Input, showTzInput].forEach(input => {
-      input.addEventListener('pointerdown', (e) => e.stopPropagation());
-      input.addEventListener('keydown', (e) => e.stopPropagation());
-      input.addEventListener('keyup', (e) => e.stopPropagation());
+      stopWidgetDragPropagation(input);
     });
 
     saveBtn.onclick = () => {
       const timezone = tzSelect.value;
       if (timezone) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: {
-              timezone,
-              format24h: format24Input.checked,
-              showTimezone: showTzInput.checked
-            }
-          }
+        dispatchWidgetUpdate(widget.id, {
+          timezone,
+          format24h: format24Input.checked,
+          showTimezone: showTzInput.checked
         });
-        document.dispatchEvent(event);
         close();
       }
     };
@@ -180,25 +173,17 @@ export class ClockWidgetRenderer implements WidgetRenderer {
       if (timezoneSelect.value) {
         const is24h = format24h.dataset.selected === 'true';
         const showTz = showTzCheckbox.checked;
-        const event = new CustomEvent('widget-update', {
-          detail: { 
-            id: widget.id, 
-            content: { 
-              timezone: timezoneSelect.value, 
-              format24h: is24h, 
-              showTimezone: showTz 
-            } 
-          }
+        dispatchWidgetUpdate(widget.id, {
+          timezone: timezoneSelect.value,
+          format24h: is24h,
+          showTimezone: showTz
         });
-        document.dispatchEvent(event);
       }
     });
     
     // Prevent event propagation for interactive elements
     [timezoneSelect, button].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      el.addEventListener('keydown', (e) => e.stopPropagation());
-      el.addEventListener('keyup', (e) => e.stopPropagation());
+      stopWidgetDragPropagation(el);
     });
     
     div.appendChild(icon);

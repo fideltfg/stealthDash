@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 
 export class EmbedWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -42,13 +43,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     saveBtn.onclick = () => {
       const url = urlInput.value.trim();
       if (url) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: { url, sandbox: [] }
-          }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { url, sandbox: [] });
         close();
       }
     };
@@ -118,10 +113,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     const loadUrl = () => {
       const url = urlInput.value.trim();
       if (isValidUrl(url)) {
-        const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content: { url: url, sandbox: [] } }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { url, sandbox: [] });
       }
     };
     
@@ -133,10 +125,8 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
       }
     });
     
-    urlInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    urlInput.addEventListener('keydown', (e) => e.stopPropagation());
-    urlInput.addEventListener('keyup', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(urlInput);
+    stopWidgetDragPropagation(button);
     
     inputContainer.appendChild(icon);
     inputContainer.appendChild(label);

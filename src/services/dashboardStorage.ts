@@ -28,7 +28,7 @@ class DashboardStorageService {
           if (serverData.dashboards) {
             for (const dashboard of serverData.dashboards) {
               if (dashboard.updatedAt) {
-                const version = Math.floor(dashboard.updatedAt / 1000); // Convert to seconds
+                const version = dashboard.updatedAt / 1000; // Convert ms to seconds (keep precision)
                 this.dashboardVersions.set(dashboard.id, version);
                 dashboardSyncService.updateDashboardVersion(dashboard.id, version);
               }
@@ -148,11 +148,12 @@ class DashboardStorageService {
       const result = await authService.saveDashboard(state, undefined);
       
       if (result.success) {
-        // Update versions for all dashboards
-        for (const dashboard of state.dashboards) {
-          const newVersion = Math.floor(Date.now() / 1000);
-          this.dashboardVersions.set(dashboard.id, newVersion);
-          dashboardSyncService.updateDashboardVersion(dashboard.id, newVersion);
+        // Update versions using server-returned timestamps (accurate, no clock drift)
+        if (result.dashboardVersions) {
+          for (const [dashboardId, version] of Object.entries(result.dashboardVersions)) {
+            this.dashboardVersions.set(dashboardId, version);
+            dashboardSyncService.updateDashboardVersion(dashboardId, version);
+          }
         }
         
         console.log('📤 Saved dashboards successfully');

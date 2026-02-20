@@ -1,6 +1,6 @@
 import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState, Theme } from './types/types';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
-import { getDefaultState, getAllDashboards, createDashboard, deleteDashboard, renameDashboard, switchDashboard, getActiveDashboardId, generateUUID } from './components/storage';
+import { getDefaultState, generateUUID } from './components/storage';
 import { createHistoryManager, shouldCoalesceAction } from './components/history';
 import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidgetZIndex, snapToGrid, constrainSize } from './types/widget';
 import { loadWidgetModule, loadWidgetModules } from './types/widget-loader';
@@ -1580,31 +1580,6 @@ class Dashboard {
     this.save();
   }
 
-  private duplicateWidget(widgetId: string): void {
-    const widget = this.state.widgets.find(w => w.id === widgetId);
-    if (!widget) return;
-
-    const newWidget: Widget = {
-      ...JSON.parse(JSON.stringify(widget)),
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-      position: {
-        x: widget.position.x + 20,
-        y: widget.position.y + 20
-      },
-      z: this.state.widgets.length,
-      meta: {
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }
-    };
-
-    this.state.widgets.push(newWidget);
-    this.renderWidget(newWidget);
-    this.selectWidget(newWidget.id);
-    this.saveHistory();
-    this.save();
-  }
-
   private deleteWidget(widgetId: string): void {
     const index = this.state.widgets.findIndex(w => w.id === widgetId);
     if (index === -1) return;
@@ -2545,86 +2520,36 @@ class Dashboard {
   }
 
   /**
-   * Save without broadcasting to other tabs.
-   * Use for cosmetic/local-only changes (theme, background, zoom, etc.)
+   * Core persist logic: updates cached multiState and saves to server.
+   * @param immediate  pass true for instant save, false for debounced
+   * @param notifyTabs pass true to broadcast the change to other tabs
    */
-  private saveQuiet(): void {
+  private persistState(immediate = true, notifyTabs = false): void {
     if (this.isOutOfSync || !this.multiState) return;
-
-    const activeDashboard = this.multiState.dashboards.find(
-      (d: any) => d.id === this.multiState!.activeDashboardId
-    );
-    if (activeDashboard) {
-      activeDashboard.state = this.state;
-      activeDashboard.updatedAt = Date.now();
-
-      if (authService.isAuthenticated()) {
-        dashboardStorage.saveDashboards(this.multiState, true).catch((err: any) => {
-          console.error('Failed to save dashboard to server:', err);
-        });
-      }
+    const ad = this.multiState.dashboards.find((d: any) => d.id === this.multiState!.activeDashboardId);
+    if (!ad) return;
+    ad.state = this.state;
+    ad.updatedAt = Date.now();
+    if (authService.isAuthenticated()) {
+      const modifiedId = notifyTabs ? this.multiState.activeDashboardId : undefined;
+      dashboardStorage.saveDashboards(this.multiState, immediate, modifiedId).catch((err: any) =>
+        console.error('Failed to save dashboard to server:', err)
+      );
     }
   }
 
-  private save(): void {
-    // Check if dashboard is out of sync
-    if (this.isOutOfSync) {
-      console.warn('⚠️  Cannot save - dashboard is out of sync. Please reload.');
-      return;
-    }
+  /** Save without broadcasting to other tabs. */
+  private saveQuiet(): void { this.persistState(true, false); }
 
-    // Update current dashboard in cached multi-state
-    if (!this.multiState) {
-      console.warn('⚠️  Cannot save - multiState not loaded');
-      return;
-    }
-
-    const activeDashboard = this.multiState.dashboards.find(
-      (d: any) => d.id === this.multiState!.activeDashboardId
-    );
-    if (activeDashboard) {
-      activeDashboard.state = this.state;
-      activeDashboard.updatedAt = Date.now();
-
-      console.log('💾 Saving dashboard state - widgets:', this.state.widgets.map((w: any) => ({
-        id: w.id,
-        type: w.type,
-        groups: w.content?.groups?.length || 0,
-        entities: w.content?.entities?.length || 0
-      })));
-
-      // Save to server if authenticated (immediate save for widget updates)
-      // Pass the active dashboard ID so other tabs viewing it get notified
-      if (authService.isAuthenticated()) {
-        const modifiedId = this.multiState.activeDashboardId;
-        dashboardStorage.saveDashboards(this.multiState, true, modifiedId).catch((err: any) => {
-          console.error('Failed to save dashboard to server:', err);
-        });
-      }
-    }
-  }
+  private save(): void { this.persistState(true, true); }
 
   private undo(): void {
     if (this.isOutOfSync) return;
     const previous = this.history.undo();
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
-      this.render(); // No await needed - fire and forget
-
-      // Update cached multi-state
-      if (this.multiState) {
-        const activeDashboard = this.multiState.dashboards.find(
-          (d: any) => d.id === this.multiState!.activeDashboardId
-        );
-        if (activeDashboard) {
-          activeDashboard.state = this.state;
-          activeDashboard.updatedAt = Date.now();
-
-          if (authService.isAuthenticated()) {
-            dashboardStorage.saveDashboards(this.multiState, false, this.multiState.activeDashboardId);
-          }
-        }
-      }
+      this.render();
+      this.persistState(false, true);
     }
   }
 
@@ -2633,22 +2558,8 @@ class Dashboard {
     const next = this.history.redo();
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
-      this.render(); // No await needed - fire and forget
-
-      // Update cached multi-state
-      if (this.multiState) {
-        const activeDashboard = this.multiState.dashboards.find(
-          (d: any) => d.id === this.multiState!.activeDashboardId
-        );
-        if (activeDashboard) {
-          activeDashboard.state = this.state;
-          activeDashboard.updatedAt = Date.now();
-
-          if (authService.isAuthenticated()) {
-            dashboardStorage.saveDashboards(this.multiState, false, this.multiState.activeDashboardId);
-          }
-        }
-      }
+      this.render();
+      this.persistState(false, true);
     }
   }
 

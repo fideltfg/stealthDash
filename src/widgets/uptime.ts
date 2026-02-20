@@ -1,5 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
 
 interface PingResult {
   timestamp: number;
@@ -8,9 +11,8 @@ interface PingResult {
 }
 
 export class UptimeWidgetRenderer implements WidgetRenderer {
-  private pingIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
   private pingHistory: Map<string, PingResult[]> = new Map();
-  private readonly PING_SERVER_URL = window.location.protocol + '//' + window.location.hostname + ':3001';
 
   configure(widget: Widget): void {
     const content = widget.content as { target?: string; interval?: number; timeout?: number };
@@ -62,17 +64,11 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     saveBtn.onclick = () => {
       const target = targetInput.value.trim();
       if (target) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: {
-              target,
-              interval: parseInt(intervalInput.value) || 30,
-              timeout: parseInt(timeoutInput.value) || 5000
-            }
-          }
+        dispatchWidgetUpdate(widget.id, {
+          target,
+          interval: parseInt(intervalInput.value) || 30,
+          timeout: parseInt(timeoutInput.value) || 5000
         });
-        document.dispatchEvent(event);
         close();
       }
     };
@@ -91,23 +87,14 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
       // Start pinging
       const interval = (content.interval || 30) * 1000; // Default 30 seconds
-      this.clearPingInterval(widget.id);
-
-      // Do initial ping
-      this.performPing(widget, div);
-
-      // Set up interval
-      const intervalId = window.setInterval(() => {
-        this.performPing(widget, div);
-      }, interval);
-      this.pingIntervals.set(widget.id, intervalId);
+      this.poller.start(widget.id, () => this.performPing(widget, div), interval);
 
       // Clean up interval when widget is removed from DOM
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           mutation.removedNodes.forEach((node) => {
             if (node === div || (node as HTMLElement).contains?.(div)) {
-              this.clearPingInterval(widget.id);
+              this.poller.stop(widget.id);
               observer.disconnect();
             }
           });
@@ -120,14 +107,6 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     }
 
     container.appendChild(div);
-  }
-
-  private clearPingInterval(widgetId: string): void {
-    const intervalId = this.pingIntervals.get(widgetId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.pingIntervals.delete(widgetId);
-    }
   }
 
   private initializePingHistory(widgetId: string): void {
@@ -191,13 +170,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       const timeout = parseInt(timeoutInput.value) || 5000;
 
       if (target) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: { target, interval, timeout }
-          }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { target, interval, timeout });
       }
     };
 
@@ -209,10 +182,10 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       }
     });
 
-    targetInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    intervalInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    timeoutInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(targetInput);
+    stopWidgetDragPropagation(intervalInput);
+    stopWidgetDragPropagation(timeoutInput);
+    stopWidgetDragPropagation(button);
 
     inputContainer.appendChild(icon);
     inputContainer.appendChild(label);
@@ -383,7 +356,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       const timeoutSeconds = Math.floor(timeout / 1000);
 
       const response = await fetch(
-        `${this.PING_SERVER_URL}/ping/${encodeURIComponent(content.target)}?timeout=${timeoutSeconds}`,
+        `${getPingServerUrl()}/ping/${encodeURIComponent(content.target)}?timeout=${timeoutSeconds}`,
         {
           signal: AbortSignal.timeout(timeout + 1000) // Add 1 second buffer
         }
@@ -405,7 +378,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
       // Log for debugging
       if (error instanceof Error && error.message.includes('Failed to fetch')) {
-        console.error('Ping server not reachable at', this.PING_SERVER_URL);
+        console.error('Ping server not reachable at', getPingServerUrl());
         console.error('Make sure ping server is running: docker compose up -d ping-server');
       } else {
         console.warn('Ping failed:', content.target, error);

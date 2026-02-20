@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 
 export class TextWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
@@ -12,17 +13,10 @@ export class TextWidgetRenderer implements WidgetRenderer {
     textarea.value = content.markdown || '';
     
     textarea.addEventListener('input', () => {
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: { markdown: textarea.value } }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, { markdown: textarea.value });
     });
     
-    textarea.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-    });
-    textarea.addEventListener('keydown', (e) => e.stopPropagation());
-    textarea.addEventListener('keyup', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(textarea);
     
     container.appendChild(textarea);
   }

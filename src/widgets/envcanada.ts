@@ -1,5 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { WidgetPoller } from '../utils/polling';
+import { renderConfigPrompt, renderLoading, renderError } from '../utils/widgetRendering';
 
 export interface EnvCanadaContent {
   latitude: string;
@@ -16,7 +19,7 @@ export interface EnvCanadaContent {
  * Feed format: https://weather.gc.ca/rss/weather/{lat}_{lon}_{lang}.xml
  */
 class EnvCanadaWidgetRenderer implements WidgetRenderer {
-  private refreshIntervals = new Map<string, number>();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
@@ -30,123 +33,21 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     
     container.className = 'widget-content';
 
+    // Stop any existing polling
+    this.poller.stop(widget.id);
+
     if (!content.latitude || !content.longitude) {
-      this.renderConfigScreen(container, widget);
+      const btn = renderConfigPrompt(container, '🍁', 'Environment Canada Weather', 'Enter coordinates to display weather forecasts');
+      btn.addEventListener('click', () => this.configure(widget));
       return;
     }
 
-    this.renderData(container, widget);
-    this.setupAutoRefresh(widget);
-  }
-
-  /**
-   * Renders the initial configuration screen for setting up coordinates
-   */
-  private renderConfigScreen(container: HTMLElement, widget: Widget): void {
-    const content = widget.content as unknown as EnvCanadaContent;
-    
-    const configDiv = document.createElement('div');
-    configDiv.className = 'envcanada-config';
-
-    configDiv.innerHTML = `
-      <div class="widget-config-icon">🍁</div>
-      <div class="envcanada-config-title">
-        Environment Canada Weather
-      </div>
-      <div class="envcanada-config-description">
-        Enter latitude and longitude coordinates to display weather forecasts
-      </div>
-      
-      <div class="envcanada-config-form">
-        <div class="envcanada-config-field">
-          <label>
-            Latitude
-          </label>
-          <input
-            type="text"
-            id="latitude"
-            placeholder="51.179"
-            value="${content.latitude || ''}"
-            class="envcanada-config-input"
-          >
-        </div>
-        
-        <div class="envcanada-config-field">
-          <label>
-            Longitude
-          </label>
-          <input
-            type="text"
-            id="longitude"
-            placeholder="-115.569"
-            value="${content.longitude || ''}"
-            class="envcanada-config-input"
-          >
-        </div>
-        
-        <div class="envcanada-config-field">
-          <label>
-            Language
-          </label>
-          <select
-            id="language"
-            class="envcanada-config-select"
-          >
-            <option value="e" ${content.language === 'e' ? 'selected' : ''}>English</option>
-            <option value="f" ${content.language === 'f' ? 'selected' : ''}>Français</option>
-          </select>
-        </div>
-      </div>
-      
-      <button
-        id="load-forecast"
-        class="envcanada-config-button"
-      >
-        Load Forecast
-      </button>
-      
-      <div class="envcanada-config-hint">
-        Example: Banff, AB = 51.179, -115.569<br>
-        Find coordinates at <a href="https://weather.gc.ca" target="_blank">weather.gc.ca</a>
-      </div>
-    `;
-
-    const latInput = configDiv.querySelector('#latitude') as HTMLInputElement;
-    const lonInput = configDiv.querySelector('#longitude') as HTMLInputElement;
-    const langSelect = configDiv.querySelector('#language') as HTMLSelectElement;
-    const button = configDiv.querySelector('#load-forecast') as HTMLButtonElement;
-
-    const loadForecast = () => {
-      const lat = latInput.value.trim();
-      const lon = lonInput.value.trim();
-      
-      if (lat && lon) {
-        content.latitude = lat;
-        content.longitude = lon;
-        content.language = langSelect.value as 'e' | 'f';
-        content.refreshInterval = content.refreshInterval || 1800; // 30 minutes default
-        
-        const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content }
-        });
-        document.dispatchEvent(event);
-      }
-    };
-
-    button.addEventListener('click', loadForecast);
-    latInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') lonInput.focus();
-    });
-    lonInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadForecast();
-    });
-
-    latInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    lonInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    langSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
-
-    container.appendChild(configDiv);
+    // Start polling - calls renderData immediately, then on interval
+    if (content.refreshInterval > 0) {
+      this.poller.start(widget.id, () => this.renderData(container, widget), content.refreshInterval * 1000);
+    } else {
+      this.renderData(container, widget);
+    }
   }
 
   /**
@@ -175,11 +76,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     contentArea.className = 'envcanada-content';
 
     // Loading indicator
-    contentArea.innerHTML = `
-      <div class="widget-loading padded centered">
-        <div>Loading forecast...</div>
-      </div>
-    `;
+    renderLoading(contentArea, 'Loading forecast...');
 
     container.appendChild(contentArea);
 
@@ -194,21 +91,12 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
       console.error('Weather widget error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      contentArea.innerHTML = `
-        <div class="widget-error simple">
-          <div class="widget-error-icon">⚠️</div>
-          <div class="widget-error-title">Failed to load forecast</div>
-          <div class="widget-error-detail">${errorMessage}</div>
-          <div class="widget-error-hint">
-            Check coordinates and try again
-          </div>
-          <button id="retry-btn" class="envcanada-retry-button">
-            Retry
-          </button>
-        </div>
-      `;
+      renderError(contentArea, 'Failed to load forecast', errorMessage, 'Check coordinates and try again');
       
-      const retryBtn = contentArea.querySelector('#retry-btn') as HTMLButtonElement;
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'envcanada-retry-button';
+      retryBtn.textContent = 'Retry';
+      contentArea.querySelector('.widget-error')?.appendChild(retryBtn);
       retryBtn.addEventListener('click', () => {
         this.renderData(container, widget);
       });
@@ -427,29 +315,6 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
   }
 
   /**
-   * Sets up automatic refresh interval
-   */
-  private setupAutoRefresh(widget: Widget): void {
-    const content = widget.content as unknown as EnvCanadaContent;
-    
-    const existingInterval = this.refreshIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
-
-    if (content.refreshInterval > 0) {
-      const intervalId = window.setInterval(() => {
-        const container = document.querySelector(`#widget-${widget.id} .widget-content`) as HTMLElement;
-        if (container) {
-          this.renderData(container, widget);
-        }
-      }, content.refreshInterval * 1000);
-
-      this.refreshIntervals.set(widget.id, intervalId);
-    }
-  }
-
-  /**
    * Shows settings modal for changing coordinates and preferences
    */
   private showSettings(container: HTMLElement, widget: Widget): void {
@@ -537,16 +402,15 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const langSelect = modal.querySelector('#settings-lang') as HTMLSelectElement;
     const refreshInput = modal.querySelector('#settings-refresh') as HTMLInputElement;
 
+    stopAllDragPropagation(modal);
+
     saveBtn.addEventListener('click', () => {
       content.latitude = latInput.value.trim();
       content.longitude = lonInput.value.trim();
       content.language = langSelect.value as 'e' | 'f';
       content.refreshInterval = parseInt(refreshInput.value) || 1800;
 
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, content as Record<string, any>);
 
       overlay.remove();
       this.renderData(container, widget);

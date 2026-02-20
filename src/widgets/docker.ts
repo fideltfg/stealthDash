@@ -1,8 +1,10 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { preventWidgetKeyboardDrag } from '../types/widget';
-import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { renderConfigPrompt } from '../utils/widgetRendering';
+import { populateCredentialSelect } from '../utils/credentials';
 
 export interface DockerContent {
   host?: string;
@@ -40,7 +42,7 @@ interface DockerContainer {
 }
 
 class DockerWidgetRenderer implements WidgetRenderer {
-  private refreshIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
@@ -72,41 +74,21 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     container.className = 'widget-content';
 
-    // Clear any existing refresh interval
-    const existingInterval = this.refreshIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
+    // Stop any existing polling
+    this.poller.stop(widget.id);
 
     if (!content.host) {
       this.showEmptyState(container, widget);
       return;
     }
 
-    this.renderContainerList(container, widget);
-
-    // Start auto-refresh
-    const interval = window.setInterval(() => {
-      this.renderContainerList(container, widget);
-    }, (content.refreshInterval || 30) * 1000);
-    this.refreshIntervals.set(widget.id, interval);
+    // Start polling (fires immediately, then every refreshInterval)
+    this.poller.start(widget.id, () => this.renderContainerList(container, widget), (content.refreshInterval || 30) * 1000);
   }
 
   private showEmptyState(container: HTMLElement, widget: Widget): void {
-    container.innerHTML = `
-      <div class="widget-empty-state centered">
-        <div class="widget-config-icon">🐋</div>
-        <div class="widget-empty-state-title">Docker Containers</div>
-        <div class="widget-empty-state-text">Configure Docker host to monitor containers</div>
-        <button id="configure-docker-btn" class="widget-button-primary">Configure</button>
-      </div>
-    `;
-
-    const configBtn = container.querySelector('#configure-docker-btn') as HTMLButtonElement;
-    configBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
-    configBtn.addEventListener('click', () => {
-      this.showConfigDialog(widget);
-    });
+    const btn = renderConfigPrompt(container, '🐋', 'Docker Containers', 'Configure Docker host to monitor containers');
+    btn.addEventListener('click', () => this.showConfigDialog(widget));
   }
 
   private async showConfigDialog(widget: Widget): Promise<void> {
@@ -117,14 +99,6 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
     const dialog = document.createElement('div');
     dialog.className = 'widget-dialog large';
-
-    // Load credentials
-    const credentials = await credentialsService.getAll();
-    const dockerCredentials = credentials.filter(c => c.service_type === 'docker');
-
-    const credentialOptions = dockerCredentials
-      .map(c => `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''}>${c.name}</option>`)
-      .join('');
 
     dialog.innerHTML = `
       <h3 class="widget-dialog-title large docker-title">
@@ -165,7 +139,6 @@ class DockerWidgetRenderer implements WidgetRenderer {
           class="widget-dialog-input extended"
         >
           <option value="">None (local socket or unsecured TCP)</option>
-          ${credentialOptions}
         </select>
         <small class="widget-field-hint">
           Only required for HTTPS connections. Create Docker credentials from the <i class="fas fa-user"></i> user menu.
@@ -218,13 +191,10 @@ class DockerWidgetRenderer implements WidgetRenderer {
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
 
+    await populateCredentialSelect(credentialSelect, 'docker', content.credentialId ?? undefined);
+
     // Prevent widget dragging
-    [hostInput, credentialSelect, refreshInput, showAllInput, saveBtn, cancelBtn].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
-        preventWidgetKeyboardDrag(el);
-      }
-    });
+    stopAllDragPropagation(dialog);
 
     cancelBtn.addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => {
@@ -244,13 +214,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
 
       overlay.remove();
 
-      const event = new CustomEvent('widget-update', {
-        detail: {
-          id: widget.id,
-          content: { host, credentialId, refreshInterval, showAll }
-        }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, { host, credentialId, refreshInterval, showAll });
     });
   }
 
@@ -468,14 +432,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
       throw new Error('Docker host is required');
     }
 
-    const pingServerUrl = this.getPingServerUrl();
+    const pingServerUrl = getPingServerUrl();
 
     const response = await fetch(`${pingServerUrl}/api/docker/containers`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authService.getToken() || ''}`
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         host: content.host,
         credentialId: content.credentialId,
@@ -499,14 +460,11 @@ class DockerWidgetRenderer implements WidgetRenderer {
     widget: Widget
   ): Promise<void> {
     try {
-      const pingServerUrl = this.getPingServerUrl();
+      const pingServerUrl = getPingServerUrl();
 
       const response = await fetch(`${pingServerUrl}/api/docker/containers/${action}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authService.getToken() || ''}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           host: content.host,
           credentialId: content.credentialId,
@@ -596,13 +554,10 @@ class DockerWidgetRenderer implements WidgetRenderer {
         const lines = linesSelect.value;
         logsContainer.innerHTML = '<div class="docker-logs-loading"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
 
-        const pingServerUrl = this.getPingServerUrl();
+        const pingServerUrl = getPingServerUrl();
         const response = await fetch(`${pingServerUrl}/api/docker/containers/logs`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             host: content.host,
             credentialId: content.credentialId,
@@ -677,12 +632,6 @@ class DockerWidgetRenderer implements WidgetRenderer {
     fetchLogs();
   }
 
-  private getPingServerUrl(): string {
-    if (typeof window !== 'undefined') {
-      return window.location.origin.replace(':3000', ':3001');
-    }
-    return 'http://localhost:3001';
-  }
 }
 
 export const widget = {

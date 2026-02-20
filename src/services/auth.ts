@@ -1,3 +1,5 @@
+import { getPingServerUrl } from '../utils/api';
+
 export interface User {
   id: number;
   username: string;
@@ -28,34 +30,27 @@ export interface AdminStats {
   totalAdmins: number;
 }
 
+type ApiResult<T = any> = { success: true; data: T } | { success: false; error: string };
+
 class AuthService {
   private token: string | null = null;
   private user: User | null = null;
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = this.getServerUrl();
+    this.baseUrl = getPingServerUrl();
     this.loadFromStorage();
   }
 
-  private getServerUrl(): string {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    return `${protocol}//${hostname}:3001`;
-  }
+  // ── Helpers ──────────────────────────────────────────────────────────
 
   private loadFromStorage(): void {
     const token = localStorage.getItem('auth_token');
     const userJson = localStorage.getItem('auth_user');
-    
     if (token && userJson) {
       this.token = token;
-      try {
-        this.user = JSON.parse(userJson);
-      } catch (e) {
-        console.warn('⚠️  Failed to parse cached user data, clearing storage');
-        this.clearStorage();
-      }
+      try { this.user = JSON.parse(userJson); }
+      catch { this.clearStorage(); }
     }
   }
 
@@ -73,495 +68,219 @@ class AuthService {
     this.user = null;
   }
 
-  async register(username: string, email: string, password: string): Promise<AuthResponse> {
+  /** Generic API call — handles auth headers, JSON, try/catch in one place */
+  private async request<T = any>(
+    path: string,
+    options: { method?: string; body?: any; auth?: boolean } = {}
+  ): Promise<ApiResult<T>> {
+    const { method = 'GET', body, auth = true } = options;
     try {
-      const response = await fetch(`${this.baseUrl}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+      const headers: Record<string, string> = {};
+      if (auth && this.token) headers['Authorization'] = `Bearer ${this.token}`;
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+
+      const res = await fetch(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {})
       });
 
-      const data = await response.json();
+      const data = await res.json();
+      if (res.status === 409) return { success: false, error: '__conflict__' };
 
-      if (data.success && data.token && data.user) {
-        this.token = data.token;
-        this.user = data.user;
-        this.saveToStorage();
-        return { success: true, user: data.user, token: data.token };
-      }
-
-      return { success: false, error: data.error || 'Registration failed' };
-    } catch (error) {
-      console.error('Registration error:', error);
+      return data.success
+        ? { success: true, data }
+        : { success: false, error: data.error || 'Request failed' };
+    } catch (err) {
+      console.error(`API ${method} ${path} error:`, err);
       return { success: false, error: 'Network error' };
     }
   }
 
-  async login(username: string, password: string): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.token && data.user) {
-        this.token = data.token;
-        this.user = data.user;
-        this.saveToStorage();
-        return { success: true, user: data.user, token: data.token };
-      }
-
-      return { success: false, error: data.error || 'Login failed' };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Network error' };
-    }
+  private post<T = any>(path: string, body?: any) {
+    return this.request<T>(path, { method: 'POST', body });
   }
+
+  private del<T = any>(path: string) {
+    return this.request<T>(path, { method: 'DELETE' });
+  }
+
+  /** Generic admin POST action */
+  private async adminAction(path: string, body?: any): Promise<{ success: boolean; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.post(path, body);
+    return r.success ? { success: true } : { success: false, error: r.error };
+  }
+
+  // ── Public accessors ────────────────────────────────────────────────
+
+  isAuthenticated(): boolean { return this.token !== null && this.user !== null; }
+  getUser(): User | null { return this.user; }
+  getToken(): string | null { return this.token; }
+  isAdmin(): boolean { return this.user?.isAdmin === true; }
 
   logout(): void {
     this.clearStorage();
     window.location.reload();
   }
 
+  // ── Auth ─────────────────────────────────────────────────────────────
+
+  async register(username: string, email: string, password: string): Promise<AuthResponse> {
+    const r = await this.request('/auth/register', { method: 'POST', body: { username, email, password }, auth: false });
+    if (r.success && r.data.token && r.data.user) {
+      this.token = r.data.token;
+      this.user = r.data.user;
+      this.saveToStorage();
+      return { success: true, user: r.data.user, token: r.data.token };
+    }
+    return { success: false, error: !r.success ? r.error : 'Registration failed' };
+  }
+
+  async login(username: string, password: string): Promise<AuthResponse> {
+    const r = await this.request('/auth/login', { method: 'POST', body: { username, password }, auth: false });
+    if (r.success && r.data.token && r.data.user) {
+      this.token = r.data.token;
+      this.user = r.data.user;
+      this.saveToStorage();
+      return { success: true, user: r.data.user, token: r.data.token };
+    }
+    return { success: false, error: !r.success ? r.error : 'Login failed' };
+  }
+
   async verify(): Promise<boolean> {
     if (!this.token) return false;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/verify`, {
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success === true;
-    } catch (error) {
-      return false;
-    }
+    const r = await this.request('/auth/verify');
+    return r.success;
   }
 
-  isAuthenticated(): boolean {
-    return this.token !== null && this.user !== null;
-  }
-
-  getUser(): User | null {
-    return this.user;
-  }
-
-  getToken(): string | null {
-    return this.token;
-  }
+  // ── Password recovery ────────────────────────────────────────────────
 
   async requestPasswordRecovery(usernameOrEmail: string): Promise<{ success: boolean; error?: string; message?: string }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/request-recovery`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usernameOrEmail })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        return { 
-          success: true,
-          message: data.message
-        };
-      }
-
-      return { success: false, error: data.error || 'Recovery request failed' };
-    } catch (error) {
-      console.error('Password recovery request error:', error);
-      return { success: false, error: 'Network error' };
-    }
+    const r = await this.post('/auth/request-recovery', { usernameOrEmail });
+    return r.success ? { success: true, message: r.data.message } : { success: false, error: r.error };
   }
 
   async validateRecoveryToken(token: string): Promise<{ valid: boolean; username?: string; error?: string }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/validate-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
-
-      const data = await response.json();
-      
-      if (data.valid) {
-        return { 
-          valid: true,
-          username: data.username
-        };
-      }
-
-      return { valid: false, error: data.error || 'Invalid token' };
-    } catch (error) {
-      console.error('Token validation error:', error);
-      return { valid: false, error: 'Network error' };
-    }
+    const r = await this.request('/auth/validate-token', { method: 'POST', body: { token }, auth: false });
+    return r.success && r.data.valid
+      ? { valid: true, username: r.data.username }
+      : { valid: false, error: !r.success ? r.error : 'Invalid token' };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        return { success: true };
-      }
-
-      return { success: false, error: data.error || 'Password reset failed' };
-    } catch (error) {
-      console.error('Password reset error:', error);
-      return { success: false, error: 'Network error' };
-    }
+    const r = await this.request('/auth/reset-password', { method: 'POST', body: { token, newPassword }, auth: false });
+    return r.success ? { success: true } : { success: false, error: r.error };
   }
 
-  async saveDashboard(dashboardData: any, clientVersion?: number): Promise<{ success: boolean; conflict?: boolean; version?: number }> {
+  // ── Dashboard CRUD ──────────────────────────────────────────────────
+
+  async saveDashboard(dashboardData: any, clientVersion?: number): Promise<{ success: boolean; conflict?: boolean; version?: number; dashboardVersions?: Record<string, number> }> {
     if (!this.token) return { success: false };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/save`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ dashboardData, clientVersion })
-      });
-
-      const data = await response.json();
-      
-      if (response.status === 409) {
-        // Version conflict
-        return { success: false, conflict: true };
-      }
-      
-      if (data.success) {
-        return { success: true, version: data.version };
-      }
-      console.error('❌ Failed to save dashboard:', data.error);
-      return { success: false };
-    } catch (error) {
-      console.error('❌ Save dashboard error:', error);
-      return { success: false };
-    }
+    const r = await this.post('/dashboard/save', { dashboardData, clientVersion });
+    if (!r.success && r.error === '__conflict__') return { success: false, conflict: true };
+    return r.success ? { success: true, version: r.data.version, dashboardVersions: r.data.dashboardVersions } : { success: false };
   }
 
   async loadDashboard(): Promise<any | null> {
     if (!this.token) return null;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/load`, {
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      if (data.success && data.data) {
-       // console.log('✅ Dashboard loaded from server:', data.data.dashboards.length, 'dashboards');
-        return data.data; // Includes version field
-      }
-      return null;
-    } catch (error) {
-      console.error('❌ Load dashboard error:', error);
-      return null;
-    }
+    const r = await this.request('/dashboard/load');
+    return r.success && r.data.data ? r.data.data : null;
   }
 
   async saveSingleDashboard(dashboardId: string, name: string, state: any, isActive: boolean): Promise<boolean> {
     if (!this.token) return false;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/save-single`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ dashboardId, name, state, isActive })
-      });
-
-      const data = await response.json();
-      return data.success === true;
-    } catch (error) {
-      console.error('❌ Save single dashboard error:', error);
-      return false;
-    }
+    const r = await this.post('/dashboard/save-single', { dashboardId, name, state, isActive });
+    return r.success;
   }
 
   async deleteDashboard(dashboardId: string): Promise<boolean> {
     if (!this.token) return false;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/${dashboardId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${this.token}`
-        }
-      });
-
-      const data = await response.json();
-      return data.success === true;
-    } catch (error) {
-      console.error('❌ Delete dashboard error:', error);
-      return false;
-    }
-  }
-
-  // User profile management
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/user/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ currentPassword, newPassword })
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Change password error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async updateProfile(email: string): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/user/update-profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-      
-      if (data.success && this.user) {
-        this.user.email = email;
-        this.saveToStorage();
-        return { success: true };
-      }
-      
-      return { success: false, error: data.error };
-    } catch (error) {
-      console.error('Update profile error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async getProfile(): Promise<User | null> {
-    if (!this.token) return null;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/user/profile`, {
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      
-      if (data.success && data.user) {
-        this.user = {
-          id: data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          createdAt: data.user.created_at,
-          isAdmin: data.user.is_admin
-        };
-        this.saveToStorage();
-        return this.user;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Get profile error:', error);
-      return null;
-    }
-  }
-
-  // Admin functions
-  isAdmin(): boolean {
-    return this.user?.isAdmin === true;
-  }
-
-  async getUsers(): Promise<AdminUser[]> {
-    if (!this.token) return [];
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users`, {
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success ? data.users : [];
-    } catch (error) {
-      console.error('Get users error:', error);
-      return [];
-    }
-  }
-
-  async makeAdmin(userId: number): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId}/make-admin`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Make admin error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async removeAdmin(userId: number): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId}/remove-admin`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Remove admin error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async resetUserPassword(userId: number, newPassword: string): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId}/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ newPassword })
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Reset password error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async deleteUser(userId: number): Promise<{ success: boolean; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Delete user error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async createUser(username: string, email: string, password: string, isAdmin: boolean = false): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
-    if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ username, email, password, isAdmin })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        return { success: true, user: data.user };
-      }
-      
-      return { success: false, error: data.error || 'Failed to create user' };
-    } catch (error) {
-      console.error('Create user error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  }
-
-  async getAdminStats(): Promise<AdminStats | null> {
-    if (!this.token) return null;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/admin/stats`, {
-        headers: { 'Authorization': `Bearer ${this.token}` }
-      });
-
-      const data = await response.json();
-      return data.success ? data.stats : null;
-    } catch (error) {
-      console.error('Get stats error:', error);
-      return null;
-    }
+    return (await this.del(`/dashboard/${dashboardId}`)).success;
   }
 
   async toggleDashboardPublic(dashboardId: string, isPublic: boolean): Promise<{ success: boolean; isPublic?: boolean; error?: string }> {
     if (!this.token) return { success: false, error: 'Not authenticated' };
-
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/toggle-public/${dashboardId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.token}`
-        },
-        body: JSON.stringify({ isPublic })
-      });
-
-      const data = await response.json();
-      return data.success ? { success: true, isPublic: data.isPublic } : { success: false, error: data.error };
-    } catch (error) {
-      console.error('Toggle public error:', error);
-      return { success: false, error: 'Network error' };
-    }
+    const r = await this.post(`/dashboard/toggle-public/${dashboardId}`, { isPublic });
+    return r.success ? { success: true, isPublic: r.data.isPublic } : { success: false, error: r.error };
   }
 
   async getPublicDashboard(dashboardId: string): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/dashboard/public/${dashboardId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        return data.dashboard;
-      }
-      
-      throw new Error(data.error || 'Failed to load public dashboard');
-    } catch (error) {
-      console.error('Get public dashboard error:', error);
-      throw error;
+    const r = await this.request(`/dashboard/public/${dashboardId}`, { auth: false });
+    if (r.success) return r.data.dashboard;
+    throw new Error(r.error);
+  }
+
+  // ── User profile ────────────────────────────────────────────────────
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.post('/user/change-password', { currentPassword, newPassword });
+    return r.success ? { success: true } : { success: false, error: r.error };
+  }
+
+  async updateProfile(email: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.post('/user/update-profile', { email });
+    if (r.success && this.user) {
+      this.user.email = email;
+      this.saveToStorage();
+      return { success: true };
     }
+    return { success: false, error: !r.success ? r.error : 'Update failed' };
+  }
+
+  async getProfile(): Promise<User | null> {
+    if (!this.token) return null;
+    const r = await this.request('/user/profile');
+    if (r.success && r.data.user) {
+      this.user = {
+        id: r.data.user.id,
+        username: r.data.user.username,
+        email: r.data.user.email,
+        createdAt: r.data.user.created_at,
+        isAdmin: r.data.user.is_admin
+      };
+      this.saveToStorage();
+      return this.user;
+    }
+    return null;
+  }
+
+  // ── Admin ───────────────────────────────────────────────────────────
+
+  async getUsers(): Promise<AdminUser[]> {
+    if (!this.token) return [];
+    const r = await this.request('/admin/users');
+    return r.success ? r.data.users : [];
+  }
+
+  async makeAdmin(userId: number) { return this.adminAction(`/admin/users/${userId}/make-admin`); }
+  async removeAdmin(userId: number) { return this.adminAction(`/admin/users/${userId}/remove-admin`); }
+  async resetUserPassword(userId: number, newPassword: string) { return this.adminAction(`/admin/users/${userId}/reset-password`, { newPassword }); }
+
+  async deleteUser(userId: number): Promise<{ success: boolean; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.del(`/admin/users/${userId}`);
+    return r.success ? { success: true } : { success: false, error: r.error };
+  }
+
+  async createUser(username: string, email: string, password: string, isAdmin = false): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.post('/admin/users', { username, email, password, isAdmin });
+    return r.success ? { success: true, user: r.data.user } : { success: false, error: r.error };
+  }
+
+  async getAdminStats(): Promise<AdminStats | null> {
+    if (!this.token) return null;
+    const r = await this.request('/admin/stats');
+    return r.success ? r.data.stats : null;
+  }
+
+  async checkDashboardVersions(): Promise<Record<string, number> | null> {
+    if (!this.token) return null;
+    const r = await this.request('/dashboard/versions');
+    return r.success ? r.data.versions : null;
   }
 }
 

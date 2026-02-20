@@ -1,8 +1,9 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { preventWidgetKeyboardDrag } from '../types/widget';
-import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { populateCredentialSelect } from '../utils/credentials';
 
 interface HomeAssistantEntity {
   entity_id: string;
@@ -38,8 +39,20 @@ interface HomeAssistantContent {
 }
 
 export class HomeAssistantRenderer implements WidgetRenderer {
-  private intervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
   private entityStates: Map<string, Map<string, HomeAssistantEntity>> = new Map();
+
+  /** Consolidated HA API call through ping-server proxy */
+  private async haFetch(content: HomeAssistantContent, path: string, extra: Record<string, any> = {}): Promise<Response> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (content.credentialId) Object.assign(headers, getAuthHeaders());
+    const body: Record<string, any> = { url: content.url, ...extra };
+    if (content.credentialId) body.credentialId = content.credentialId;
+    else body.token = content.token;
+    return fetch(`${getPingServerUrl()}/home-assistant/${path}`, {
+      method: 'POST', headers, body: JSON.stringify(body)
+    });
+  }
 
   configure(widget: Widget): void {
     this.showSettingsDialog(widget);
@@ -54,7 +67,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       e.stopPropagation();
       this.showManageEntitiesDialog(widget);
     };
-    entitiesBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Add group button
     const groupBtn = document.createElement('button');
@@ -65,7 +77,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       e.stopPropagation();
       this.createNewGroup(widget);
     };
-    groupBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     return [groupBtn, entitiesBtn];
   }
@@ -128,22 +139,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Load credentials
     const credentialSelect = prompt.querySelector('#ha-credential') as HTMLSelectElement;
-    (async () => {
-      try {
-        const credentials = await credentialsService.getAll();
-        credentials.forEach(cred => {
-          const option = document.createElement('option');
-          option.value = cred.id.toString();
-          option.textContent = `🔑 ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
-          credentialSelect.appendChild(option);
-        });
-        if (content.credentialId) {
-          credentialSelect.value = content.credentialId.toString();
-        }
-      } catch (error) {
-        console.error('Failed to load credentials:', error);
-      }
-    })();
+    populateCredentialSelect(credentialSelect, 'home_assistant', content.credentialId);
 
     // Save button handler
     const saveBtn = prompt.querySelector('#save-ha-config') as HTMLButtonElement;
@@ -158,24 +154,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         return;
       }
 
-      // Trigger widget update
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: { ...content, url, credentialId: parseInt(credId) } }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, { ...content, url, credentialId: parseInt(credId) });
     });
 
-    // Stop propagation so widget isn't dragged
-    [urlInput, credentialSelect, saveBtn].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      // Prevent keyboard events from bubbling up to widget drag handlers
-      if (el instanceof HTMLInputElement) {
-        preventWidgetKeyboardDrag(el);
-      } else if (el instanceof HTMLSelectElement) {
-        el.addEventListener('keydown', (e) => e.stopPropagation());
-        el.addEventListener('keyup', (e) => e.stopPropagation());
-      }
-    });
+    stopAllDragPropagation(prompt);
   }
 
   private renderNoEntitiesPrompt(container: HTMLElement, widget: Widget): void {
@@ -197,7 +179,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     addBtn.addEventListener('click', () => {
       this.showAddEntityDialog(widget);
     });
-    addBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   }
 
   private async renderEntities(container: HTMLElement, widget: Widget): Promise<void> {
@@ -554,36 +535,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     if (!content.url || (!content.credentialId && !content.token)) return;
 
     try {
-      // Use ping-server proxy to avoid CORS issues
-      const pingServerUrl = this.getPingServerUrl();
-      
-      let response;
-      if (content.credentialId) {
-        // Use credentialId (new method)
-        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          },
-          body: JSON.stringify({
-            url: content.url,
-            credentialId: content.credentialId
-          })
-        });
-      } else {
-        // Legacy: use token directly
-        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            url: content.url,
-            token: content.token
-          })
-        });
-      }
+      const response = await this.haFetch(content, 'states');
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -629,42 +581,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const domain = entityId.split('.')[0];
       const service = widgetStates.get(entityId)?.state === 'on' ? 'turn_off' : 'turn_on';
 
-      // Use ping-server proxy to avoid CORS issues
-      const pingServerUrl = this.getPingServerUrl();
-      
-      let response;
-      if (content.credentialId) {
-        // Use credentialId (new method)
-        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          },
-          body: JSON.stringify({
-            url: content.url,
-            credentialId: content.credentialId,
-            domain,
-            service,
-            entity_id: entityId
-          })
-        });
-      } else {
-        // Legacy: use token directly
-        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            url: content.url,
-            token: content.token,
-            domain,
-            service,
-            entity_id: entityId
-          })
-        });
-      }
+      const response = await this.haFetch(content, 'service', { domain, service, entity_id: entityId });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -683,40 +600,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       const domain = entityId.split('.')[0];
       const service = turnOn ? 'turn_on' : 'turn_off';
 
-      // Use ping-server proxy to avoid CORS issues
-      const pingServerUrl = this.getPingServerUrl();
-      
-      let response;
-      if (content.credentialId) {
-        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          },
-          body: JSON.stringify({
-            url: content.url,
-            credentialId: content.credentialId,
-            domain,
-            service,
-            entity_id: entityId
-          })
-        });
-      } else {
-        response = await fetch(`${pingServerUrl}/home-assistant/service`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            url: content.url,
-            token: content.token,
-            domain,
-            service,
-            entity_id: entityId
-          })
-        });
-      }
+      const response = await this.haFetch(content, 'service', { domain, service, entity_id: entityId });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -727,44 +611,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     }
   }
 
-  private getPingServerUrl(): string {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    return `${protocol}//${hostname}:3001`;
-  }
-
   private async fetchAllEntities(widget: Widget): Promise<HomeAssistantEntity[]> {
     const content = widget.content as HomeAssistantContent;
     if (!content.url || (!content.credentialId && !content.token)) return [];
 
     try {
-      const pingServerUrl = this.getPingServerUrl();
-      
-      let response;
-      if (content.credentialId) {
-        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          },
-          body: JSON.stringify({
-            url: content.url,
-            credentialId: content.credentialId
-          })
-        });
-      } else {
-        response = await fetch(`${pingServerUrl}/home-assistant/states`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            url: content.url,
-            token: content.token
-          })
-        });
-      }
+      const response = await this.haFetch(content, 'states');
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -913,13 +765,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     });
 
     // Stop propagation for all inputs
-    [searchInput, displayNameInput, cancelBtn, saveBtn].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      // Prevent keyboard events from bubbling up to widget drag handlers
-      if (el instanceof HTMLInputElement) {
-        preventWidgetKeyboardDrag(el);
-      }
-    });
+    stopAllDragPropagation(dialog);
 
     // Cancel button
     cancelBtn.addEventListener('click', () => {
@@ -977,11 +823,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         }
       }
 
-      // Trigger widget update for UI refresh
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: { ...content, entities } }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, { ...content, entities });
     });
 
     // Prevent dialog from being dragged
@@ -1044,13 +886,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const saveBtn = dialog.querySelector('#save-edit-entity') as HTMLButtonElement;
 
     // Stop propagation for all inputs
-    [entityIdInput, displayNameInput, entityTypeSelect, cancelBtn, saveBtn].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      // Prevent keyboard events from bubbling up to widget drag handlers
-      if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
-        preventWidgetKeyboardDrag(el);
-      }
-    });
+    stopAllDragPropagation(dialog);
 
     // Cancel button
     cancelBtn.addEventListener('click', () => {
@@ -1101,10 +937,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
 
       // Trigger widget update
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: { ...content, entities } }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, { ...content, entities });
 
       // Return to manage entities dialog to show updated list
       this.showManageEntitiesDialog(widget);
@@ -1120,14 +953,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     const dialog = document.createElement('div');
     dialog.className = 'widget-dialog extended large';
-
-    // Load credentials for the selector
-    const credentials = await credentialsService.getAll();
-    const homeAssistantCredentials = credentials.filter(c => c.service_type === 'home_assistant');
-
-    const credentialOptions = homeAssistantCredentials
-      .map(c => `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''}>${c.name}</option>`)
-      .join('');
 
     dialog.innerHTML = `
       <h3 class="ha-dialog-title"><i class="fa-solid fa-gear"></i> Home Assistant Settings</h3>
@@ -1157,7 +982,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           class="widget-dialog-input extended"
         >
           <option value="">Select saved credential...</option>
-          ${credentialOptions}
         </select>
         <small class="ha-dialog-hint">
           Use saved credentials instead of storing token directly
@@ -1210,21 +1034,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+    // Populate credentials
+    const credentialSelect = dialog.querySelector('#ha-credential-select') as HTMLSelectElement;
+    populateCredentialSelect(credentialSelect, 'home_assistant', content.credentialId);
+
     // Get input elements
     const urlInput = dialog.querySelector('#ha-url-input') as HTMLInputElement;
-    const credentialSelect = dialog.querySelector('#ha-credential-select') as HTMLSelectElement;
     const tokenInput = dialog.querySelector('#ha-token-input') as HTMLInputElement;
     const refreshInput = dialog.querySelector('#ha-refresh-input') as HTMLInputElement;
     const saveBtn = dialog.querySelector('#save-settings-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-settings-btn') as HTMLButtonElement;
 
-    // Stop propagation for all inputs
-    [urlInput, credentialSelect, tokenInput, refreshInput, saveBtn, cancelBtn].forEach(el => {
-      el.addEventListener('pointerdown', (e) => e.stopPropagation());
-      if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
-        preventWidgetKeyboardDrag(el);
-      }
-    });
+    stopAllDragPropagation(dialog);
 
     // Save button handler
     saveBtn.addEventListener('click', () => {
@@ -1248,45 +1069,27 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         return;
       }
 
-      // Trigger widget update
-      const event = new CustomEvent('widget-update', {
-        detail: {
-          id: widget.id,
-          content: {
-            ...content,
-            url,
-            credentialId,
-            token: credentialId ? undefined : token, // Clear token if using credentialId
-            refreshInterval
-          }
-        }
+      dispatchWidgetUpdate(widget.id, {
+        ...content,
+        url,
+        credentialId,
+        token: credentialId ? undefined : token,
+        refreshInterval
       });
-      document.dispatchEvent(event);
 
       overlay.remove();
     });
-    saveBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Cancel button handler
     cancelBtn.addEventListener('click', () => {
       overlay.remove();
     });
-    cancelBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Close on overlay click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         overlay.remove();
       }
-    });
-
-    // Prevent dialog from being dragged
-    dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
-    
-    // Prevent keyboard events from bubbling up to widget drag handlers
-    [urlInput, tokenInput, refreshInput].forEach(input => {
-      input.addEventListener('pointerdown', (e) => e.stopPropagation());
-      preventWidgetKeyboardDrag(input);
     });
   }
 
@@ -1368,7 +1171,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     closeBtn.addEventListener('click', () => {
       overlay.remove();
     });
-    closeBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Close on overlay click
     overlay.addEventListener('click', (e) => {
@@ -1383,7 +1185,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       overlay.remove();
       this.showAddEntityDialog(widget);
     });
-    addBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     // Edit entity buttons
     const editButtons = dialog.querySelectorAll('.edit-entity-btn');
@@ -1393,7 +1194,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         overlay.remove();
         this.showEditEntityDialog(widget, index);
       });
-      btn.addEventListener('pointerdown', (e) => e.stopPropagation());
     });
 
     // Remove entity buttons
@@ -1427,10 +1227,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           }
           
           // Trigger widget update
-          const event = new CustomEvent('widget-update', {
-            detail: { id: widget.id, content }
-          });
-          document.dispatchEvent(event);
+          dispatchWidgetUpdate(widget.id, content);
 
           overlay.remove();
         }
@@ -1438,45 +1235,20 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       btn.addEventListener('pointerdown', (e) => e.stopPropagation());
     });
 
-    // Prevent dialog from being dragged
-    dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
+    stopAllDragPropagation(dialog);
   }
 
   private startAutoRefresh(widget: Widget, grid: HTMLElement): void {
     const content = widget.content as HomeAssistantContent;
-
-    // Clear existing interval
-    const existingInterval = this.intervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
-
-    // Set up new interval
     const interval = (content.refreshInterval || 5) * 1000;
-    const intervalId = window.setInterval(async () => {
+    this.poller.start(widget.id, async () => {
       await this.fetchEntityStates(widget);
       this.updateEntityCards(widget, grid);
     }, interval);
-
-    this.intervals.set(widget.id, intervalId);
   }
 
   cleanup(widgetId: string): void {
-    // Clear auto-refresh interval
-    const interval = this.intervals.get(widgetId);
-    if (interval) {
-      clearInterval(interval);
-      this.intervals.delete(widgetId);
-    }
-
-    // Remove global click listener
-    const clickHandler = this.intervals.get(`${widgetId}-click`);
-    if (clickHandler) {
-      document.removeEventListener('click', clickHandler as any);
-      this.intervals.delete(`${widgetId}-click`);
-    }
-
-    // Clear cached states
+    this.poller.stop(widgetId);
     this.entityStates.delete(widgetId);
   }
 
@@ -1573,19 +1345,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const updatedGroups = [...(content.groups || []), newGroup];
     
     // Trigger widget update event - this will save to database
-    const event = new CustomEvent('widget-update', {
-      detail: { 
-        id: widget.id, 
-        content: {
-          url: content.url,
-          credentialId: content.credentialId,
-          entities: content.entities || [],
-          groups: updatedGroups,
-          refreshInterval: content.refreshInterval
-        }
-      }
+    dispatchWidgetUpdate(widget.id, {
+      url: content.url,
+      credentialId: content.credentialId,
+      entities: content.entities || [],
+      groups: updatedGroups,
+      refreshInterval: content.refreshInterval
     });
-    document.dispatchEvent(event);
   }
 
   private async deleteGroup(widget: Widget, groupId: string): Promise<void> {
@@ -1606,19 +1372,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     const updatedGroups = groups.filter(g => g.id !== groupId);
     
     // Trigger widget update event - this will save to database
-    const event = new CustomEvent('widget-update', {
-      detail: { 
-        id: widget.id, 
-        content: {
-          url: content.url,
-          credentialId: content.credentialId,
-          entities: updatedEntities,
-          groups: updatedGroups,
-          refreshInterval: content.refreshInterval
-        }
-      }
+    dispatchWidgetUpdate(widget.id, {
+      url: content.url,
+      credentialId: content.credentialId,
+      entities: updatedEntities,
+      groups: updatedGroups,
+      refreshInterval: content.refreshInterval
     });
-    document.dispatchEvent(event);
   }
 
   private async moveEntityToGroup(widget: Widget, entityId: string, sourceGroupId: string, targetGroupId: string, beforeEntityId?: string): Promise<void> {
@@ -1676,19 +1436,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     }
 
     // Trigger widget update event - this will save to database
-    const event = new CustomEvent('widget-update', {
-      detail: { 
-        id: widget.id, 
-        content: {
-          url: content.url,
-          credentialId: content.credentialId,
-          entities: entities,
-          groups: groups,
-          refreshInterval: content.refreshInterval
-        }
-      }
+    dispatchWidgetUpdate(widget.id, {
+      url: content.url,
+      credentialId: content.credentialId,
+      entities: entities,
+      groups: groups,
+      refreshInterval: content.refreshInterval
     });
-    document.dispatchEvent(event);
   }
 
   private async reorderEntity(widget: Widget, entityId: string, beforeEntityId: string, groupId: string): Promise<void> {
@@ -1727,19 +1481,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     }
 
     // Trigger widget update event - this will save to database
-    const event = new CustomEvent('widget-update', {
-      detail: { 
-        id: widget.id, 
-        content: {
-          url: content.url,
-          credentialId: content.credentialId,
-          entities: entities,
-          groups: groups,
-          refreshInterval: content.refreshInterval
-        }
-      }
+    dispatchWidgetUpdate(widget.id, {
+      url: content.url,
+      credentialId: content.credentialId,
+      entities: entities,
+      groups: groups,
+      refreshInterval: content.refreshInterval
     });
-    document.dispatchEvent(event);
   }
 }
 

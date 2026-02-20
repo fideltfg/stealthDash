@@ -1,7 +1,9 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { escapeHtml, stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 
 interface GoogleCalendarContent {
   calendarId?: string; // Google Calendar ID (deprecated - use credentialId)
@@ -51,7 +53,7 @@ interface CalendarResponse {
 }
 
 class GoogleCalendarRenderer implements WidgetRenderer {
-  private updateIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
@@ -101,8 +103,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         const timeMax = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
         
         // Use backend API endpoint with credentialId
-        const token = authService.getToken();
-        const apiUrl = new URL(`${window.location.protocol}//${window.location.hostname}:3001/api/google-calendar/events`);
+        const apiUrl = new URL(`${getPingServerUrl()}/api/google-calendar/events`);
         apiUrl.searchParams.set('credentialId', content.credentialId.toString());
         apiUrl.searchParams.set('timeMin', timeMin);
         apiUrl.searchParams.set('timeMax', timeMax);
@@ -111,9 +112,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         console.log('Fetching Google Calendar events via backend...');
         
         const response = await fetch(apiUrl.toString(), {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: getAuthHeaders(false)
         });
 
         if (!response.ok) {
@@ -156,19 +155,9 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       }
     };
 
-    // Initial fetch
-    fetchAndRender();
-
-    // Clear any existing interval
-    const existingInterval = this.updateIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
-
-    // Set up auto-refresh
-    const refreshInterval = (content.refreshInterval || 300) * 1000; // Convert to milliseconds
-    const intervalId = window.setInterval(fetchAndRender, refreshInterval);
-    this.updateIntervals.set(widget.id, intervalId);
+    // Start polling (fires immediately, then every refreshInterval)
+    const refreshInterval = (content.refreshInterval || 300) * 1000;
+    this.poller.start(widget.id, fetchAndRender, refreshInterval);
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
@@ -334,16 +323,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       const refreshInput = document.getElementById('calendar-refresh') as HTMLInputElement;
 
       // Prevent arrow keys from moving the widget
-      credentialSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      credentialSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keydown', (e) => e.stopPropagation());
-      displayModeSelect.addEventListener('keyup', (e) => e.stopPropagation());
-      maxEventsInput.addEventListener('keydown', (e) => e.stopPropagation());
-      maxEventsInput.addEventListener('keyup', (e) => e.stopPropagation());
-      daysAheadInput.addEventListener('keydown', (e) => e.stopPropagation());
-      daysAheadInput.addEventListener('keyup', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keydown', (e) => e.stopPropagation());
-      refreshInput.addEventListener('keyup', (e) => e.stopPropagation());
+      stopAllDragPropagation(modal);
       
       const credentialId = parseInt(credentialSelect.value);
       const displayMode = displayModeSelect.value;
@@ -368,10 +348,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
       };
 
       // Dispatch update event
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: newContent }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, newContent);
 
       // Close modal
       document.body.removeChild(overlay);
@@ -417,11 +394,11 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           <div class="flex space-between align-start gap-12">
             <div class="flex-1 truncate">
               <div class="event-title">
-                ${this.escapeHtml(event.summary)}
+                ${escapeHtml(event.summary)}
               </div>
               <div class="event-time">
                 ${isAllDay ? 'All day' : this.formatTime(startDate)}
-                ${event.location ? `<span class="event-location"><i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}</span>` : ''}
+                ${event.location ? `<span class="event-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(event.location)}</span>` : ''}
               </div>
             </div>
             <div class="event-date-label">
@@ -465,7 +442,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         <div class="event-card-detailed hover-effect" onclick="window.open('${event.htmlLink}', '_blank')">
           <div class="mb-8">
             <div class="event-title-large">
-              ${this.escapeHtml(event.summary)}
+              ${escapeHtml(event.summary)}
             </div>
             <div class="event-time">
               ${dateLabel} ${isAllDay ? '(All day)' : `at ${this.formatTime(startDate)}`}
@@ -475,12 +452,12 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           ${event.location ? `
             <div class="event-location-row">
               <span><i class="fas fa-map-marker-alt"></i></span>
-              <span>${this.escapeHtml(event.location)}</span>
+              <span>${escapeHtml(event.location)}</span>
             </div>
           ` : ''}
           ${event.description ? `
             <div class="event-description">
-              ${this.escapeHtml(event.description.substring(0, 150))}${event.description.length > 150 ? '...' : ''}
+              ${escapeHtml(event.description.substring(0, 150))}${event.description.length > 150 ? '...' : ''}
             </div>
           ` : ''}
           ${event.attendees && event.attendees.length > 0 ? `
@@ -542,11 +519,11 @@ class GoogleCalendarRenderer implements WidgetRenderer {
             <div class="agenda-divider"></div>
             <div class="flex-1 truncate">
               <div class="agenda-event-title">
-                ${this.escapeHtml(event.summary)}
+                ${escapeHtml(event.summary)}
               </div>
               ${event.location ? `
                 <div class="agenda-event-location">
-                  <i class="fas fa-map-marker-alt"></i> ${this.escapeHtml(event.location)}
+                  <i class="fas fa-map-marker-alt"></i> ${escapeHtml(event.location)}
                 </div>
               ` : ''}
             </div>
@@ -606,18 +583,8 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     return date.toDateString() === tomorrow.toDateString();
   }
 
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   destroy(widget: Widget): void {
-    const intervalId = this.updateIntervals.get(widget.id);
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.updateIntervals.delete(widget.id);
-    }
+    this.poller.stop(widget.id);
   }
 }
 

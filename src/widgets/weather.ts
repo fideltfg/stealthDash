@@ -1,5 +1,7 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { renderLoading, renderError } from '../utils/widgetRendering';
 
 export class WeatherWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -42,13 +44,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     saveBtn.onclick = () => {
       const location = locationInput.value.trim();
       if (location) {
-        const event = new CustomEvent('widget-update', {
-          detail: {
-            id: widget.id,
-            content: { location }
-          }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { location });
         close();
       }
     };
@@ -98,10 +94,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     const loadWeather = () => {
       const location = locationInput.value.trim();
       if (location) {
-        const event = new CustomEvent('widget-update', {
-          detail: { id: widget.id, content: { location } }
-        });
-        document.dispatchEvent(event);
+        dispatchWidgetUpdate(widget.id, { location });
       }
     };
     
@@ -113,10 +106,8 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
       }
     });
     
-    locationInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-    locationInput.addEventListener('keydown', (e) => e.stopPropagation());
-    locationInput.addEventListener('keyup', (e) => e.stopPropagation());
-    button.addEventListener('pointerdown', (e) => e.stopPropagation());
+    stopWidgetDragPropagation(locationInput);
+    stopWidgetDragPropagation(button);
     
     inputContainer.appendChild(icon);
     inputContainer.appendChild(label);
@@ -126,10 +117,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
   }
 
   private async fetchWeatherData(container: HTMLElement, location: string): Promise<void> {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'widget-loading padded';
-    loadingDiv.textContent = 'Loading weather...';
-    container.appendChild(loadingDiv);
+    renderLoading(container, 'Loading weather...');
     
     try {
       const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`);
@@ -147,15 +135,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
       container.innerHTML = '';
       this.renderWeatherUI(container, weatherData, name, country);
     } catch (error) {
-      container.innerHTML = '';
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'widget-error';
-      errorDiv.innerHTML = `
-        <div class="widget-error-icon">⚠️</div>
-        <div>Failed to load weather data</div>
-        <div class="widget-error-message">${error instanceof Error ? error.message : 'Unknown error'}</div>
-      `;
-      container.appendChild(errorDiv);
+      renderError(container, 'Failed to load weather data', error);
     }
   }
 

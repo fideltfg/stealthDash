@@ -1,7 +1,10 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
-import { authService } from '../services/auth';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { dispatchWidgetUpdate, stopAllDragPropagation } from '../utils/dom';
+import { formatTimeAgo } from '../utils/formatting';
 
 interface UnifiProtectContent {
   host: string; // UniFi Protect Console host (e.g., 'https://192.168.1.1')
@@ -65,7 +68,7 @@ interface ProtectBootstrap {
 }
 
 class UnifiProtectRenderer implements WidgetRenderer {
-  private updateIntervals: Map<string, number> = new Map();
+  private poller = new WidgetPoller();
   private eventStreams: Map<string, EventSource> = new Map();
 
   configure(widget: Widget): void {
@@ -79,12 +82,6 @@ class UnifiProtectRenderer implements WidgetRenderer {
     if (!content.host || !content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
-    }
-
-    // Clear existing interval
-    const existingInterval = this.updateIntervals.get(widget.id);
-    if (existingInterval) {
-      clearInterval(existingInterval);
     }
 
     // Close existing event stream
@@ -114,14 +111,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
         }
 
         // Fetch bootstrap data from UniFi Protect
-        const proxyUrl = new URL('/api/unifi-protect/bootstrap', window.location.origin.replace(':3000', ':3001'));
+        const proxyUrl = new URL('/api/unifi-protect/bootstrap', getPingServerUrl());
         proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
         const response = await fetch(proxyUrl.toString(), {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          }
+          headers: getAuthHeaders(false)
         });
 
         if (!response.ok) {
@@ -159,13 +154,9 @@ class UnifiProtectRenderer implements WidgetRenderer {
     };
 
 
-    // Initial fetch
-    fetchAndRender();
-
-    // Set up auto-refresh
+    // Start polling (fires immediately, then every interval)
     const interval = content.refreshInterval || 30;
-    const intervalId = window.setInterval(fetchAndRender, interval * 1000);
-    this.updateIntervals.set(widget.id, intervalId);
+    this.poller.start(widget.id, fetchAndRender, interval * 1000);
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
@@ -331,14 +322,12 @@ class UnifiProtectRenderer implements WidgetRenderer {
       list.innerHTML = '';
 
       try {
-        const proxyUrl = new URL('/api/unifi-protect/bootstrap', window.location.origin.replace(':3000', ':3001'));
+        const proxyUrl = new URL('/api/unifi-protect/bootstrap', getPingServerUrl());
         proxyUrl.searchParams.set('host', host);
         proxyUrl.searchParams.set('credentialId', credentialId.toString());
         
         const response = await fetch(proxyUrl.toString(), {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken() || ''}`
-          }
+          headers: getAuthHeaders(false)
         });
 
         if (!response.ok) {
@@ -483,10 +472,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
       };
 
       // Dispatch update event
-      const event = new CustomEvent('widget-update', {
-        detail: { id: widget.id, content: newContent }
-      });
-      document.dispatchEvent(event);
+      dispatchWidgetUpdate(widget.id, newContent);
 
       overlay.remove();
     });
@@ -536,7 +522,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const camera = cameras.find(c => c.id === event.camera);
     const cameraName = camera?.name || 'Unknown Camera';
     const timestamp = new Date(event.start);
-    const timeAgo = this.getTimeAgo(timestamp);
+    const timeAgo = formatTimeAgo(timestamp.getTime());
     const detectionType = event.smartDetectTypes.length > 0 
       ? event.smartDetectTypes.join(', ') 
       : event.type;
@@ -647,7 +633,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
             <div class="badge ${statusColor}">${statusText}</div>
             </div>
           </div>
-          <div><subtitle style="float: left;">${camera.model}</subtitle><subtitle style="float: right;">Last seen: ${this.getTimeAgo(new Date(camera.lastSeen))}
+          <div><subtitle style="float: left;">${camera.model}</subtitle><subtitle style="float: right;">Last seen: ${formatTimeAgo(camera.lastSeen)}
             </subtitle>
           </div>
         </div>
@@ -699,21 +685,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
     `;
   }
 
-  private getTimeAgo(date: Date): string {
-    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-    
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return `${Math.floor(seconds / 86400)}d ago`;
-  }
-
   destroy(widget: Widget): void {
-    const interval = this.updateIntervals.get(widget.id);
-    if (interval) {
-      clearInterval(interval);
-      this.updateIntervals.delete(widget.id);
-    }
+    this.poller.stop(widget.id);
 
     const stream = this.eventStreams.get(widget.id);
     if (stream) {

@@ -1,8 +1,10 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
-import { preventWidgetKeyboardDrag } from '../types/widget';
-import { credentialsService, type Credential as CredentialData } from '../services/credentials';
-import { authService } from '../services/auth';
+import { escapeHtml, stopAllDragPropagation } from '../utils/dom';
+import { getPingServerUrl, getAuthHeaders } from '../utils/api';
+import { WidgetPoller } from '../utils/polling';
+import { renderConfigPrompt } from '../utils/widgetRendering';
+import { populateCredentialSelect } from '../utils/credentials';
 
 export interface GmailContent {
   credentialId?: number;
@@ -36,7 +38,7 @@ interface GmailMessageDetails extends GmailMessage {
 }
 
 class GmailWidgetRenderer implements WidgetRenderer {
-  private refreshIntervals = new Map<string, number>();
+  private poller = new WidgetPoller();
 
   configure(widget: Widget): void {
     const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
@@ -61,6 +63,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
 
     container.className = 'gmail-container widget-wrapper';
     container.innerHTML = '';
+    this.poller.stop(widget.id);
 
     const header = this.createHeader(widget, container);
     const body = document.createElement('div');
@@ -78,8 +81,16 @@ class GmailWidgetRenderer implements WidgetRenderer {
         setTimeout(() => this.showSetupWizard(container, widget), 500);
       }
     } else {
-      this.loadEmails(body, widget);
-      this.setupAutoRefresh(widget);
+      if (content.refreshInterval > 0) {
+        this.poller.start(widget.id, () => {
+          const gmailBody = document.getElementById(`widget-${widget.id}`)?.querySelector('.gmail-body') as HTMLElement;
+          if (gmailBody && content.credentialId) {
+            this.loadEmails(gmailBody, widget);
+          }
+        }, content.refreshInterval * 1000);
+      } else {
+        this.loadEmails(body, widget);
+      }
     }
   }
 
@@ -136,21 +147,8 @@ class GmailWidgetRenderer implements WidgetRenderer {
   }
 
   private showSetupMessage(body: HTMLElement, widget: Widget): void {
-    body.innerHTML = `
-      <div class="widget-config-screen">
-        <div class="widget-config-icon">📧</div>
-        <h3>Gmail Not Configured</h3>
-        <p class="widget-config-description">
-          Click the button below to set up your Gmail connection.
-        </p>
-        <button class="btn btn-primary" id="gmail-setup-${widget.id}">
-          <i class="fas fa-cog"></i> Setup Gmail
-        </button>
-      </div>
-    `;
-
-    const setupBtn = body.querySelector(`#gmail-setup-${widget.id}`) as HTMLButtonElement;
-    setupBtn?.addEventListener('click', () => {
+    const btn = renderConfigPrompt(body, '📧', 'Gmail Not Configured', 'Click the button below to set up your Gmail connection.');
+    btn.addEventListener('click', () => {
       this.showSetupWizard(body.parentElement as HTMLElement, widget);
     });
   }
@@ -186,9 +184,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
       throw new Error('No credential configured');
     }
 
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const serverUrl = `${protocol}//${hostname}:3001`;
+    const serverUrl = getPingServerUrl();
 
     // First, get the list of message IDs
     const listQuery = new URLSearchParams({
@@ -200,9 +196,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
     const listResponse = await fetch(
       `${serverUrl}/api/gmail/messages?${listQuery}`,
       {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
+        headers: getAuthHeaders(false),
       }
     );
 
@@ -219,9 +213,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
 
     // Fetch details for each message
     const messagePromises = listData.messages.map(async (msg) => {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      const serverUrl = `${protocol}//${hostname}:3001`;
+      const detailServerUrl = getPingServerUrl();
 
       const detailQuery = new URLSearchParams({
         credentialId: content.credentialId!.toString(),
@@ -229,11 +221,9 @@ class GmailWidgetRenderer implements WidgetRenderer {
       });
 
       const detailResponse = await fetch(
-        `${serverUrl}/api/gmail/message?${detailQuery}`,
+        `${detailServerUrl}/api/gmail/message?${detailQuery}`,
         {
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`,
-          },
+          headers: getAuthHeaders(false),
         }
       );
 
@@ -303,9 +293,9 @@ class GmailWidgetRenderer implements WidgetRenderer {
           <i class="fas ${message.isUnread ? 'fa-envelope' : 'fa-envelope-open'}" style="color: ${iconColor};"></i>
         </div>
         <div class="gmail-message-info">
-          <div class="gmail-message-from">${this.escapeHtml(message.from)}</div>
-          <div class="gmail-message-subject">${this.escapeHtml(message.subject)}</div>
-          <div class="gmail-message-snippet">${this.escapeHtml(message.snippet)}</div>
+          <div class="gmail-message-from">${escapeHtml(message.from)}</div>
+          <div class="gmail-message-subject">${escapeHtml(message.subject)}</div>
+          <div class="gmail-message-snippet">${escapeHtml(message.snippet)}</div>
         </div>
         <div class="gmail-message-date">${message.date}</div>
       </div>
@@ -346,19 +336,14 @@ class GmailWidgetRenderer implements WidgetRenderer {
     const content = widget.content as unknown as GmailContent;
     if (!content.credentialId) return;
 
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const serverUrl = `${protocol}//${hostname}:3001`;
+    const serverUrl = getPingServerUrl();
 
     try {
       const response = await fetch(
         `${serverUrl}/api/gmail/modify`,
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authService.getToken()}`,
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             credentialId: content.credentialId,
             messageId,
@@ -390,28 +375,6 @@ class GmailWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  private setupAutoRefresh(widget: Widget): void {
-    const content = widget.content as unknown as GmailContent;
-    
-    // Clear existing interval if any
-    const existingInterval = this.refreshIntervals.get(`widget-${widget.id}`);
-    if (existingInterval) {
-      clearInterval(existingInterval);
-    }
-
-    // Setup new interval if enabled
-    if (content.refreshInterval > 0) {
-      const interval = window.setInterval(() => {
-        const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.gmail-body') as HTMLElement;
-        if (container && content.credentialId) {
-          this.loadEmails(container, widget);
-        }
-      }, content.refreshInterval * 1000);
-
-      this.refreshIntervals.set(`widget-${widget.id}`, interval);
-    }
-  }
-
   private formatDate(date: Date): string {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -427,12 +390,6 @@ class GmailWidgetRenderer implements WidgetRenderer {
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   private showSetupWizard(_container: HTMLElement, widget: Widget): void {
@@ -556,10 +513,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
     document.body.appendChild(overlay);
 
     // Prevent interaction with widget content
-    const inputs = dialog.querySelectorAll('input, select, textarea, button');
-    inputs.forEach(input => {
-      preventWidgetKeyboardDrag(input as HTMLElement);
-    });
+    stopAllDragPropagation(dialog);
 
     // Load credentials
     this.loadCredentials(widget);
@@ -624,30 +578,14 @@ class GmailWidgetRenderer implements WidgetRenderer {
   }
 
   private async loadCredentials(widget: Widget): Promise<void> {
-    try {
-      const credentials = await credentialsService.getAll();
-      const gmailCredentials = credentials.filter((c: CredentialData) => c.service_type === 'gmail');
-
-      const select = document.querySelector(`#gmail-credential-${widget.id}`) as HTMLSelectElement;
-      if (select) {
-        // Clear existing options except first
-        while (select.options.length > 1) {
-          select.remove(1);
-        }
-
-        // Add credential options
-        gmailCredentials.forEach((cred: CredentialData) => {
-          const option = document.createElement('option');
-          option.value = cred.id.toString();
-          option.textContent = cred.name;
-          if ((widget.content as unknown as GmailContent).credentialId === cred.id) {
-            option.selected = true;
-          }
-          select.appendChild(option);
-        });
+    const select = document.querySelector(`#gmail-credential-${widget.id}`) as HTMLSelectElement;
+    if (select) {
+      // Clear existing options except first
+      while (select.options.length > 1) {
+        select.remove(1);
       }
-    } catch (error) {
-      console.error('Failed to load credentials:', error);
+      const content = widget.content as unknown as GmailContent;
+      await populateCredentialSelect(select, 'gmail', content.credentialId);
     }
   }
 }
