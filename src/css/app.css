@@ -35,7 +35,7 @@
   --bg-success: rgba(76, 175, 80, 0.2);
   --bg-error: rgba(244, 67, 54, 0.2); 
   --bg-info: rgba(0, 123, 255, 0.2);
-
+  --bg-secondary: rgba(255, 255, 255, 0.1);
   --card-background: rgb(173 173 173 / 25%);
 
   /* Layout */
@@ -69,7 +69,7 @@
 /* Gruvbox Dark Theme - Warm retro colors inspired by Gruvbox */
 .theme-gruvbox {
   --bg: #282828;
-  --surface: #3c3836;
+  --surface: #3f342f;
   --text: #ebdbb2;
   --muted: #a89984;
   --accent: #fe8019;
@@ -78,6 +78,7 @@
   --border: #504945;
   --hover: #504945;
   --font-body: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Consolas', monospace;
+  ---success: #b8bb26;
 }
 
 /* Tokyo Night Theme - Cool blue night theme with cyan undertones */
@@ -154,6 +155,7 @@
   --border: #ffd4bd;
   --hover: #ffe4d4;
   --font-body: ui-rounded, 'Montserrat', 'Quicksand', 'Comfortaa', 'Raleway', sans-serif;
+  --card-background: rgba(139, 99, 13, 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -284,16 +286,15 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 2px 8px var(--shadow);
   cursor: default;
-  overflow: hidden;
+  overflow: visible;
   transition: box-shadow var(--transition);
   padding-bottom: 40px;
 }
 
 .widget:hover,
 .widget:focus-within {
-  box-shadow: 0 4px 16px var(--shadow);
+  box-shadow: 16px var(--shadow);
 }
 
 .widget.selected {
@@ -307,13 +308,15 @@ body {
 
 .widget-header {
   inset: 0 0 auto 0;
-  padding: 8px 12px;
+  padding: 10px 12px 6px 12px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   cursor: move;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  overflow: visible;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 
@@ -334,6 +337,7 @@ body {
   padding: 8px;
   height: 100%;
   overflow: auto;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 
@@ -345,8 +349,7 @@ body {
   font-size: 20px;
   cursor: pointer;
   padding: 0;
-  width: 28px;
-  height: 28px;
+  height: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -637,6 +640,17 @@ body {
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 .theme-menu-item {
   display: flex;
   align-items: center;
@@ -762,7 +776,6 @@ body {
 #app.locked .menu-button,
 #app.locked .controls-container,
 #app.locked .resize-handle,
-#app.locked .widget-header,
 #app.locked .user-menu {
   display: none !important;
   pointer-events: none !important;
@@ -773,14 +786,13 @@ body {
   pointer-events: auto;
 }
 
-#app.locked .canvas {
-  cursor: default !important;
-}
 
 #app.locked .canvas-content {
   border-color: transparent !important;
 }
 
+#app.locked .canvas,
+#app.locked .widget-header,
 #app.locked .widget {
   cursor: default !important;
 }
@@ -1630,18 +1642,85 @@ a:hover {
 }
 
 /* Uptime Widget */
+.uptime-widget {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.uptime-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.uptime-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.uptime-target-label {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
 .uptime-chart-container {
   flex: 1;
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 40px;
+  height: 30px;
+}
+
+.uptime-bar-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  height: 100%;
 }
 
 .uptime-bar {
   width: 100%;
-  border-radius: 2px 2px 0 0;
+  border-radius: 4px 4px 0 0;
   transition: all 150ms;
+}
+
+.uptime-bar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-secondary);
+  border-radius: 4px 4px 0 0;
+}
+
+.uptime-bar-container:hover .uptime-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.uptime-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: pre;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms;
+  pointer-events: none;
+  z-index: 1000;
+  margin-bottom: 4px;
 }
 
 .uptime-bar-excellent {
@@ -1666,6 +1745,13 @@ a:hover {
 
 .uptime-bar-failed {
   background: #ef4444;
+}
+
+.uptime-stats-container {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 /* RSS Widget */
@@ -2033,7 +2119,7 @@ a:hover {
 }
 
 
-.docker-button-group {
+.button-group {
   display: flex;
   gap: 8px;
   margin-top: 12px;
@@ -2059,7 +2145,6 @@ a:hover {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   padding: 12px;
-  background-color: var(--card-background);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
@@ -2083,6 +2168,11 @@ a:hover {
 .ha-drop-highlight {
   background: rgba(100, 150, 255, 0.1);
   border: 2px dashed var(--accent);
+}
+.ha-sensor-value{
+  color: var(--success);
+  font-size: larger;
+  font-weight: bolder;
 }
 
 .dragging {
@@ -2280,4 +2370,90 @@ a:hover {
     opacity: 0.6;
     transform: scale(1.1);
   }
+}
+/* === SYNC NOTIFICATION BANNER === */
+.sync-notification-banner {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: top 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  min-width: 500px;
+  max-width: 90vw;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sync-notification-banner.visible {
+  top: 20px;
+}
+
+.sync-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sync-notification-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.sync-notification-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.sync-notification-reload-btn {
+  background: white;
+  color: #ee5a24;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sync-notification-reload-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sync-notification-reload-btn:active {
+  transform: translateY(0);
+}
+
+.sync-notification-close-btn {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sync-notification-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: rotate(90deg);
 }

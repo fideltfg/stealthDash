@@ -6,6 +6,7 @@ import { createWidgetElement, updateWidgetPosition, updateWidgetSize, updateWidg
 import { loadWidgetModule, loadWidgetModules } from './types/widget-loader';
 import { authService, type User } from './services/auth';
 import { dashboardStorage } from './services/dashboardStorage';
+import { dashboardSyncService } from './services/dashboardSync';
 import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
@@ -37,7 +38,9 @@ class Dashboard {
   private credentialsUI: CredentialsUI;
   private currentUser: User | null = null;
   private userMenuElement: HTMLElement | null = null;
-  private autoSaveInterval: number | null = null;
+  private syncNotificationBanner: HTMLElement | null = null;
+  private isOutOfSync: boolean = false;
+  private syncStatusUnsubscribe: (() => void) | null = null;
 
   constructor() {
     this.authUI = new AuthUI(this.handleAuthChange.bind(this));
@@ -107,6 +110,9 @@ class Dashboard {
         this.state = getDefaultState();
       }
 
+      // Set up sync service for cross-tab communication
+      this.setupSyncService();
+
       this.setupDOM();
       this.setupTheme();
       this.setupBackground();
@@ -121,8 +127,22 @@ class Dashboard {
       this.saveHistory();
       //console.log('About to show user menu, currentUser:', this.currentUser);
       this.showUserMenu();
-      this.startAutoSave();
 
+      // Force immediate save before page unload to prevent data loss
+      // But NEVER save if this tab is out of sync - that would overwrite another tab's changes
+      window.addEventListener('beforeunload', async () => {
+        if (this.multiState && !this.isOutOfSync) {
+          await dashboardStorage.saveDashboards(this.multiState, true);
+        }
+      });
+
+      // Also save when page visibility changes (tab hidden, browser minimized)
+      // But skip if out of sync
+      document.addEventListener('visibilitychange', async () => {
+        if (document.hidden && this.multiState && !this.isOutOfSync) {
+          await dashboardStorage.saveDashboards(this.multiState, true);
+        }
+      });
 
     } else {
       // Show login dialog
@@ -171,27 +191,66 @@ class Dashboard {
     }
   }
 
-  private startAutoSave(): void {
-    // Auto-save to server every 30 seconds
-    this.autoSaveInterval = window.setInterval(async () => {
-      if (authService.isAuthenticated() && this.multiState) {
-        // Update the active dashboard's state in memory
-        const activeDashboard = this.multiState.dashboards.find(
-          (d: any) => d.id === this.multiState!.activeDashboardId
-        );
-        if (activeDashboard) {
-          activeDashboard.state = this.state;
-          activeDashboard.updatedAt = Date.now();
-          await dashboardStorage.saveDashboards(this.multiState); // Save to server (debounced)
-        }
-      }
-    }, 30000);
-  }
-
   private hideLoadingScreen(): void {
     // Call the global function to hide the loading screen
     if (typeof (window as any).hideLoadingScreen === 'function') {
       (window as any).hideLoadingScreen();
+    }
+  }
+
+  private showSyncNotification(): void {
+    // Remove existing notification if present
+    this.hideSyncNotification();
+
+    // Create notification banner
+    this.syncNotificationBanner = document.createElement('div');
+    this.syncNotificationBanner.className = 'sync-notification-banner';
+    this.syncNotificationBanner.innerHTML = `
+      <div class="sync-notification-content">
+        <span class="sync-notification-icon">⚠️</span>
+        <span class="sync-notification-message">
+          This dashboard has been updated in another tab. Changes you make will not be saved.
+        </span>
+        <button class="sync-notification-reload-btn">Reload Dashboard</button>
+        <button class="sync-notification-close-btn">✕</button>
+      </div>
+    `;
+
+    // Add event listeners
+    const reloadBtn = this.syncNotificationBanner.querySelector('.sync-notification-reload-btn');
+    const closeBtn = this.syncNotificationBanner.querySelector('.sync-notification-close-btn');
+
+    if (reloadBtn) {
+      reloadBtn.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.hideSyncNotification();
+      });
+    }
+
+    document.body.appendChild(this.syncNotificationBanner);
+
+    // Animate in
+    setTimeout(() => {
+      if (this.syncNotificationBanner) {
+        this.syncNotificationBanner.classList.add('visible');
+      }
+    }, 10);
+  }
+
+  private hideSyncNotification(): void {
+    if (this.syncNotificationBanner) {
+      this.syncNotificationBanner.classList.remove('visible');
+      setTimeout(() => {
+        if (this.syncNotificationBanner) {
+          this.syncNotificationBanner.remove();
+          this.syncNotificationBanner = null;
+        }
+      }, 300);
     }
   }
 
@@ -446,28 +505,26 @@ class Dashboard {
     }
   }
 
+  /**
+   * Get the active theme: local preference first, then dashboard-saved theme.
+   */
+  private getActiveTheme(): Theme {
+    const localTheme = sessionStorage.getItem('dashboard-local-theme');
+    if (localTheme) {
+      return localTheme as Theme;
+    }
+    return this.state.theme;
+  }
+
   private setupTheme(): void {
     const root = document.documentElement;
+    const theme = this.getActiveTheme();
     
     // Remove all theme classes first
     root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-sunset', 'theme-peachy');
 
-    if (this.state.theme === 'dark') {
-      root.classList.add('theme-dark');
-    } else if (this.state.theme === 'light') {
-      root.classList.add('theme-light');
-    } else if (this.state.theme === 'gruvbox') {
-      root.classList.add('theme-gruvbox');
-    } else if (this.state.theme === 'tokyo-night') {
-      root.classList.add('theme-tokyo-night');
-    } else if (this.state.theme === 'catppuccin') {
-      root.classList.add('theme-catppuccin');
-    } else if (this.state.theme === 'forest') {
-      root.classList.add('theme-forest');
-    } else if (this.state.theme === 'sunset') {
-      root.classList.add('theme-sunset');
-    } else if (this.state.theme === 'peachy') {
-      root.classList.add('theme-peachy');
+    if (theme !== 'system') {
+      root.classList.add(`theme-${theme}`);
     }
     // If 'system', no class is added (uses @media prefers-color-scheme)
   }
@@ -508,7 +565,7 @@ class Dashboard {
       
       const check = document.createElement('span');
       check.className = 'theme-menu-check';
-      check.innerHTML = this.state.theme === theme.value ? '✓' : '';
+      check.innerHTML = this.getActiveTheme() === theme.value ? '✓' : '';
       
       item.appendChild(icon);
       item.appendChild(label);
@@ -516,9 +573,12 @@ class Dashboard {
       
       item.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Save as local preference (per-browser)
+        sessionStorage.setItem('dashboard-local-theme', theme.value);
+        // Also save to dashboard state as the default for other browsers
         this.state.theme = theme.value;
         this.setupTheme();
-        this.save();
+        this.saveQuiet();
         menu.remove();
       });
       
@@ -529,7 +589,7 @@ class Dashboard {
     const rect = button.getBoundingClientRect();
     menu.style.position = 'fixed';
     menu.style.bottom = `${window.innerHeight - rect.top + 8}px`;
-    menu.style.left = `${rect.left}px`;
+    menu.style.left = `${rect.left -  120}px`;
 
     document.body.appendChild(menu);
 
@@ -550,12 +610,38 @@ class Dashboard {
     this.canvas.setAttribute('data-background', this.state.background);
   }
 
+  private setupSyncService(): void {
+    if (!this.multiState) return;
+
+    // Set the current dashboard ID in the sync service
+    const activeDashboardId = this.multiState.activeDashboardId;
+    const version = dashboardStorage.getDashboardVersion(activeDashboardId);
+    dashboardSyncService.setCurrentDashboard(activeDashboardId, version);
+
+    // Clean up previous listener if exists
+    if (this.syncStatusUnsubscribe) {
+      this.syncStatusUnsubscribe();
+    }
+
+    // Listen for sync status changes
+    this.syncStatusUnsubscribe = dashboardSyncService.onSyncStatusChange((status) => {
+      this.isOutOfSync = status.isOutOfSync;
+      
+      if (status.isOutOfSync) {
+        console.warn('⚠️ Dashboard is out of sync - changes detected from another tab');
+        this.showSyncNotification();
+      } else {
+        this.hideSyncNotification();
+      }
+    });
+  }
+
   private toggleBackground(): void {
     const backgrounds: Array<'grid' | 'dots' | 'lines' | 'solid'> = ['grid', 'dots', 'lines', 'solid'];
     const currentIndex = backgrounds.indexOf(this.state.background);
     this.state.background = backgrounds[(currentIndex + 1) % backgrounds.length];
     this.setupBackground();
-    this.save();
+    this.saveQuiet();
   }
 
   private setupEventListeners(): void {
@@ -777,11 +863,6 @@ class Dashboard {
     if (this.dragState || this.resizeState) {
       this.saveHistory();
       this.save(); // Save after drag/resize is complete
-    }
-
-    // Save viewport position after panning
-    if (this.panState) {
-      this.save();
     }
 
     this.dragState = null;
@@ -1094,7 +1175,6 @@ class Dashboard {
     if (newZoom !== this.state.zoom) {
       this.state.zoom = newZoom;
       this.applyZoom();
-      this.save();
     }
   }
 
@@ -1173,7 +1253,6 @@ class Dashboard {
     this.touchStartX = 0;
     this.touchStartY = 0;
     this.touchStartTime = 0;
-    this.save();
   }
 
   private applyZoom(): void {
@@ -1190,7 +1269,6 @@ class Dashboard {
     // Don't reset viewport position, just apply the zoom
     this.canvasContent.style.transform = `scale(${this.state.zoom})`;
     this.canvasContent.style.transformOrigin = 'top left';
-    this.save();
   }
 
   private resetView(): void {
@@ -1199,7 +1277,6 @@ class Dashboard {
     this.canvasContent.style.top = '0px';
     // Update the viewport state
     this.state.viewport = { x: 0, y: 0 };
-    this.save();
   }
 
   private autoArrangeWidgets(): void {
@@ -1809,6 +1886,13 @@ class Dashboard {
     this.render();
     this.setupTheme();
     this.setupBackground();
+    
+    // Update sync service with new dashboard
+    const version = dashboardStorage.getDashboardVersion(dashboardId);
+    dashboardSyncService.setCurrentDashboard(dashboardId, version);
+    // Reset sync status when switching dashboards
+    this.isOutOfSync = false;
+    this.hideSyncNotification();
     
     // Update switcher button
     const button = document.querySelector('.dashboard-switcher-button') as HTMLButtonElement;
@@ -2423,16 +2507,12 @@ class Dashboard {
         widgetElement.dispatchEvent(event);
       }
     });
-
-    // Clear any intervals we might have
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval);
-    }
   }
 
   private async render(): Promise<void> {
     // Load all widget modules needed for current dashboard
     const widgetTypes = this.state.widgets.map(w => w.type);
+    
     if (widgetTypes.length > 0) {
       await loadWidgetModules(widgetTypes);
     }
@@ -2464,7 +2544,35 @@ class Dashboard {
     }
   }
 
+  /**
+   * Save without broadcasting to other tabs.
+   * Use for cosmetic/local-only changes (theme, background, zoom, etc.)
+   */
+  private saveQuiet(): void {
+    if (this.isOutOfSync || !this.multiState) return;
+
+    const activeDashboard = this.multiState.dashboards.find(
+      (d: any) => d.id === this.multiState!.activeDashboardId
+    );
+    if (activeDashboard) {
+      activeDashboard.state = this.state;
+      activeDashboard.updatedAt = Date.now();
+
+      if (authService.isAuthenticated()) {
+        dashboardStorage.saveDashboards(this.multiState, true).catch((err: any) => {
+          console.error('Failed to save dashboard to server:', err);
+        });
+      }
+    }
+  }
+
   private save(): void {
+    // Check if dashboard is out of sync
+    if (this.isOutOfSync) {
+      console.warn('⚠️  Cannot save - dashboard is out of sync. Please reload.');
+      return;
+    }
+
     // Update current dashboard in cached multi-state
     if (!this.multiState) {
       console.warn('⚠️  Cannot save - multiState not loaded');
@@ -2486,8 +2594,10 @@ class Dashboard {
       })));
 
       // Save to server if authenticated (immediate save for widget updates)
+      // Pass the active dashboard ID so other tabs viewing it get notified
       if (authService.isAuthenticated()) {
-        dashboardStorage.saveDashboards(this.multiState, true).catch((err: any) => {
+        const modifiedId = this.multiState.activeDashboardId;
+        dashboardStorage.saveDashboards(this.multiState, true, modifiedId).catch((err: any) => {
           console.error('Failed to save dashboard to server:', err);
         });
       }
@@ -2495,6 +2605,7 @@ class Dashboard {
   }
 
   private undo(): void {
+    if (this.isOutOfSync) return;
     const previous = this.history.undo();
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
@@ -2510,7 +2621,7 @@ class Dashboard {
           activeDashboard.updatedAt = Date.now();
 
           if (authService.isAuthenticated()) {
-            dashboardStorage.saveDashboards(this.multiState);
+            dashboardStorage.saveDashboards(this.multiState, false, this.multiState.activeDashboardId);
           }
         }
       }
@@ -2518,6 +2629,7 @@ class Dashboard {
   }
 
   private redo(): void {
+    if (this.isOutOfSync) return;
     const next = this.history.redo();
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
@@ -2533,7 +2645,7 @@ class Dashboard {
           activeDashboard.updatedAt = Date.now();
 
           if (authService.isAuthenticated()) {
-            dashboardStorage.saveDashboards(this.multiState);
+            dashboardStorage.saveDashboards(this.multiState, false, this.multiState.activeDashboardId);
           }
         }
       }

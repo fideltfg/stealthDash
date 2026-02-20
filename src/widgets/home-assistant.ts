@@ -205,7 +205,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Create main container
     const mainContainer = document.createElement('div');
-    mainContainer.className = 'ha-main-container';
+    mainContainer.className = 'list';
     container.appendChild(mainContainer);
 
     const entities = content.entities || [];
@@ -479,7 +479,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           valueDisplay.classList.add('alarm-flash-error');
         } else {
           valueDisplay.textContent = `${state.state} ${unit}`.trim();
-          valueDisplay.style.color = '#4CAF50';
         }
       } else {
         valueDisplay.textContent = '—';
@@ -545,7 +544,6 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           valueDisplay.classList.add('alarm-flash-error');
         } else {
           valueDisplay.textContent = `${state.state} ${unit}`.trim();
-          valueDisplay.style.color = '#4CAF50';
         }
       }
     });

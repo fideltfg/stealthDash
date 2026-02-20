@@ -440,7 +440,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
           ` : ''}
         </div>
         <div><subtitle>${container.Image}</subtitle></div>
-        <div class="docker-button-group">
+        <div class="button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
               <button class=" btn btn-small btn-danger" data-action="stop" data-id="${shortId}">

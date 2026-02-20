@@ -2,6 +2,7 @@ import type { MultiDashboardState } from '../types/types';
 import { authService } from './auth';
 import { getDefaultMultiDashboardState } from '../components/storage';
 import { sanitizeDashboardState } from '../utils/sanitizeWidgets';
+import { dashboardSyncService } from './dashboardSync';
 
 /**
  * Dashboard storage service - server only (no localStorage).
@@ -10,8 +11,9 @@ import { sanitizeDashboardState } from '../utils/sanitizeWidgets';
 class DashboardStorageService {
   private saveTimeout: number | undefined;
   private lastSaveTime: number = 0;
-  private readonly SAVE_DEBOUNCE_MS = 2000; // 2 seconds
-  private readonly MIN_SAVE_INTERVAL_MS = 5000; // Minimum 5 seconds between saves
+  private dashboardVersions: Map<string, number> = new Map(); // Per-dashboard versions
+  private readonly SAVE_DEBOUNCE_MS = 1000; // 1 second (reduced from 2)
+  private readonly MIN_SAVE_INTERVAL_MS = 3000; // Minimum 3 seconds between saves (reduced from 5)
 
   /**
    * Load dashboard state from server (no localStorage fallback)
@@ -19,11 +21,21 @@ class DashboardStorageService {
   async loadDashboards(): Promise<MultiDashboardState> {
     if (authService.isAuthenticated()) {
       try {
-       // console.log('🔄 Loading dashboards from server...');
         const serverData = await authService.loadDashboard();
         
         if (serverData && serverData.dashboards && serverData.dashboards.length > 0) {
-         // console.log('✅ Loaded', serverData.dashboards.length, 'dashboards from server');
+          // Store per-dashboard versions from server
+          if (serverData.dashboards) {
+            for (const dashboard of serverData.dashboards) {
+              if (dashboard.updatedAt) {
+                const version = Math.floor(dashboard.updatedAt / 1000); // Convert to seconds
+                this.dashboardVersions.set(dashboard.id, version);
+                dashboardSyncService.updateDashboardVersion(dashboard.id, version);
+              }
+            }
+          }
+          console.log('📥 Loaded dashboards with versions:', 
+                      Array.from(this.dashboardVersions.entries()).map(([id, v]) => `${id}:${v}`).join(', '));
           return serverData;
         } else {
           console.log('⚠️  No dashboards on server, creating default');
@@ -44,8 +56,18 @@ class DashboardStorageService {
 
   /**
    * Save dashboard state to server only (no localStorage)
+   * Will refuse to save if the sync service indicates we are out of sync.
+   * @param modifiedDashboardId - If provided, broadcasts an update for this specific dashboard
+   *   to other tabs. Only pass this when the dashboard CONTENT was actually changed 
+   *   (not for metadata-only changes like switching the active dashboard).
    */
-  async saveDashboards(state: MultiDashboardState, immediate: boolean = false): Promise<void> {
+  async saveDashboards(state: MultiDashboardState, immediate: boolean = false, modifiedDashboardId?: string): Promise<void> {
+    // Block saves if this tab is out of sync for the active dashboard
+    if (dashboardSyncService.isOutOfSync()) {
+      console.warn('⚠️  Blocked save - dashboard is out of sync with another tab');
+      return;
+    }
+
     // Deduplicate dashboards before saving
     const dashboardMap = new Map();
     for (const dashboard of state.dashboards) {
@@ -69,9 +91,9 @@ class DashboardStorageService {
     // Save to server if authenticated
     if (authService.isAuthenticated()) {
       if (immediate) {
-        await this.saveToServerNow(cleanState);
+        await this.saveToServerNow(cleanState, modifiedDashboardId);
       } else {
-        this.debouncedSaveToServer(cleanState);
+        this.debouncedSaveToServer(cleanState, modifiedDashboardId);
       }
     } else {
       console.warn('⚠️  Not authenticated, cannot save to server');
@@ -81,7 +103,7 @@ class DashboardStorageService {
   /**
    * Debounced save to server to avoid excessive API calls
    */
-  private debouncedSaveToServer(state: MultiDashboardState): void {
+  private debouncedSaveToServer(state: MultiDashboardState, modifiedDashboardId?: string): void {
     // Clear existing timeout
     if (this.saveTimeout !== undefined) {
       clearTimeout(this.saveTimeout);
@@ -95,13 +117,13 @@ class DashboardStorageService {
       // Too soon, schedule for later
       const delay = this.MIN_SAVE_INTERVAL_MS - timeSinceLastSave + this.SAVE_DEBOUNCE_MS;
       this.saveTimeout = window.setTimeout(() => {
-        this.saveToServerNow(state);
+        this.saveToServerNow(state, modifiedDashboardId);
         this.saveTimeout = undefined;
       }, delay);
     } else {
       // Enough time has passed, schedule with normal debounce
       this.saveTimeout = window.setTimeout(() => {
-        this.saveToServerNow(state);
+        this.saveToServerNow(state, modifiedDashboardId);
         this.saveTimeout = undefined;
       }, this.SAVE_DEBOUNCE_MS);
     }
@@ -110,13 +132,43 @@ class DashboardStorageService {
   /**
    * Immediate save to server
    */
-  private async saveToServerNow(state: MultiDashboardState): Promise<void> {
+  private async saveToServerNow(state: MultiDashboardState, modifiedDashboardId?: string): Promise<void> {
     try {
       this.lastSaveTime = Date.now();
-      const success = await authService.saveDashboard(state);
       
-      if (!success) {
-        console.warn('⚠️  Failed to save dashboards to server (saved to localStorage only)');
+      // Build per-dashboard version map for conflict detection
+      const dashboardVersions: Record<string, number> = {};
+      for (const dashboard of state.dashboards) {
+        const version = this.dashboardVersions.get(dashboard.id);
+        if (version !== undefined) {
+          dashboardVersions[dashboard.id] = version;
+        }
+      }
+      
+      const result = await authService.saveDashboard(state, undefined);
+      
+      if (result.success) {
+        // Update versions for all dashboards
+        for (const dashboard of state.dashboards) {
+          const newVersion = Math.floor(Date.now() / 1000);
+          this.dashboardVersions.set(dashboard.id, newVersion);
+          dashboardSyncService.updateDashboardVersion(dashboard.id, newVersion);
+        }
+        
+        console.log('📤 Saved dashboards successfully');
+        
+        // Only broadcast if a specific dashboard's content was modified
+        // (not for metadata-only saves like switching the active dashboard)
+        if (modifiedDashboardId) {
+          const version = this.dashboardVersions.get(modifiedDashboardId);
+          dashboardSyncService.broadcastDashboardUpdate(modifiedDashboardId, version);
+        }
+      } else if (result.conflict) {
+        console.warn('⚠️  Version conflict detected! Dashboard was modified elsewhere.');
+        // Don't reload the page - let the Dashboard class handle this via sync service
+        // The other tab that made the change has already broadcast the update
+      } else {
+        console.warn('⚠️  Failed to save dashboards to server');
       }
     } catch (error) {
       console.error('❌ Error saving dashboards to server:', error);
@@ -134,6 +186,8 @@ class DashboardStorageService {
         if (!success) {
           console.warn('⚠️  Failed to delete dashboard from server');
         }
+        // Remove version tracking for deleted dashboard
+        this.dashboardVersions.delete(dashboardId);
         return success;
       } catch (error) {
         console.error('❌ Error deleting dashboard from server:', error);
@@ -145,22 +199,18 @@ class DashboardStorageService {
   }
 
   /**
-   * Force synchronization with server
+   * Get the version for a specific dashboard
    */
-  async syncWithServer(): Promise<boolean> {
-    if (!authService.isAuthenticated()) {
-      return false;
-    }
+  getDashboardVersion(dashboardId: string): number | undefined {
+    return this.dashboardVersions.get(dashboardId);
+  }
 
-    try {
-      console.log('🔄 Syncing with server...');
-      // Load fresh data from server
-      await this.loadDashboards();
-      console.log('✅ Sync complete');
-      return true;
-    } catch (error) {
-      console.error('❌ Sync failed:', error);
-      return false;
+  /**
+   * Clean up resources
+   */
+  destroy(): void {
+    if (this.saveTimeout !== undefined) {
+      clearTimeout(this.saveTimeout);
     }
   }
 }

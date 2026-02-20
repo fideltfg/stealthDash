@@ -53,6 +53,7 @@ class AuthService {
       try {
         this.user = JSON.parse(userJson);
       } catch (e) {
+        console.warn('⚠️  Failed to parse cached user data, clearing storage');
         this.clearStorage();
       }
     }
@@ -221,8 +222,8 @@ class AuthService {
     }
   }
 
-  async saveDashboard(dashboardData: any): Promise<boolean> {
-    if (!this.token) return false;
+  async saveDashboard(dashboardData: any, clientVersion?: number): Promise<{ success: boolean; conflict?: boolean; version?: number }> {
+    if (!this.token) return { success: false };
 
     try {
       const response = await fetch(`${this.baseUrl}/dashboard/save`, {
@@ -231,19 +232,24 @@ class AuthService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.token}`
         },
-        body: JSON.stringify({ dashboardData })
+        body: JSON.stringify({ dashboardData, clientVersion })
       });
 
       const data = await response.json();
+      
+      if (response.status === 409) {
+        // Version conflict
+        return { success: false, conflict: true };
+      }
+      
       if (data.success) {
-        //console.log('✅ Dashboard saved to server successfully');
-        return true;
+        return { success: true, version: data.version };
       }
       console.error('❌ Failed to save dashboard:', data.error);
-      return false;
+      return { success: false };
     } catch (error) {
       console.error('❌ Save dashboard error:', error);
-      return false;
+      return { success: false };
     }
   }
 
@@ -258,7 +264,7 @@ class AuthService {
       const data = await response.json();
       if (data.success && data.data) {
        // console.log('✅ Dashboard loaded from server:', data.data.dashboards.length, 'dashboards');
-        return data.data;
+        return data.data; // Includes version field
       }
       return null;
     } catch (error) {

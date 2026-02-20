@@ -194,7 +194,7 @@ export class AuthUI {
     }
   }
 
-  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void, onHelpClick?: () => void): HTMLElement {
+  createUserMenu(user: User, onSettingsClick?: () => void, onAdminClick?: () => void, onManageDashboardsClick?: () => void, onCredentialsClick?: () => void, onHelpClick?: () => void, onCloseOtherSessionsClick?: () => void): HTMLElement {
     const container = document.createElement('div');
     container.className = 'user-menu';
 
@@ -219,6 +219,10 @@ export class AuthUI {
           <button id="help-btn" class="user-dropdown-button">
             <span>❓</span>
             <span>Help</span>
+          </button>
+          <button id="close-sessions-btn" class="user-dropdown-button">
+            <span>🚪</span>
+            <span>Close Other Sessions</span>
           </button>
           <button id="settings-btn" class="user-dropdown-button user-dropdown-button-primary">
             <span>⚙️</span>
@@ -300,6 +304,16 @@ export class AuthUI {
         dropdown.classList.remove('visible');
         toggle.style.transform = 'scale(1)';
         onHelpClick();
+      });
+    }
+
+    // Close Other Sessions button
+    const closeSessionsBtn = dropdown.querySelector('#close-sessions-btn') as HTMLButtonElement;
+    if (closeSessionsBtn && onCloseOtherSessionsClick) {
+      closeSessionsBtn.addEventListener('click', () => {
+        dropdown.classList.remove('visible');
+        toggle.style.transform = 'scale(1)';
+        onCloseOtherSessionsClick();
       });
     }
 

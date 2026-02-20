@@ -5,13 +5,40 @@ const { authMiddleware } = require('../src/auth');
 
 // Save entire multi-dashboard state
 router.post('/save', authMiddleware, async (req, res) => {
-  const { dashboardData } = req.body;
+  const { dashboardData, clientVersion, dashboardVersions } = req.body;
   
   if (!dashboardData || !dashboardData.dashboards || !dashboardData.activeDashboardId) {
     return res.status(400).json({ error: 'Invalid dashboard data format' });
   }
   
   try {
+    // Check for version conflicts on specific dashboards being saved
+    if (dashboardVersions && Object.keys(dashboardVersions).length > 0) {
+      const dashboardIds = Object.keys(dashboardVersions);
+      
+      // Get server versions for these specific dashboards
+      const serverVersionCheck = await db.query(
+        `SELECT dashboard_id, EXTRACT(EPOCH FROM updated_at) as version 
+         FROM dashboards 
+         WHERE user_id = $1 AND dashboard_id = ANY($2)`,
+        [req.user.userId, dashboardIds]
+      );
+      
+      // Check if any of the dashboards being saved have been modified on the server
+      for (const row of serverVersionCheck.rows) {
+        const clientDashVersion = dashboardVersions[row.dashboard_id];
+        if (clientDashVersion && row.version > clientDashVersion) {
+          console.warn('⚠️  Dashboard conflict detected:', row.dashboard_id, 
+                       'client=', clientDashVersion, 'server=', row.version);
+          return res.status(409).json({ 
+            error: 'Version conflict', 
+            message: 'Dashboard was modified elsewhere. Please reload to get latest changes.',
+            conflictDashboardId: row.dashboard_id
+          });
+        }
+      }
+    }
+    
     // Log incoming data for debugging
     console.log('📥 Received save request with', dashboardData.dashboards.length, 'dashboards');
     const dashboardIds = dashboardData.dashboards.map(d => d.id);
@@ -78,8 +105,27 @@ router.post('/save', authMiddleware, async (req, res) => {
     `, [req.user.userId, dashboardData.activeDashboardId]);
     
     await db.query('COMMIT');
+    
+    // Get the updated versions for all saved dashboards
+    const versionResult = await db.query(
+      `SELECT dashboard_id, EXTRACT(EPOCH FROM updated_at) as version 
+       FROM dashboards 
+       WHERE user_id = $1 AND dashboard_id = ANY($2)`,
+      [req.user.userId, uniqueDashboards.map(d => d.id)]
+    );
+    
+    // Build per-dashboard version map
+    const updatedDashboardVersions = {};
+    for (const row of versionResult.rows) {
+      updatedDashboardVersions[row.dashboard_id] = row.version;
+    }
+    
     console.log('✅ Successfully saved', uniqueDashboards.length, 'dashboards for user', req.user.userId);
-    res.json({ success: true, message: 'Dashboards saved successfully' });
+    res.json({ 
+      success: true, 
+      message: 'Dashboards saved successfully',
+      dashboardVersions: updatedDashboardVersions
+    });
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('❌ Save dashboard error:', error);
@@ -120,12 +166,18 @@ router.get('/load', authMiddleware, async (req, res) => {
     const activeDashboard = result.rows.find(row => row.is_active);
     const activeDashboardId = activeDashboard ? activeDashboard.dashboard_id : dashboards[0].id;
     
+    // Get the version (latest updated_at timestamp)
+    const versionResult = await db.query(
+      'SELECT MAX(EXTRACT(EPOCH FROM updated_at)) as version FROM dashboards WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
     res.json({
       success: true,
       data: {
         dashboards,
         activeDashboardId,
-        version: 1
+        version: versionResult.rows[0]?.version || Date.now() / 1000
       }
     });
   } catch (error) {
@@ -164,6 +216,22 @@ router.post('/save-single', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Save single dashboard error:', error);
     res.status(500).json({ error: 'Failed to save dashboard' });
+  }
+});
+
+// Check current version without loading all data (lightweight)
+router.get('/version', authMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT MAX(EXTRACT(EPOCH FROM updated_at)) as version FROM dashboards WHERE user_id = $1',
+      [req.user.userId]
+    );
+    
+    const version = result.rows[0]?.version || Date.now() / 1000;
+    res.json({ success: true, version });
+  } catch (error) {
+    console.error('Version check error:', error);
+    res.status(500).json({ error: 'Failed to check version' });
   }
 });
 

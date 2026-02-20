@@ -325,7 +325,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     container.innerHTML = '';
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'card-list';
+    wrapper.className = 'list';
 
       // Last updated with icon
     if (content.lastUpdated) {
