@@ -583,8 +583,8 @@ class GoogleCalendarRenderer implements WidgetRenderer {
     return date.toDateString() === tomorrow.toDateString();
   }
 
-  destroy(widget: Widget): void {
-    this.poller.stop(widget.id);
+  destroy(): void {
+    this.poller.stopAll();
   }
 }
 

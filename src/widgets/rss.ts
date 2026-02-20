@@ -15,6 +15,10 @@ interface RssFeedItem {
 export class RssWidgetRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
 
+  destroy(): void {
+    this.poller.stopAll();
+  }
+
   configure(widget: Widget): void {
     const content = widget.content as { feedUrl?: string; maxItems?: number; refreshInterval?: number };
     

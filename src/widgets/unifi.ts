@@ -1500,12 +1500,10 @@ class UnifiRenderer implements WidgetRenderer {
     }
   }
 
-  destroy(widget: Widget): void {
-    const interval = this.updateIntervals.get(widget.id);
-    if (interval) {
-      clearInterval(interval);
-      this.updateIntervals.delete(widget.id);
-    }
+  destroy(): void {
+    this.poller.stopAll();
+    this.updateIntervals.forEach(id => clearInterval(id));
+    this.updateIntervals.clear();
   }
 }
 

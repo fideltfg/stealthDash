@@ -188,10 +188,10 @@ class AuthService {
     return r.success && r.data.data ? r.data.data : null;
   }
 
-  async saveSingleDashboard(dashboardId: string, name: string, state: any, isActive: boolean): Promise<boolean> {
-    if (!this.token) return false;
-    const r = await this.post('/dashboard/save-single', { dashboardId, name, state, isActive });
-    return r.success;
+  async saveSingleDashboard(dashboardId: string, name: string, state: any): Promise<{ success: boolean; version?: number }> {
+    if (!this.token) return { success: false };
+    const r = await this.post('/dashboard/save-single', { dashboardId, name, state });
+    return r.success ? { success: true, version: r.data.version } : { success: false };
   }
 
   async deleteDashboard(dashboardId: string): Promise<boolean> {

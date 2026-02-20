@@ -4,6 +4,7 @@ export interface WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void;
   configure?(widget: Widget): void; // Optional configuration method
   getHeaderButtons?(widget: Widget): HTMLElement[]; // Optional method to provide custom header buttons
+  destroy?(): void; // Optional: stop all polling/intervals when dashboard switches
 }
 
 // Plugin interface for self-registering widgets
@@ -45,4 +46,17 @@ export function getAllWidgetPlugins(): WidgetPlugin[] {
 // Get all registered widget types
 export function getRegisteredWidgetTypes(): string[] {
   return Array.from(widgetRegistry.keys());
+}
+
+// Stop all polling/intervals across all registered widget renderers
+export function cleanupAllWidgets(): void {
+  widgetRegistry.forEach((plugin) => {
+    if (plugin.renderer.destroy) {
+      try {
+        plugin.renderer.destroy();
+      } catch (error) {
+        console.error(`Error cleaning up widget ${plugin.type}:`, error);
+      }
+    }
+  });
 }

@@ -12,6 +12,10 @@ interface PingResult {
 
 export class UptimeWidgetRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
+
+  destroy(): void {
+    this.poller.stopAll();
+  }
   private pingHistory: Map<string, PingResult[]> = new Map();
 
   configure(widget: Widget): void {

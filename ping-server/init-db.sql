@@ -67,12 +67,29 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Conditional updated_at trigger for dashboards
+-- Only bumps updated_at when dashboard_data or name actually change
+CREATE OR REPLACE FUNCTION update_dashboard_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only bump updated_at when actual content changes
+    IF OLD.dashboard_data IS DISTINCT FROM NEW.dashboard_data
+       OR OLD.name IS DISTINCT FROM NEW.name THEN
+        NEW.updated_at = CURRENT_TIMESTAMP;
+    ELSE
+        -- Preserve existing updated_at for metadata-only changes (is_active, etc.)
+        NEW.updated_at = OLD.updated_at;
+    END IF;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Create triggers
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_dashboards_updated_at BEFORE UPDATE ON dashboards
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    FOR EACH ROW EXECUTE FUNCTION update_dashboard_updated_at();
 
 CREATE TRIGGER update_credentials_updated_at BEFORE UPDATE ON credentials
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

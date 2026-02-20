@@ -356,6 +356,10 @@ class UnifiSensorRenderer implements WidgetRenderer {
   cleanup(widget: Widget): void {
     this.poller.stop(widget.id);
   }
+
+  destroy(): void {
+    this.poller.stopAll();
+  }
 }
 
 // Export the widget with metadata

@@ -81,14 +81,14 @@ router.post('/save', authMiddleware, async (req, res) => {
       const isActive = dashboard.id === dashboardData.activeDashboardId;
       
       // Insert/Update dashboard data WITHOUT setting is_active yet
+      // The database trigger only bumps updated_at when data/name actually change
       await db.query(`
         INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active)
         VALUES ($1, $2, $3, $4, false)
         ON CONFLICT (user_id, dashboard_id) 
         DO UPDATE SET 
           name = EXCLUDED.name,
-          dashboard_data = EXCLUDED.dashboard_data,
-          updated_at = CURRENT_TIMESTAMP
+          dashboard_data = EXCLUDED.dashboard_data
       `, [
         req.user.userId,
         dashboard.id,
@@ -188,31 +188,33 @@ router.get('/load', authMiddleware, async (req, res) => {
 
 // Save a single dashboard (for incremental updates)
 router.post('/save-single', authMiddleware, async (req, res) => {
-  const { dashboardId, name, state, isActive } = req.body;
+  const { dashboardId, name, state } = req.body;
   
   if (!dashboardId || !state) {
     return res.status(400).json({ error: 'Dashboard ID and state are required' });
   }
   
   try {
-    await db.query(`
+    // Save only this dashboard's data. The trigger only bumps updated_at when data/name change.
+    // is_active is NOT modified here — active dashboard is managed per-tab via sessionStorage.
+    const result = await db.query(`
       INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, false)
       ON CONFLICT (user_id, dashboard_id) 
       DO UPDATE SET 
         name = EXCLUDED.name,
-        dashboard_data = EXCLUDED.dashboard_data,
-        is_active = EXCLUDED.is_active,
-        updated_at = CURRENT_TIMESTAMP
+        dashboard_data = EXCLUDED.dashboard_data
+      RETURNING EXTRACT(EPOCH FROM updated_at) as version
     `, [
       req.user.userId,
       dashboardId,
       name || 'Dashboard',
-      JSON.stringify(state),
-      isActive || false
+      JSON.stringify(state)
     ]);
     
-    res.json({ success: true, message: 'Dashboard saved successfully' });
+    const version = result.rows[0]?.version ? parseFloat(result.rows[0].version) : undefined;
+    
+    res.json({ success: true, message: 'Dashboard saved successfully', version });
   } catch (error) {
     console.error('Save single dashboard error:', error);
     res.status(500).json({ error: 'Failed to save dashboard' });

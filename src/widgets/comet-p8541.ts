@@ -915,6 +915,14 @@ export class CometP8541Renderer implements WidgetRenderer {
     });
   }
 
+  destroy(): void {
+    this.poller.stopAll();
+    this.abortControllers.forEach(c => c.abort());
+    this.abortControllers.clear();
+    this.gauges.forEach(g => { if (g && typeof g.destroy === 'function') g.destroy(); });
+    this.gauges.clear();
+  }
+
   private setupCleanupObserver(container: HTMLElement, widgetId: string): void {
     const observer = new MutationObserver(() => {
       if (!document.body.contains(container)) {

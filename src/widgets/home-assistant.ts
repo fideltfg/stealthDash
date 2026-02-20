@@ -1252,6 +1252,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     this.entityStates.delete(widgetId);
   }
 
+  destroy(): void {
+    this.poller.stopAll();
+    this.entityStates.clear();
+  }
+
   private createSection(label: string, group: EntityGroup | null, widget: Widget): HTMLElement {
     const section = document.createElement('div');
     section.className = 'card';

@@ -7,13 +7,16 @@ import { dashboardSyncService } from './dashboardSync';
 /**
  * Dashboard storage service - server only (no localStorage).
  * Server storage is the single source of truth when authenticated.
+ * 
+ * Key design: only the active dashboard is saved per operation.
+ * Each tab manages its own active dashboard independently via sessionStorage.
  */
 class DashboardStorageService {
   private saveTimeout: number | undefined;
   private lastSaveTime: number = 0;
   private dashboardVersions: Map<string, number> = new Map(); // Per-dashboard versions
-  private readonly SAVE_DEBOUNCE_MS = 1000; // 1 second (reduced from 2)
-  private readonly MIN_SAVE_INTERVAL_MS = 3000; // Minimum 3 seconds between saves (reduced from 5)
+  private readonly SAVE_DEBOUNCE_MS = 1000;
+  private readonly MIN_SAVE_INTERVAL_MS = 3000;
 
   /**
    * Load dashboard state from server (no localStorage fallback)
@@ -173,6 +176,83 @@ class DashboardStorageService {
       }
     } catch (error) {
       console.error('❌ Error saving dashboards to server:', error);
+    }
+  }
+
+  /**
+   * Save only the active dashboard to the server (not all dashboards).
+   * This is the primary save method used by persistState.
+   * @param state - The full multi-dashboard state (only the active dashboard is extracted and saved)
+   * @param immediate - If true, save immediately; if false, debounce
+   * @param notifyTabs - If true, broadcast the change to other tabs via sync service
+   */
+  async saveActiveDashboard(state: MultiDashboardState, immediate: boolean = true, notifyTabs: boolean = false): Promise<void> {
+    if (dashboardSyncService.isOutOfSync()) {
+      console.warn('⚠️  Blocked save - dashboard is out of sync with another tab');
+      return;
+    }
+
+    if (!authService.isAuthenticated()) {
+      console.warn('⚠️  Not authenticated, cannot save to server');
+      return;
+    }
+
+    const activeDashboard = state.dashboards.find(d => d.id === state.activeDashboardId);
+    if (!activeDashboard) return;
+
+    // Sanitize the single dashboard state
+    const cleanSingleState = sanitizeDashboardState({
+      ...state,
+      dashboards: [activeDashboard]
+    });
+    const cleanDashboard = cleanSingleState.dashboards[0];
+    if (!cleanDashboard) return;
+
+    const dashboardId = activeDashboard.id;
+    const name = activeDashboard.name;
+    const dashboardState = cleanDashboard.state;
+
+    const doSave = async () => {
+      try {
+        this.lastSaveTime = Date.now();
+        const result = await authService.saveSingleDashboard(dashboardId, name, dashboardState);
+
+        if (result.success) {
+          // Update version from server response
+          if (result.version !== undefined) {
+            this.dashboardVersions.set(dashboardId, result.version);
+            dashboardSyncService.updateDashboardVersion(dashboardId, result.version);
+          }
+          console.log('📤 Saved dashboard', dashboardId, 'successfully');
+          
+          if (notifyTabs) {
+            const version = this.dashboardVersions.get(dashboardId);
+            dashboardSyncService.broadcastDashboardUpdate(dashboardId, version);
+          }
+        } else {
+          console.warn('⚠️  Failed to save dashboard', dashboardId);
+        }
+      } catch (error) {
+        console.error('❌ Error saving dashboard to server:', error);
+      }
+    };
+
+    if (immediate) {
+      await doSave();
+    } else {
+      // Debounce
+      if (this.saveTimeout !== undefined) {
+        clearTimeout(this.saveTimeout);
+      }
+      const now = Date.now();
+      const timeSinceLastSave = now - this.lastSaveTime;
+      const delay = timeSinceLastSave < this.MIN_SAVE_INTERVAL_MS
+        ? this.MIN_SAVE_INTERVAL_MS - timeSinceLastSave + this.SAVE_DEBOUNCE_MS
+        : this.SAVE_DEBOUNCE_MS;
+      this.saveTimeout = window.setTimeout(() => {
+        doSave();
+        this.saveTimeout = undefined;
+      }, delay);
     }
   }
 

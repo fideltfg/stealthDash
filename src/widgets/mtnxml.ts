@@ -19,6 +19,10 @@ export interface MTNXMLContent extends WidgetContent {
 class MTNXMLWidgetRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
 
+  destroy(): void {
+    this.poller.stopAll();
+  }
+
   configure(widget: Widget): void {
     const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
     if (container) {

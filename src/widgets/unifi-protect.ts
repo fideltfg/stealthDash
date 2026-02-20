@@ -685,14 +685,10 @@ class UnifiProtectRenderer implements WidgetRenderer {
     `;
   }
 
-  destroy(widget: Widget): void {
-    this.poller.stop(widget.id);
-
-    const stream = this.eventStreams.get(widget.id);
-    if (stream) {
-      stream.close();
-      this.eventStreams.delete(widget.id);
-    }
+  destroy(): void {
+    this.poller.stopAll();
+    this.eventStreams.forEach(stream => stream.close());
+    this.eventStreams.clear();
   }
 }
 

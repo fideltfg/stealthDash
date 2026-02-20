@@ -41,6 +41,10 @@ interface PiholeSummary {
 class PiholeRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
 
+  destroy(): void {
+    this.poller.stopAll();
+  }
+
   configure(widget: Widget): void {
     this.showConfigDialog(widget);
   }
