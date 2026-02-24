@@ -343,7 +343,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         
         const ungroupOption = document.createElement('div');
         ungroupOption.className = 'ha-context-menu-item';
-        ungroupOption.textContent = '↑ Ungroup';
+        ungroupOption.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i> Ungroup';
         
         ungroupOption.addEventListener('click', async () => {
           await this.moveEntityToGroup(widget, entity.entity_id, groupId, 'ungrouped');
@@ -456,7 +456,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         const stateValue = state.state.toLowerCase();
         
         if (stateValue === 'unavailable' || stateValue === 'unknown') {
-          valueDisplay.textContent = `⚠ ERROR`;
+          valueDisplay.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ERROR`;
           valueDisplay.classList.add('alarm-flash-error');
         } else {
           valueDisplay.textContent = `${state.state} ${unit}`.trim();
@@ -521,7 +521,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         valueDisplay.style.removeProperty('background-color');
         
         if (stateValue === 'unavailable' || stateValue === 'unknown') {
-          valueDisplay.textContent = `⚠ ERROR`;
+          valueDisplay.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ERROR`;
           valueDisplay.classList.add('alarm-flash-error');
         } else {
           valueDisplay.textContent = `${state.state} ${unit}`.trim();

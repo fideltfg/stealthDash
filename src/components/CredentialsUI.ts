@@ -13,12 +13,12 @@ export class CredentialsUI {
     dialog.innerHTML = `
       <div class="dialog-container credentials-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">🔐 Credential Management</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-key"></i> Credential Management</h2>
           <button id="close-credentials" class="dialog-close-button">×</button>
         </div>
 
         <div class="credentials-add-section">
-          <button id="add-credential-btn" class="btn btn-success credentials-add-button">➕ Add New Credential</button>
+          <button id="add-credential-btn" class="btn btn-success credentials-add-button"><i class="fa-solid fa-plus"></i> Add New Credential</button>
         </div>
 
         <div id="credentials-list" class="credentials-list">
@@ -27,7 +27,7 @@ export class CredentialsUI {
 
         ${this.credentials.length === 0 ? `
           <div class="credentials-empty">
-            <div class="credentials-empty-icon">🔑</div>
+            <div class="credentials-empty-icon"><i class="fa-solid fa-key"></i></div>
             <p class="credentials-empty-title">No credentials saved yet</p>
             <p class="credentials-empty-subtitle">Add credentials to securely store API keys, passwords, and tokens</p>
           </div>
@@ -77,13 +77,13 @@ export class CredentialsUI {
         </div>
         <div class="credentials-list-item-actions">
           <button class="test-credential-btn action-btn action-btn-info credential-action-btn" data-id="${cred.id}" title="Test credential">
-            🧪 Test
+            <i class="fa-solid fa-vial"></i> Test
           </button>
           <button class="edit-credential-btn action-btn action-btn-warning credential-action-btn" data-id="${cred.id}" title="Edit credential">
-            ✏️ Edit
+            <i class="fa-regular fa-pen-to-square"></i> Edit
           </button>
           <button class="delete-credential-btn action-btn action-btn-danger credential-action-btn" data-id="${cred.id}" title="Delete credential">
-            🗑️ Delete
+            <i class="fa-regular fa-trash-can"></i> Delete
           </button>
         </div>
       </div>
@@ -130,7 +130,7 @@ export class CredentialsUI {
     dialog.innerHTML = `
       <div class="dialog-container credential-form-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">➕ Add New Credential</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-plus"></i> Add New Credential</h2>
           <button id="close-create-credential" class="dialog-close-button">×</button>
         </div>
 
@@ -144,15 +144,15 @@ export class CredentialsUI {
             <label class="form-label">Service Type *</label>
             <select id="cred-service-type" required class="form-select">
               <option value="">Select service type...</option>
-              <option value="pihole">🛡️ Pi-hole</option>
-              <option value="unifi">📡 UniFi Controller</option>
-              <option value="home_assistant">🏠 Home Assistant</option>
-              <option value="google_calendar">📅 Google Calendar</option>
-              <option value="docker">🐋 Docker</option>
-              <option value="snmp">📊 SNMP</option>
-              <option value="api"><i class="fas fa-plug"></i> Generic API</option>
-              <option value="vnc">🖥️ VNC Server</option>
-              <option value="custom">⭐ Custom</option>
+              <option value="pihole">Pi-hole</option>
+              <option value="unifi">UniFi Controller</option>
+              <option value="home_assistant">Home Assistant</option>
+              <option value="google_calendar">Google Calendar</option>
+              <option value="docker">Docker</option>
+              <option value="snmp">SNMP</option>
+              <option value="api">Generic API</option>
+              <option value="vnc">VNC Server</option>
+              <option value="custom">Custom</option>
             </select>
           </div>
 
@@ -215,7 +215,7 @@ export class CredentialsUI {
       container.innerHTML = `
         <div class="credential-info-box">
           <p class="credential-info-text">
-            ℹ️ Custom credentials can store any key-value pairs. You'll need to manually enter the JSON data.
+                        <i class="fa-solid fa-circle-info"></i> Custom credentials can store any key-value pairs. You'll need to manually enter the JSON data.
           </p>
         </div>
         <div class="form-group">
@@ -315,7 +315,7 @@ export class CredentialsUI {
       dialog.innerHTML = `
         <div class="dialog-container credential-form-container">
           <div class="dialog-header">
-            <h2 class="dialog-title">✏️ Edit Credential</h2>
+            <h2 class="dialog-title"><i class="fa-regular fa-pen-to-square"></i> Edit Credential</h2>
             <button id="close-edit-credential" class="dialog-close-button">×</button>
           </div>
 
@@ -462,12 +462,12 @@ export class CredentialsUI {
       const result = await credentialsService.test(id);
       
       if (result.valid) {
-        this.showNotification(`✅ ${result.message}`, 'success');
+        this.showNotification(`<i class="fa-solid fa-circle-check"></i> ${result.message}`, 'success');
       } else {
-        this.showNotification(`⚠️ ${result.message}`, 'warning');
+        this.showNotification(`<i class="fa-solid fa-triangle-exclamation"></i> ${result.message}`, 'warning');
       }
     } catch (error: any) {
-      this.showNotification(`❌ Test failed: ${error.message}`, 'error');
+      this.showNotification(`<i class="fa-solid fa-circle-xmark"></i> Test failed: ${error.message}`, 'error');
     }
   }
 

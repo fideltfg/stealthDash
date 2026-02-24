@@ -91,7 +91,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   }
 
   private showEmptyState(container: HTMLElement, widget: Widget): void {
-    const btn = renderConfigPrompt(container, '🐋', 'Docker Containers', 'Configure Docker host to monitor containers');
+    const btn = renderConfigPrompt(container, '<i class="fa-brands fa-docker"></i>', 'Docker Containers', 'Configure Docker host to monitor containers');
     btn.addEventListener('click', () => this.showConfigDialog(widget));
   }
 
@@ -304,7 +304,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     } catch (error) {
       container.innerHTML = `
         <div class="widget-error-container centered">
-          <div class="widget-error-icon">⚠️</div>
+          <div class="widget-error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
           <div class="widget-error-title">Connection Error</div>
           <div class="widget-error-message">
             ${error instanceof Error ? error.message : 'Failed to connect to Docker host'}
@@ -325,7 +325,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
     if (containers.length === 0) {
       containersList.innerHTML = `
         <div class="widget-empty-state centered">
-          <div class="docker-empty-icon">📦</div>
+          <div class="docker-empty-icon"><i class="fa-solid fa-cube"></i></div>
           <div>No containers found</div>
         </div>
       `;

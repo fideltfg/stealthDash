@@ -243,7 +243,7 @@ class Dashboard {
     this.syncNotificationBanner.className = 'sync-notification-banner';
     this.syncNotificationBanner.innerHTML = `
       <div class="sync-notification-content">
-        <span class="sync-notification-icon">⚠️</span>
+        <span class="sync-notification-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
         <span class="sync-notification-message">
           This dashboard has been updated in another tab. Changes you make will not be saved.
         </span>
@@ -370,7 +370,7 @@ class Dashboard {
     
     const dashboardButton = document.createElement('button');
     dashboardButton.className = 'dashboard-switcher-button';
-    dashboardButton.innerHTML = '<span class="dashboard-switcher-icon">📊</span><span class="dashboard-switcher-text"></span>';
+    dashboardButton.innerHTML = '<span class="dashboard-switcher-icon"><i class="fa-solid fa-table-columns"></i></span><span class="dashboard-switcher-text"></span>';
     dashboardButton.setAttribute('aria-label', 'Switch dashboard');
     dashboardButton.setAttribute('title', 'Switch dashboard');
     
@@ -401,7 +401,7 @@ class Dashboard {
     // Menu Button (hamburger icon)
     const menuButton = document.createElement('button');
     menuButton.className = 'menu-button';
-    menuButton.innerHTML = '☰';
+    menuButton.innerHTML = '<i class="fa-solid fa-bars"></i>';
     menuButton.setAttribute('aria-label', 'Toggle menu');
     menuButton.setAttribute('title', 'Toggle menu');
     menuButton.addEventListener('click', () => this.toggleMenu());
@@ -425,7 +425,7 @@ class Dashboard {
     // Fullscreen Toggle
     const fullscreenToggle = document.createElement('button');
     fullscreenToggle.className = 'fullscreen-toggle';
-    fullscreenToggle.innerHTML = '⛶';
+    fullscreenToggle.innerHTML = '<i class="fa-solid fa-expand"></i>';
     fullscreenToggle.setAttribute('aria-label', 'Toggle fullscreen');
     fullscreenToggle.setAttribute('title', 'Toggle fullscreen');
     fullscreenToggle.addEventListener('click', () => {
@@ -447,7 +447,7 @@ class Dashboard {
     // Background Toggle
     const backgroundToggle = document.createElement('button');
     backgroundToggle.className = 'background-toggle';
-    backgroundToggle.innerHTML = '◫';
+    backgroundToggle.innerHTML = '<i class="fa-solid fa-border-all"></i>';
     backgroundToggle.setAttribute('aria-label', 'Change background pattern');
     backgroundToggle.setAttribute('title', 'Change background pattern');
     backgroundToggle.addEventListener('click', () => {
@@ -1750,7 +1750,7 @@ class Dashboard {
 
         const icon = document.createElement('div');
         icon.className = 'widget-type-icon';
-        icon.textContent = widgetMeta.icon;
+        icon.innerHTML = widgetMeta.icon;
 
         const content = document.createElement('div');
         content.className = 'widget-type-content';
@@ -1877,7 +1877,7 @@ class Dashboard {
     const manageItem = document.createElement('button');
     manageItem.className = 'dashboard-switcher-item manage';
     manageItem.innerHTML = `
-      <span class="dashboard-switcher-item-icon">⚙️</span>
+      <span class="dashboard-switcher-item-icon"><i class="fa-solid fa-gear"></i></span>
       <span class="dashboard-switcher-item-name">Manage Dashboards</span>
     `;
     manageItem.addEventListener('click', (e) => {
@@ -2020,7 +2020,7 @@ class Dashboard {
 
         const icon = document.createElement('div');
         icon.className = 'widget-type-icon';
-        icon.textContent = '📊';
+        icon.innerHTML = '<i class="fa-solid fa-table-columns"></i>';
 
         const itemContent = document.createElement('div');
         itemContent.className = 'widget-type-content';
@@ -2096,171 +2096,164 @@ class Dashboard {
   }
 
   private showHelpDialog(): void {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    const dialog = document.createElement('div');
+    dialog.id = 'help-dialog';
+    dialog.className = 'dialog';
 
-    const modal = document.createElement('div');
-    modal.className = 'modal help-modal';
-    modal.style.maxWidth = '800px';
+    dialog.innerHTML = `
+      <div class="dialog-container help-container">
+        <div class="dialog-header">
+          <h2 class="dialog-title"><i class="fa-solid fa-circle-question"></i> Dashboard Help</h2>
+          <button id="close-help" class="dialog-close-button">×</button>
+        </div>
 
-    const header = document.createElement('div');
-    header.className = 'modal-header';
-
-    const title = document.createElement('h2');
-    title.className = 'modal-title';
-    title.textContent = '❓ Dashboard Help';
-    header.appendChild(title);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close';
-    closeBtn.innerHTML = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', () => overlay.remove());
-    header.appendChild(closeBtn);
-
-    const content = document.createElement('div');
-    content.className = 'modal-content help-content';
-    
-    content.innerHTML = `
-      <div class="help-section">
-        <h3>🎛️ Dashboard Navigation</h3>
-        <ul>
-          <li>Click the dashboard name in the top-left corner or use a keyboard shortcut...</li>
-          <li>
+        <div class="help-content">
+          <div class="help-section">
+            <h3><i class="fa-solid fa-compass"></i> Dashboard Navigation</h3>
             <ul>
-              <li><kbd>Shift</kbd> + <kbd>1-9</kbd> - Jump to dashboard by number</li>
-              <li><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd> - Navigate previous/next dashboard</li>
+              <li><strong>Dashboard Switcher:</strong> Click the dashboard name in the top-left corner to see all dashboards</li>
+              <li><strong>Keyboard:</strong>
+                <ul>
+                  <li><kbd>Shift</kbd> + <kbd>1-9</kbd> — Jump to dashboard by number</li>
+                  <li><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd> — Navigate previous/next dashboard</li>
+                </ul>
+              </li>
+              <li><strong>Arrow Buttons:</strong> Click the <strong>‹</strong> / <strong>›</strong> arrows on the left/right edges of the screen</li>
+              <li><strong>Touch Gestures:</strong> Swipe left/right to switch dashboards</li>
             </ul>
-          </li>
-          <li><strong>Touch Gestures:</strong> Swipe left/right to switch dashboards</li>
-          <li><strong>Arrow Buttons:</strong> Click the arrows on the left/right edges of the screen</li>
-        </ul>
-      </div>
+          </div>
 
-      <div class="help-section">
-        <h3>🎨 Widgets</h3>
-        <ul>
-          <li><strong>Add Widget:</strong> Click the <strong>+</strong> button (bottom-left)</li>
-          <li><kbd>Shift</kbd> + Click to select a widget</li>
-          <li><kbd>Shift</kbd> + Click and drag the widget anywhere</li>
-          <li><strong>Resize Widget:</strong> Drag the edges or corners (hover to reveal handles)</li>
-          <li><strong>Configure:</strong> Click the ⚙️ icon in the widget header</li>
-          <li><strong>Copy to Dashboard:</strong> Click the 📋 icon to copy widget to another dashboard</li>
-          <li><strong>Delete:</strong> Click the × icon in the widget header</li>
-          <li><strong>Keyboard Movement:</strong>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-puzzle-piece"></i> Widgets</h3>
             <ul>
-              <li><kbd>Shift</kbd> + Click to select a widget</li>
-              <li>Arrow keys to move selected widget (hold <kbd>Shift</kbd> for 10x speed)</li>
-              <li><kbd>Esc</kbd> to deselect widget</li>
+              <li><strong>Add Widget:</strong> Click the <strong>+</strong> button (bottom-left controls)</li>
+              <li><strong>Select:</strong> Click a widget header to select it</li>
+              <li><strong>Move:</strong> Click and drag the widget header</li>
+              <li><strong>Resize:</strong> Hover to reveal edge/corner handles, then drag</li>
+              <li><strong>Configure:</strong> Click the <strong>⋮</strong> menu in the widget header → <i class="fa-solid fa-gear"></i> Configure</li>
+              <li><strong>Duplicate:</strong> <strong>⋮</strong> menu → <i class="fa-regular fa-copy"></i> Duplicate (creates a copy on the same dashboard)</li>
+              <li><strong>Copy to Dashboard:</strong> <strong>⋮</strong> menu → <i class="fa-regular fa-clipboard"></i> Copy to… (copy widget to another dashboard)</li>
+              <li><strong>Delete:</strong> <strong>⋮</strong> menu → <i class="fa-regular fa-trash-can"></i> Delete</li>
+              <li><strong>Keyboard Movement:</strong>
+                <ul>
+                  <li>Arrow keys move selected widget by 1 grid unit</li>
+                  <li>Hold <kbd>Shift</kbd> + Arrow keys for 10× speed</li>
+                  <li><kbd>Esc</kbd> to deselect widget</li>
+                </ul>
+              </li>
+              <li><strong>Grid Snap:</strong> Widgets automatically snap to the grid and to nearby widget edges</li>
             </ul>
-          </li>
-        </ul>
-      </div>
+          </div>
 
-      <div class="help-section">
-        <h3>🔒 Lock Mode</h3>
-        <ul>
-          <li><strong>Toggle Lock:</strong> Click the lock icon (top-right)</li>
-          <li><strong>Locked Mode:</strong> Prevents moving, resizing, or deleting widgets</li>
-          <li><strong>Use Case:</strong> Perfect for viewing dashboards without accidental changes</li>
-        </ul>
-      </div>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-lock"></i> Lock Mode</h3>
+            <ul>
+              <li><strong>Toggle Lock:</strong> Click the <i class="fas fa-lock"></i> lock icon (top-right)</li>
+              <li><strong>Locked Mode:</strong> Prevents moving, resizing, deleting widgets, and disables keyboard shortcuts</li>
+              <li><strong>Use Case:</strong> Perfect for viewing or presenting dashboards without accidental changes</li>
+            </ul>
+          </div>
 
-      <div class="help-section">
-        <h3>🔍 Canvas Controls</h3>
-        <ul>
-          <li><strong>Zoom:</strong> <kbd>Ctrl</kbd> + Mouse Wheel or pinch gesture</li>
-          <li><strong>Pan:</strong> Click and drag outside the canvas, on empty canvas areas, hold <kbd>Space</kbd> and drag anywhere, or use middle mouse button</li>
-          <li><strong>Reset Zoom:</strong> Click the <strong>1:1</strong> button (left menu)</li>
-          <li><strong>Reset View:</strong> Click the 🎯 button to center canvas</li>
-        </ul>
-      </div>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-magnifying-glass"></i> Canvas Controls</h3>
+            <ul>
+              <li><strong>Zoom:</strong> <kbd>Ctrl</kbd> + Mouse Wheel on empty canvas areas, or pinch gesture on touch</li>
+              <li><strong>Pan:</strong> Click and drag on empty canvas areas</li>
+              <li><strong>Spacebar Pan:</strong> Hold <kbd>Space</kbd> and drag anywhere on the canvas</li>
+              <li><strong>Middle Mouse Pan:</strong> Middle-click and drag anywhere</li>
+              <li><strong>Reset Zoom:</strong> Click the <strong>1:1</strong> button (left controls)</li>
+              <li><strong>Reset View:</strong> Click the <i class="fa-solid fa-group-arrows-rotate"></i> button (left controls) to return to the origin</li>
+              <li><strong>Fullscreen:</strong> Click the <i class="fa-solid fa-expand"></i> button (left controls) or press <kbd>F11</kbd></li>
+            </ul>
+          </div>
 
-      <div class="help-section">
-        <h3>🎭 Themes & Appearance</h3>
-        <ul>
-          <li><strong>Theme Toggle:</strong> Click the 🌓 button (left menu)</li>
-          <li><strong>Background Pattern:</strong> Click the ◫ button to cycle patterns</li>
-          <li><strong>Fullscreen:</strong> Click the ⛶ button or press <kbd>F11</kbd></li>
-        </ul>
-      </div>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-palette"></i> Themes & Appearance</h3>
+            <ul>
+              <li><strong>Theme Picker:</strong> Click the <i class="fa-solid fa-circle-half-stroke"></i> button (left controls) to choose from 13 themes</li>
+              <li><strong>Available Themes:</strong> Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, and System (auto-detects your OS preference)</li>
+              <li><strong>Background Pattern:</strong> Click the <i class="fa-solid fa-border-all"></i> button to cycle through Grid, Dots, Lines, and Solid</li>
+            </ul>
+          </div>
 
-      <div class="help-section">
-        <h3>🔐 Credentials & Security</h3>
-        <ul>
-          <li><strong>Credential Manager:</strong> Store API keys and tokens securely</li>
-          <li><strong>Access:</strong> User menu → Credentials</li>
-          <li><strong>Usage:</strong> Select stored credentials when configuring widgets</li>
-        </ul>
-      </div>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-key"></i> Credentials & Security</h3>
+            <ul>
+              <li><strong>Credential Manager:</strong> Securely store API keys, passwords, and tokens</li>
+              <li><strong>Access:</strong> User menu (top-right avatar) → <i class="fa-solid fa-key"></i> Credentials</li>
+              <li><strong>Supported Types:</strong> Pi-hole, UniFi, Home Assistant, Google Calendar, Docker, SNMP, Generic API, VNC, and Custom (JSON)</li>
+              <li><strong>Usage:</strong> Select stored credentials when configuring widgets — no need to re-enter keys</li>
+              <li><strong>Test:</strong> Use the <i class="fa-solid fa-vial"></i> Test button to verify a credential works before using it</li>
+            </ul>
+          </div>
 
-      <div class="help-section">
-        <h3>⌨️ Keyboard Shortcuts Summary</h3>
-        <table class="help-shortcuts-table">
-          <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr>
-          <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr>
-          <tr><td><kbd>Shift</kbd> + <kbd>1-9</kbd></td><td>Switch to dashboard</td></tr>
-          <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd></td><td>Navigate dashboards</td></tr>
-          <tr><td><kbd>Arrow Keys</kbd></td><td>Move selected widget</td></tr>
-          <tr><td><kbd>Alt</kbd> + <kbd>Arrow Keys</kbd></td><td>Resize selected widget</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Deselect widget</td></tr>
-        </table>
-      </div>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-table-columns"></i> Dashboard Management</h3>
+            <ul>
+              <li><strong>Access:</strong> User menu → <i class="fa-solid fa-sliders"></i> My Dashboards</li>
+              <li><strong>Create:</strong> Click <strong>+ New Dashboard</strong> to add a new dashboard</li>
+              <li><strong>Rename:</strong> Click the <i class="fa-solid fa-pen"></i> button next to any dashboard</li>
+              <li><strong>Public Sharing:</strong> Click the <i class="fa-solid fa-lock"></i> button to make a dashboard public and get a shareable URL</li>
+              <li><strong>Delete:</strong> Click the <i class="fa-regular fa-trash-can"></i> button (available when you have more than one dashboard)</li>
+            </ul>
+          </div>
 
-      <div class="help-section">
-        <h3>💡 Tips & Tricks</h3>
-        <ul>
-          <li>Use <strong>My Dashboards</strong> to organize widgets into separate dashboards</li>
-          <li>Lock the dashboard when presenting to prevent accidental edits</li>
-          <li>Store credentials once and reuse them across multiple widgets</li>
-          <li>Use the grid snap feature for perfectly aligned widgets</li>
-        </ul>
+          <div class="help-section">
+            <h3><i class="fa-solid fa-user"></i> User Menu</h3>
+            <ul>
+              <li><strong>Access:</strong> Click your avatar (top-right corner)</li>
+              <li><i class="fa-solid fa-sliders"></i> <strong>My Dashboards</strong> — Manage, rename, share, or delete dashboards</li>
+              <li><i class="fa-solid fa-key"></i> <strong>Credentials</strong> — Manage stored API keys and tokens</li>
+              <li><i class="fa-solid fa-circle-question"></i> <strong>Help</strong> — This help dialog</li>
+              <li><i class="fa-solid fa-gear"></i> <strong>Settings</strong> — Update email, change password, view account info</li>
+              <li><i class="fa-solid fa-crown"></i> <strong>Admin</strong> — User management and stats (administrators only)</li>
+              <li><i class="fa-solid fa-right-from-bracket"></i> <strong>Logout</strong> — Sign out of your account</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3><i class="fa-regular fa-keyboard"></i> Keyboard Shortcuts</h3>
+            <table class="help-shortcuts-table">
+              <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr>
+              <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr>
+              <tr><td><kbd>Shift</kbd> + <kbd>1-9</kbd></td><td>Jump to dashboard by number</td></tr>
+              <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd>/<kbd>→</kbd></td><td>Previous / next dashboard</td></tr>
+              <tr><td><kbd>Arrow Keys</kbd></td><td>Move selected widget (1 grid unit)</td></tr>
+              <tr><td><kbd>Shift</kbd> + <kbd>Arrow Keys</kbd></td><td>Move selected widget (10 grid units)</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td>Deselect widget</td></tr>
+              <tr><td><kbd>Space</kbd> (hold)</td><td>Pan mode — drag to pan the canvas</td></tr>
+              <tr><td><kbd>F11</kbd></td><td>Toggle fullscreen</td></tr>
+            </table>
+          </div>
+
+          <div class="help-section">
+            <h3><i class="fa-solid fa-lightbulb"></i> Tips & Tricks</h3>
+            <ul>
+              <li>Use <strong>My Dashboards</strong> to organize widgets across separate dashboards</li>
+              <li>Lock the dashboard when presenting to prevent accidental changes</li>
+              <li>Store credentials once and reuse them across multiple widgets</li>
+              <li>Widgets snap to the grid and to other widget edges for easy alignment</li>
+              <li>Make a dashboard public to share a read-only view with anyone via URL</li>
+              <li>Use <kbd>Ctrl</kbd> + <kbd>Z</kbd> to undo any accidental changes (up to 50 steps)</li>
+              <li>Set the theme to <strong>System</strong> to automatically match your OS light/dark preference</li>
+            </ul>
+          </div>
+        </div>
       </div>
     `;
 
-    modal.appendChild(header);
-    modal.appendChild(content);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
 
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-      }
+    // Close button
+    dialog.querySelector('#close-help')?.addEventListener('click', () => dialog.remove());
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.remove();
     });
   }
 
   private showDashboardManager(): void {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-
-    const header = document.createElement('div');
-    header.className = 'modal-header';
-
-    const title = document.createElement('h2');
-    title.className = 'modal-title';
-    title.textContent = 'My Dashboards';
-    header.appendChild(title);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close';
-    closeBtn.innerHTML = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', () => overlay.remove());
-    header.appendChild(closeBtn);
-
-    const content = document.createElement('div');
-    content.className = 'dashboard-manager-content';
-    content.style.cssText = `
-      padding: 20px;
-      max-height: 500px;
-      overflow-y: auto;
-    `;
-
     // Get all dashboards from current state
     if (!this.multiState) {
       console.error('No multiState available');
@@ -2270,117 +2263,119 @@ class Dashboard {
     const dashboards = this.multiState.dashboards;
     const activeDashboardId = this.multiState.activeDashboardId;
 
-    // Dashboard list
-    const listContainer = document.createElement('div');
-    listContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
+    const dialog = document.createElement('div');
+    dialog.id = 'dashboard-manager-dialog';
+    dialog.className = 'dialog';
+
+    dialog.innerHTML = `
+      <div class="dialog-container dashboard-manager-container">
+        <div class="dialog-header">
+          <h2 class="dialog-title"><i class="fa-solid fa-sliders"></i> My Dashboards</h2>
+          <button id="close-dashboard-manager" class="dialog-close-button">×</button>
+        </div>
+
+        <div class="dashboard-manager-list">
+          ${dashboards.map(dashboard => {
+            const isActive = dashboard.id === activeDashboardId;
+            const isPublic = (dashboard as any).isPublic || false;
+            return `
+              <div class="dashboard-manager-row ${isActive ? 'dashboard-manager-row-active' : ''}" data-dashboard-id="${dashboard.id}">
+                <span class="dashboard-manager-name ${isActive ? 'dashboard-manager-name-active' : ''}" data-dashboard-id="${dashboard.id}">
+                  ${dashboard.name}${isActive ? ' (Active)' : ''}
+                </span>
+                <button class="dashboard-manager-action-btn ${isPublic ? 'dashboard-manager-action-btn-public-active' : 'dashboard-manager-action-btn-public'} dm-public-btn" data-dashboard-id="${dashboard.id}" title="${isPublic ? 'Public (click to make private)' : 'Private (click to make public)'}">
+                  ${isPublic ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-lock"></i>'}
+                </button>
+                <button class="dashboard-manager-action-btn dashboard-manager-action-btn-rename dm-rename-btn" data-dashboard-id="${dashboard.id}" data-dashboard-name="${dashboard.name}" title="Rename">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                ${dashboards.length > 1 ? `
+                  <button class="dashboard-manager-action-btn dashboard-manager-action-btn-delete dm-delete-btn" data-dashboard-id="${dashboard.id}" data-dashboard-name="${dashboard.name}" title="Delete">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <button id="dm-add-btn" class="dashboard-manager-add-btn">+ New Dashboard</button>
+      </div>
     `;
 
-    dashboards.forEach(dashboard => {
-      const dashboardRow = document.createElement('div');
-      dashboardRow.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        background: var(--surface-hover);
-        border: 2px solid ${dashboard.id === activeDashboardId ? 'var(--accent)' : 'var(--border)'};
-        border-radius: 8px;
-        transition: border-color 0.2s;
-      `;
+    document.body.appendChild(dialog);
 
-      // Dashboard name (editable)
-      const nameSpan = document.createElement('span');
-      nameSpan.style.cssText = `
-        flex: 1;
-        font-weight: ${dashboard.id === activeDashboardId ? '600' : '400'};
-        color: var(--text);
-        cursor: pointer;
-      `;
-      nameSpan.textContent = dashboard.name + (dashboard.id === activeDashboardId ? ' (Active)' : '');
-      nameSpan.addEventListener('click', () => {
-        if (dashboard.id !== activeDashboardId) {
-          this.switchToDashboard(dashboard.id);
-          overlay.remove();
+    // Close button
+    dialog.querySelector('#close-dashboard-manager')?.addEventListener('click', () => dialog.remove());
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.remove();
+    });
+
+    // Dashboard name click - switch to dashboard
+    dialog.querySelectorAll('.dashboard-manager-name').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = (el as HTMLElement).dataset.dashboardId!;
+        if (id !== activeDashboardId) {
+          this.switchToDashboard(id);
+          dialog.remove();
         }
       });
+    });
 
-      // Rename button
-      const renameBtn = document.createElement('button');
-      renameBtn.innerHTML = '✏️';
-      renameBtn.title = 'Rename';
-      renameBtn.style.cssText = `
-        padding: 6px 10px;
-        background: var(--accent);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-      `;
-      renameBtn.addEventListener('click', async (e) => {
+    // Rename buttons
+    dialog.querySelectorAll('.dm-rename-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const newName = prompt('Enter new dashboard name:', dashboard.name);
+        const target = e.currentTarget as HTMLElement;
+        const dashId = target.dataset.dashboardId!;
+        const currentName = target.dataset.dashboardName!;
+        const newName = prompt('Enter new dashboard name:', currentName);
         if (newName && newName.trim()) {
-          // Update in current state
           if (this.multiState) {
-            const dash = this.multiState.dashboards.find(d => d.id === dashboard.id);
+            const dash = this.multiState.dashboards.find(d => d.id === dashId);
             if (dash) {
               dash.name = newName.trim();
               dash.updatedAt = Date.now();
             }
           }
-
-          // Save the renamed dashboard to server
           if (authService.isAuthenticated()) {
-            const dash = this.multiState?.dashboards.find(d => d.id === dashboard.id);
+            const dash = this.multiState?.dashboards.find(d => d.id === dashId);
             if (dash) {
               await authService.saveSingleDashboard(dash.id, dash.name, dash.state);
             }
           }
-
-          overlay.remove();
+          dialog.remove();
           this.showDashboardManager();
         }
       });
+    });
 
-      // Public toggle button
-      const publicBtn = document.createElement('button');
-      const isPublic = (dashboard as any).isPublic || false;
-      publicBtn.innerHTML = isPublic ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-lock"></i>';
-      publicBtn.title = isPublic ? 'Public (click to make private)' : 'Private (click to make public)';
-      publicBtn.style.cssText = `
-        padding: 6px 10px;
-        background: ${isPublic ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'};
-        color: white;
-        border: 1px solid ${isPublic ? '#4CAF50' : 'var(--border)'};
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-      `;
-      publicBtn.addEventListener('click', async (e) => {
+    // Public toggle buttons
+    dialog.querySelectorAll('.dm-public-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        const dashId = target.dataset.dashboardId!;
+        const dashboard = dashboards.find(d => d.id === dashId);
+        if (!dashboard) return;
+        const isPublic = (dashboard as any).isPublic || false;
         const newPublicState = !isPublic;
-        
+
         try {
-          const result = await authService.toggleDashboardPublic(dashboard.id, newPublicState);
+          const result = await authService.toggleDashboardPublic(dashId, newPublicState);
           if (result.success) {
-            // Update local state
             if (this.multiState) {
-              const dash = this.multiState.dashboards.find(d => d.id === dashboard.id);
+              const dash = this.multiState.dashboards.find(d => d.id === dashId);
               if (dash) {
                 (dash as any).isPublic = result.isPublic;
               }
             }
-            overlay.remove();
+            dialog.remove();
             this.showDashboardManager();
-            
-            // Show share URL if made public
             if (newPublicState) {
-              const shareUrl = `${window.location.origin}/#/public/${dashboard.id}`;
+              const shareUrl = `${window.location.origin}/#/public/${dashId}`;
               prompt('Dashboard is now public! Share this URL:', shareUrl);
             }
           } else {
@@ -2391,97 +2386,55 @@ class Dashboard {
           alert('Failed to update dashboard visibility');
         }
       });
-
-      // Delete button (only if not the last dashboard)
-      if (dashboards.length > 1) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '🗑️';
-        deleteBtn.title = 'Delete';
-        deleteBtn.style.cssText = `
-          padding: 6px 10px;
-          background: #f44336;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        `;
-        deleteBtn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const widgetCount = dashboard.state.widgets.length;
-          const message = widgetCount > 0
-            ? `Delete dashboard "${dashboard.name}"? This will delete ${widgetCount} widget${widgetCount > 1 ? 's' : ''}. This cannot be undone.`
-            : `Delete dashboard "${dashboard.name}"? This cannot be undone.`;
-
-          if (confirm(message)) {
-            const wasActive = dashboard.id === activeDashboardId;
-
-            // Delete from current state
-            if (this.multiState) {
-              // Don't delete if it's the last dashboard
-              if (this.multiState.dashboards.length <= 1) {
-                alert('Cannot delete the last dashboard');
-                return;
-              }
-
-              // Remove the dashboard
-              this.multiState.dashboards = this.multiState.dashboards.filter(d => d.id !== dashboard.id);
-
-              // If we deleted the active dashboard, switch to the first one
-              if (this.multiState.activeDashboardId === dashboard.id) {
-                this.multiState.activeDashboardId = this.multiState.dashboards[0].id;
-              }
-
-              // Delete from server if authenticated
-              if (authService.isAuthenticated()) {
-                await dashboardStorage.deleteDashboard(dashboard.id, this.multiState);
-              }
-            }
-
-            overlay.remove();
-
-            if (wasActive && this.multiState) {
-              // Switch to the new active dashboard
-              this.switchToDashboard(this.multiState.activeDashboardId);
-            } else {
-              this.showDashboardManager();
-            }
-          }
-        });
-        dashboardRow.appendChild(publicBtn);
-        dashboardRow.appendChild(renameBtn);
-        dashboardRow.appendChild(deleteBtn);
-      } else {
-        dashboardRow.appendChild(publicBtn);
-        dashboardRow.appendChild(renameBtn);
-      }
-
-      dashboardRow.appendChild(nameSpan);
-      dashboardRow.insertBefore(nameSpan, dashboardRow.firstChild);
-
-      listContainer.appendChild(dashboardRow);
     });
 
-    content.appendChild(listContainer);
+    // Delete buttons
+    dialog.querySelectorAll('.dm-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        const dashId = target.dataset.dashboardId!;
+        const dashName = target.dataset.dashboardName!;
+        const dashboard = dashboards.find(d => d.id === dashId);
+        if (!dashboard) return;
+
+        const widgetCount = dashboard.state.widgets.length;
+        const message = widgetCount > 0
+          ? `Delete dashboard "${dashName}"? This will delete ${widgetCount} widget${widgetCount > 1 ? 's' : ''}. This cannot be undone.`
+          : `Delete dashboard "${dashName}"? This cannot be undone.`;
+
+        if (confirm(message)) {
+          const wasActive = dashId === activeDashboardId;
+
+          if (this.multiState) {
+            if (this.multiState.dashboards.length <= 1) {
+              alert('Cannot delete the last dashboard');
+              return;
+            }
+            this.multiState.dashboards = this.multiState.dashboards.filter(d => d.id !== dashId);
+            if (this.multiState.activeDashboardId === dashId) {
+              this.multiState.activeDashboardId = this.multiState.dashboards[0].id;
+            }
+            if (authService.isAuthenticated()) {
+              await dashboardStorage.deleteDashboard(dashId, this.multiState);
+            }
+          }
+
+          dialog.remove();
+
+          if (wasActive && this.multiState) {
+            this.switchToDashboard(this.multiState.activeDashboardId);
+          } else {
+            this.showDashboardManager();
+          }
+        }
+      });
+    });
 
     // Add new dashboard button
-    const addButton = document.createElement('button');
-    addButton.textContent = '+ New Dashboard';
-    addButton.style.cssText = `
-      width: 100%;
-      padding: 12px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    `;
-    addButton.addEventListener('click', async () => {
+    dialog.querySelector('#dm-add-btn')?.addEventListener('click', async () => {
       const name = prompt('Enter dashboard name:', `Dashboard ${dashboards.length + 1}`);
       if (name && name.trim()) {
-        // Create new dashboard and add to current state
         const newDashboard = {
           id: generateUUID(),
           name: name.trim(),
@@ -2490,39 +2443,15 @@ class Dashboard {
           updatedAt: Date.now()
         };
 
-        // Add to current state and save the new dashboard to server
         if (authService.isAuthenticated() && this.multiState) {
           this.multiState.dashboards.push(newDashboard);
           await authService.saveSingleDashboard(newDashboard.id, newDashboard.name, newDashboard.state);
         }
 
-        overlay.remove();
-        // Switch to the new dashboard
+        dialog.remove();
         this.switchToDashboard(newDashboard.id);
       }
     });
-    content.appendChild(addButton);
-
-    modal.appendChild(header);
-    modal.appendChild(content);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-      }
-    });
-
-    // Close on ESC
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        overlay.remove();
-        document.removeEventListener('keydown', handleKeyDown);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
   }
 
   private cleanup(): void {
@@ -2635,7 +2564,7 @@ class Dashboard {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       `;
       banner.innerHTML = `
-        👁️ Viewing public dashboard: "${publicDashboard.name}" by ${publicDashboard.owner} (Read-only)
+        <i class="fa-solid fa-eye"></i> Viewing public dashboard: "${publicDashboard.name}" by ${publicDashboard.owner} (Read-only)
       `;
       document.body.appendChild(banner);
       

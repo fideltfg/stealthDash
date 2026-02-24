@@ -10,7 +10,7 @@ export class PasswordRecoveryUI {
     dialog.innerHTML = `
       <div class="dialog-container recovery-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">🔐 Password Recovery</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-lock"></i> Password Recovery</h2>
           <button id="close-recovery" class="dialog-close-button">×</button>
         </div>
 
@@ -94,7 +94,7 @@ export class PasswordRecoveryUI {
       // Show error dialog
       dialog.innerHTML = `
         <div class="dialog-container recovery-container recovery-container-error">
-          <div class="recovery-error-icon">⚠️</div>
+          <div class="recovery-error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
           <h2 class="dialog-title recovery-title-error">Invalid Recovery Link</h2>
           <p class="recovery-error-text">
             ${validation.error || 'This recovery link is invalid or has expired.'}
@@ -125,7 +125,7 @@ export class PasswordRecoveryUI {
     dialog.innerHTML = `
       <div class="dialog-container recovery-container">
         <div class="recovery-reset-header">
-          <div class="recovery-reset-icon">🔐</div>
+          <div class="recovery-reset-icon"><i class="fa-solid fa-lock"></i></div>
           <h2 class="dialog-title">Reset Your Password</h2>
           <p class="recovery-username">
             ${validation.username ? `Account: <strong>${validation.username}</strong>` : ''}

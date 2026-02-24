@@ -106,7 +106,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
     input.className = 'chatgpt-input';
 
     const sendBtn = document.createElement('button');
-    sendBtn.innerHTML = '➤';
+    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
     sendBtn.disabled = !content.apiKey;
     sendBtn.className = 'chatgpt-send-button';
 
@@ -295,7 +295,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         const headerLeft = header.querySelector('div') as HTMLElement;
         if (headerLeft) {
           headerLeft.innerHTML = `
-            <span>🤖</span>
+            <span><i class="fa-solid fa-robot"></i></span>
             <span>ChatGPT (${widgetContent.model})</span>
           `;
         }
@@ -318,7 +318,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
           const headerLeft = header.querySelector('div') as HTMLElement;
           if (headerLeft) {
             headerLeft.innerHTML = `
-              <span>🤖</span>
+              <span><i class="fa-solid fa-robot"></i></span>
               <span>ChatGPT (${widgetContent.model})</span>
             `;
           }
@@ -344,7 +344,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
           <option value="">Select saved credential...</option>
         </select>
         <small class="chatgpt-settings-hint">
-          💡 Tip: Create OpenAI credentials from the user menu (🔐 Credentials). Use type: Generic, store your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
+          <i class="fa-solid fa-lightbulb"></i> Tip: Create OpenAI credentials from the user menu (<i class="fa-solid fa-key"></i> Credentials). Use type: Generic, store your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
         </small>
       </div>
 
@@ -377,14 +377,14 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         <label class="widget-dialog-label bold">
           Chat History
         </label>
-        <button id="clear-history" class="chatgpt-clear-button">🗑️ Clear All Messages</button>
+        <button id="clear-history" class="chatgpt-clear-button"><i class="fa-regular fa-trash-can"></i> Clear All Messages</button>
         <small class="chatgpt-settings-hint" id="message-count">
           ${content.messages.length} message(s) in history
         </small>
       </div>
 
       <div class="chatgpt-pricing-info">
-        <div class="chatgpt-pricing-info-title">💡 Pricing Info</div>
+        <div class="chatgpt-pricing-info-title"><i class="fa-solid fa-lightbulb"></i> Pricing Info</div>
         <div class="chatgpt-pricing-info-content">
           • GPT-3.5: $0.0015/$0.002 per 1K tokens<br>
           • GPT-4o: $0.005/$0.015 per 1K tokens<br>
@@ -403,7 +403,7 @@ class ChatGPTWidgetRenderer implements WidgetRenderer {
         credentials.forEach(cred => {
           const option = document.createElement('option');
           option.value = cred.id.toString();
-          option.textContent = `🔑 ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
+          option.textContent = `${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
           credentialSelect.appendChild(option);
         });
 

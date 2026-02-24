@@ -141,7 +141,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
         console.error('Error fetching UniFi Protect data:', error);
         contentEl.innerHTML = `
           <div class="widget-error">
-            <div class="widget-error-icon large">⚠️</div>
+            <div class="widget-error-icon large"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <div class="widget-error-title" style="color: var(--error);">
               ${error.message || 'Failed to load UniFi Protect data'}
             </div>
@@ -614,7 +614,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
             ` : ''}
             ${camera.isMotionDetected ? `
               <div style="position: absolute; top: 8px; left: 8px; background: rgba(249, 115, 22, 0.9); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                🚨 MOTION
+                <i class="fa-solid fa-bell"></i> MOTION
               </div>
             ` : ''}
           </div>

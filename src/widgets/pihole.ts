@@ -60,7 +60,7 @@ class PiholeRenderer implements WidgetRenderer {
     this.poller.stop(widget.id);
 
     if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
-      const btn = renderConfigPrompt(container, '🛡️', 'Configure Pi-hole', 'Configure your Pi-hole server connection. Tip: Create credentials first from the user menu (🔐 Credentials)');
+      const btn = renderConfigPrompt(container, '<i class="fa-solid fa-shield-halved"></i>', 'Configure Pi-hole', 'Configure your Pi-hole server connection. Tip: Create credentials first from the user menu (<i class="fa-solid fa-key"></i> Credentials)');
       btn.addEventListener('click', () => this.showConfigDialog(widget));
       return;
     }
@@ -157,7 +157,7 @@ class PiholeRenderer implements WidgetRenderer {
             <option value="">Select a saved credential...</option>
           </select>
           <small class="widget-dialog-hint">
-            Manage credentials from the user menu (🔐 Credentials)
+            Manage credentials from the user menu (<i class="fa-solid fa-key"></i> Credentials)
           </small>
         </div>
 
@@ -249,7 +249,7 @@ class PiholeRenderer implements WidgetRenderer {
       const refreshInterval = parseInt(refreshInput.value);
 
       if (!credentialId) {
-        alert('Please select a saved credential. You can create one from the user menu (🔐 Credentials).');
+        alert('Please select a saved credential. You can create one from the user menu (Credentials).');
         return;
       }
 
@@ -348,7 +348,7 @@ class PiholeRenderer implements WidgetRenderer {
         <!-- Primary Stats -->
         <div class="grid grid-3 gap-8">
           ${this.createStatCard('Total Queries', formatNumber(data.queries.total), '<i class="fas fa-chart-bar"></i>', '#2196f3')}
-          ${this.createStatCard('Blocked', formatNumber(data.queries.blocked), '🛡️', '#f44336')}
+          ${this.createStatCard('Blocked', formatNumber(data.queries.blocked), '<i class="fa-solid fa-shield-halved"></i>', '#f44336')}
           ${this.createStatCard('Block Rate', blockedPercentage + '%', '<i class="fas fa-chart-line"></i>', statusColor)}
         </div>
 
@@ -356,7 +356,7 @@ class PiholeRenderer implements WidgetRenderer {
         <div class="grid grid-4 gap-4">
           ${this.createStatCard('Blocklist', formatNumber(data.gravity.domains_being_blocked), '<i class="fas fa-list"></i>', '#ff9800')}
           ${this.createStatCard('Unique Domains', formatNumber(data.queries.unique_domains), '<i class="fas fa-globe"></i>', '#9c27b0')}
-          ${this.createStatCard('Forwarded', formatNumber(data.queries.forwarded), '↗️', '#00bcd4')}
+          ${this.createStatCard('Forwarded', formatNumber(data.queries.forwarded), '<i class="fa-solid fa-share"></i>', '#00bcd4')}
           ${this.createStatCard('Cached', formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b')}
         </div>
 

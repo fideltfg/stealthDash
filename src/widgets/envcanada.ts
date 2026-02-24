@@ -41,7 +41,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     this.poller.stop(widget.id);
 
     if (!content.latitude || !content.longitude) {
-      const btn = renderConfigPrompt(container, '🍁', 'Environment Canada Weather', 'Enter coordinates to display weather forecasts');
+      const btn = renderConfigPrompt(container, '<i class="fa-brands fa-canadian-maple-leaf"></i>', 'Environment Canada Weather', 'Enter coordinates to display weather forecasts');
       btn.addEventListener('click', () => this.configure(widget));
       return;
     }
@@ -69,7 +69,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const headerLeft = document.createElement('div');
     headerLeft.className = 'envcanada-header-left';
     headerLeft.innerHTML = `
-      <span>🍁Weather Forecast</span>
+      <span><i class="fa-brands fa-canadian-maple-leaf"></i> Weather Forecast</span>
     `;
 
     header.appendChild(headerLeft);
@@ -233,7 +233,7 @@ class EnvCanadaWidgetRenderer implements WidgetRenderer {
     const locationDiv = document.createElement('div');
     locationDiv.className = 'card';
     locationDiv.innerHTML = `
-      <span class="envcanada-location-icon">📍</span>
+      <span class="envcanada-location-icon"><i class="fa-solid fa-location-dot"></i></span>
       <span>${data.location || 'Weather Forecast'}</span>
     `;
     wrapper.appendChild(locationDiv);

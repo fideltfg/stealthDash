@@ -21,7 +21,7 @@ export async function populateCredentialSelect(
     filtered.forEach(cred => {
       const option = document.createElement('option');
       option.value = cred.id.toString();
-      option.textContent = `🔑 ${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
+      option.textContent = `${cred.name}${cred.description ? ` - ${cred.description}` : ''}`;
       selectEl.appendChild(option);
     });
 

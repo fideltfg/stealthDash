@@ -18,7 +18,7 @@ export class AuthUI {
     dialog.innerHTML = `
       <div class="dialog-container auth-container">
         <h2 class="dialog-title auth-title">
-          🔐 Dashboard Login
+          <i class="fa-solid fa-lock"></i> Dashboard Login
         </h2>
         
         <div class="auth-tabs">
@@ -205,38 +205,38 @@ export class AuthUI {
       <div id="user-dropdown" class="user-dropdown">
         <div class="user-dropdown-header">
           <div class="user-dropdown-username">${user.username}</div>
-          ${user.isAdmin ? '<div class="user-dropdown-admin-badge">👑 Administrator</div>' : ''}
+          ${user.isAdmin ? '<div class="user-dropdown-admin-badge"><i class="fa-solid fa-crown"></i> Administrator</div>' : ''}
         </div>
         <div class="user-dropdown-body">
           <button id="manage-dashboards-btn" class="user-dropdown-button">
-            <span>🎛️</span>
+            <span><i class="fa-solid fa-sliders"></i></span>
             <span>My Dashboards</span>
           </button>
           <button id="credentials-btn" class="user-dropdown-button">
-            <span>🔐</span>
+            <span><i class="fa-solid fa-key"></i></span>
             <span>Credentials</span>
           </button>
           <button id="help-btn" class="user-dropdown-button">
-            <span>❓</span>
+            <span><i class="fa-solid fa-circle-question"></i></span>
             <span>Help</span>
           </button>
           <button id="close-sessions-btn" class="user-dropdown-button">
-            <span>🚪</span>
+            <span><i class="fa-solid fa-right-from-bracket"></i></span>
             <span>Close Other Sessions</span>
           </button>
           <button id="settings-btn" class="user-dropdown-button user-dropdown-button-primary">
-            <span>⚙️</span>
+            <span><i class="fa-solid fa-gear"></i></span>
             <span>Settings</span>
           </button>
           ${user.isAdmin ? `
             <button id="admin-btn" class="user-dropdown-button user-dropdown-button-warning">
-              <span>👑</span>
+              <span><i class="fa-solid fa-crown"></i></span>
               <span>Admin</span>
             </button>
           ` : ''}
           <div class="user-dropdown-separator"></div>
           <button id="logout-btn" class="user-dropdown-button user-dropdown-button-danger">
-            <span>🚪</span>
+            <span><i class="fa-solid fa-right-from-bracket"></i></span>
             <span>Logout</span>
           </button>
         </div>

@@ -151,7 +151,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
   }
 
   private showSetupMessage(body: HTMLElement, widget: Widget): void {
-    const btn = renderConfigPrompt(body, '📧', 'Gmail Not Configured', 'Click the button below to set up your Gmail connection.');
+    const btn = renderConfigPrompt(body, '<i class="fa-solid fa-envelope"></i>', 'Gmail Not Configured', 'Click the button below to set up your Gmail connection.');
     btn.addEventListener('click', () => {
       this.showSetupWizard(body.parentElement as HTMLElement, widget);
     });
@@ -267,7 +267,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
     if (messages.length === 0) {
       body.innerHTML = `
         <div class="widget-empty">
-          <div class="widget-empty-icon">📭</div>
+          <div class="widget-empty-icon"><i class="fa-solid fa-inbox"></i></div>
           <div>No messages found</div>
         </div>
       `;
@@ -598,7 +598,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
 export const widget: WidgetPlugin = {
   type: 'gmail',
   name: 'Gmail',
-  icon: '📧',
+  icon: '<i class="fa-solid fa-envelope"></i>',
   description: 'Display Gmail inbox with unread messages and quick actions',
   renderer: new GmailWidgetRenderer(),
   defaultSize: { w: 400, h: 600 },

@@ -89,7 +89,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
     const icon = document.createElement('div');
     icon.className = 'widget-config-icon';
-    icon.textContent = '🕐';
+    icon.innerHTML = '<i class="fa-regular fa-clock"></i>';
     
     const label = document.createElement('div');
     label.className = 'clock-config-title';

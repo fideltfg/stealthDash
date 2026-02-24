@@ -20,7 +20,7 @@ export function renderError(
   const msg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
   container.innerHTML = `
     <div class="widget-error">
-      <div class="widget-error-icon">⚠️</div>
+      <div class="widget-error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
       <div class="widget-error-title">${escapeHtml(title)}</div>
       <div class="widget-error-message">${escapeHtml(msg)}</div>
       ${hint ? `<div class="widget-error-hint">${escapeHtml(hint)}</div>` : ''}

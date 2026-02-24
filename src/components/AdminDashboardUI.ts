@@ -19,7 +19,7 @@ export class AdminDashboardUI {
     dialog.innerHTML = `
       <div class="dialog-container admin-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">👑 Admin Dashboard</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-crown"></i> Admin Dashboard</h2>
           <button id="close-admin" class="dialog-close-button">×</button>
         </div>
 
@@ -43,10 +43,10 @@ export class AdminDashboardUI {
 
         <!-- Users Table -->
         <div class="section admin-table-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div class="admin-table-header-row">
             <h3 class="section-title">User Management</h3>
-            <button id="create-user-btn" class="action-btn action-btn-success" style="margin: 0;">
-              ➕ Create User
+            <button id="create-user-btn" class="action-btn action-btn-success">
+              <i class="fa-solid fa-plus"></i> Create User
             </button>
           </div>
           
@@ -104,7 +104,7 @@ export class AdminDashboardUI {
         </td>
         <td class="admin-table-td">${user.email}</td>
         <td class="admin-table-td">
-          ${user.is_admin ? '<span class="admin-role-badge">👑 Admin</span>' : 'User'}
+          ${user.is_admin ? '<span class="admin-role-badge"><i class="fa-solid fa-crown"></i> Admin</span>' : 'User'}
         </td>
         <td class="admin-table-td admin-table-td-date">
           ${new Date(user.created_at).toLocaleDateString()}
@@ -215,9 +215,9 @@ export class AdminDashboardUI {
     const dialog = document.createElement('div');
     dialog.className = 'dialog';
     dialog.innerHTML = `
-      <div class="dialog-container" style="max-width: 500px;">
+      <div class="dialog-container admin-create-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">➕ Create New User</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-plus"></i> Create New User</h2>
           <button id="close-create-user" class="dialog-close-button">×</button>
         </div>
         
@@ -259,19 +259,19 @@ export class AdminDashboardUI {
             </div>
 
             <div class="form-group">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                <input type="checkbox" id="new-is-admin" style="cursor: pointer;" />
+              <label class="admin-checkbox-label">
+                <input type="checkbox" id="new-is-admin" />
                 <span>Make this user an administrator</span>
               </label>
             </div>
 
             <div id="create-user-message" class="message"></div>
 
-            <div style="display: flex; gap: 12px; margin-top: 24px;">
-              <button type="button" id="cancel-create-user" class="btn btn-info" style="flex: 1;">
+            <div class="admin-create-actions">
+              <button type="button" id="cancel-create-user" class="btn btn-info">
                 Cancel
               </button>
-              <button type="submit" class="btn btn-success" style="flex: 1;">
+              <button type="submit" class="btn btn-success">
                 Create User
               </button>
             </div>

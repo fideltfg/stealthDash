@@ -12,13 +12,13 @@ export class UserSettingsUI {
     dialog.innerHTML = `
       <div class="dialog-container settings-container">
         <div class="dialog-header">
-          <h2 class="dialog-title">⚙️ User Settings</h2>
+          <h2 class="dialog-title"><i class="fa-solid fa-gear"></i> User Settings</h2>
           <button id="close-settings" class="dialog-close-button">×</button>
         </div>
 
         <!-- Profile Section -->
         <div class="section">
-          <h3 class="section-title settings-section-title-success">👤 Profile Information</h3>
+          <h3 class="section-title settings-section-title-success"><i class="fa-solid fa-user"></i> Profile Information</h3>
           
           <div class="form-group">
             <label class="form-label form-label-disabled">Username</label>
@@ -36,7 +36,7 @@ export class UserSettingsUI {
 
         <!-- Change Password Section -->
         <div class="section">
-          <h3 class="section-title settings-section-title-warning">🔑 Change Password</h3>
+          <h3 class="section-title settings-section-title-warning"><i class="fa-solid fa-key"></i> Change Password</h3>
           
           <div class="form-group">
             <label class="form-label">Current Password</label>
@@ -59,11 +59,11 @@ export class UserSettingsUI {
 
         <!-- Account Info -->
         <div class="section">
-          <h3 class="section-title settings-section-title-info">ℹ️ Account Information</h3>
+          <h3 class="section-title settings-section-title-info"><i class="fa-solid fa-circle-info"></i> Account Information</h3>
           <div class="settings-info-list">
             <div><strong>User ID:</strong> ${user.id}</div>
             <div><strong>Account Created:</strong> ${new Date(user.createdAt).toLocaleString()}</div>
-            <div><strong>Account Type:</strong> ${user.isAdmin ? '<span class="settings-admin-badge">👑 Administrator</span>' : 'User'}</div>
+            <div><strong>Account Type:</strong> ${user.isAdmin ? '<span class="settings-admin-badge"><i class="fa-solid fa-crown"></i> Administrator</span>' : 'User'}</div>
           </div>
         </div>
 

@@ -39,7 +39,7 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     this.poller.stop(widget.id);
 
     if (!content.feedUrl) {
-      const btn = renderConfigPrompt(container, '⛷️', 'Mountain XML Feed', 'Display ski resort conditions from MTNXML feeds');
+      const btn = renderConfigPrompt(container, '<i class="fa-solid fa-person-skiing"></i>', 'Mountain XML Feed', 'Display ski resort conditions from MTNXML feeds');
       btn.addEventListener('click', () => this.configure(widget));
       return;
     }

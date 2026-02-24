@@ -189,7 +189,7 @@ class UnifiRenderer implements WidgetRenderer {
         console.error('Error fetching UniFi data:', error);
         contentEl.innerHTML = `
           <div class="widget-error text-center">
-            <div class="widget-error-icon">⚠️</div>
+            <div class="widget-error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <div class="widget-error-title" style="color: #ff3b30;">Error loading UniFi data</div>
             <div class="widget-error-message">${error.message}</div>
             <div class="widget-error-hint">Check host: ${content.host}</div>
@@ -208,7 +208,7 @@ class UnifiRenderer implements WidgetRenderer {
         <div class="widget-config-icon"><i class="fas fa-wifi"></i></div>
         <div class="unifi-config-title">UniFi Network Widget</div>
         <div class="widget-config-description">Configure your UniFi Controller connection</div>
-        <div class="widget-config-sublabel">💡 Tip: Create credentials first from the user menu (🔐 Credentials)</div>
+        <div class="widget-config-sublabel"><i class="fa-solid fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fa-solid fa-key"></i> Credentials)</div>
         <button class="configure-btn widget-config-button">Configure</button>
       </div>
     `;
@@ -271,7 +271,7 @@ class UnifiRenderer implements WidgetRenderer {
             <option value="">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small class="widget-dialog-hint">Create credentials from the user menu (🔐 Credentials)</small>
+          <small class="widget-dialog-hint">Create credentials from the user menu (<i class="fa-solid fa-key"></i> Credentials)</small>
         </div>
 
         <div class="widget-dialog-field">
@@ -888,11 +888,11 @@ class UnifiRenderer implements WidgetRenderer {
             </div>
           ` : ''}
           <div class="unifi-client-info-item">
-            <span class="widget-muted">↑ TX:</span>
+            <span class="widget-muted"><i class="fa-solid fa-arrow-up"></i> TX:</span>
             <span class="widget-text-bold">${formatBytes(client.tx_bytes)}</span>
           </div>
           <div class="unifi-client-info-item">
-            <span class="widget-muted">↓ RX:</span>
+            <span class="widget-muted"><i class="fa-solid fa-arrow-down"></i> RX:</span>
             <span class="widget-text-bold">${formatBytes(client.rx_bytes)}</span>
           </div>
           <div class="unifi-client-info-item">
@@ -944,13 +944,13 @@ class UnifiRenderer implements WidgetRenderer {
               ` : ''}
               ${data.xput_down ? `
                 <div class="unifi-info-item">
-                  <span class="widget-muted">↓ Download:</span>
+                  <span class="widget-muted"><i class="fa-solid fa-arrow-down"></i> Download:</span>
                   <span class="widget-text-bold">${(data.xput_down / 1000000).toFixed(1)} Mbps</span>
                 </div>
               ` : ''}
               ${data.xput_up ? `
                 <div class="unifi-info-item">
-                  <span class="widget-muted">↑ Upload:</span>
+                  <span class="widget-muted"><i class="fa-solid fa-arrow-up"></i> Upload:</span>
                   <span class="widget-text-bold">${(data.xput_up / 1000000).toFixed(1)} Mbps</span>
                 </div>
               ` : ''}
@@ -1061,7 +1061,7 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Top by Total Traffic -->
         <div>
           <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <span>📊</span>
+            <span><i class="fa-solid fa-chart-bar"></i></span>
             <span>Most Active (Total Traffic)</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1096,11 +1096,11 @@ class UnifiRenderer implements WidgetRenderer {
                   
                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
                     <div style="display: flex; justify-content: space-between;">
-                      <span style="color: var(--muted);">↑ Upload:</span>
+                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-up"></i> Upload:</span>
                       <span style="color: var(--text); font-weight: 500;">${formatBytes(client.tx_bytes)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
-                      <span style="color: var(--muted);">↓ Download:</span>
+                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-down"></i> Download:</span>
                       <span style="color: var(--text); font-weight: 500;">${formatBytes(client.rx_bytes)}</span>
                     </div>
                     ${!client.is_wired && client.signal ? `
@@ -1125,7 +1125,7 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Top Uploaders -->
         <div>
           <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <span>↑</span>
+            <span><i class="fa-solid fa-arrow-up"></i></span>
             <span>Top Uploaders</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1148,7 +1148,7 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Top Downloaders -->
         <div>
           <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            <span>↓</span>
+            <span><i class="fa-solid fa-arrow-down"></i></span>
             <span>Top Downloaders</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1196,11 +1196,11 @@ class UnifiRenderer implements WidgetRenderer {
           <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">Network Throughput</div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             <div>
-              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↑ UPLOAD</div>
+              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
               <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.tx_bytes)}</div>
             </div>
             <div>
-              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↓ DOWNLOAD</div>
+              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
               <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.rx_bytes)}</div>
             </div>
           </div>
@@ -1257,8 +1257,8 @@ class UnifiRenderer implements WidgetRenderer {
                     </div>
                     
                     <div style="display: flex; justify-content: space-between; font-size: 10px;">
-                      <span style="color: var(--muted);">↑ ${formatBytes(device.tx)}</span>
-                      <span style="color: var(--muted);">↓ ${formatBytes(device.rx)}</span>
+                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-up"></i> ${formatBytes(device.tx)}</span>
+                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-down"></i> ${formatBytes(device.rx)}</span>
                     </div>
                   </div>
                 `;
@@ -1311,17 +1311,17 @@ class UnifiRenderer implements WidgetRenderer {
         ${hasSpeedtest ? `
           <div style="background: linear-gradient(135deg, #0077ff 0%, #00d4ff 100%); padding: 20px; border-radius: 12px; color: white;">
             <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
-              <span>🚀</span>
+              <span><i class="fa-solid fa-rocket"></i></span>
               <span>WAN Speed (Speedtest)</span>
             </div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
               <div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↑ UPLOAD</div>
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
                 <div style="font-size: 32px; font-weight: 700;">${((data.xput_up || 0) / 1000000).toFixed(1)}</div>
                 <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
               </div>
               <div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">↓ DOWNLOAD</div>
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
                 <div style="font-size: 32px; font-weight: 700;">${((data.xput_down || 0) / 1000000).toFixed(1)}</div>
                 <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
               </div>
@@ -1334,7 +1334,7 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
         ` : `
           <div style="background: var(--bg); padding: 20px; border-radius: 12px; text-align: center; border: 2px dashed var(--border);">
-            <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+            <div style="font-size: 32px; margin-bottom: 8px;"><i class="fa-solid fa-chart-bar"></i></div>
             <div style="font-size: 13px; color: var(--muted);">No speedtest data available</div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Run a speedtest from your UniFi controller</div>
           </div>
@@ -1346,12 +1346,12 @@ class UnifiRenderer implements WidgetRenderer {
             <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Average Client Speeds</div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
               <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
-                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">↑ AVG UPLOAD</div>
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;"><i class="fa-solid fa-arrow-up"></i> AVG UPLOAD</div>
                 <div style="font-size: 24px; font-weight: 700; color: #ff9500;">${(avgTxRate / 1000).toFixed(1)}</div>
                 <div style="font-size: 11px; color: var(--muted);">Mbps</div>
               </div>
               <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
-                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">↓ AVG DOWNLOAD</div>
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;"><i class="fa-solid fa-arrow-down"></i> AVG DOWNLOAD</div>
                 <div style="font-size: 24px; font-weight: 700; color: #34c759;">${(avgRxRate / 1000).toFixed(1)}</div>
                 <div style="font-size: 11px; color: var(--muted);">Mbps</div>
               </div>
@@ -1367,7 +1367,7 @@ class UnifiRenderer implements WidgetRenderer {
         ${fastestClients.length > 0 ? `
           <div>
             <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-              <span>⚡</span>
+              <span><i class="fa-solid fa-bolt"></i></span>
               <span>Fastest Clients</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1397,11 +1397,11 @@ class UnifiRenderer implements WidgetRenderer {
                     
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
                       <div style="display: flex; justify-content: space-between;">
-                        <span style="color: var(--muted);">↑ TX:</span>
+                        <span style="color: var(--muted);"><i class="fa-solid fa-arrow-up"></i> TX:</span>
                         <span style="color: #ff9500; font-weight: 600;">${txSpeed.toFixed(1)} Mbps</span>
                       </div>
                       <div style="display: flex; justify-content: space-between;">
-                        <span style="color: var(--muted);">↓ RX:</span>
+                        <span style="color: var(--muted);"><i class="fa-solid fa-arrow-down"></i> RX:</span>
                         <span style="color: #34c759; font-weight: 600;">${rxSpeed.toFixed(1)} Mbps</span>
                       </div>
                       ${!client.is_wired && client.essid ? `
