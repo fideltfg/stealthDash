@@ -3,7 +3,7 @@
 A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 15+ widget types.
 
 
-![Dashboard Screenshot](./media/dashboard.v1.png)
+![Dashboard Screenshot](images/dashboard.v1.png)
 
 ## Features
 
@@ -114,7 +114,7 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 | `Tab` | Navigate UI controls |
 
 ### Themes & Backgrounds
-
+![Dashboard Screenshot](images/Multitheme.png)
 **Change Theme**
 - Click the theme button (bottom-left menu)
 - Cycles through: Light → Dark → System preference

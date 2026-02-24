@@ -7,26 +7,10 @@ const crypto = require('crypto');
 const db = require('../src/db');
 const { authMiddleware } = require('../src/auth');
 const { decryptCredentials } = require('../src/crypto-utils');
-const { widgetMetadata } = require('../src/widgetMetadata');
 
 // Session caches to avoid rate limiting
 const piholeSessionCache = new Map();
 const unifiSessionCache = new Map();
-
-// ==================== WIDGET METADATA ROUTE ====================
-
-/**
- * GET /widgets/metadata
- * Returns metadata for all available widget types
- * This allows the client to display the widget picker without loading all widget code
- */
-router.get('/widgets/metadata', (req, res) => {
-  res.json({
-    success: true,
-    widgets: widgetMetadata,
-    timestamp: Date.now()
-  });
-});
 
 // ==================== CREDENTIALS HELPER ====================
 

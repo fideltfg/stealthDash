@@ -2144,6 +2144,12 @@ body {
   font-family: inherit;
 }
 
+/* === ADD WIDGET DIALOG === */
+.add-widget-container {
+  width: 500px;
+  max-width: 90vw;
+}
+
 /* === WIDGET TYPE SELECTOR === */
 .widget-types {
   display: flex;

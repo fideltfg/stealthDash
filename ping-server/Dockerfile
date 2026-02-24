@@ -17,7 +17,6 @@ COPY src/auth.js ./
 COPY src/db.js ./
 COPY src/crypto-utils.js ./
 COPY init-db.sql ./
-COPY src/widgetMetadata.js ./
 COPY src/vnc-proxy.js ./
 COPY routes ./routes
 

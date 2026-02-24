@@ -2,15 +2,25 @@
  * Widget Metadata Registry
  * 
  * This file contains metadata for all available widgets.
- * It's used by the server to provide widget information to the client
- * without requiring the client to load all widget code.
+ * It provides widget information to the client without requiring
+ * the client to load all widget code.
  * 
  * When adding a new widget:
  * 1. Add its metadata here
  * 2. Add the widget module to src/widgets/types/index.ts
  */
 
-const widgetMetadata = [
+export interface WidgetMetadataEntry {
+  type: string;
+  name: string;
+  icon: string;
+  description: string;
+  defaultSize: { w: number; h: number };
+  defaultContent: Record<string, any>;
+  hasSettings: boolean;
+}
+
+export const widgetMetadata: WidgetMetadataEntry[] = [
   {
     type: 'image',
     name: 'Image',
@@ -196,5 +206,3 @@ const widgetMetadata = [
     hasSettings: true
   }
 ];
-
-module.exports = { widgetMetadata };

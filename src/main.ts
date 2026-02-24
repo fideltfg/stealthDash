@@ -13,6 +13,7 @@ import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
 import { CredentialsUI } from './components/CredentialsUI';
+import { widgetMetadata } from './widgetMetadata';
 
 class Dashboard {
   private state: DashboardState;
@@ -1704,46 +1705,26 @@ class Dashboard {
   }
 
   private async showAddWidgetModal(): Promise<void> {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
+    const dialog = document.createElement('div');
+    dialog.id = 'add-widget-dialog';
+    dialog.className = 'dialog';
 
-    const modal = document.createElement('div');
-    modal.className = 'modal';
+    dialog.innerHTML = `
+      <div class="dialog-container add-widget-container">
+        <div class="dialog-header">
+          <h2 class="dialog-title"><i class="fa-solid fa-plus"></i> Add Widget</h2>
+          <button id="close-add-widget" class="dialog-close-button">×</button>
+        </div>
+        <div class="widget-types" id="widget-type-list"></div>
+      </div>
+    `;
 
-    const header = document.createElement('div');
-    header.className = 'modal-header';
+    document.body.appendChild(dialog);
 
-    const title = document.createElement('h2');
-    title.className = 'modal-title';
-    title.textContent = 'Add Widget';
-    header.appendChild(title);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'modal-close';
-    closeBtn.innerHTML = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', () => overlay.remove());
-    header.appendChild(closeBtn);
-
-    const types = document.createElement('div');
-    types.className = 'widget-types';
-
-    // Fetch widget metadata from server (no need to load widget code)
+    // Populate widget types
+    const typesList = dialog.querySelector('#widget-type-list') as HTMLElement;
     try {
-      const apiUrl = (import.meta as any).env?.VITE_API_URL || 
-        (typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : 'http://localhost:3001');
-      const response = await fetch(`${apiUrl}/widgets/metadata`);
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error('Failed to fetch widget metadata');
-      }
-
-      const widgets = data.widgets;
-
-      widgets.forEach((widgetMeta: any) => {
+      widgetMetadata.forEach((widgetMeta) => {
         const row = document.createElement('button');
         row.className = 'widget-type-row';
         row.tabIndex = 0;
@@ -1770,58 +1751,37 @@ class Dashboard {
         row.appendChild(content);
 
         row.addEventListener('click', () => {
-          // Add widget with its default content (widget code will be lazy-loaded)
           this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
-          overlay.remove();
+          dialog.remove();
         });
 
-        types.appendChild(row);
+        typesList.appendChild(row);
       });
     } catch (error) {
       console.error('Failed to load widget metadata:', error);
-      types.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
+      typesList.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
     }
 
-    modal.appendChild(header);
-    modal.appendChild(types);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    // Close button
+    dialog.querySelector('#close-add-widget')?.addEventListener('click', () => {
+      dialog.remove();
+    });
 
-    // Focus trap
-    const focusableElements = modal.querySelectorAll('button');
-    const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-    firstElement?.focus();
+    // Click outside to close
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        dialog.remove();
+      }
+    });
 
     // ESC to close
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        overlay.remove();
+        dialog.remove();
         document.removeEventListener('keydown', handleKeyDown);
-      }
-
-      // Tab trap
-      if (e.key === 'Tab') {
-        if (e.shiftKey && document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        } else if (!e.shiftKey && document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-
-    // Click outside to close
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        document.removeEventListener('keydown', handleKeyDown);
-      }
-    });
   }
 
   private updateDashboardSwitcherButton(button: HTMLButtonElement): void {
