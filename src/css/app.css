@@ -157,20 +157,357 @@
   --font-body: ui-rounded, 'Montserrat', 'Quicksand', 'Comfortaa', 'Raleway', sans-serif;
   --card-background: rgba(139, 99, 13, 0.25);
 }
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.theme-light):not(.theme-dark):not(.theme-gruvbox):not(.theme-tokyo-night):not(.theme-catppuccin):not(.theme-forest):not(.theme-sunset):not(.theme-peachy) {
-    --bg: #1a1a1a;
-    --surface: #2a2a2a;
-    --text: #f5f5f5;
-    --muted: #999999;
-    --accent: #4da6ff;
-    --ring: #4da6ff;
-    --shadow: rgba(0, 0, 0, 0.3);
-    --border: #404040;
-    --hover: #333333;
-  }
+/* === STEALTH THEME - CYBERPUNK HUD OVERRIDES === */
+.theme-stealth .widget {
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.06), inset 0 0 8px rgba(0, 240, 255, 0.03);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.03) 0%, rgba(0, 0, 0, 0.4) 100%);
 }
+
+.theme-stealth .widget:hover,
+.theme-stealth .widget:focus-within {
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.12), 0 0 30px rgba(0, 240, 255, 0.04);
+  border-color: rgba(0, 240, 255, 0.45);
+}
+
+.theme-stealth .widget.selected {
+  box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.theme-stealth .widget-header {
+  border-bottom-color: rgba(0, 240, 255, 0.15);
+}
+
+.theme-stealth .widget-title {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.theme-stealth .canvas[data-background="grid"] {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.06) 1px, transparent 1px);
+}
+
+.theme-stealth .canvas[data-background="dots"] {
+  background-image: radial-gradient(circle, rgba(0, 240, 255, 0.12) 1px, transparent 1px);
+}
+
+.theme-stealth .theme-menu-dropdown,
+.theme-stealth .widget-menu-dropdown {
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: #0d1117ee;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.08);
+}
+
+.theme-stealth .theme-menu-item:hover,
+.theme-stealth .widget-menu-item:hover {
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.theme-stealth ::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.2);
+}
+
+.theme-stealth ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.35);
+}
+
+/* === TACTICAL THEME - TEAL HUD OVERRIDES === */
+.theme-tactical .widget {
+  border: 1px solid rgba(0, 212, 168, 0.2);
+  box-shadow: 0 0 8px rgba(0, 212, 168, 0.05), inset 0 0 8px rgba(0, 212, 168, 0.02);
+  background: linear-gradient(135deg, rgba(0, 212, 168, 0.03) 0%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+.theme-tactical .widget:hover,
+.theme-tactical .widget:focus-within {
+  box-shadow: 0 0 14px rgba(0, 212, 168, 0.1), 0 0 28px rgba(0, 212, 168, 0.04);
+  border-color: rgba(0, 212, 168, 0.4);
+}
+
+.theme-tactical .widget.selected {
+  box-shadow: 0 0 0 2px rgba(0, 212, 168, 0.25), 0 0 18px rgba(0, 212, 168, 0.12);
+}
+
+.theme-tactical .widget-header {
+  border-bottom-color: rgba(0, 212, 168, 0.12);
+}
+
+.theme-tactical .widget-title {
+  color: #00d4a8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.theme-tactical .canvas[data-background="grid"] {
+  background-image:
+    linear-gradient(rgba(0, 212, 168, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 168, 0.05) 1px, transparent 1px);
+}
+
+.theme-tactical .canvas[data-background="dots"] {
+  background-image: radial-gradient(circle, rgba(0, 212, 168, 0.1) 1px, transparent 1px);
+}
+
+.theme-tactical .theme-menu-dropdown,
+.theme-tactical .widget-menu-dropdown {
+  border: 1px solid rgba(0, 212, 168, 0.18);
+  background: #0c1410ee;
+  box-shadow: 0 0 18px rgba(0, 212, 168, 0.06);
+}
+
+.theme-tactical .theme-menu-item:hover,
+.theme-tactical .widget-menu-item:hover {
+  background: rgba(0, 212, 168, 0.07);
+}
+
+.theme-tactical ::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 168, 0.18);
+}
+
+.theme-tactical ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 168, 0.3);
+}
+
+/* === FUTURIST THEME - MONOCHROME BLUEPRINT OVERRIDES === */
+.theme-futurist .widget {
+  border: 1px solid rgba(180, 200, 230, 0.12);
+  box-shadow: 0 0 6px rgba(180, 200, 230, 0.04);
+  background: linear-gradient(180deg, rgba(180, 200, 230, 0.04) 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.theme-futurist .widget:hover,
+.theme-futurist .widget:focus-within {
+  box-shadow: 0 0 12px rgba(180, 200, 230, 0.08), 0 0 24px rgba(180, 200, 230, 0.03);
+  border-color: rgba(180, 200, 230, 0.25);
+}
+
+.theme-futurist .widget.selected {
+  box-shadow: 0 0 0 1px rgba(180, 200, 230, 0.2), 0 0 16px rgba(180, 200, 230, 0.08);
+}
+
+.theme-futurist .widget-header {
+  border-bottom-color: rgba(180, 200, 230, 0.1);
+}
+
+.theme-futurist .widget-title {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 400;
+  font-size: 0.85em;
+}
+
+.theme-futurist .canvas[data-background="grid"] {
+  background-image:
+    linear-gradient(rgba(180, 200, 230, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 200, 230, 0.06) 1px, transparent 1px);
+}
+
+.theme-futurist .canvas[data-background="dots"] {
+  background-image: radial-gradient(circle, rgba(180, 200, 230, 0.1) 1px, transparent 1px);
+}
+
+.theme-futurist .theme-menu-dropdown,
+.theme-futurist .widget-menu-dropdown {
+  border: 1px solid rgba(180, 200, 230, 0.12);
+  background: #0c1019ee;
+  box-shadow: 0 0 16px rgba(180, 200, 230, 0.05);
+}
+
+.theme-futurist .theme-menu-item:hover,
+.theme-futurist .widget-menu-item:hover {
+  background: rgba(180, 200, 230, 0.06);
+}
+
+.theme-futurist ::-webkit-scrollbar-thumb {
+  background: rgba(180, 200, 230, 0.15);
+}
+
+.theme-futurist ::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 200, 230, 0.25);
+}
+
+/* === RETRO THEME - DOS/EGA OVERRIDES === */
+.theme-retro .widget {
+  margin: 10px;
+  border: 2px solid #3ace3a;
+  border-radius: 0;
+  box-shadow: 4px 4px 0px #003300;
+  background: #0a0a14;
+}
+
+.theme-retro .widget:hover,
+.theme-retro .widget:focus-within {
+  box-shadow: 4px 4px 0px #005500, 0 0 8px rgba(85, 255, 85, 0.2);
+  border-color: #88ff88;
+}
+
+.theme-retro .widget.selected {
+  border-color: #ff8800;
+  box-shadow: 4px 4px 0px #553300, 0 0 12px rgba(255, 136, 0, 0.25);
+}
+
+.theme-retro .widget-header {
+  border-bottom: 2px solid #3ace3a;
+  background: #002200;
+  border-radius: 0;
+}
+
+.theme-retro .widget-title {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: #3ace3a;
+  font-size: 0.8em;
+}
+
+.theme-retro .canvas[data-background="grid"] {
+  background-image:
+    linear-gradient(rgba(85, 255, 85, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(85, 255, 85, 0.08) 1px, transparent 1px);
+}
+
+.theme-retro .canvas[data-background="dots"] {
+  background-image: radial-gradient(circle, rgba(85, 255, 85, 0.15) 1px, transparent 1px);
+}
+
+.theme-retro .theme-menu-dropdown,
+.theme-retro .widget-menu-dropdown {
+  border: 2px solid #3ace3a;
+  border-radius: 0;
+  background: #0a0a14;
+  box-shadow: 4px 4px 0px #003300;
+}
+
+.theme-retro .theme-menu-item,
+.theme-retro .widget-menu-item {
+  border-radius: 0;
+}
+
+.theme-retro .theme-menu-item:hover,
+.theme-retro .widget-menu-item:hover {
+  background: #002200;
+  color: #3ace3a;
+}
+
+.theme-retro .fab,
+.theme-retro .theme-toggle,
+.theme-retro .fullscreen-toggle,
+.theme-retro .background-toggle,
+.theme-retro .lock-toggle,
+.theme-retro .reset-zoom-toggle,
+.theme-retro .reset-view-toggle,
+.theme-retro .menu-button,
+.theme-retro .card,
+.theme-retro .controls-container,
+.theme-retro .user-dropdown {
+  border-radius: 0;
+}
+
+.theme-retro .dashboard-switcher-button {
+  border-radius: 0;
+}
+
+.theme-retro ::-webkit-scrollbar-thumb {
+  background: #3ace3a;
+  border-radius: 0;
+}
+
+.theme-retro ::-webkit-scrollbar-thumb:hover {
+  background: #88ff88;
+}
+
+/* Stealth Theme - Dark cyberpunk HUD with cyan neon accents */
+.theme-stealth {
+  --bg: #0a0e14;
+  --surface: #0d1117;
+  --text: #00f0ff;
+  --muted: #3a7a7a;
+  --accent: #00f0ff;
+  --ring: #00f0ff;
+  --shadow: rgba(0, 240, 255, 0.08);
+  --border: #00f0ff33;
+  --hover: #0f1923;
+  --success: #00ff88;
+  --error: #ff2a6d;
+  --info: #00f0ff;
+  --bg-success: rgba(0, 255, 136, 0.15);
+  --bg-error: rgba(255, 42, 109, 0.15);
+  --bg-info: rgba(0, 240, 255, 0.1);
+  --card-background: rgba(0, 240, 255, 0.04);
+  --font-body: 'Rajdhani', 'Orbitron', 'Share Tech Mono', 'Fira Code', monospace;
+}
+
+/* Tactical Theme - Dark HUD with teal/emerald green accents */
+.theme-tactical {
+  --bg: #080d0b;
+  --surface: #0c1410;
+  --text: #e0f0ea;
+  --muted: #4a7a6a;
+  --accent: #00d4a8;
+  --ring: #00d4a8;
+  --shadow: rgba(0, 212, 168, 0.08);
+  --border: rgba(0, 212, 168, 0.2);
+  --hover: #0f1d17;
+  --success: #00e57a;
+  --error: #ff4a6e;
+  --info: #00d4a8;
+  --bg-success: rgba(0, 229, 122, 0.15);
+  --bg-error: rgba(255, 74, 110, 0.15);
+  --bg-info: rgba(0, 212, 168, 0.1);
+  --card-background: rgba(0, 212, 168, 0.04);
+  --font-body: 'Rajdhani', 'Share Tech Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* Futurist Theme - Monochrome sci-fi blueprint with white/silver on deep navy */
+.theme-futurist {
+  --bg: #080b12;
+  --surface: #0c1019;
+  --text: #d0d8e8;
+  --muted: #5a6580;
+  --accent: #c8d0e0;
+  --ring: #8890a4;
+  --shadow: rgba(180, 190, 220, 0.06);
+  --border: rgba(180, 200, 230, 0.15);
+  --hover: #101520;
+  --success: #90a8c0;
+  --error: #c0707a;
+  --info: #8898b8;
+  --bg-success: rgba(144, 168, 192, 0.12);
+  --bg-error: rgba(192, 112, 122, 0.12);
+  --bg-info: rgba(136, 152, 184, 0.1);
+  --card-background: rgba(180, 200, 230, 0.03);
+  --font-body: 'Share Tech Mono', 'Fira Code', 'Inconsolata', 'Consolas', monospace;
+}
+
+/* Retro Theme - DOS/EGA-era sci-fi with bold saturated primaries on black */
+.theme-retro {
+  --bg: #000000;
+  --surface: #0a0a14;
+  --text: #ffffff;
+  --muted: #aaaaaa;
+  --accent: #ff8800;
+  --ring: #ff8800;
+  --shadow: rgba(0, 0, 0, 0.6);
+  --border: #3ace3a;
+  --hover: #1a1a2e;
+  --success: #3ace3a;
+  --error: #ff5555;
+  --info: #5555ff;
+  --bg-success: rgba(85, 255, 85, 0.15);
+  --bg-error: rgba(255, 85, 85, 0.15);
+  --bg-info: rgba(85, 85, 255, 0.15);
+  --card-background: rgba(85, 255, 85, 0.04);
+  --radius: 0px;
+  --font-body: 'Press Start 2P', 'VT323', 'Share Tech Mono', 'Courier New', monospace;
+}
+
+/* System theme is now resolved in JavaScript (see src/themes.ts resolveSystemTheme).
+   When theme='system', JS applies 'theme-dark' or 'theme-light' directly,
+   so no @media :not() selector is needed here. */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -275,7 +612,7 @@ body {
   min-height: 100%;
   width: 5000px;
   height: 2000px;
-  border: 3px dashed var(--muted);
+  border: 1px dashed var(--muted);
   box-sizing: border-box;
   transition: transform 100ms;
 }
@@ -2146,7 +2483,7 @@ a:hover {
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: inherit;
   padding: 12px;
   transition: all 0.2s;
 }
@@ -2154,7 +2491,7 @@ a:hover {
 .ha-entity-card {
   background: var(--card-background);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: inherit;
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s;
@@ -2457,3 +2794,264 @@ a:hover {
   border-color: white;
   transform: rotate(90deg);
 }
+
+/* ==================== VNC Widget ==================== */
+.vnc-widget {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.vnc-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--widget-bg, rgba(0, 0, 0, 0.6));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.vnc-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vnc-status-indicator::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vnc-status-indicator.disconnected::before {
+  background: #888;
+}
+
+.vnc-status-indicator.connecting::before {
+  background: #f0ad4e;
+  animation: vnc-pulse 1s infinite;
+}
+
+.vnc-status-indicator.connected::before {
+  background: #4caf50;
+}
+
+.vnc-status-indicator.error::before {
+  background: #f44336;
+}
+
+@keyframes vnc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.vnc-status-info {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+.vnc-connect-btn {
+  padding: 2px 10px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.vnc-connect-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vnc-display {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+.vnc-display canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.vnc-bell {
+  box-shadow: inset 0 0 20px rgba(255, 255, 0, 0.3);
+  transition: box-shadow 0.2s;
+}
+
+/* VNC config screen */
+.vnc-config-label {
+  font-size: 14px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.vnc-config-inputs {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.vnc-config-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.vnc-config-input:focus {
+  border-color: var(--accent-color, #4a9eff);
+}
+
+.vnc-config-input:first-child {
+  flex: 1;
+}
+
+.vnc-config-port {
+  width: 80px;
+  flex: none;
+}
+
+.vnc-config-button {
+  margin-top: 12px;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent-color, #4a9eff);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.vnc-config-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vnc-config-button:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+/* VNC config dialog */
+.vnc-config-dialog {
+  max-width: 500px;
+}
+
+.vnc-config-dialog input[type="range"] {
+  flex: 1;
+}
+
+.vnc-config-dialog .widget-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* VNC Password Prompt (inline overlay inside VNC display) */
+.vnc-password-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.vnc-password-box {
+  background: var(--widget-bg, #1e1e2e);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 280px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vnc-password-title {
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vnc-password-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vnc-password-input:focus {
+  border-color: var(--accent-color, #4a9eff);
+}
+
+.vnc-password-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.vnc-password-cancel,
+.vnc-password-connect {
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+}
+
+.vnc-password-cancel {
+  background: transparent;
+  color: inherit;
+}
+
+.vnc-password-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vnc-password-connect {
+  background: var(--accent-color, #4a9eff);
+  color: white;
+  border-color: transparent;
+}
+
+.vnc-password-connect:hover {
+  opacity: 0.85;
+}
+
+

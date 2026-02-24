@@ -176,6 +176,24 @@ const widgetMetadata = [
       refreshInterval: 300
     },
     hasSettings: true
+  },
+  {
+    type: 'vnc',
+    name: 'VNC Remote Desktop',
+    icon: '🖥️',
+    description: 'Connect to remote VNC servers and display their desktops',
+    defaultSize: { w: 800, h: 600 },
+    defaultContent: {
+      viewOnly: false,
+      scaleMode: 'local',
+      clipToWindow: true,
+      showDotCursor: false,
+      qualityLevel: 6,
+      compressionLevel: 2,
+      autoConnect: true,
+      reconnectDelay: 5
+    },
+    hasSettings: true
   }
 ];
 

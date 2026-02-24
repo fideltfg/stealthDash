@@ -40,6 +40,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'unifi-sensor': () => import('../widgets/unifi-sensor'),
   'docker': () => import('../widgets/docker'),
   'gmail': () => import('../widgets/gmail'),
+  'vnc': () => import('../widgets/vnc'),
 };
 
 // Track which widgets have been loaded

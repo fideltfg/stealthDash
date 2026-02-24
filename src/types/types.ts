@@ -1,8 +1,9 @@
 // Core type definitions for the dashboard
+import type { Theme } from '../themes';
 
 // Dynamic widget type - widgets register themselves via the plugin system
 export type WidgetType = string;
-export type Theme = 'light' | 'dark' | 'system' | 'gruvbox' | 'tokyo-night' | 'catppuccin' | 'forest' | 'sunset' | 'peachy';
+export type { Theme };
 export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid';
 
 export interface Vec2 {

@@ -1,4 +1,5 @@
 import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState, Theme } from './types/types';
+import { THEMES, THEME_CLASSES, resolveSystemTheme } from './themes';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
 import { getDefaultState, generateUUID } from './components/storage';
 import { createHistoryManager, shouldCoalesceAction } from './components/history';
@@ -42,6 +43,28 @@ class Dashboard {
   private syncNotificationBanner: HTMLElement | null = null;
   private isOutOfSync: boolean = false;
   private syncStatusUnsubscribe: (() => void) | null = null;
+  private _systemThemeListener: (() => void) | null = null;
+
+  /** Save zoom + viewport to sessionStorage for the given dashboard */
+  private saveLocalViewState(dashboardId: string): void {
+    const viewState = {
+      zoom: this.state.zoom,
+      viewport: { ...this.state.viewport }
+    };
+    sessionStorage.setItem(`view-${dashboardId}`, JSON.stringify(viewState));
+  }
+
+  /** Restore zoom + viewport from sessionStorage for the given dashboard */
+  private restoreLocalViewState(dashboardId: string): void {
+    const raw = sessionStorage.getItem(`view-${dashboardId}`);
+    if (raw) {
+      try {
+        const viewState = JSON.parse(raw);
+        if (typeof viewState.zoom === 'number') this.state.zoom = viewState.zoom;
+        if (viewState.viewport) this.state.viewport = viewState.viewport;
+      } catch { /* ignore corrupt data */ }
+    }
+  }
 
   constructor() {
     this.authUI = new AuthUI(this.handleAuthChange.bind(this));
@@ -113,6 +136,8 @@ class Dashboard {
 
       if (activeDashboard) {
         this.state = activeDashboard.state;
+        // Restore per-tab zoom/viewport from sessionStorage
+        this.restoreLocalViewState(activeDashboard.id);
        //console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
       } else {
         console.warn('⚠️  No active dashboard found, using default state');
@@ -531,13 +556,21 @@ class Dashboard {
     const root = document.documentElement;
     const theme = this.getActiveTheme();
     
-    // Remove all theme classes first
-    root.classList.remove('theme-dark', 'theme-light', 'theme-gruvbox', 'theme-tokyo-night', 'theme-catppuccin', 'theme-forest', 'theme-sunset', 'theme-peachy');
+    // Remove all theme classes first (derived from registry)
+    root.classList.remove(...THEME_CLASSES);
 
-    if (theme !== 'system') {
-      root.classList.add(`theme-${theme}`);
+    // Apply the concrete theme class — for 'system', resolve to light/dark
+    const resolved = theme === 'system' ? resolveSystemTheme() : theme;
+    root.classList.add(`theme-${resolved}`);
+
+    // Listen for OS preference changes so 'system' theme reacts in real-time
+    if (!this._systemThemeListener) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      this._systemThemeListener = () => {
+        if (this.getActiveTheme() === 'system') this.setupTheme();
+      };
+      mq.addEventListener('change', this._systemThemeListener);
     }
-    // If 'system', no class is added (uses @media prefers-color-scheme)
   }
 
   private showThemeMenu(button: HTMLElement): void {
@@ -551,17 +584,7 @@ class Dashboard {
     const menu = document.createElement('div');
     menu.className = 'theme-menu-dropdown';
 
-    const themes: Array<{ value: Theme; label: string; icon: string }> = [
-      { value: 'light', label: 'Light', icon: 'fa-solid fa-sun' },
-      { value: 'dark', label: 'Dark', icon: 'fa-solid fa-moon' },
-      { value: 'gruvbox', label: 'Gruvbox', icon: 'fa-solid fa-palette' },
-      { value: 'tokyo-night', label: 'Tokyo Night', icon: 'fa-solid fa-city' },
-      { value: 'catppuccin', label: 'Catppuccin', icon: 'fa-solid fa-mug-hot' },
-      { value: 'forest', label: 'Forest', icon: 'fa-solid fa-tree' },
-      { value: 'sunset', label: 'Sunset', icon: 'fa-solid fa-cloud-sun' },
-      { value: 'peachy', label: 'Peachy', icon: 'fa-solid fa-heart' },
-      { value: 'system', label: 'System', icon: 'fa-solid fa-desktop' }
-    ];
+    const themes = THEMES;
 
     themes.forEach(theme => {
       const item = document.createElement('button');
@@ -876,6 +899,11 @@ class Dashboard {
       this.save(); // Save after drag/resize is complete
     }
 
+    // Save local view state after pan ends (zoom/viewport are local-only)
+    if (this.panState && this.multiState) {
+      this.saveLocalViewState(this.multiState.activeDashboardId);
+    }
+
     this.dragState = null;
     this.resizeState = null;
     this.panState = null;
@@ -1186,6 +1214,7 @@ class Dashboard {
     if (newZoom !== this.state.zoom) {
       this.state.zoom = newZoom;
       this.applyZoom();
+      if (this.multiState) this.saveLocalViewState(this.multiState.activeDashboardId);
     }
   }
 
@@ -1231,6 +1260,8 @@ class Dashboard {
   }
 
   private handleTouchEnd(e: TouchEvent): void {
+    // Save view state after pinch-zoom ends
+    if (this.multiState) this.saveLocalViewState(this.multiState.activeDashboardId);
     // Detect swipe gesture for dashboard navigation
     if (e.changedTouches.length === 1 && this.touchStartTime > 0) {
       const touchEndX = e.changedTouches[0].clientX;
@@ -1280,6 +1311,7 @@ class Dashboard {
     // Don't reset viewport position, just apply the zoom
     this.canvasContent.style.transform = `scale(${this.state.zoom})`;
     this.canvasContent.style.transformOrigin = 'top left';
+    if (this.multiState) this.saveLocalViewState(this.multiState.activeDashboardId);
   }
 
   private resetView(): void {
@@ -1288,6 +1320,7 @@ class Dashboard {
     this.canvasContent.style.top = '0px';
     // Update the viewport state
     this.state.viewport = { x: 0, y: 0 };
+    if (this.multiState) this.saveLocalViewState(this.multiState.activeDashboardId);
   }
 
   private autoArrangeWidgets(): void {
@@ -1859,6 +1892,11 @@ class Dashboard {
   private async switchToDashboard(dashboardId: string): Promise<void> {
     if (!this.multiState) return;
     
+    // Save current dashboard's view state before switching
+    if (this.multiState.activeDashboardId) {
+      this.saveLocalViewState(this.multiState.activeDashboardId);
+    }
+    
     // Clean up current widgets before switching
     this.cleanup();
     
@@ -1870,6 +1908,8 @@ class Dashboard {
     if (!dashboard) return;
     
     this.state = dashboard.state;
+    // Restore per-tab zoom/viewport for the target dashboard
+    this.restoreLocalViewState(dashboardId);
     this.history = createHistoryManager();
     this.render();
     this.setupTheme();

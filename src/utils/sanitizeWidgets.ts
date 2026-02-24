@@ -39,6 +39,8 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'unifi-sensor': ['host', 'credentialId', 'selectedSensors', 'showTemperature', 'showHumidity', 'showLight', 'temperatureUnit', 'refreshInterval'],
   'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
   'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
+  'gmail': ['credentialId', 'labelIds', 'maxResults', 'refreshInterval'],
+  'vnc': ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
 };
 
 /**
@@ -88,12 +90,19 @@ export function sanitizeWidget(widget: Widget): Widget {
 export function sanitizeDashboardState(state: MultiDashboardState): MultiDashboardState {
   return {
     ...state,
-    dashboards: state.dashboards.map(dashboard => ({
-      ...dashboard,
-      state: {
-        ...dashboard.state,
-        widgets: dashboard.state.widgets.map(widget => sanitizeWidget(widget))
-      }
-    }))
+    dashboards: state.dashboards.map(dashboard => {
+      // Strip zoom and viewport from the state before saving to server.
+      // These are view-only preferences stored locally per tab.
+      const { zoom, viewport, ...restState } = dashboard.state;
+      return {
+        ...dashboard,
+        state: {
+          ...restState,
+          zoom: 1.0,
+          viewport: { x: 0, y: 0 },
+          widgets: dashboard.state.widgets.map(widget => sanitizeWidget(widget))
+        }
+      };
+    })
   };
 }

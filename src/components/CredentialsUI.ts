@@ -151,6 +151,7 @@ export class CredentialsUI {
               <option value="docker">🐋 Docker</option>
               <option value="snmp">📊 SNMP</option>
               <option value="api"><i class="fas fa-plug"></i> Generic API</option>
+              <option value="vnc">🖥️ VNC Server</option>
               <option value="custom">⭐ Custom</option>
             </select>
           </div>
@@ -225,11 +226,11 @@ export class CredentialsUI {
     } else {
       container.innerHTML = fields.map(field => `
         <div class="form-group">
-          <label class="form-label">${field.label} *</label>
+          <label class="form-label">${field.label}${field.optional ? '' : ' *'}</label>
           <input 
             type="${field.type}" 
             id="cred-field-${field.name}" 
-            required 
+            ${field.optional ? '' : 'required'}
             class="form-input" 
             placeholder="${field.placeholder || ''}">
         </div>

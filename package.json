@@ -12,6 +12,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@novnc/novnc": "https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz",
     "d3": "^7.8.5",
     "justgage": "^2.0.1",
     "marked": "^11.0.0"

@@ -37,8 +37,7 @@ class DashboardStorageService {
               }
             }
           }
-          console.log('📥 Loaded dashboards with versions:', 
-                      Array.from(this.dashboardVersions.entries()).map(([id, v]) => `${id}:${v}`).join(', '));
+         // console.log('📥 Loaded dashboards with versions:', Array.from(this.dashboardVersions.entries()).map(([id, v]) => `${id}:${v}`).join(', '));
           return serverData;
         } else {
           console.log('⚠️  No dashboards on server, creating default');

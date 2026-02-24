@@ -104,6 +104,7 @@ const adminRoutes = require('./routes/admin');
 const credentialsRoutes = require('./routes/credentials');
 const widgetRoutes = require('./routes/widgets');
 const dockerRoutes = require('./routes/docker');
+const { initVncProxy } = require('./vnc-proxy');
 
 // Initialize auth routes with email function
 authRoutes.init(sendRecoveryEmail, SMTP_CONFIGURED);
@@ -122,9 +123,12 @@ app.use('/', widgetRoutes);
 app.use('/', dockerRoutes);
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Ping server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Ping endpoint: http://localhost:${PORT}/ping/<target>`);
   console.log(`Proxy endpoint: http://localhost:${PORT}/proxy?url=<target_url>`);
 });
+
+// Attach VNC WebSocket proxy to the HTTP server
+initVncProxy(server);

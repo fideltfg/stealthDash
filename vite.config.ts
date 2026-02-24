@@ -19,5 +19,8 @@ export default defineConfig({
     watch: {
       usePolling: true
     }
+  },
+  optimizeDeps: {
+    include: ['@novnc/novnc/core/rfb.js']
   }
 })

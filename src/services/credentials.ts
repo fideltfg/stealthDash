@@ -35,7 +35,7 @@ export interface TestCredentialResponse {
 const SERVICE_TYPES: Record<string, {
   label: string;
   icon: string;
-  fields: { name: string; label: string; type: string; placeholder?: string }[];
+  fields: { name: string; label: string; type: string; placeholder?: string; optional?: boolean }[];
 }> = {
   pihole: { label: 'Pi-hole', icon: '<i class="fas fa-shield-alt"></i>', fields: [
     { name: 'password', label: 'App Password', type: 'password', placeholder: 'App Password' }
@@ -64,6 +64,12 @@ const SERVICE_TYPES: Record<string, {
   ]},
   modbus: { label: 'Modbus', icon: '<i class="fas fa-cog"></i>', fields: [] },
   custom: { label: 'Custom', icon: '<i class="fas fa-star"></i>', fields: [] },
+  vnc: { label: 'VNC Server', icon: '<i class="fas fa-desktop"></i>', fields: [
+    { name: 'host', label: 'VNC Host', type: 'text', placeholder: '192.168.1.100' },
+    { name: 'port', label: 'VNC Port', type: 'number', placeholder: '5900' },
+    { name: 'username', label: 'Username (optional)', type: 'text', placeholder: 'Leave blank if not required', optional: true },
+    { name: 'password', label: 'VNC Password (optional)', type: 'password', placeholder: 'Leave blank if not required', optional: true }
+  ]},
 };
 
 class CredentialsService {

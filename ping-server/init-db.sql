@@ -68,16 +68,18 @@ END;
 $$ language 'plpgsql';
 
 -- Conditional updated_at trigger for dashboards
--- Only bumps updated_at when dashboard_data or name actually change
+-- Only bumps updated_at when widgets or name actually change.
+-- Cosmetic state changes (theme, background, grid, zoom, viewport) do NOT bump the version,
+-- so other tabs/browsers won't receive out-of-sync warnings for those changes.
 CREATE OR REPLACE FUNCTION update_dashboard_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only bump updated_at when actual content changes
-    IF OLD.dashboard_data IS DISTINCT FROM NEW.dashboard_data
-       OR OLD.name IS DISTINCT FROM NEW.name THEN
+    -- Only bump updated_at when widgets or name change (structural edits only)
+    IF (NEW.dashboard_data->'widgets') IS DISTINCT FROM (OLD.dashboard_data->'widgets')
+       OR NEW.name IS DISTINCT FROM OLD.name THEN
         NEW.updated_at = CURRENT_TIMESTAMP;
     ELSE
-        -- Preserve existing updated_at for metadata-only changes (is_active, etc.)
+        -- Preserve existing updated_at for cosmetic / metadata-only changes
         NEW.updated_at = OLD.updated_at;
     END IF;
     RETURN NEW;

@@ -42,14 +42,14 @@ export class DashboardSyncService {
       this.setupMessageListener();
     }
 
-    console.log('🔄 Dashboard sync service initialized, tab ID:', this.tabId);
+    //console.log('🔄 Dashboard sync service initialized, tab ID:', this.tabId);
   }
 
   /**
    * Set the current dashboard being viewed/edited in this tab
    */
   setCurrentDashboard(dashboardId: string, version?: number): void {
-    console.log('📍 Current dashboard set to:', dashboardId, 'version:', version);
+   // console.log('📍 Current dashboard set to:', dashboardId, 'version:', version);
     this.currentDashboardId = dashboardId;
     
     // Store version if provided
