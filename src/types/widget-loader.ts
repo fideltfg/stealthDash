@@ -41,6 +41,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'docker': () => import('../widgets/docker'),
   'gmail': () => import('../widgets/gmail'),
   'vnc': () => import('../widgets/vnc'),
+  'weather-dash': () => import('../widgets/weather-dash'),
 };
 
 // Track which widgets have been loaded

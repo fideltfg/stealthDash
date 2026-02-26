@@ -145,7 +145,8 @@ export class CredentialsUI {
             <select id="cred-service-type" required class="form-select">
               <option value="">Select service type...</option>
               <option value="pihole">Pi-hole</option>
-              <option value="unifi">UniFi Controller</option>
+              <option value="unifi">UniFi (Legacy - Username/Password)</option>
+              <option value="unifi_api">UniFi (API Key - UOS Consoles)</option>
               <option value="home_assistant">Home Assistant</option>
               <option value="google_calendar">Google Calendar</option>
               <option value="docker">Docker</option>

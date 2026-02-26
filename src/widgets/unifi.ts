@@ -7,10 +7,10 @@ import { dispatchWidgetUpdate, stopAllDragPropagation } from '../utils/dom';
 import { formatBytes, formatUptime, formatNumber, formatTimeAgo } from '../utils/formatting';
 
 interface UnifiContent {
-  host: string; // UniFi Controller host (e.g., 'https://192.168.1.1:8443')
-  username?: string; // UniFi controller username (deprecated - use credentialId)
-  password?: string; // UniFi controller password (deprecated - use credentialId)
-  credentialId?: number; // ID of saved credential to use
+  host?: string; // Deprecated - host is now stored in the credential
+  username?: string; // Deprecated - use credentialId
+  password?: string; // Deprecated - use credentialId
+  credentialId?: number; // ID of saved credential (contains host + auth)
   site?: string; // Site name (default: 'default')
   refreshInterval?: number; // Refresh interval in seconds (default: 30)
   displayMode?: 'compact' | 'detailed' | 'minimal' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds'; // Display style
@@ -87,6 +87,8 @@ interface UnifiStats {
   xput_down?: number;
   num_lan?: number;
   gateway_status?: string;
+  gateway_model?: string;
+  isp_name?: string;
   devices?: UnifiDevice[];
   clients?: UnifiClient[];
   alarms?: UnifiAlarm[];
@@ -96,6 +98,10 @@ interface UnifiStats {
     tx_packets: number;
     rx_packets: number;
   };
+  wan_download_kbps?: number;
+  wan_upload_kbps?: number;
+  wan_packet_loss?: number;
+  wan_downtime?: number;
 }
 
 class UnifiRenderer implements WidgetRenderer {
@@ -111,22 +117,16 @@ class UnifiRenderer implements WidgetRenderer {
    // console.log('UniFi widget render - Full content:', content);
    // console.log('UniFi widget render - Has credentialId?', !!content.credentialId);
     
-    // If widget has no host or credential configured, show configuration prompt
-    if (!content.host || !content.credentialId) {
+    // If widget has no credential configured, show configuration prompt
+    if (!content.credentialId) {
       this.renderConfigPrompt(container, widget);
       return;
     }
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-widget w-100 h-100 flex flex-column gap-16 overflow-auto" style="padding: 16px; background: var(--surface);">
-        <div class="unifi-header flex space-between align-center mb-16">
-          <h3 class="unifi-title flex align-center gap-8">
-            <span class="unifi-icon"><i class="fas fa-wifi"></i></span>
-            <span>UniFi Network</span>
-          </h3>
-        </div>
-        <div class="unifi-content flex-1 flex flex-column gap-12">
+      <div class="unifi-widget">
+        <div class="unifi-content">
           <div class="widget-loading text-center">
             Loading...
           </div>
@@ -144,8 +144,8 @@ class UnifiRenderer implements WidgetRenderer {
         }
 
         // Use the ping-server proxy to avoid CORS issues
+        // Host is read from the credential on the server side
         const proxyUrl = new URL('/api/unifi/stats', getPingServerUrl());
-        proxyUrl.searchParams.set('host', content.host);
         proxyUrl.searchParams.set('site', content.site || 'default');
         proxyUrl.searchParams.set('credentialId', content.credentialId.toString());
         
@@ -192,7 +192,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div class="widget-error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <div class="widget-error-title" style="color: #ff3b30;">Error loading UniFi data</div>
             <div class="widget-error-message">${error.message}</div>
-            <div class="widget-error-hint">Check host: ${content.host}</div>
+            <div class="widget-error-hint">Check your credential settings and host URL</div>
           </div>
         `;
       }
@@ -203,13 +203,14 @@ class UnifiRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
-    container.innerHTML = `
+    container.innerHTML = `<div class="">
       <div class="widget-config-screen padded text-center h-100">
         <div class="widget-config-icon"><i class="fas fa-wifi"></i></div>
         <div class="unifi-config-title">UniFi Network Widget</div>
         <div class="widget-config-description">Configure your UniFi Controller connection</div>
-        <div class="widget-config-sublabel"><i class="fa-solid fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fa-solid fa-key"></i> Credentials)</div>
+        <div class="widget-config-sublabel"><i class="fa-solid fa-lightbulb"></i> Tip: Create credentials first — use <b>UniFi (Legacy)</b> for username/password or <b>UniFi (API Key)</b> for UOS consoles</div>
         <button class="configure-btn widget-config-button">Configure</button>
+      </div>
       </div>
     `;
 
@@ -230,12 +231,13 @@ class UnifiRenderer implements WidgetRenderer {
 
     // Load credentials for dropdown
     const credentials = await credentialsService.getAll();
-    const unifiCredentials = credentials.filter((c: any) => c.service_type === 'unifi');
+    const unifiCredentials = credentials.filter((c: any) => c.service_type === 'unifi' || c.service_type === 'unifi_api');
     
     const credentialOptions = unifiCredentials.length > 0
-      ? unifiCredentials.map((c: any) => 
-          `<option value="${c.id}" ${content.credentialId === c.id ? 'selected' : ''} style="background: var(--surface); color: var(--text);">${c.name}</option>`
-        ).join('')
+      ? unifiCredentials.map((c: any) => {
+          const label = c.service_type === 'unifi_api' ? `${c.name} (API Key)` : `${c.name} (Legacy)`;
+          return `<option value="${c.id}" data-type="${c.service_type}" ${content.credentialId === c.id ? 'selected' : ''} style="background: var(--surface); color: var(--text);">${label}</option>`;
+        }).join('')
       : '<option value="" disabled style="background: var(--surface); color: var(--muted);">No credentials available</option>';
 
     modal.innerHTML = `
@@ -249,19 +251,6 @@ class UnifiRenderer implements WidgetRenderer {
 
       <form id="unifi-config-form" class="unifi-config-form">
         <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Controller Host *</label>
-          <input 
-            type="text" 
-            id="unifi-host" 
-            value="${content.host || 'https://192.168.1.1:8443'}"
-            placeholder="https://192.168.1.1:8443 or https://unifi.local:8443"
-            required
-            class="widget-dialog-input extended"
-          />
-          <small class="widget-dialog-hint">Include protocol (https://) and port (usually 8443)</small>
-        </div>
-
-        <div class="widget-dialog-field">
           <label class="widget-dialog-label">Credentials *</label>
           <select 
             id="unifi-credential"
@@ -271,19 +260,25 @@ class UnifiRenderer implements WidgetRenderer {
             <option value="">Select credentials...</option>
             ${credentialOptions}
           </select>
-          <small class="widget-dialog-hint">Create credentials from the user menu (<i class="fa-solid fa-key"></i> Credentials)</small>
+          <small class="widget-dialog-hint">
+            <b>Legacy</b>: host + username/password for self-hosted controllers &nbsp;|&nbsp; 
+            <b>API Key</b>: for UOS consoles via unifi.ui.com cloud API.
+            Create from <i class="fa-solid fa-key"></i> Credentials menu.
+          </small>
         </div>
 
-        <div class="widget-dialog-field">
-          <label class="widget-dialog-label">Site Name</label>
-          <input 
-            type="text" 
-            id="unifi-site" 
-            value="${content.site || 'default'}"
-            placeholder="default"
-            class="widget-dialog-input extended"
-          />
-          <small class="widget-dialog-hint">Usually "default" unless you have multiple sites</small>
+        <div class="widget-dialog-field" id="site-field">
+          <label class="widget-dialog-label">Site</label>
+          <div id="site-selector-container">
+            <input 
+              type="text" 
+              id="unifi-site" 
+              value="${content.site || 'default'}"
+              placeholder="default"
+              class="widget-dialog-input extended"
+            />
+          </div>
+          <small class="widget-dialog-hint" id="site-hint">Usually "default" unless you have multiple sites</small>
         </div>
 
         <div class="widget-dialog-field">
@@ -326,23 +321,111 @@ class UnifiRenderer implements WidgetRenderer {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
+    // Dynamic site selector: when an API key credential is selected, fetch available sites
+    const credentialSelect = modal.querySelector('#unifi-credential') as HTMLSelectElement;
+    const siteContainer = modal.querySelector('#site-selector-container') as HTMLElement;
+    const siteHint = modal.querySelector('#site-hint') as HTMLElement;
+    
+    const loadSitesForCredential = async (credId: string) => {
+      if (!credId) return;
+      
+      // Check if this is an API key credential
+      const selectedOption = credentialSelect.querySelector(`option[value="${credId}"]`) as HTMLOptionElement;
+      const credType = selectedOption?.dataset.type;
+      
+      if (credType === 'unifi_api') {
+        // Show loading state
+        siteHint.textContent = 'Loading sites from cloud...';
+        
+        try {
+          const proxyUrl = new URL('/api/unifi/sites', getPingServerUrl());
+          proxyUrl.searchParams.set('credentialId', credId);
+          
+          const response = await fetch(proxyUrl.toString(), {
+            headers: getAuthHeaders(false)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const sites = data.sites || [];
+            
+            if (sites.length > 0) {
+              // Replace text input with dropdown
+              const currentSite = content.site || 'default';
+              const siteSelect = document.createElement('select');
+              siteSelect.id = 'unifi-site';
+              siteSelect.className = 'widget-dialog-input extended';
+              
+              sites.forEach((s: any) => {
+                const opt = document.createElement('option');
+                opt.value = s.siteId; // Use siteId for precise selection
+                const label = `${s.desc} (${s.gateway || 'no gateway'}) - ${s.totalClients} clients, ${s.totalDevices} devices${s.isOwner ? ' ★' : ''}`;
+                opt.textContent = label;
+                // Select if matches current site (by siteId or name)
+                if (currentSite === s.siteId || (currentSite === s.name && !content.site?.match(/^[a-f0-9]{24}$/))) {
+                  opt.selected = true;
+                }
+                siteSelect.appendChild(opt);
+              });
+              
+              // If nothing is selected, select the owner's site
+              if (siteSelect.selectedIndex === -1 || siteSelect.value === '') {
+                const ownerSite = sites.find((s: any) => s.isOwner);
+                if (ownerSite) {
+                  siteSelect.value = ownerSite.siteId;
+                }
+              }
+              
+              siteContainer.innerHTML = '';
+              siteContainer.appendChild(siteSelect);
+              siteHint.textContent = 'Select which UniFi site to monitor';
+              
+              // Prevent drag on the new select
+              siteSelect.addEventListener('pointerdown', (e) => e.stopPropagation());
+            } else {
+              siteHint.textContent = 'No sites found for this API key';
+            }
+          } else {
+            siteHint.textContent = 'Could not load sites - using manual entry';
+          }
+        } catch (err) {
+          siteHint.textContent = 'Could not load sites - using manual entry';
+        }
+      } else {
+        // Legacy credential - show text input
+        const existingInput = siteContainer.querySelector('input');
+        if (!existingInput) {
+          siteContainer.innerHTML = `<input type="text" id="unifi-site" value="${content.site || 'default'}" placeholder="default" class="widget-dialog-input extended" />`;
+        }
+        siteHint.textContent = 'Usually "default" unless you have multiple sites';
+      }
+    };
+    
+    // Load sites when credential changes
+    credentialSelect.addEventListener('change', () => {
+      loadSitesForCredential(credentialSelect.value);
+    });
+    
+    // Load sites on initial open if credential is already selected
+    if (credentialSelect.value) {
+      loadSitesForCredential(credentialSelect.value);
+    }
+
     // Handle form submission
     const form = modal.querySelector('#unifi-config-form') as HTMLFormElement;
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const hostInput = document.getElementById('unifi-host') as HTMLInputElement;
       const credentialSelect = document.getElementById('unifi-credential') as HTMLSelectElement;
-      const siteInput = document.getElementById('unifi-site') as HTMLInputElement;
+      const siteElement = document.getElementById('unifi-site') as HTMLInputElement | HTMLSelectElement;
       const displayModeSelect = document.getElementById('unifi-display-mode') as HTMLSelectElement;
       const refreshInput = document.getElementById('unifi-refresh') as HTMLInputElement;
 
       // Prevent drag propagation on all interactive elements
       stopAllDragPropagation(modal);
       
-      const host = hostInput.value.trim();
       const credentialId = parseInt(credentialSelect.value);
-      const site = siteInput.value.trim();
+      const site = siteElement.value.trim() || 'default';
       const displayMode = displayModeSelect.value;
       const refreshInterval = parseInt(refreshInput.value);
 
@@ -352,10 +435,9 @@ class UnifiRenderer implements WidgetRenderer {
         return;
       }
 
-      console.log('Saving UniFi config:', { host, credentialId, site, displayMode, refreshInterval });
+      console.log('Saving UniFi config:', { credentialId, site, displayMode, refreshInterval });
 
       const newContent: UnifiContent = {
-        host,
         credentialId,
         site,
         displayMode: displayMode as 'minimal' | 'compact' | 'detailed' | 'devices' | 'clients' | 'full' | 'active' | 'throughput' | 'speeds',
@@ -401,37 +483,61 @@ class UnifiRenderer implements WidgetRenderer {
     const clients = (data.num_user || 0);
     const guests = (data.num_guest || 0);
     const devices = (data.gateways || 0) + (data.switches || 0) + (data.access_points || 0);
+    const statusIcon = data.gateway_status === 'ok' ? '<i class="fas fa-circle" style="color: #34c759; font-size: 8px;"></i>' : 
+                       data.gateway_status === 'warning' ? '<i class="fas fa-circle" style="color: #ff9500; font-size: 8px;"></i>' : 
+                       data.gateway_status ? '<i class="fas fa-circle" style="color: #ff3b30; font-size: 8px;"></i>' : '';
     
     container.innerHTML = `
       <div class="unifi-compact flex flex-column gap-12">
         <div class="unifi-stats-grid">
-          <div class="unifi-stat-card">
+          <div class="card">
             <div class="unifi-stat-value accent">${clients}</div>
             <div class="unifi-stat-label">Clients</div>
           </div>
           
-          <div class="unifi-stat-card">
-            <div class="unifi-stat-value">${guests}</div>
-            <div class="unifi-stat-label">Guests</div>
-          </div>
-          
-          <div class="unifi-stat-card">
+          <div class="card">
             <div class="unifi-stat-value">${devices}</div>
             <div class="unifi-stat-label">Devices</div>
           </div>
-        </div>
-        
-        ${data.site_name ? `
-          <div class="unifi-info-row">
-            <span class="unifi-info-label">Site</span>
-            <span class="unifi-info-value">${data.site_name}</span>
+          
+          <div class="card">
+            <div class="unifi-stat-value">${guests}</div>
+            <div class="unifi-stat-label">Guests</div>
           </div>
-        ` : ''}
+        </div>
         
         ${data.wan_ip ? `
           <div class="unifi-info-row">
-            <span class="unifi-info-label">WAN IP</span>
+            <span class="unifi-info-label">${statusIcon} WAN</span>
             <span class="unifi-info-value mono">${data.wan_ip}</span>
+          </div>
+        ` : ''}
+        
+        ${data.gateway_model ? `
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">Gateway</span>
+            <span class="unifi-info-value">${data.gateway_model}</span>
+          </div>
+        ` : ''}
+        
+        ${data.latency ? `
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">Latency</span>
+            <span class="unifi-info-value">${data.latency}ms</span>
+          </div>
+        ` : ''}
+
+        ${data.isp_name ? `
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">ISP</span>
+            <span class="unifi-info-value">${data.isp_name}</span>
+          </div>
+        ` : ''}
+
+        ${(data.gateways || data.switches || data.access_points) ? `
+          <div class="unifi-info-row">
+            <span class="unifi-info-label">Infrastructure</span>
+            <span class="unifi-info-value">${data.gateways || 0} GW | ${data.switches || 0} SW | ${data.access_points || 0} AP</span>
           </div>
         ` : ''}
       </div>
@@ -445,34 +551,40 @@ class UnifiRenderer implements WidgetRenderer {
     const gateways = (data.gateways || 0);
     const switches = (data.switches || 0);
     const aps = (data.access_points || 0);
-    const uptime = data.uptime ? formatUptime(data.uptime) : 'Unknown';
+    const uptime = data.uptime ? formatUptime(data.uptime) : 'N/A';
+    const statusColor = data.gateway_status === 'ok' ? '#34c759' : data.gateway_status === 'warning' ? '#ff9500' : data.gateway_status ? '#ff3b30' : 'var(--muted)';
     
     container.innerHTML = `
-      <div class="unifi-detailed flex flex-column gap-16">
-        <div class="unifi-stats-grid-small">
-          <div class="unifi-stat-card">
+      <div class="card-list">
+          <div class="card">
             <div class="unifi-stat-value-small accent">${clients}</div>
             <div class="unifi-stat-label-small">Clients</div>
           </div>
           
-          <div class="unifi-stat-card">
+          <div class="card">
             <div class="unifi-stat-value-small">${guests}</div>
             <div class="unifi-stat-label-small">Guests</div>
           </div>
           
-          <div class="unifi-stat-card">
+          <div class="card">
             <div class="unifi-stat-value-small">${iot}</div>
             <div class="unifi-stat-label-small">IoT</div>
           </div>
-        </div>
         
-        <div class="unifi-section">
-          <div class="unifi-section-title">Infrastructure</div>
+        <div class="card">
+          <div class="card-title">Infrastructure</div>
           <div class="flex flex-column gap-8">
-            <div class="unifi-info-row">
-              <span class="unifi-info-label"><i class="fas fa-globe"></i> Gateways</span>
-              <span class="unifi-info-value">${gateways}</span>
-            </div>
+            ${data.gateway_model ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label"><i class="fas fa-globe"></i> Gateway</span>
+                <span class="unifi-info-value">${data.gateway_model} <i class="fas fa-circle" style="color: ${statusColor}; font-size: 8px; vertical-align: middle;"></i></span>
+              </div>
+            ` : `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label"><i class="fas fa-globe"></i> Gateways</span>
+                <span class="unifi-info-value">${gateways}</span>
+              </div>
+            `}
             <div class="unifi-info-row">
               <span class="unifi-info-label"><i class="fas fa-network-wired"></i> Switches</span>
               <span class="unifi-info-value">${switches}</span>
@@ -484,24 +596,51 @@ class UnifiRenderer implements WidgetRenderer {
           </div>
         </div>
         
-        <div class="unifi-section">
+        <div class="card">
+          <div class="card-title">WAN</div>
           <div class="flex flex-column gap-8">
-            ${data.site_name ? `
-              <div class="unifi-info-row">
-                <span class="unifi-info-label">Site</span>
-                <span class="unifi-info-value">${data.site_name}</span>
-              </div>
-            ` : ''}
             ${data.wan_ip ? `
               <div class="unifi-info-row">
-                <span class="unifi-info-label">WAN IP</span>
+                <span class="unifi-info-label">IP</span>
                 <span class="unifi-info-value mono">${data.wan_ip}</span>
               </div>
             ` : ''}
-            <div class="unifi-info-row">
-              <span class="unifi-info-label">Uptime</span>
-              <span class="unifi-info-value">${uptime}</span>
-            </div>
+            ${data.isp_name ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">ISP</span>
+                <span class="unifi-info-value">${data.isp_name}</span>
+              </div>
+            ` : ''}
+            ${data.latency ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">Latency</span>
+                <span class="unifi-info-value">${data.latency}ms</span>
+              </div>
+            ` : ''}
+            ${data.wan_uptime !== undefined ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">WAN Uptime</span>
+                <span class="unifi-info-value">${data.wan_uptime}%</span>
+              </div>
+            ` : ''}
+            ${data.xput_down ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label"><i class="fa-solid fa-arrow-down"></i> Down</span>
+                <span class="unifi-info-value">${(data.xput_down / 1000000).toFixed(0)} Mbps</span>
+              </div>
+            ` : ''}
+            ${data.xput_up ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label"><i class="fa-solid fa-arrow-up"></i> Up</span>
+                <span class="unifi-info-value">${(data.xput_up / 1000000).toFixed(0)} Mbps</span>
+              </div>
+            ` : ''}
+            ${data.uptime ? `
+              <div class="unifi-info-row">
+                <span class="unifi-info-label">Console Uptime</span>
+                <span class="unifi-info-value">${uptime}</span>
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -517,7 +656,6 @@ class UnifiRenderer implements WidgetRenderer {
           <div class="unifi-devices-title">Network Devices (${devices.length})</div>
           <div class="unifi-devices-summary">${(data.gateways || 0)} GW | ${(data.switches || 0)} SW | ${(data.access_points || 0)} AP</div>
         </div>
-        
         ${devices.length === 0 ? `
           <div class="widget-loading text-center">No devices found</div>
         ` : devices.map(device => {
@@ -525,15 +663,13 @@ class UnifiRenderer implements WidgetRenderer {
           const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
           
           return `
-            <div class="unifi-device-card" style="border-left-color: ${statusColor};">
-              <div class="unifi-device-header">
-                <div class="unifi-device-icon-wrapper">
+            <div class="card" style="border-left-color: ${statusColor};">
+              <div class="card-header">
                   <span class="unifi-device-icon">${typeIcon}</span>
                   <div>
                     <div class="unifi-device-name">${device.name}</div>
                     <div class="unifi-device-ip">${device.ip}</div>
                   </div>
-                </div>
                 ${device.upgradable ? '<span class="unifi-device-badge">Update</span>' : ''}
               </div>
               
@@ -912,27 +1048,48 @@ class UnifiRenderer implements WidgetRenderer {
     const clients = data.clients || [];
     const devices = data.devices || [];
     const alarms = data.alarms || [];
+    const totalDevices = (data.gateways || 0) + (data.switches || 0) + (data.access_points || 0);
+    const statusColor = data.gateway_status === 'ok' ? '#34c759' : data.gateway_status === 'warning' ? '#ff9500' : data.gateway_status ? '#ff3b30' : 'var(--muted)';
     
     container.innerHTML = `
       <div class="unifi-full flex flex-column gap-16 h-100 overflow-auto">
         <!-- Summary Stats -->
         <div class="unifi-stats-grid-full">
-          <div class="unifi-stat-card-compact">
+          <div class="card-compact">
             <div class="unifi-stat-value-compact accent">${data.num_user || 0}</div>
             <div class="unifi-stat-label-tiny">Clients</div>
           </div>
-          <div class="unifi-stat-card-compact">
-            <div class="unifi-stat-value-compact">${devices.length}</div>
+          <div class="card-compact">
+            <div class="unifi-stat-value-compact">${totalDevices || devices.length}</div>
             <div class="unifi-stat-label-tiny">Devices</div>
           </div>
-          <div class="unifi-stat-card-compact">
+          <div class="card-compact">
             <div class="unifi-stat-value-compact">${data.num_guest || 0}</div>
             <div class="unifi-stat-label-tiny">Guests</div>
           </div>
         </div>
 
+        <!-- Infrastructure -->
+        ${data.gateway_model || data.gateways ? `
+          <div class="card">
+            <div class="card-title">Infrastructure</div>
+            <div class="card-content">
+              ${data.gateway_model ? `
+                <div class="unifi-info-item">
+                  <span class="widget-muted">Gateway:</span>
+                  <span class="widget-text-bold">${data.gateway_model} <i class="fas fa-circle" style="color: ${statusColor}; font-size: 8px; vertical-align: middle;"></i></span>
+                </div>
+              ` : ''}
+              <div class="unifi-info-item">
+                <span class="widget-muted">Breakdown:</span>
+                <span class="widget-text-bold">${data.gateways || 0} GW | ${data.switches || 0} SW | ${data.access_points || 0} AP</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- WAN Info -->
-        ${data.wan_ip || data.xput_down ? `
+        ${data.wan_ip || data.xput_down || data.isp_name ? `
           <div class="unifi-card">
             <div class="unifi-card-title">WAN</div>
             <div class="unifi-card-content">
@@ -942,22 +1099,34 @@ class UnifiRenderer implements WidgetRenderer {
                   <span class="widget-text-bold mono">${data.wan_ip}</span>
                 </div>
               ` : ''}
-              ${data.xput_down ? `
+              ${data.isp_name ? `
                 <div class="unifi-info-item">
-                  <span class="widget-muted"><i class="fa-solid fa-arrow-down"></i> Download:</span>
-                  <span class="widget-text-bold">${(data.xput_down / 1000000).toFixed(1)} Mbps</span>
+                  <span class="widget-muted">ISP:</span>
+                  <span class="widget-text-bold">${data.isp_name}</span>
                 </div>
               ` : ''}
-              ${data.xput_up ? `
+              ${data.wan_uptime !== undefined ? `
                 <div class="unifi-info-item">
-                  <span class="widget-muted"><i class="fa-solid fa-arrow-up"></i> Upload:</span>
-                  <span class="widget-text-bold">${(data.xput_up / 1000000).toFixed(1)} Mbps</span>
+                  <span class="widget-muted">Uptime:</span>
+                  <span class="widget-text-bold">${data.wan_uptime}%</span>
                 </div>
               ` : ''}
               ${data.latency ? `
                 <div class="unifi-info-item">
                   <span class="widget-muted">Latency:</span>
                   <span class="widget-text-bold">${data.latency}ms</span>
+                </div>
+              ` : ''}
+              ${data.xput_down ? `
+                <div class="unifi-info-item">
+                  <span class="widget-muted"><i class="fa-solid fa-arrow-down"></i> Download:</span>
+                  <span class="widget-text-bold">${(data.xput_down / 1000000).toFixed(0)} Mbps</span>
+                </div>
+              ` : ''}
+              ${data.xput_up ? `
+                <div class="unifi-info-item">
+                  <span class="widget-muted"><i class="fa-solid fa-arrow-up"></i> Upload:</span>
+                  <span class="widget-text-bold">${(data.xput_up / 1000000).toFixed(0)} Mbps</span>
                 </div>
               ` : ''}
             </div>
@@ -967,11 +1136,11 @@ class UnifiRenderer implements WidgetRenderer {
         <!-- Devices Section -->
         ${devices.length > 0 ? `
           <div>
-            <div class="unifi-list-title">Devices (${devices.length})</div>
+            <div class="unifi-list-title">Network Devices (${devices.length})</div>
             <div class="flex flex-column gap-8">
-              ${devices.slice(0, 5).map(device => {
+              ${devices.slice(0, 8).map(device => {
                 const statusColor = device.state === 1 ? '#34c759' : '#ff3b30';
-                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : '<i class="fas fa-globe"></i>';
+                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
                 
                 return `
                   <div class="unifi-device-mini" style="border-left-color: ${statusColor};">
@@ -980,12 +1149,12 @@ class UnifiRenderer implements WidgetRenderer {
                         <span class="unifi-device-mini-icon">${typeIcon}</span>
                         <span class="unifi-device-mini-name">${device.name}</span>
                       </div>
-                      <span class="unifi-device-mini-clients">${device.num_sta || 0} clients</span>
+                      <span class="unifi-device-mini-clients">${device.model || ''}</span>
                     </div>
                   </div>
                 `;
               }).join('')}
-              ${devices.length > 5 ? `<div class="unifi-more-items">+${devices.length - 5} more devices</div>` : ''}
+              ${devices.length > 8 ? `<div class="unifi-more-items">+${devices.length - 8} more devices</div>` : ''}
             </div>
           </div>
         ` : ''}
@@ -1176,113 +1345,208 @@ class UnifiRenderer implements WidgetRenderer {
     const clients = data.clients || [];
     const devices = data.devices || [];
     
-    // Calculate per-device throughput
+    // Determine if we have actual byte-level traffic (legacy API) or only WAN speed (cloud API)
+    const hasTrafficBytes = traffic.tx_bytes > 0 || traffic.rx_bytes > 0;
+    const hasDeviceTraffic = devices.some(d => (d.tx_bytes || 0) + (d.rx_bytes || 0) > 0);
+    
+    // WAN link speed in Mbps (from ISP metrics / speedtest)
+    const wanDownMbps = data.wan_download_kbps ? data.wan_download_kbps / 1000 : (data.xput_down ? data.xput_down / 1000000 : 0);
+    const wanUpMbps = data.wan_upload_kbps ? data.wan_upload_kbps / 1000 : (data.xput_up ? data.xput_up / 1000000 : 0);
+    const hasWanSpeed = wanDownMbps > 0 || wanUpMbps > 0;
+    
+    // Calculate per-device throughput (only meaningful with legacy API data)
     const deviceTraffic = devices.map(device => ({
       name: device.name,
       type: device.type,
+      state: device.state,
       tx: device.tx_bytes || 0,
       rx: device.rx_bytes || 0,
       total: (device.tx_bytes || 0) + (device.rx_bytes || 0),
-      clients: device.num_sta || 0
+      clients: device.num_sta || 0,
+      uptime: device.uptime || 0
     })).sort((a, b) => b.total - a.total);
     
     const totalDeviceTraffic = deviceTraffic.reduce((sum, d) => sum + d.total, 0);
     const totalClientTraffic = clients.reduce((sum, c) => sum + c.tx_bytes + c.rx_bytes, 0);
     
+    // Total connected clients from either the clients array or site stats
+    const totalClients = clients.length > 0 ? clients.length : (data.num_user || 0);
+    
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
-        <!-- Network Totals -->
+        <!-- WAN Speed / Network Throughput Header -->
         <div style="background: linear-gradient(135deg, var(--accent) 0%, #0077ff 100%); padding: 20px; border-radius: 12px; color: white;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">Network Throughput</div>
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">${hasTrafficBytes ? 'Network Throughput' : 'WAN Link Speed'}</div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             <div>
               <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
-              <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.tx_bytes)}</div>
+              ${hasTrafficBytes 
+                ? `<div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.tx_bytes)}</div>`
+                : `<div style="font-size: 28px; font-weight: 700;">${wanUpMbps.toFixed(0)}</div>
+                   <div style="font-size: 12px; opacity: 0.9;">Mbps</div>`
+              }
             </div>
             <div>
               <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
-              <div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.rx_bytes)}</div>
+              ${hasTrafficBytes 
+                ? `<div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.rx_bytes)}</div>`
+                : `<div style="font-size: 28px; font-weight: 700;">${wanDownMbps.toFixed(0)}</div>
+                   <div style="font-size: 12px; opacity: 0.9;">Mbps</div>`
+              }
             </div>
           </div>
           <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; font-size: 12px;">
-            <span>Total: <strong>${formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
-            <span>Packets: <strong>${formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>
+            ${hasTrafficBytes 
+              ? `<span>Total: <strong>${formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
+                 <span>Packets: <strong>${formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>`
+              : `<span>Latency: <strong>${data.latency || data.speedtest_ping || '\u2014'}ms</strong></span>
+                 <span>ISP: <strong>${data.isp_name || 'Unknown'}</strong></span>`
+            }
           </div>
         </div>
 
-        <!-- Traffic Distribution -->
+        <!-- Network Overview -->
         <div>
-          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Traffic Distribution</div>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY DEVICES</div>
-              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalDeviceTraffic)}</div>
-              <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${devices.length} devices</div>
-            </div>
-            <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">BY CLIENTS</div>
-              <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalClientTraffic)}</div>
-              <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${clients.length} clients</div>
-            </div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Network Overview</div>
+          <div style="display: grid; grid-template-columns: repeat(${hasTrafficBytes ? '2' : '3'}, 1fr); gap: 12px;">
+            ${hasTrafficBytes ? `
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">DEVICE TRAFFIC</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalDeviceTraffic)}</div>
+                <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${devices.length} devices</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">CLIENT TRAFFIC</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${formatBytes(totalClientTraffic)}</div>
+                <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${totalClients} clients</div>
+              </div>
+            ` : `
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">DEVICES</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${devices.length}</div>
+                <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${devices.filter(d => d.state === 1).length} online</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">CLIENTS</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--accent);">${totalClients}</div>
+                <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">${data.num_guest || 0} guests</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">WAN</div>
+                <div style="font-size: 22px; font-weight: 700; color: ${data.gateway_status === 'ok' || (data.wan_uptime && data.wan_uptime <= 100 && data.wan_uptime >= 99) ? '#34c759' : '#ff9500'};">${data.wan_uptime !== undefined ? (typeof data.wan_uptime === 'number' && data.wan_uptime <= 100 ? data.wan_uptime + '%' : '\u2713') : '\u2014'}</div>
+                <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">uptime</div>
+              </div>
+            `}
           </div>
         </div>
 
-        <!-- Device Throughput -->
-        ${deviceTraffic.length > 0 ? `
+        <!-- Device List -->
+        ${devices.length > 0 ? `
           <div>
-            <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Device Throughput</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">${hasDeviceTraffic ? 'Device Throughput' : 'Network Devices'}</div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${deviceTraffic.slice(0, 8).map(device => {
-                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : '<i class="fas fa-globe"></i>';
-                const percentage = totalDeviceTraffic > 0 ? (device.total / totalDeviceTraffic * 100) : 0;
+                const typeIcon = device.type === 'uap' ? '<i class="fas fa-wifi"></i>' : device.type === 'usw' ? '<i class="fas fa-network-wired"></i>' : device.type === 'ugw' ? '<i class="fas fa-globe"></i>' : '<i class="fas fa-server"></i>';
+                const isOnline = device.state === 1;
+                const statusColor = isOnline ? '#34c759' : '#ff3b30';
                 
-                return `
-                  <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px;">${typeIcon}</span>
-                        <div>
-                          <div style="font-size: 12px; font-weight: 600; color: var(--text);">${device.name}</div>
-                          <div style="font-size: 10px; color: var(--muted);">${device.clients} clients</div>
+                if (hasDeviceTraffic) {
+                  // Legacy API: show actual traffic data
+                  const percentage = totalDeviceTraffic > 0 ? (device.total / totalDeviceTraffic * 100) : 0;
+                  return `
+                    <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 16px;">${typeIcon}</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">${device.name}</div>
+                            <div style="font-size: 10px; color: var(--muted);">${device.clients} clients</div>
+                          </div>
+                        </div>
+                        <div style="text-align: right;">
+                          <div style="font-size: 13px; font-weight: 700; color: var(--accent);">${formatBytes(device.total)}</div>
+                          <div style="font-size: 9px; color: var(--muted);">${percentage.toFixed(1)}%</div>
                         </div>
                       </div>
-                      <div style="text-align: right;">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--accent);">${formatBytes(device.total)}</div>
-                        <div style="font-size: 9px; color: var(--muted);">${percentage.toFixed(1)}%</div>
+                      <div style="background: var(--surface); height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 6px;">
+                        <div style="background: var(--accent); height: 100%; width: ${percentage}%;"></div>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                        <span style="color: var(--muted);"><i class="fa-solid fa-arrow-up"></i> ${formatBytes(device.tx)}</span>
+                        <span style="color: var(--muted);"><i class="fa-solid fa-arrow-down"></i> ${formatBytes(device.rx)}</span>
                       </div>
                     </div>
-                    
-                    <div style="background: var(--surface); height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 6px;">
-                      <div style="background: var(--accent); height: 100%; width: ${percentage}%;"></div>
+                  `;
+                } else {
+                  // Cloud API: show device status (no per-device traffic available)
+                  return `
+                    <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 16px;">${typeIcon}</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">${device.name}</div>
+                            <div style="font-size: 10px; color: var(--muted);">${device.type === 'uap' ? 'Access Point' : device.type === 'usw' ? 'Switch' : device.type === 'ugw' ? 'Gateway' : 'Device'}${device.uptime > 0 ? ' \u00b7 Up ' + formatUptime(device.uptime) : ''}</div>
+                          </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></div>
+                          <span style="font-size: 11px; color: ${statusColor}; font-weight: 600;">${isOnline ? 'Online' : 'Offline'}</span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div style="display: flex; justify-content: space-between; font-size: 10px;">
-                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-up"></i> ${formatBytes(device.tx)}</span>
-                      <span style="color: var(--muted);"><i class="fa-solid fa-arrow-down"></i> ${formatBytes(device.rx)}</span>
-                    </div>
-                  </div>
-                `;
+                  `;
+                }
               }).join('')}
             </div>
           </div>
         ` : ''}
 
-        <!-- Upload/Download Ratio -->
+        <!-- Upload/Download Ratio (only when we have actual traffic data) -->
+        ${hasTrafficBytes ? `
+        ${(() => {
+          const ratioTx = traffic.tx_bytes;
+          const ratioRx = traffic.rx_bytes;
+          const ratioTotal = ratioTx + ratioRx;
+          const uploadPct = ratioTotal > 0 ? (ratioTx / ratioTotal * 100) : 0;
+          const downloadPct = ratioTotal > 0 ? (ratioRx / ratioTotal * 100) : 0;
+          return `
         <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
           <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Upload/Download Ratio</div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <div style="flex: ${traffic.tx_bytes}; background: #ff9500; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
-              ${traffic.tx_bytes > 0 ? formatBytes(traffic.tx_bytes) : '0'}
+            <div style="flex: ${ratioTx || 1}; background: #ff9500; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              ${formatBytes(ratioTx)}
             </div>
-            <div style="flex: ${traffic.rx_bytes}; background: #34c759; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
-              ${traffic.rx_bytes > 0 ? formatBytes(traffic.rx_bytes) : '0'}
+            <div style="flex: ${ratioRx || 1}; background: #34c759; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              ${formatBytes(ratioRx)}
             </div>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 8px;">
-            <span>Upload: ${traffic.rx_bytes > 0 ? ((traffic.tx_bytes / traffic.rx_bytes) * 100).toFixed(1) : 0}%</span>
-            <span>Download: 100%</span>
+            <span>Upload: ${uploadPct.toFixed(1)}%</span>
+            <span>Download: ${downloadPct.toFixed(1)}%</span>
+          </div>
+        </div>`;
+        })()}
+        ` : `
+        <!-- WAN Speed Ratio (cloud API - show link speed breakdown) -->
+        ${hasWanSpeed ? `
+        <div style="background: var(--bg); padding: 14px; border-radius: 8px;">
+          <div style="font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px;">WAN Link Capacity</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="flex: ${wanUpMbps || 1}; background: #ff9500; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              <i class="fa-solid fa-arrow-up" style="margin-right: 4px;"></i> ${wanUpMbps.toFixed(0)} Mbps
+            </div>
+            <div style="flex: ${wanDownMbps || 1}; background: #34c759; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 60px;">
+              <i class="fa-solid fa-arrow-down" style="margin-right: 4px;"></i> ${wanDownMbps.toFixed(0)} Mbps
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 8px;">
+            <span>Latency: ${data.latency || '\u2014'}ms</span>
+            <span>${data.wan_packet_loss !== undefined ? `Packet Loss: ${data.wan_packet_loss}%` : ''}</span>
           </div>
         </div>
+        ` : ''}
+        `}
       </div>
     `;
   }
@@ -1502,8 +1766,8 @@ class UnifiRenderer implements WidgetRenderer {
 
   destroy(): void {
     this.poller.stopAll();
-    this.updateIntervals.forEach(id => clearInterval(id));
-    this.updateIntervals.clear();
+    // this.updateIntervals.forEach(id => clearInterval(id));
+    // this.updateIntervals.clear();
   }
 }
 

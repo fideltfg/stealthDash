@@ -88,7 +88,14 @@ export interface CometP8541Content {
   showAlarms?: boolean;
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content;
+export interface WeatherDashContent {
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  locationName: string;
+}
+
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent;
 
 export interface Widget {
   id: string;

@@ -40,9 +40,13 @@ const SERVICE_TYPES: Record<string, {
   pihole: { label: 'Pi-hole', icon: '<i class="fas fa-shield-alt"></i>', fields: [
     { name: 'password', label: 'App Password', type: 'password', placeholder: 'App Password' }
   ]},
-  unifi: { label: 'UniFi Controller', icon: '<i class="fas fa-wifi"></i>', fields: [
-    { name: 'username', label: 'Username', type: 'text', placeholder: 'UniFi username' },
-    { name: 'password', label: 'Password', type: 'password', placeholder: 'UniFi password' }
+  unifi: { label: 'UniFi (Legacy)', icon: '<i class="fas fa-wifi"></i>', fields: [
+    { name: 'host', label: 'Controller URL', type: 'text', placeholder: 'https://192.168.1.1:8443' },
+    { name: 'username', label: 'Username', type: 'text', placeholder: 'UniFi controller username' },
+    { name: 'password', label: 'Password', type: 'password', placeholder: 'UniFi controller password' }
+  ]},
+  unifi_api: { label: 'UniFi (API Key)', icon: '<i class="fas fa-wifi"></i>', fields: [
+    { name: 'apiKey', label: 'API Key', type: 'password', placeholder: 'API key from unifi.ui.com → API section' }
   ]},
   home_assistant: { label: 'Home Assistant', icon: '<i class="fas fa-home"></i>', fields: [
     { name: 'token', label: 'Long-Lived Access Token', type: 'password', placeholder: 'Long-lived access token' }

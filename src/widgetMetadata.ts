@@ -188,6 +188,15 @@ export const widgetMetadata: WidgetMetadataEntry[] = [
     hasSettings: true
   },
   {
+    type: 'weather-dash',
+    name: 'Weather Dashboard',
+    icon: '<i class="fa-solid fa-mountain-sun"></i>',
+    description: 'Full weather dashboard with 24-hour hourly and 7-day daily forecasts',
+    defaultSize: { w: 1200, h: 800 },
+    defaultContent: { latitude: 0, longitude: 0, timezone: 'America/Edmonton', locationName: '' },
+    hasSettings: true
+  },
+  {
     type: 'vnc',
     name: 'VNC Remote Desktop',
     icon: '<i class="fa-solid fa-desktop"></i>',

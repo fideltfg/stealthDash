@@ -464,6 +464,56 @@ router.post('/home-assistant/service', async (req, res) => {
 
 // ==================== PROXY ROUTES ====================
 
+// Embed proxy endpoint - strips X-Frame-Options and CSP headers so sites can be iframed
+router.get('/embed-proxy', async (req, res) => {
+  try {
+    const targetUrl = req.query.url;
+
+    if (!targetUrl) {
+      return res.status(400).send('Missing url parameter');
+    }
+
+    // Validate URL
+    const urlModule = require('url');
+    const parsedUrl = urlModule.parse(targetUrl);
+    if (!parsedUrl.protocol || !['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return res.status(400).send('Invalid URL protocol');
+    }
+
+    console.log(`Embed-proxying request to: ${targetUrl}`);
+
+    const https = require('https');
+    const http = require('http');
+    const protocol = parsedUrl.protocol === 'https:' ? https : http;
+
+    protocol.get(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (proxyRes) => {
+      // Forward status code
+      res.status(proxyRes.statusCode);
+
+      // Forward all headers EXCEPT ones that block iframe embedding
+      const skipHeaders = ['x-frame-options', 'content-security-policy', 'content-security-policy-report-only'];
+      for (const [key, value] of Object.entries(proxyRes.headers)) {
+        if (!skipHeaders.includes(key.toLowerCase())) {
+          res.set(key, value);
+        }
+      }
+
+      // Allow embedding from any origin
+      res.set('Access-Control-Allow-Origin', '*');
+      res.removeHeader('X-Frame-Options');
+
+      proxyRes.pipe(res);
+    }).on('error', (error) => {
+      console.error('Embed proxy error:', error);
+      res.status(500).send(`Embed proxy error: ${error.message}`);
+    });
+
+  } catch (error) {
+    console.error('Embed proxy endpoint error:', error);
+    res.status(500).send(`Error: ${error.message}`);
+  }
+});
+
 // CORS proxy endpoint for fetching external XML/data
 router.get('/proxy', async (req, res) => {
   try {
@@ -638,44 +688,501 @@ router.get('/api/pihole', async (req, res) => {
 
 // ==================== UNIFI ROUTES ====================
 
-// UniFi Controller API proxy endpoint
-router.get('/api/unifi/stats', async (req, res) => {
-  try {
-    const { host, username, password, credentialId, site = 'default' } = req.query;
+// Helper: Fetch UniFi data using legacy cookie-based auth (self-hosted controllers)
+async function fetchUnifiLegacy(fetch, httpsAgent, host, site, username, password) {
+  // Create cache key from host+username
+  const cacheKey = `${host}:${username}:${password}`;
+  
+  let cookies;
+  const cachedSession = unifiSessionCache.get(cacheKey);
+  
+  // Check if we have a valid cached session
+  if (cachedSession && cachedSession.expires > Date.now()) {
+    console.log('Using cached UniFi legacy session');
+    cookies = cachedSession.cookies;
+  } else {
+    // Authenticate and get session cookies
+    const loginUrl = `${host}/api/login`;
+    console.log(`Authenticating with UniFi Controller (legacy) at: ${loginUrl}`);
     
-    if (!host) {
-      return res.status(400).json({ error: 'Missing host parameter' });
+    const loginResponse = await fetch(loginUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ 
+        username: username,
+        password: password,
+        remember: false
+      }),
+      agent: httpsAgent,
+      timeout: 10000
+    });
+    
+    if (!loginResponse.ok) {
+      console.error(`UniFi login error: ${loginResponse.status} ${loginResponse.statusText}`);
+      const errorText = await loginResponse.text();
+      throw { status: loginResponse.status, error: `UniFi authentication failed: ${loginResponse.status}`, details: errorText };
     }
     
-    let unifiUsername = username;
-    let unifiPassword = password;
+    // Extract cookies from response
+    const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
+    if (!setCookieHeaders || setCookieHeaders.length === 0) {
+      throw { status: 401, error: 'Authentication failed', details: 'No session cookies received from UniFi Controller' };
+    }
     
-    // If credentialId is provided, fetch credentials from database
-    if (credentialId) {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Authentication required when using credentialId' });
+    cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]).join('; ');
+    
+    // Cache the session for 30 minutes
+    unifiSessionCache.set(cacheKey, {
+      cookies: cookies,
+      expires: Date.now() + (30 * 60 * 1000)
+    });
+    
+    console.log('UniFi legacy authentication successful, session cached');
+  }
+  
+  // Build request headers for legacy cookie auth
+  const makeHeaders = () => ({ 'Accept': 'application/json', 'Cookie': cookies });
+  
+  // Legacy endpoints: /api/s/{site}/stat/*
+  const basePath = `/api/s/${site}/stat`;
+  
+  const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
+    fetch(`${host}${basePath}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }),
+    fetch(`${host}${basePath}/device`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 })
+      .catch(err => { console.log('Device fetch failed (non-critical):', err.message); return null; }),
+    fetch(`${host}${basePath}/sta`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 })
+      .catch(err => { console.log('Clients fetch failed (non-critical):', err.message); return null; }),
+    fetch(`${host}${basePath}/alarm`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 })
+      .catch(err => { console.log('Alarms fetch failed (non-critical):', err.message); return null; })
+  ]);
+  
+  if (!healthResponse.ok) {
+    // Clear cache on auth errors
+    if (healthResponse.status === 401) {
+      unifiSessionCache.delete(cacheKey);
+    }
+    const errorText = await healthResponse.text();
+    throw { status: healthResponse.status, error: `UniFi API returned ${healthResponse.status}: ${healthResponse.statusText}`, details: errorText };
+  }
+  
+  return {
+    healthData: await healthResponse.json(),
+    devicesData: devicesResponse && devicesResponse.ok ? await devicesResponse.json() : { data: [] },
+    clientsData: clientsResponse && clientsResponse.ok ? await clientsResponse.json() : { data: [] },
+    alarmsData: alarmsResponse && alarmsResponse.ok ? await alarmsResponse.json() : { data: [] }
+  };
+}
+
+// Helper: Fetch UniFi data using API key via the cloud Site Manager API (api.ui.com)
+// API keys from unifi.ui.com authenticate against the cloud API, NOT local consoles.
+// Endpoints: /v1/sites, /v1/devices, /v1/hosts, /v1/isp-metrics/{type}
+const UNIFI_CLOUD_API = 'https://api.ui.com';
+
+async function fetchUnifiApiKey(fetch, apiKey) {
+  const makeHeaders = () => ({
+    'Accept': 'application/json',
+    'X-API-Key': apiKey
+  });
+  
+  console.log('Fetching UniFi data from cloud Site Manager API (api.ui.com)...');
+  
+  // Fetch sites, devices, and hosts in parallel
+  const [sitesResponse, devicesResponse, hostsResponse] = await Promise.all([
+    fetch(`${UNIFI_CLOUD_API}/v1/sites`, { headers: makeHeaders(), timeout: 15000 }),
+    fetch(`${UNIFI_CLOUD_API}/v1/devices`, { headers: makeHeaders(), timeout: 15000 })
+      .catch(err => { console.log('Devices fetch failed (non-critical):', err.message); return null; }),
+    fetch(`${UNIFI_CLOUD_API}/v1/hosts`, { headers: makeHeaders(), timeout: 15000 })
+      .catch(err => { console.log('Hosts fetch failed (non-critical):', err.message); return null; })
+  ]);
+  
+  if (!sitesResponse.ok) {
+    const errorText = await sitesResponse.text();
+    console.error(`UniFi cloud API error: ${sitesResponse.status} - ${errorText}`);
+    throw {
+      status: sitesResponse.status,
+      error: `UniFi cloud API returned ${sitesResponse.status}. Check your API key at unifi.ui.com.`,
+      details: errorText
+    };
+  }
+  
+  const sitesData = await sitesResponse.json();
+  const devicesData = devicesResponse && devicesResponse.ok ? await devicesResponse.json() : { data: [] };
+  const hostsData = hostsResponse && hostsResponse.ok ? await hostsResponse.json() : { data: [] };
+  
+  // Also try to fetch ISP metrics (last 24h at 5-minute intervals)
+  let ispMetrics = { data: [] };
+  try {
+    const metricsResponse = await fetch(`${UNIFI_CLOUD_API}/v1/isp-metrics/5m?duration=24h`, {
+      headers: makeHeaders(),
+      timeout: 15000
+    });
+    if (metricsResponse.ok) {
+      ispMetrics = await metricsResponse.json();
+    }
+  } catch (err) {
+    console.log('ISP metrics fetch failed (non-critical):', err.message);
+  }
+  
+  console.log('UniFi cloud API data received:', {
+    sites: (sitesData.data || []).length,
+    devices: (devicesData.data || []).length,
+    hosts: (hostsData.data || []).length,
+    metrics: (ispMetrics.data || []).length
+  });
+  
+  return { sitesData, devicesData, hostsData, ispMetrics };
+}
+
+// Helper: Map cloud API device shortnames to legacy type codes for icon display
+function mapDeviceType(shortname, model) {
+  const sn = (shortname || '').toUpperCase();
+  const m = (model || '').toUpperCase();
+  
+  // Gateways / Security Gateways
+  if (sn.startsWith('UDM') || sn.startsWith('UXG') || sn.startsWith('USG') || sn.startsWith('UDR') || sn.startsWith('UDW') || sn === 'UDMPRO' || sn === 'UXGPRO') return 'ugw';
+  
+  // Access Points
+  if (sn.startsWith('U6') || sn.startsWith('U7') || sn.startsWith('UAP') || sn.startsWith('UAC') || m.includes('AP') || m.includes('ACCESS POINT') || m.includes('MESH') || m.includes(' LR') || m.includes(' IW') || m.includes(' HD') || m.includes(' PRO')) {
+    // Distinguish APs from switches that might have "Pro" in the name
+    if (m.includes('SWITCH') || m.includes('USW') || m.includes('US ')) return 'usw';
+    return 'uap';
+  }
+  
+  // Switches
+  if (sn.startsWith('USW') || sn.startsWith('USL') || sn.startsWith('US8') || sn.startsWith('USC') || sn.startsWith('USF') || m.includes('SWITCH') || m.includes('USW') || m.includes('US ')) return 'usw';
+  
+  // If model string contains AP-related keywords
+  if (m.includes('AC ') || m.includes('WIFI') || m.includes('WI-FI')) return 'uap';
+  
+  return 'usw'; // Default to switch for unknown network devices
+}
+
+// Transform cloud Site Manager API data into the widget's UnifiStats format
+function transformCloudApiData(sitesData, devicesData, hostsData, ispMetrics, targetSite) {
+  const sites = sitesData.data || [];
+  const deviceHosts = devicesData.data || []; // Array of {hostId, hostName, devices: [...]}
+  const hosts = hostsData.data || [];
+  const metricsEntries = ispMetrics.data || [];
+  
+  // Find the target site - try matching by siteId first, then by name/desc
+  // When multiple sites have the same name (e.g. both "default"), prefer the one with isOwner: true
+  let site = null;
+  
+  // Try exact siteId match first (if user provided a siteId)
+  site = sites.find(s => s.siteId === targetSite);
+  
+  if (!site) {
+    // Find all sites matching by name or description
+    const matchingSites = sites.filter(s => 
+      (s.meta?.name || '').toLowerCase() === targetSite.toLowerCase() ||
+      (s.meta?.desc || '').toLowerCase() === targetSite.toLowerCase()
+    );
+    
+    if (matchingSites.length > 1) {
+      // Multiple matches - prefer the one where isOwner is true
+      site = matchingSites.find(s => s.isOwner === true) || matchingSites[0];
+    } else if (matchingSites.length === 1) {
+      site = matchingSites[0];
+    }
+  }
+  
+  if (!site && sites.length > 0) {
+    // Fall back: prefer owned site, then first site
+    site = sites.find(s => s.isOwner === true) || sites[0];
+  }
+  
+  const siteHostId = site?.hostId;
+  
+  const stats = {
+    site_name: site?.meta?.desc || site?.meta?.name || targetSite,
+    num_user: 0,
+    num_guest: 0,
+    num_iot: 0,
+    gateways: 0,
+    switches: 0,
+    access_points: 0,
+    wan_ip: undefined,
+    uptime: undefined,
+    wan_uptime: undefined,
+    latency: undefined,
+    speedtest_ping: undefined,
+    xput_up: undefined,
+    xput_down: undefined,
+    gateway_status: undefined,
+    gateway_model: undefined,
+    isp_name: undefined,
+    devices: [],
+    clients: [],
+    alarms: [],
+    traffic: { tx_bytes: 0, rx_bytes: 0, tx_packets: 0, rx_packets: 0 },
+    wan_download_kbps: undefined,
+    wan_upload_kbps: undefined,
+    wan_packet_loss: undefined,
+    wan_downtime: undefined
+  };
+  
+  // Extract site statistics
+  if (site?.statistics) {
+    const siteStats = site.statistics;
+    const counts = siteStats.counts || {};
+    
+    // Client counts
+    stats.num_user = (counts.wifiClient || 0) + (counts.wiredClient || 0);
+    stats.num_guest = counts.guestClient || 0;
+    stats.num_iot = counts.iotClient || 0;
+    
+    // Device counts from site statistics (authoritative numbers)
+    stats.gateways = counts.gatewayDevice || 0;
+    stats.switches = counts.wiredDevice || 0;
+    stats.access_points = counts.wifiDevice || 0;
+    
+    // WAN info
+    if (siteStats.wans) {
+      const primaryWan = siteStats.wans.WAN || siteStats.wans.WAN1;
+      if (primaryWan) {
+        stats.wan_ip = primaryWan.externalIp;
+      }
+    }
+    
+    // WAN uptime from percentages
+    if (siteStats.percentages) {
+      const wanUp = siteStats.percentages.wanUptime;
+      stats.gateway_status = wanUp === 100 ? 'ok' : (wanUp > 90 ? 'warning' : 'error');
+      stats.wan_uptime = wanUp;
+    }
+    
+    // ISP info
+    if (siteStats.ispInfo) {
+      stats.isp_name = siteStats.ispInfo.name;
+    }
+    
+    // Gateway model
+    if (siteStats.gateway) {
+      stats.gateway_model = siteStats.gateway.shortname;
+    }
+  }
+  
+  // Process ISP metrics for the matching site
+  // Metrics are grouped by siteId/hostId with nested periods[]
+  // NOTE: download_kbps / upload_kbps represent WAN LINK SPEED (capacity), NOT actual traffic.
+  const siteMetrics = metricsEntries.find(m => m.siteId === site?.siteId) || metricsEntries[0];
+  if (siteMetrics?.periods?.length > 0) {
+    const latest = siteMetrics.periods[siteMetrics.periods.length - 1];
+    const wan = latest?.data?.wan;
+    if (wan) {
+      if (wan.avgLatency !== undefined) stats.latency = wan.avgLatency;
+      if (wan.maxLatency !== undefined) stats.speedtest_ping = wan.maxLatency;
+      // download_kbps / upload_kbps are WAN link speed in kbps, convert to bps
+      if (wan.download_kbps !== undefined) {
+        stats.xput_down = wan.download_kbps * 1000;
+        stats.wan_download_kbps = wan.download_kbps;
+      }
+      if (wan.upload_kbps !== undefined) {
+        stats.xput_up = wan.upload_kbps * 1000;
+        stats.wan_upload_kbps = wan.upload_kbps;
+      }
+      if (wan.packetLoss !== undefined) stats.wan_packet_loss = wan.packetLoss;
+      if (wan.downtime !== undefined) stats.wan_downtime = wan.downtime;
+    }
+    // traffic byte totals are NOT available from the cloud API
+    // (download_kbps etc are link speed, not cumulative counters)
+  }
+  
+  // Process devices from cloud API
+  // The /v1/devices response is grouped by host: {data: [{hostId, hostName, devices: [...]}, ...]}
+  // Find the host entry matching this site's hostId
+  let siteDeviceList = [];
+  if (siteHostId) {
+    const hostEntry = deviceHosts.find(h => h.hostId === siteHostId);
+    if (hostEntry) {
+      siteDeviceList = hostEntry.devices || [];
+    }
+  }
+  if (siteDeviceList.length === 0 && deviceHosts.length > 0) {
+    // Fall back: flatten all devices from all hosts
+    siteDeviceList = deviceHosts.flatMap(h => h.devices || []);
+  }
+  
+  // Filter to network devices only (exclude protect cameras, access readers, etc.)
+  const networkDevices = siteDeviceList.filter(d => d.productLine === 'network');
+  
+  networkDevices.forEach(device => {
+    // Calculate uptime from startupTime
+    let uptimeSeconds = 0;
+    if (device.startupTime) {
+      const startTime = new Date(device.startupTime).getTime();
+      if (!isNaN(startTime)) {
+        uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+        if (uptimeSeconds < 0) uptimeSeconds = 0;
+      }
+    }
+    
+    const deviceType = mapDeviceType(device.shortname, device.model);
+    
+    stats.devices.push({
+      name: device.name || 'Unknown',
+      model: device.model || device.shortname || '',
+      type: deviceType,
+      ip: device.ip || '',
+      mac: device.mac || '',
+      state: device.status === 'online' ? 1 : 0,
+      adopted: device.isManaged || false,
+      uptime: uptimeSeconds,
+      version: device.version || '',
+      upgradable: !!(device.updateAvailable),
+      num_sta: 0,
+      user_num_sta: 0,
+      guest_num_sta: 0,
+      bytes: 0,
+      tx_bytes: 0,
+      rx_bytes: 0,
+      satisfaction: 0,
+      cpu: 0,
+      mem: 0,
+      shortname: device.shortname || ''
+    });
+  });
+  
+  // Process hosts for console uptime info
+  if (hosts.length > 0 && siteHostId) {
+    const host = hosts.find(h => h.id === siteHostId);
+    if (host) {
+      // Calculate uptime from registrationTime or lastConnectionStateChange
+      const rs = host.reportedState || {};
+      if (rs.state === 'connected' && host.lastConnectionStateChange) {
+        const connTime = new Date(host.lastConnectionStateChange).getTime();
+        if (!isNaN(connTime)) {
+          stats.uptime = Math.floor((Date.now() - connTime) / 1000);
+        }
+      }
+    }
+  }
+  
+  console.log('UniFi cloud API transform result:', {
+    site: stats.site_name,
+    siteId: site?.siteId,
+    hostId: siteHostId?.substring(0, 30),
+    clients: stats.num_user,
+    guests: stats.num_guest,
+    networkDevices: stats.devices.length,
+    gateways: stats.gateways,
+    switches: stats.switches,
+    aps: stats.access_points,
+    wan_ip: stats.wan_ip,
+    gateway_model: stats.gateway_model,
+    isp: stats.isp_name,
+    latency: stats.latency,
+    isOwner: site?.isOwner
+  });
+  
+  return stats;
+}
+
+// UniFi cloud API: List available sites (for config dialog dropdown)
+router.get('/api/unifi/sites', async (req, res) => {
+  try {
+    const { credentialId } = req.query;
+    
+    if (!credentialId) {
+      return res.status(400).json({ error: 'Missing credentialId parameter' });
+    }
+    
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const credResult = await db.query(
+        'SELECT service_type, credential_data FROM credentials WHERE id = $1 AND user_id = $2',
+        [credentialId, decoded.userId]
+      );
+      
+      if (credResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Credential not found' });
       }
       
-      const token = authHeader.substring(7);
-      const jwt = require('jsonwebtoken');
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
-        const credentials = await getCredentials(credentialId, decoded.userId);
-        
-        if (!credentials.username || !credentials.password) {
-          return res.status(400).json({ error: 'Credential does not contain username and password fields' });
-        }
-        
-        unifiUsername = credentials.username;
-        unifiPassword = credentials.password;
-      } catch (err) {
-        return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
+      const serviceType = credResult.rows[0].service_type;
+      const credentials = decryptCredentials(credResult.rows[0].credential_data);
+      
+      if (serviceType !== 'unifi_api' || !credentials.apiKey) {
+        return res.json({ sites: [] }); // Only cloud API has site listing
       }
+      
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch(`${UNIFI_CLOUD_API}/v1/sites`, {
+        headers: { 'Accept': 'application/json', 'X-API-Key': credentials.apiKey },
+        timeout: 15000
+      });
+      
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'Failed to fetch sites from UniFi cloud API' });
+      }
+      
+      const data = await response.json();
+      const sites = (data.data || []).map(s => ({
+        siteId: s.siteId,
+        name: s.meta?.name || 'unknown',
+        desc: s.meta?.desc || s.meta?.name || 'Unknown',
+        isOwner: s.isOwner || false,
+        gateway: s.statistics?.gateway?.shortname || '',
+        totalDevices: s.statistics?.counts?.totalDevice || 0,
+        totalClients: (s.statistics?.counts?.wifiClient || 0) + (s.statistics?.counts?.wiredClient || 0) + (s.statistics?.counts?.guestClient || 0)
+      }));
+      
+      res.json({ sites });
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token' });
+    }
+  } catch (error) {
+    console.error('Error listing UniFi sites:', error);
+    res.status(500).json({ error: 'Failed to list sites' });
+  }
+});
+
+// UniFi Controller API proxy endpoint (supports both legacy username/password and API key auth)
+router.get('/api/unifi/stats', async (req, res) => {
+  try {
+    const { credentialId, site = 'default' } = req.query;
+    
+    if (!credentialId) {
+      return res.status(400).json({ error: 'Missing credentialId parameter' });
     }
     
-    if (!unifiUsername || !unifiPassword) {
-      return res.status(400).json({ error: 'Missing username/password or credentialId parameter' });
+    // Authenticate and fetch credentials
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required when using credentialId' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = require('jsonwebtoken');
+    let credentials, serviceType;
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      
+      // Fetch the full credential record (including service_type) to determine auth method
+      const credResult = await db.query(
+        'SELECT service_type, credential_data FROM credentials WHERE id = $1 AND user_id = $2',
+        [credentialId, decoded.userId]
+      );
+      
+      if (credResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Credential not found or access denied' });
+      }
+      
+      serviceType = credResult.rows[0].service_type;
+      credentials = decryptCredentials(credResult.rows[0].credential_data);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid authentication token or credential access denied' });
     }
 
     // Use node-fetch to make requests
@@ -687,123 +1194,48 @@ router.get('/api/unifi/stats', async (req, res) => {
       rejectUnauthorized: false
     });
     
-    // Create cache key from host+username+password
-    const cacheKey = `${host}:${unifiUsername}:${unifiPassword}`;
+    let rawData;
     
-    let cookies;
-    const cachedSession = unifiSessionCache.get(cacheKey);
-    
-    // Check if we have a valid cached session
-    if (cachedSession && cachedSession.expires > Date.now()) {
-      console.log('Using cached UniFi session');
-      cookies = cachedSession.cookies;
+    if (serviceType === 'unifi_api') {
+      // API Key auth via cloud Site Manager API (api.ui.com)
+      if (!credentials.apiKey) {
+        return res.status(400).json({ error: 'Credential does not contain an API key' });
+      }
+      console.log(`UniFi cloud API key auth`);
+      const cloudData = await fetchUnifiApiKey(fetch, credentials.apiKey);
+      
+      // Transform cloud API data into the widget's expected stats format
+      const stats = transformCloudApiData(
+        cloudData.sitesData, 
+        cloudData.devicesData, 
+        cloudData.hostsData, 
+        cloudData.ispMetrics, 
+        site
+      );
+      
+      console.log('UniFi cloud API stats:', {
+        site: stats.site_name,
+        clients: stats.num_user,
+        devices: stats.devices.length
+      });
+      
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Content-Type', 'application/json');
+      return res.json(stats);
     } else {
-      // Step 1: Authenticate and get session cookies
-      const loginUrl = `${host}/api/login`;
-      console.log(`Authenticating with UniFi Controller at: ${loginUrl}`);
-      
-      const loginResponse = await fetch(loginUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          username: unifiUsername,
-          password: unifiPassword,
-          remember: false
-        }),
-        agent: httpsAgent,
-        timeout: 10000
-      });
-      
-      if (!loginResponse.ok) {
-        console.error(`UniFi login error: ${loginResponse.status} ${loginResponse.statusText}`);
-        const errorText = await loginResponse.text();
-        return res.status(loginResponse.status).json({ 
-          error: `UniFi authentication failed: ${loginResponse.status}`,
-          details: errorText
-        });
+      // Legacy username/password auth for self-hosted controllers
+      const host = credentials.host;
+      if (!host) {
+        return res.status(400).json({ error: 'Credential does not contain a host URL. Please edit the credential and add the Controller URL.' });
       }
-      
-      // Extract cookies from response
-      const setCookieHeaders = loginResponse.headers.raw()['set-cookie'];
-      if (!setCookieHeaders || setCookieHeaders.length === 0) {
-        return res.status(401).json({ 
-          error: 'Authentication failed',
-          details: 'No session cookies received from UniFi Controller'
-        });
+      if (!credentials.username || !credentials.password) {
+        return res.status(400).json({ error: 'Credential does not contain username and password fields' });
       }
-      
-      // Join all cookies
-      cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]).join('; ');
-      
-      // Cache the session for 30 minutes
-      unifiSessionCache.set(cacheKey, {
-        cookies: cookies,
-        expires: Date.now() + (30 * 60 * 1000) // 30 minutes
-      });
-      
-      console.log('UniFi authentication successful, session cached');
+      console.log(`UniFi legacy auth for host: ${host}`);
+      rawData = await fetchUnifiLegacy(fetch, httpsAgent, host, site, credentials.username, credentials.password);
     }
     
-    // Step 2: Fetch multiple endpoints in parallel for comprehensive data
-    const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
-      // Health/stats
-      fetch(`${host}/api/s/${site}/stat/health`, { 
-        headers: { 'Accept': 'application/json', 'Cookie': cookies },
-        agent: httpsAgent,
-        timeout: 10000 
-      }),
-      // Device list (APs, switches, gateways)
-      fetch(`${host}/api/s/${site}/stat/device`, { 
-        headers: { 'Accept': 'application/json', 'Cookie': cookies },
-        agent: httpsAgent,
-        timeout: 10000 
-      }).catch(err => {
-        console.log('Device fetch failed (non-critical):', err.message);
-        return null;
-      }),
-      // Active clients
-      fetch(`${host}/api/s/${site}/stat/sta`, { 
-        headers: { 'Accept': 'application/json', 'Cookie': cookies },
-        agent: httpsAgent,
-        timeout: 10000 
-      }).catch(err => {
-        console.log('Clients fetch failed (non-critical):', err.message);
-        return null;
-      }),
-      // Recent alarms
-      fetch(`${host}/api/s/${site}/stat/alarm`, { 
-        headers: { 'Accept': 'application/json', 'Cookie': cookies },
-        agent: httpsAgent,
-        timeout: 10000 
-      }).catch(err => {
-        console.log('Alarms fetch failed (non-critical):', err.message);
-        return null;
-      })
-    ]);
-    
-    if (!healthResponse.ok) {
-      console.error(`UniFi API error: ${healthResponse.status} ${healthResponse.statusText}`);
-      const errorText = await healthResponse.text();
-      console.error(`Response body: ${errorText}`);
-      
-      // Clear cache on auth errors
-      if (healthResponse.status === 401) {
-        unifiSessionCache.delete(cacheKey);
-      }
-      
-      return res.status(healthResponse.status).json({ 
-        error: `UniFi API returned ${healthResponse.status}: ${healthResponse.statusText}`,
-        details: errorText
-      });
-    }
-    
-    const healthData = await healthResponse.json();
-    const devicesData = devicesResponse && devicesResponse.ok ? await devicesResponse.json() : { data: [] };
-    const clientsData = clientsResponse && clientsResponse.ok ? await clientsResponse.json() : { data: [] };
-    const alarmsData = alarmsResponse && alarmsResponse.ok ? await alarmsResponse.json() : { data: [] };
+    const { healthData, devicesData, clientsData, alarmsData } = rawData;
     
     // Aggregate stats from all subsystems
     const stats = {
@@ -833,8 +1265,6 @@ router.get('/api/unifi/stats', async (req, res) => {
           stats.num_guest = item.num_guest || 0;
           stats.num_iot = item.num_iot || 0;
           stats.access_points = item.num_ap || 0;
-          if (item.tx_bytes) stats.traffic.tx_bytes += item.tx_bytes;
-          if (item.rx_bytes) stats.traffic.rx_bytes += item.rx_bytes;
         } else if (item.subsystem === 'wan') {
           stats.wan_ip = item.wan_ip;
           stats.uptime = item.uptime;
@@ -851,6 +1281,13 @@ router.get('/api/unifi/stats', async (req, res) => {
         } else if (item.subsystem === 'lan') {
           stats.num_lan = item.num_user || 0;
         }
+
+        // Accumulate traffic bytes and packets from ALL subsystems that report them
+        // (wlan, lan, wan each track traffic at their own layer)
+        if (item.tx_bytes) stats.traffic.tx_bytes += item.tx_bytes;
+        if (item.rx_bytes) stats.traffic.rx_bytes += item.rx_bytes;
+        if (item.tx_packets) stats.traffic.tx_packets += item.tx_packets;
+        if (item.rx_packets) stats.traffic.rx_packets += item.rx_packets;
       });
     }
     
@@ -871,9 +1308,9 @@ router.get('/api/unifi/stats', async (req, res) => {
           num_sta: device.num_sta || 0,
           user_num_sta: device['user-num_sta'] || 0,
           guest_num_sta: device['guest-num_sta'] || 0,
-          bytes: device.bytes || 0,
-          tx_bytes: device['tx_bytes'] || 0,
-          rx_bytes: device['rx_bytes'] || 0,
+          bytes: device.bytes || (device.stat?.bytes) || 0,
+          tx_bytes: device['tx_bytes'] || device.stat?.tx_bytes || 0,
+          rx_bytes: device['rx_bytes'] || device.stat?.rx_bytes || 0,
           satisfaction: device.satisfaction,
           cpu: device['system-stats']?.cpu,
           mem: device['system-stats']?.mem,
@@ -933,6 +1370,10 @@ router.get('/api/unifi/stats', async (req, res) => {
     
   } catch (error) {
     console.error('UniFi proxy error:', error);
+    // Handle structured errors from auth helpers
+    if (error.status && error.error) {
+      return res.status(error.status).json({ error: error.error, details: error.details });
+    }
     res.status(500).json({ 
       error: error.message,
       details: 'Failed to fetch UniFi data. Check if controller is accessible and credentials are correct.'

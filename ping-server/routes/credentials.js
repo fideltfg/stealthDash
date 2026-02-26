@@ -60,7 +60,7 @@ router.post('/credentials', authMiddleware, async (req, res) => {
   }
   
   // Validate service_type
-  const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'vnc', 'custom'];
+  const validServiceTypes = ['pihole', 'unifi', 'unifi_api', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'vnc', 'custom'];
   if (!validServiceTypes.includes(service_type)) {
     return res.status(400).json({ 
       error: 'Invalid service_type', 
@@ -118,7 +118,7 @@ router.put('/credentials/:id', authMiddleware, async (req, res) => {
     }
     
     if (service_type !== undefined) {
-      const validServiceTypes = ['pihole', 'unifi', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'vnc', 'custom'];
+      const validServiceTypes = ['pihole', 'unifi', 'unifi_api', 'home_assistant', 'google_calendar', 'docker', 'snmp', 'modbus', 'api', 'vnc', 'custom'];
       if (!validServiceTypes.includes(service_type)) {
         return res.status(400).json({ 
           error: 'Invalid service_type', 
@@ -204,8 +204,12 @@ router.post('/credentials/:id/test', authMiddleware, async (req, res) => {
         message = valid ? 'Pi-hole credentials format is valid' : 'Missing password';
         break;
       case 'unifi':
-        valid = !!data.username && !!data.password;
-        message = valid ? 'UniFi credentials format is valid' : 'Missing username or password';
+        valid = !!data.host && !!data.username && !!data.password;
+        message = valid ? 'UniFi credentials format is valid' : 'Missing host, username, or password';
+        break;
+      case 'unifi_api':
+        valid = !!data.apiKey;
+        message = valid ? 'UniFi API key format is valid' : 'Missing API key';
         break;
       case 'home_assistant':
         valid = !!data.token;

@@ -1,10 +1,11 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { getPingServerUrl } from '../utils/api';
 
 export class EmbedWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
-    const content = widget.content as { url: string; sandbox?: string[] };
+    const content = widget.content as { url: string; sandbox?: string[]; useProxy?: boolean };
     
     const overlay = document.createElement('div');
     overlay.className = 'widget-overlay';
@@ -18,6 +19,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
         <label class="widget-dialog-label">URL to Embed</label>
         <input type="text" id="embed-url" value="${content.url || ''}" placeholder="https://example.com" class="widget-dialog-input" />
       </div>
+      <div id="embed-proxy-row"></div>
       <div class="widget-dialog-buttons">
         <button id="cancel-btn" class="widget-dialog-button-cancel">
           Cancel
@@ -31,6 +33,24 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+    // Build checkbox row programmatically so click events work reliably
+    const proxyRow = dialog.querySelector('#embed-proxy-row') as HTMLDivElement;
+    proxyRow.style.cssText = 'display:flex;flex-direction:row;align-items:center;gap:8px;margin-bottom:8px;';
+
+    const proxyCheckbox = document.createElement('input');
+    proxyCheckbox.type = 'checkbox';
+    proxyCheckbox.id = 'embed-proxy';
+    proxyCheckbox.checked = !!content.useProxy;
+    proxyCheckbox.style.cssText = 'width:auto;cursor:pointer;margin:0;';
+
+    const proxyLabel = document.createElement('label');
+    proxyLabel.htmlFor = 'embed-proxy';
+    proxyLabel.textContent = 'Use proxy (bypass X-Frame-Options)';
+    proxyLabel.style.cssText = 'margin:0;cursor:pointer;user-select:none;';
+
+    proxyRow.appendChild(proxyCheckbox);
+    proxyRow.appendChild(proxyLabel);
+
     const urlInput = dialog.querySelector('#embed-url') as HTMLInputElement;
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
@@ -43,20 +63,24 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     saveBtn.onclick = () => {
       const url = urlInput.value.trim();
       if (url) {
-        dispatchWidgetUpdate(widget.id, { url, sandbox: [] });
+        dispatchWidgetUpdate(widget.id, { url, sandbox: [], useProxy: proxyCheckbox.checked });
         close();
       }
     };
   }
 
   render(container: HTMLElement, widget: Widget): void {
-    const content = widget.content as { url: string; sandbox?: string[] };
+    const content = widget.content as { url: string; sandbox?: string[]; useProxy?: boolean };
     const div = document.createElement('div');
     div.className = 'embed-widget';
     
     if (content.url) {
       const iframe = document.createElement('iframe');
-      iframe.src = content.url;
+      if (content.useProxy) {
+        iframe.src = `${getPingServerUrl()}/embed-proxy?url=${encodeURIComponent(content.url)}`;
+      } else {
+        iframe.src = content.url;
+      }
       iframe.sandbox.add('allow-same-origin');
       iframe.sandbox.add('allow-scripts');
       if (content.sandbox) {
