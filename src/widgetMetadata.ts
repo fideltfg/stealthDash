@@ -213,5 +213,14 @@ export const widgetMetadata: WidgetMetadataEntry[] = [
       reconnectDelay: 5
     },
     hasSettings: true
+  },
+  {
+    type: 'sensi',
+    name: 'Sensi Thermostat',
+    icon: '<i class="fa-solid fa-temperature-arrow-up"></i>',
+    description: 'Display and control Sensi thermostats',
+    defaultSize: { w: 420, h: 550 },
+    defaultContent: { refreshInterval: 30 },
+    hasSettings: true
   }
 ];

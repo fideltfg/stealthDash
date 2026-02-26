@@ -41,6 +41,8 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
   'gmail': ['credentialId', 'labelIds', 'maxResults', 'refreshInterval'],
   'vnc': ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
+  'weather-dash': ['latitude', 'longitude', 'timezone', 'locationName'],
+  'sensi': ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices'],
 };
 
 /**

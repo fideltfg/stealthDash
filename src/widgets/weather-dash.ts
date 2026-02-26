@@ -47,8 +47,10 @@ function getWindDirection(degrees: number): string {
 }
 
 function getWindArrow(degrees: number): string {
-  const arrows = ['↓', '↙', '←', '↖', '↑', '↗', '→', '↘'];
-  const index = Math.round(degrees / 45) % 8;
+  // Use same 16-point compass as getWindDirection for consistency
+  //              N    NNE   NE   ENE    E   ESE   SE   SSE    S   SSW   SW   WSW    W   WNW   NW   NNW
+  const arrows = ['↓', '↙', '↙', '←', '←', '↖', '↖', '↑', '↑', '↗', '↗', '→', '→', '↘', '↘', '↓'];
+  const index = Math.round(degrees / 22.5) % 16;
   return arrows[index];
 }
 
@@ -330,8 +332,8 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
         <div style="font-size:1.4em;margin:2px 0">${icon}</div>
         <div class="stat-value" style="font-size:14px;margin-bottom:0">${temp}°</div>
         <div style="font-size:10px;line-height:1.2">
-          <span style="color:${isCurrent ? 'white' : 'var(--error)'}">${tempMax}°</span><br>
-          <span style="color:${isCurrent ? 'white' : 'var(--accent)'}">${tempMin}°</span>
+          <span style="color:${isCurrent ? 'white' : 'var(--info)'}">${tempMax}°</span> / 
+          <span style="color:${isCurrent ? 'white' : 'var(--ring)'}">${tempMin}°</span>
         </div>
         <div style="font-size:9px;opacity:0.85;margin-top:2px;line-height:1.3">
           ${snowfall > 0 ? `<span style="color:${isCurrent ? 'white' : 'var(--info)'};font-weight:700">❄️${snowfall.toFixed(1)}cm</span><br>` : ''}
@@ -382,15 +384,15 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
       const card = document.createElement('div');
       card.className = 'card';
       card.title = getWeatherDescription(code);
-      card.style.cssText = 'text-align:center;border-left:3px solid var(--accent);';
+      card.style.cssText = 'text-align:center';
 
       card.innerHTML = `
         <div class="card-title" style="text-align:center">${i === 0 ? 'Today' : dayName}</div>
         <div class="card-subtitle" style="text-align:center">${dateStr}</div>
         <div style="font-size:2em;margin:6px 0">${icon}</div>
         <div class="flex justify-center gap-8" style="font-size:14px">
-          <span style="color:var(--error);font-weight:700">${tempMax}°</span>
-          <span style="color:var(--accent);font-weight:700">${tempMin}°</span>
+          <h3 style="color:var(--info);">${tempMax}°</h3>
+          <h3 style="color:var(--accent);">${tempMin}°</h3>
         </div>
         <div class="card-footer">
           ${snowfall > 0 ? `

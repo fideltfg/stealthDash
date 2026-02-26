@@ -74,6 +74,9 @@ const SERVICE_TYPES: Record<string, {
     { name: 'username', label: 'Username (optional)', type: 'text', placeholder: 'Leave blank if not required', optional: true },
     { name: 'password', label: 'VNC Password (optional)', type: 'password', placeholder: 'Leave blank if not required', optional: true }
   ]},
+  sensi: { label: 'Sensi Thermostat', icon: '<i class="fa-solid fa-temperature-arrow-up"></i>', fields: [
+    { name: 'refresh_token', label: 'Refresh Token', type: 'password', placeholder: 'Refresh token from manager.sensicomfort.com' }
+  ]},
 };
 
 class CredentialsService {
@@ -118,6 +121,7 @@ class CredentialsService {
     return this.api<TestCredentialResponse>(`/user/credentials/${id}/test`, 'POST');
   }
 
+  getServiceTypes() { return Object.entries(SERVICE_TYPES).map(([value, meta]) => ({ value, label: meta.label })).sort((a, b) => a.label.localeCompare(b.label)); }
   getServiceTypeFields(serviceType: string) { return SERVICE_TYPES[serviceType]?.fields ?? []; }
   getServiceTypeLabel(serviceType: string) { return SERVICE_TYPES[serviceType]?.label ?? serviceType; }
   getServiceTypeIcon(serviceType: string) { return SERVICE_TYPES[serviceType]?.icon ?? '<i class="fas fa-key"></i>'; }

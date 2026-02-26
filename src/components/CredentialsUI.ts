@@ -144,16 +144,7 @@ export class CredentialsUI {
             <label class="form-label">Service Type *</label>
             <select id="cred-service-type" required class="form-select">
               <option value="">Select service type...</option>
-              <option value="pihole">Pi-hole</option>
-              <option value="unifi">UniFi (Legacy - Username/Password)</option>
-              <option value="unifi_api">UniFi (API Key - UOS Consoles)</option>
-              <option value="home_assistant">Home Assistant</option>
-              <option value="google_calendar">Google Calendar</option>
-              <option value="docker">Docker</option>
-              <option value="snmp">SNMP</option>
-              <option value="api">Generic API</option>
-              <option value="vnc">VNC Server</option>
-              <option value="custom">Custom</option>
+              ${credentialsService.getServiceTypes().map(t => `<option value="${t.value}">${t.label}</option>`).join('\n              ')}
             </select>
           </div>
 

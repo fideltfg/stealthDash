@@ -104,6 +104,7 @@ const adminRoutes = require('./routes/admin');
 const credentialsRoutes = require('./routes/credentials');
 const widgetRoutes = require('./routes/widgets');
 const dockerRoutes = require('./routes/docker');
+const sensiRoutes = require('./routes/sensi');
 const { initVncProxy } = require('./vnc-proxy');
 
 // Initialize auth routes with email function
@@ -121,6 +122,9 @@ app.use('/', widgetRoutes);
 
 // Docker API routes
 app.use('/', dockerRoutes);
+
+// Sensi thermostat routes
+app.use('/', sensiRoutes);
 
 // Start server
 const server = app.listen(PORT, () => {
