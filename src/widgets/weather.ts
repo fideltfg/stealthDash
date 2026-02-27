@@ -222,11 +222,11 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     forecastTitle.textContent = '5-Day Forecast';
     
     const forecastContainer = document.createElement('div');
-    forecastContainer.className = 'weather-forecast-container';
+    forecastContainer.className = 'weather-forecast-container card-grid';
     
     for (let i = 0; i < 5; i++) {
       const forecastDay = document.createElement('div');
-      forecastDay.className = 'weather-forecast-day';
+      forecastDay.className = 'card';
       
       const date = new Date(daily.time[i]);
       const dayName = i === 0 ? 'Today' : date.toLocaleDateString('en', { weekday: 'short' });

@@ -14,16 +14,16 @@ interface WeatherDashContent {
 
 function getWeatherIcon(code: number): string {
   const icons: Record<number, string> = {
-    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-    45: '🌫️', 48: '🌫️',
-    51: '🌦️', 53: '🌦️', 55: '🌧️',
-    61: '🌧️', 63: '🌧️', 65: '⛈️',
-    71: '🌨️', 73: '❄️', 75: '❄️', 77: '❄️',
-    80: '🌦️', 81: '🌧️', 82: '⛈️',
-    85: '🌨️', 86: '❄️',
-    95: '⛈️', 96: '⛈️', 99: '⛈️'
+    0: '<i class="fas fa-sun"></i>', 1: '<i class="fas fa-cloud-sun"></i>', 2: '<i class="fas fa-cloud-sun"></i>', 3: '<i class="fas fa-cloud"></i>',
+    45: '<i class="fas fa-smog"></i>', 48: '<i class="fas fa-smog"></i>',
+    51: '<i class="fas fa-cloud-sun-rain"></i>', 53: '<i class="fas fa-cloud-sun-rain"></i>', 55: '<i class="fas fa-cloud-rain"></i>',
+    61: '<i class="fas fa-cloud-rain"></i>', 63: '<i class="fas fa-cloud-rain"></i>', 65: '<i class="fas fa-cloud-showers-heavy"></i>',
+    71: '<i class="fas fa-snowflake"></i>', 73: '<i class="fas fa-snowflake"></i>', 75: '<i class="fas fa-snowflake"></i>', 77: '<i class="fas fa-snowflake"></i>',
+    80: '<i class="fas fa-cloud-sun-rain"></i>', 81: '<i class="fas fa-cloud-rain"></i>', 82: '<i class="fas fa-cloud-showers-heavy"></i>',
+    85: '<i class="fas fa-snowflake"></i>', 86: '<i class="fas fa-snowflake"></i>',
+    95: '<i class="fas fa-cloud-bolt"></i>', 96: '<i class="fas fa-cloud-bolt"></i>', 99: '<i class="fas fa-cloud-bolt"></i>'
   };
-  return icons[code] || '🌤️';
+  return icons[code] || '<i class="fas fa-cloud-sun"></i>';
 }
 
 function getWeatherDescription(code: number): string {
@@ -221,26 +221,24 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
       ]);
 
       div.innerHTML = '';
+      div.className = 'card';
 
       // Header
       const header = document.createElement('div');
-      header.className = 'header';
+      header.className = 'card-header';
 
-      const headerLeft = document.createElement('div');
       const title = document.createElement('h2');
       title.className = 'header-title';
-      title.textContent = `⛷️ ${content.locationName} Forecast`;
-      const subtitle = document.createElement('p');
-      subtitle.className = 'header-subtitle';
+      title.innerHTML = `<i class="fas fa-person-skiing"></i> ${content.locationName} Forecast`;
+      const subtitle = document.createElement('subtitle');
       subtitle.textContent = this.formatDateTime();
-      headerLeft.appendChild(title);
-      headerLeft.appendChild(subtitle);
-      header.appendChild(headerLeft);
+      header.appendChild(title);
+      header.appendChild(subtitle);
       div.appendChild(header);
 
       // Scrollable body
       const body = document.createElement('div');
-      body.className = 'widget-body';
+      body.className = 'card-body';
 
       // Hourly section
       const hourlySection = this.buildHourlySection(hourlyData);
@@ -290,7 +288,7 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
     const sectionHeader = document.createElement('div');
     sectionHeader.className = 'flex space-between align-center mb-8';
     sectionHeader.innerHTML = `
-      <span style="font-size:14px;font-weight:600;color:var(--text)">⏰ 24-Hour Forecast — ${dateStr}</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text)"><i class="fas fa-clock"></i> 24-Hour Forecast — ${dateStr}</span>
     `;
     section.appendChild(sectionHeader);
 
@@ -330,14 +328,14 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
       card.innerHTML = `
         <div style="font-weight:700;font-size:11px;margin-bottom:2px">${isCurrent ? 'Now' : timeStr}</div>
         <div style="font-size:1.4em;margin:2px 0">${icon}</div>
-        <div class="stat-value" style="font-size:14px;margin-bottom:0">${temp}°</div>
+        <div class="stat-value" style="color:${isCurrent ? 'white' : 'var(--text)'}">${temp}°</div>
         <div style="font-size:10px;line-height:1.2">
           <span style="color:${isCurrent ? 'white' : 'var(--info)'}">${tempMax}°</span> / 
           <span style="color:${isCurrent ? 'white' : 'var(--ring)'}">${tempMin}°</span>
         </div>
         <div style="font-size:9px;opacity:0.85;margin-top:2px;line-height:1.3">
-          ${snowfall > 0 ? `<span style="color:${isCurrent ? 'white' : 'var(--info)'};font-weight:700">❄️${snowfall.toFixed(1)}cm</span><br>` : ''}
-          💧${precip}%<br>
+          ${snowfall > 0 ? `<span style="color:${isCurrent ? 'white' : 'var(--info)'};font-weight:700"><i class="fas fa-snowflake"></i> ${snowfall.toFixed(1)}cm</span><br>` : ''}
+          <i class="fas fa-droplet"></i> ${precip}%<br>
           <span style="font-size:1.6em;line-height:1">${windArrow}</span>${wind} ${windDirText}
         </div>
       `;
@@ -355,7 +353,7 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
     const sectionHeader = document.createElement('div');
     sectionHeader.className = 'flex space-between align-center mb-8';
     sectionHeader.innerHTML = `
-      <span style="font-size:14px;font-weight:600;color:var(--text)">📅 7-Day Forecast</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text)"><i class="fas fa-calendar-days"></i> 7-Day Forecast</span>
     `;
     section.appendChild(sectionHeader);
 
@@ -382,7 +380,7 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
       const snowfall = data.daily.snowfall_sum[i];
 
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'stat-card';
       card.title = getWeatherDescription(code);
       card.style.cssText = 'text-align:center';
 
@@ -396,21 +394,21 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
         </div>
         <div class="card-footer">
           ${snowfall > 0 ? `
-          <div class="card-row" style="background:var(--bg-info);margin:-4px -4px 4px;padding:4px 6px;border-radius:4px">
-            <span class="card-row-label" style="color:var(--info);font-weight:700">❄️ Snow</span>
-            <span class="card-row-value" style="color:var(--info)">${snowfall.toFixed(1)}cm</span>
+          <div class="card-row" style="background:var(--bg-warning);margin:-4px -4px 4px;padding:4px 6px;border-radius:4px">
+            <span class="card-row-label" style="color:var(--text);font-weight:700"><i class="fas fa-snowflake"></i> Snow</span>
+            <span class="card-row-value" style="color:var(--text)">${snowfall.toFixed(1)}cm</span>
           </div>
           ` : ''}
           <div class="card-row">
-            <span class="card-row-label">💧 Precip</span>
+            <span class="card-row-label"><i class="fas fa-droplet"></i> Precip</span>
             <span class="card-row-value">${precipProb}%</span>
           </div>
           <div class="card-row">
-            <span class="card-row-label">🌧️ Amount</span>
+            <span class="card-row-label"><i class="fas fa-cloud-rain"></i> Amount</span>
             <span class="card-row-value">${precip.toFixed(1)}mm</span>
           </div>
           <div class="card-row">
-            <span class="card-row-label">💦 Humid</span>
+            <span class="card-row-label"><i class="fas fa-water"></i> Humid</span>
             <span class="card-row-value">${humidity}%</span>
           </div>
           <div class="card-row">

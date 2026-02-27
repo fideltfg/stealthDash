@@ -16,7 +16,6 @@ Documentation for dashboard widgets including configuration, setup, and troubles
   - [UniFi Protect Widget](#unifi-protect-widget)
   - [UniFi Environmental Sensors Widget](#unifi-environmental-sensors-widget)
 - [Integration Widgets](#integration-widgets)
-  - [ChatGPT Widget](#chatgpt-widget)
   - [Weather Widget](#weather-widget)
   - [RSS Feed Widget](#rss-feed-widget)
   - [Google Calendar Widget](#google-calendar-widget)
@@ -211,38 +210,6 @@ Australia/Sydney (AEST)
 ---
 
 ## Integration Widgets
-
-### ChatGPT Widget
-
-Direct integration with OpenAI's ChatGPT API.
-
-**Requirements:**
-- OpenAI API key
-- Stored in Credential Manager
-
-**Setup:**
-1. Get API key from [platform.openai.com](https://platform.openai.com)
-2. Store in Credential Manager:
-   - Name: `openai_api_key`
-   - Value: `sk-...your-key...`
-3. Add ChatGPT widget
-4. Select credential from dropdown
-5. Choose model (gpt-3.5-turbo, gpt-4, etc.)
-
-**Configuration:**
-- **Model**: GPT-3.5 Turbo, GPT-4, GPT-4 Turbo
-- **Temperature**: 0.0 - 2.0 (creativity)
-- **Max Tokens**: Response length limit
-
-**Usage:**
-- Type message in input field
-- Press Enter or click Send
-- View response in chat history
-- Conversation persists in widget
-
-**Note:** API usage incurs costs on your OpenAI account.
-
----
 
 ### Weather Widget
 

@@ -30,7 +30,6 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'uptime': () => import('../widgets/uptime'),
   'comet-p8541': () => import('../widgets/comet-p8541'),
   'home-assistant': () => import('../widgets/home-assistant'),
-  'chatgpt': () => import('../widgets/chatgpt'),
   'mtnxml': () => import('../widgets/mtnxml'),
   'envcanada': () => import('../widgets/envcanada'),
   'pihole': () => import('../widgets/pihole'),

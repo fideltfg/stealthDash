@@ -1,13 +1,13 @@
 # stealthDash
 
-A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 21 widget types.
+A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 20 widget types.
 
 ![Dashboard Screenshot](images/dashboard.v1.png)
 
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **21 Widget Types** — Text, Image, Weather, ChatGPT, Clock, Docker, VNC, Gmail, and more
+- **20 Widget Types** — Text, Image, Weather, Clock, Docker, VNC, Gmail, and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
 - **Public Sharing** — Share dashboards via link for anonymous read-only viewing
 - **Multi-User Auth** — Secure login, registration, password recovery, and admin management
@@ -160,7 +160,7 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 4. Reference credentials in widget settings
 
 **Supported Credential Types:**
-- API Keys (ChatGPT, Weather, etc.)
+- API Keys (Weather, etc.)
 - UniFi Controller credentials
 - Home Assistant tokens
 - Pi-hole API keys
@@ -210,7 +210,6 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 
 | Widget | Description |
 |--------|-------------|
-| **ChatGPT** | Interactive conversation widget powered by the OpenAI API |
 | **Gmail** | Inbox display with unread messages and quick actions via Google API |
 | **RSS Feed** | Display RSS/Atom feed items with configurable refresh interval |
 
@@ -411,7 +410,6 @@ Dashboard/
 │   │   ├── sanitizeWidgets.ts     # Strip secrets before persistence
 │   │   └── widgetRendering.ts     # Shared widget rendering utilities
 │   └── widgets/                   # Widget implementations (one file per type)
-│       ├── chatgpt.ts
 │       ├── clock.ts
 │       ├── comet-p8541.ts
 │       ├── docker.ts

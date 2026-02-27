@@ -28,7 +28,6 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'clock': ['timezone', 'format24h', 'showTimezone'],
   'rss': ['feedUrl', 'maxItems', 'refreshInterval'],
   'uptime': ['target', 'interval', 'timeout'],
-  'chatgpt': ['credentialId', 'model', 'systemPrompt'], // Remove apiKey and messages - use credentialId
   'home-assistant': ['url', 'credentialId', 'entities', 'groups', 'refreshInterval'], // Remove token - use credentialId
   'comet-p8541': ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName'],
   'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'],

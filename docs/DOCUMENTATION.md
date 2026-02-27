@@ -17,7 +17,7 @@ Complete guide covering:
 Detailed guide for all 15+ widget types:
 - Core widgets (Text, Image, Data, Embed)
 - Monitoring widgets (Uptime, Clock, Timezones)
-- Integration widgets (ChatGPT, Weather, RSS, Calendar, Home Assistant, Pi-hole, UniFi)
+- Integration widgets (Weather, RSS, Calendar, Home Assistant, Pi-hole, UniFi)
 - Specialized widgets (Environment Canada, MTN XML, Comet P8541)
 - Configuration examples and troubleshooting
 

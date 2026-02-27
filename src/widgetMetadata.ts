@@ -94,15 +94,6 @@ export const widgetMetadata: WidgetMetadataEntry[] = [
     hasSettings: true
   },
   {
-    type: 'chatgpt',
-    name: 'ChatGPT',
-    icon: '<i class="fa-solid fa-robot"></i>',
-    description: 'Interactive ChatGPT conversation widget',
-    defaultSize: { w: 500, h: 600 },
-    defaultContent: {},
-    hasSettings: false
-  },
-  {
     type: 'mtnxml',
     name: 'MTN XML',
     icon: '<i class="fa-solid fa-person-skiing"></i>',
