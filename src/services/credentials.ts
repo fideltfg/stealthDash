@@ -77,6 +77,15 @@ const SERVICE_TYPES: Record<string, {
   sensi: { label: 'Sensi Thermostat', icon: '<i class="fa-solid fa-temperature-arrow-up"></i>', fields: [
     { name: 'refresh_token', label: 'Refresh Token', type: 'password', placeholder: 'Refresh token from manager.sensicomfort.com' }
   ]},
+  glances: { label: 'Glances', icon: '<i class="fa-solid fa-microchip"></i>', fields: [
+    { name: 'password', label: 'Password (optional)', type: 'password', placeholder: 'Glances password if auth enabled', optional: true }
+  ]},
+  todoist: { label: 'Todoist', icon: '<i class="fa-solid fa-list-check"></i>', fields: [
+    { name: 'api_token', label: 'API Token', type: 'password', placeholder: 'Token from todoist.com/prefs/integrations' }
+  ]},
+  speedtest_tracker: { label: 'Speedtest Tracker', icon: '<i class="fa-solid fa-gauge-high"></i>', fields: [
+    { name: 'api_token', label: 'API Token', type: 'password', placeholder: 'Speedtest Tracker API token' }
+  ]},
 };
 
 class CredentialsService {

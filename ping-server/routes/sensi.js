@@ -42,6 +42,19 @@ const tokenCache = new Map();
 // ==================== TOKEN MANAGEMENT ====================
 
 async function getAccessToken(refreshToken) {
+  // Validate token format — catch common copy-paste mistakes
+  if (!refreshToken || refreshToken.length < 10) {
+    throw new Error('refresh_token is missing or too short. Please re-check your credential.');
+  }
+  if (refreshToken.includes('=') || refreshToken.includes('device')) {
+    throw new Error(
+      'refresh_token looks like a URL parameter ("' + refreshToken.substring(0, 20) + '..."). ' +
+      'You need to copy the refresh_token value from the RESPONSE body of the token?device= request, ' +
+      'not from the URL. Open the request in DevTools Network tab, click it, go to the Response tab, ' +
+      'and copy the refresh_token field value.'
+    );
+  }
+
   // Check cache
   const cached = tokenCache.get(refreshToken);
   if (cached && cached.expiresAt > Date.now() + 30000) {
@@ -68,6 +81,14 @@ async function getAccessToken(refreshToken) {
 
   if (!response.ok) {
     const text = await response.text();
+    if (response.status === 400) {
+      throw new Error(
+        'Sensi rejected the refresh token. This usually means the token is expired or invalid. ' +
+        'Go to manager.sensicomfort.com, log in, and in DevTools Network tab find the token?device= request. ' +
+        'Click it, go to the Response tab, and copy the refresh_token value from the JSON response. ' +
+        `(API response: ${text})`
+      );
+    }
     throw new Error(`OAuth token request failed (${response.status}): ${text}`);
   }
 
@@ -98,7 +119,7 @@ async function getAccessToken(refreshToken) {
  * This is a stateless approach — connect, get data, disconnect.
  */
 async function connectAndGetState(accessToken, timeoutMs = 15000) {
-  const { io } = require('socket.io-client');
+  const io = require('socket.io-client-v2');
 
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -144,7 +165,7 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
  * Connect to Sensi, emit a command, wait for callback response, disconnect.
  */
 async function connectAndEmit(accessToken, eventName, eventData, timeoutMs = 10000) {
-  const { io } = require('socket.io-client');
+  const io = require('socket.io-client-v2');
 
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {

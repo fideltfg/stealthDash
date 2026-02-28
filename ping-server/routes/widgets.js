@@ -2054,5 +2054,208 @@ router.get('/api/google-calendar/events', async (req, res) => {
  * POST /api/docker/containers
  * List Docker containers
  */
+
+// ==================== GLANCES (System Resources) ====================
+
+router.get('/api/glances', async (req, res) => {
+  try {
+    const { host, credentialId } = req.query;
+    if (!host) return res.status(400).json({ error: 'Missing host parameter' });
+
+    const fetch = (await import('node-fetch')).default;
+    const headers = {};
+
+    // Optional auth via credential
+    if (credentialId) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Auth required' });
+      const jwt = require('jsonwebtoken');
+      try {
+        const decoded = jwt.verify(authHeader.substring(7), process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+        const creds = await getCredentials(credentialId, decoded.userId);
+        if (creds.password) {
+          headers['Authorization'] = 'Basic ' + Buffer.from(`glances:${creds.password}`).toString('base64');
+        }
+      } catch (err) {
+        return res.status(401).json({ error: 'Invalid token or credential' });
+      }
+    }
+
+    const base = host.replace(/\/$/, '');
+
+    // Auto-detect Glances API version (v4, v3, v2)
+    let apiVersion = null;
+    for (const ver of [4, 3, 2]) {
+      try {
+        const r = await fetch(`${base}/api/${ver}/cpu`, { headers, timeout: 5000 });
+        if (r.ok) { apiVersion = ver; break; }
+      } catch { /* try next version */ }
+    }
+
+    if (!apiVersion) {
+      return res.status(502).json({ error: `Cannot reach Glances at ${host}. Ensure Glances is running with: glances -w` });
+    }
+
+    const endpoints = ['cpu', 'mem', 'swap', 'load', 'fs', 'network', 'system', 'uptime', 'percpu', 'processcount', 'diskio', 'quicklook', 'containers', 'sensors', 'gpu'];
+    const results = await Promise.all(endpoints.map(async ep => {
+      try {
+        const r = await fetch(`${base}/api/${apiVersion}/${ep}`, { headers, timeout: 5000 });
+        return r.ok ? await r.json() : null;
+      } catch { return null; }
+    }));
+
+    const [cpu, mem, swap, load, fs, network, system, uptime, percpu, processcount, diskio, quicklook, containers, sensors, gpu] = results;
+
+    // If core endpoints (cpu + mem) both failed, report error instead of misleading zeros
+    if (!cpu && !mem) {
+      return res.status(502).json({ error: `Glances API v${apiVersion} detected but returned no data. Check the Glances instance.` });
+    }
+
+    res.json({
+      cpu: cpu ? { total: cpu.total, user: cpu.user, system: cpu.system, iowait: cpu.iowait || 0, cpucore: cpu.cpucore || 0, ctx_switches_rate: cpu.ctx_switches_rate_per_sec || 0, interrupts_rate: cpu.interrupts_rate_per_sec || 0 } : { total: 0, user: 0, system: 0, iowait: 0, cpucore: 0, ctx_switches_rate: 0, interrupts_rate: 0 },
+      percpu: Array.isArray(percpu) ? percpu.map(c => ({ cpu_number: c.cpu_number, total: c.total, user: c.user, system: c.system, iowait: c.iowait || 0 })) : [],
+      mem: mem ? { total: mem.total, used: mem.used, percent: mem.percent, available: mem.available || 0, buffers: mem.buffers || 0, cached: mem.cached || 0, active: mem.active || 0, inactive: mem.inactive || 0 } : { total: 0, used: 0, percent: 0, available: 0, buffers: 0, cached: 0, active: 0, inactive: 0 },
+      swap: swap ? { total: swap.total, used: swap.used, percent: swap.percent } : { total: 0, used: 0, percent: 0 },
+      load: load ? { min1: load.min1, min5: load.min5, min15: load.min15, cpucore: load.cpucore } : { min1: 0, min5: 0, min15: 0, cpucore: 1 },
+      fs: Array.isArray(fs) ? fs.filter(d => d.mnt_point && !d.mnt_point.startsWith('/etc/')).map(d => ({ device_name: d.device_name, fs_type: d.fs_type || '', mnt_point: d.mnt_point, size: d.size, used: d.used, free: d.free || (d.size - d.used), percent: d.percent })) : [],
+      diskio: Array.isArray(diskio) ? diskio.filter(d => d.disk_name && !d.disk_name.match(/^(loop|dm-)/)).map(d => ({ disk_name: d.disk_name, read_bytes_rate: d.read_bytes_rate_per_sec || 0, write_bytes_rate: d.write_bytes_rate_per_sec || 0, read_count_rate: d.read_count_rate_per_sec || 0, write_count_rate: d.write_count_rate_per_sec || 0 })) : [],
+      network: Array.isArray(network) ? network.filter(n => n.interface_name && !n.interface_name.match(/^(lo|veth|br-)/)).map(n => ({ interface_name: n.interface_name, rx: n.bytes_recv_rate_per_sec || n.bytes_recv || 0, tx: n.bytes_sent_rate_per_sec || n.bytes_sent || 0, speed: n.speed || 0 })) : [],
+      system: system ? { hostname: system.hostname, os_name: system.os_name, os_version: system.os_version } : { hostname: 'unknown', os_name: '', os_version: '' },
+      uptime: uptime || 'N/A',
+      quicklook: quicklook ? { cpu_name: quicklook.cpu_name || '', cpu_hz_current: quicklook.cpu_hz_current || 0, cpu_hz: quicklook.cpu_hz || 0 } : null,
+      processcount: processcount ? { total: processcount.total || 0, running: processcount.running || 0, sleeping: processcount.sleeping || 0, thread: processcount.thread || 0 } : null,
+      containers: Array.isArray(containers) ? containers.map(c => ({ name: c.name, status: c.status, cpu_percent: c.cpu_percent || 0, memory_usage: c.memory_usage || 0, uptime: c.uptime || '', engine: c.engine || 'docker' })) : [],
+      sensors: Array.isArray(sensors) ? sensors.map(s => ({ label: s.label, value: s.value, unit: s.unit || '', type: s.type || '' })) : [],
+      gpu: Array.isArray(gpu) ? gpu.map(g => ({ name: g.name || '', mem: g.mem || 0, proc: g.proc || 0, gpu_id: g.gpu_id || 0, temperature: g.temperature || 0 })) : []
+    });
+  } catch (error) {
+    console.error('Glances proxy error:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch Glances data' });
+  }
+});
+
+// ==================== TODOIST (Task List) ====================
+
+router.get('/api/todoist/tasks', async (req, res) => {
+  try {
+    const { credentialId, filter } = req.query;
+    if (!credentialId) return res.status(400).json({ error: 'Missing credentialId' });
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Auth required' });
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(authHeader.substring(7), process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+    const creds = await getCredentials(credentialId, decoded.userId);
+    const apiToken = creds.api_token;
+    if (!apiToken) return res.status(400).json({ error: 'Credential missing api_token' });
+
+    const fetch = (await import('node-fetch')).default;
+    const url = new URL('https://api.todoist.com/rest/v2/tasks');
+    if (filter) url.searchParams.set('filter', filter);
+
+    const r = await fetch(url.toString(), {
+      headers: { 'Authorization': `Bearer ${apiToken}` },
+      timeout: 10000
+    });
+    if (!r.ok) throw new Error(`Todoist API ${r.status}: ${r.statusText}`);
+    res.json(await r.json());
+  } catch (error) {
+    console.error('Todoist proxy error:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch Todoist tasks' });
+  }
+});
+
+router.post('/api/todoist/close', async (req, res) => {
+  try {
+    const { credentialId, taskId } = req.query;
+    if (!credentialId || !taskId) return res.status(400).json({ error: 'Missing credentialId or taskId' });
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Auth required' });
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(authHeader.substring(7), process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+    const creds = await getCredentials(credentialId, decoded.userId);
+    const apiToken = creds.api_token;
+    if (!apiToken) return res.status(400).json({ error: 'Credential missing api_token' });
+
+    const fetch = (await import('node-fetch')).default;
+    const r = await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/close`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiToken}` },
+      timeout: 10000
+    });
+    if (!r.ok) throw new Error(`Todoist API ${r.status}: ${r.statusText}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Todoist close error:', error);
+    res.status(500).json({ error: error.message || 'Failed to close task' });
+  }
+});
+
+// ==================== SPEEDTEST TRACKER ====================
+
+router.get('/api/speedtest', async (req, res) => {
+  try {
+    const { host, credentialId, days } = req.query;
+    if (!host) return res.status(400).json({ error: 'Missing host parameter' });
+
+    const fetch = (await import('node-fetch')).default;
+    const base = host.replace(/\/$/, '');
+    const headers = { 'Accept': 'application/json' };
+
+    // Optional auth
+    if (credentialId) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Auth required' });
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(authHeader.substring(7), process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const creds = await getCredentials(credentialId, decoded.userId);
+      if (creds.api_token) headers['Authorization'] = `Bearer ${creds.api_token}`;
+    }
+
+    // Fetch latest result
+    const latestRes = await fetch(`${base}/api/v1/results/latest`, { headers, timeout: 10000 });
+    if (!latestRes.ok) throw new Error(`Speedtest Tracker ${latestRes.status}: ${latestRes.statusText}`);
+    const latestData = await latestRes.json();
+    const latest = latestData.data || latestData;
+
+    // Fetch history
+    let history = [];
+    try {
+      const histRes = await fetch(`${base}/api/v1/results?limit=50`, { headers, timeout: 10000 });
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        history = (histData.data || histData || []).slice(0, 50);
+      }
+    } catch { /* history is optional */ }
+
+    // Normalize to common shape
+    const norm = (r) => ({
+      download: (r.download || r.download_bits || 0) / (r.download_bits ? 1e6 : 1),
+      upload: (r.upload || r.upload_bits || 0) / (r.upload_bits ? 1e6 : 1),
+      ping: r.ping || r.ping_ms || 0,
+      jitter: r.jitter || r.ping_jitter || null,
+      server_name: r.server_name || r.server?.name || null,
+      timestamp: r.created_at || r.timestamp || new Date().toISOString()
+    });
+
+    const normHistory = history.map(norm).reverse();
+    const avg = (arr, key) => arr.length ? arr.reduce((s, r) => s + r[key], 0) / arr.length : 0;
+
+    res.json({
+      latest: norm(latest),
+      history: normHistory,
+      averages: {
+        download: avg(normHistory, 'download') || norm(latest).download,
+        upload: avg(normHistory, 'upload') || norm(latest).upload,
+        ping: avg(normHistory, 'ping') || norm(latest).ping
+      }
+    });
+  } catch (error) {
+    console.error('Speedtest proxy error:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch Speedtest data' });
+  }
+});
+
 module.exports = router;
 

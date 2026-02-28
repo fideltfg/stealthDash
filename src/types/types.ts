@@ -95,7 +95,37 @@ export interface WeatherDashContent {
   locationName: string;
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent;
+export interface SystemResourcesContent {
+  host?: string;
+  credentialId?: number;
+  refreshInterval?: number;
+  displayMode?: 'full' | 'compact';
+  showPerCpu?: boolean;
+  showContainers?: boolean;
+  showDiskIO?: boolean;
+  showAllFs?: boolean;
+  showAllNet?: boolean;
+}
+
+export interface TasksContent {
+  mode?: 'todoist' | 'local';
+  todoistCredentialId?: number;
+  todoistFilter?: string;
+  localTasks?: { id: string; title: string; completed: boolean; priority: number; dueDate?: string; category?: string; createdAt: number; completedAt?: number }[];
+  localCategories?: string[];
+  refreshInterval?: number;
+  sortBy?: 'priority' | 'due' | 'created';
+}
+
+export interface SpeedtestContent {
+  host?: string;
+  credentialId?: number;
+  refreshInterval?: number;
+  showChart?: boolean;
+  historyDays?: number;
+}
+
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent | SystemResourcesContent | TasksContent | SpeedtestContent;
 
 export interface Widget {
   id: string;

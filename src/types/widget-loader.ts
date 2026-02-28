@@ -42,6 +42,9 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'vnc': () => import('../widgets/vnc'),
   'weather-dash': () => import('../widgets/weather-dash'),
   'sensi': () => import('../widgets/sensi'),
+  'glances': () => import('../widgets/glances'),
+  'tasks': () => import('../widgets/tasks'),
+  'speedtest': () => import('../widgets/speedtest'),
 };
 
 // Track which widgets have been loaded

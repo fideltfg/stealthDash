@@ -42,6 +42,9 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'vnc': ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
   'weather-dash': ['latitude', 'longitude', 'timezone', 'locationName'],
   'sensi': ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices'],
+  'glances': ['host', 'credentialId', 'refreshInterval', 'displayMode', 'showPerCpu', 'showContainers', 'showDiskIO', 'showAllFs', 'showAllNet'],
+  'tasks': ['mode', 'todoistCredentialId', 'todoistFilter', 'localTasks', 'localCategories', 'refreshInterval', 'sortBy'],
+  'speedtest': ['host', 'credentialId', 'refreshInterval', 'showChart', 'historyDays'],
 };
 
 /**

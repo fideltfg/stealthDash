@@ -213,5 +213,32 @@ export const widgetMetadata: WidgetMetadataEntry[] = [
     defaultSize: { w: 420, h: 550 },
     defaultContent: { refreshInterval: 30 },
     hasSettings: true
+  },
+  {
+    type: 'glances',
+    name: 'Glances',
+    icon: '<i class="fa-solid fa-microchip"></i>',
+    description: 'Monitor CPU, memory, disk, network and load via Glances',
+    defaultSize: { w: 650, h: 450 },
+    defaultContent: { refreshInterval: 5 },
+    hasSettings: true
+  },
+  {
+    type: 'tasks',
+    name: 'Task List',
+    icon: '<i class="fa-solid fa-list-check"></i>',
+    description: 'Manage tasks locally or via Todoist',
+    defaultSize: { w: 380, h: 500 },
+    defaultContent: { mode: 'local', localTasks: [], sortBy: 'priority' },
+    hasSettings: true
+  },
+  {
+    type: 'speedtest',
+    name: 'Speedtest',
+    icon: '<i class="fa-solid fa-gauge-high"></i>',
+    description: 'Display internet speed results from Speedtest Tracker',
+    defaultSize: { w: 650, h: 450 },
+    defaultContent: { refreshInterval: 300 },
+    hasSettings: true
   }
 ];

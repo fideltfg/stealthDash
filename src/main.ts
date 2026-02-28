@@ -1715,7 +1715,7 @@ class Dashboard {
           <h2 class="dialog-title"><i class="fa-solid fa-plus"></i> Add Widget</h2>
           <button id="close-add-widget" class="dialog-close-button">×</button>
         </div>
-        <div class="widget-types" id="widget-type-list"></div>
+        <div class="card-grid" id="widget-type-list"></div>
       </div>
     `;
 
@@ -1726,7 +1726,7 @@ class Dashboard {
     try {
       widgetMetadata.forEach((widgetMeta) => {
         const row = document.createElement('button');
-        row.className = 'widget-type-row';
+        row.className = 'card';
         row.tabIndex = 0;
 
         const icon = document.createElement('div');

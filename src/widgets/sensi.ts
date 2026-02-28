@@ -149,10 +149,12 @@ export class SensiRenderer implements WidgetRenderer {
                 <li>Open Chrome/Edge and go to <a href="https://manager.sensicomfort.com/" target="_blank" rel="noopener">manager.sensicomfort.com</a></li>
                 <li>Press F12 to open DevTools → select the <strong>Network</strong> tab</li>
                 <li>Log in with your Sensi credentials</li>
-                <li>In DevTools, find the <code>token?device=</code> request</li>
-                <li>Copy the <code>refresh_token</code> value from the Response</li>
+                <li>In DevTools, find the <code>token?device=</code> request and <strong>click on it</strong></li>
+                <li>Select the <strong>Response</strong> tab (not the URL!)</li>
+                <li>Copy the <code>refresh_token</code> value from the <strong>JSON response body</strong> — it will be a long random string</li>
                 <li>Save it as a credential with service type <strong>sensi</strong>, field name <strong>refresh_token</strong></li>
               </ol>
+              <p><strong>⚠ Important:</strong> Do NOT copy the URL or the <code>device=</code> parameter. The refresh token is in the <em>response body</em> and looks like a long random string (not a device ID).</p>
             </details>
           </div>
           <button id="save-sensi-config" class="btn btn-small btn-primary">
@@ -197,7 +199,7 @@ export class SensiRenderer implements WidgetRenderer {
     }
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'sensi-wrapper list';
+    wrapper.className = 'sensi-wrapper card-list';
     container.appendChild(wrapper);
 
     const collapsed = content.collapsedDevices || [];
@@ -710,20 +712,7 @@ style.textContent = `
   font-size: 10px;
 }
 
-/* Wrapper */
-.sensi-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  overflow-y: auto;
-  max-height: 100%;
-}
-
-/* Device Card */
-.sensi-device-card {
-  border-radius: 8px;
-}
+ 
 
 .sensi-device-header {
   display: flex;
@@ -934,7 +923,6 @@ style.textContent = `
   gap: 12px;
   flex-wrap: wrap;
   padding-top: 4px;
-  border-top: 1px solid var(--border-color, rgba(255,255,255,0.08));
 }
 
 .sensi-info-item {
