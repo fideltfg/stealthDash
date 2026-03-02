@@ -12,7 +12,7 @@ Embed external websites in sandboxed iframe.
 
 - Sandboxed iframe for safety
 - Some sites block embedding (X-Frame-Options)
-- Click-to-activate reduces load
+- Use proxy option to bypass X-Frame-Options restrictions
 
 ## Supported Content
 

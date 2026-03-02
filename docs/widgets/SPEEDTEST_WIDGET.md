@@ -1,10 +1,10 @@
 # Speedtest Widget
 
-Monitor internet connection speed with periodic speed tests.
+Display internet speed test results from a self-hosted Speedtest Tracker instance.
 
 ## Overview
 
-Run internet speed tests and track download/upload speeds and latency over time with historical charts and statistics.
+Connect to a Speedtest Tracker server to view download/upload speeds and latency over time with historical charts and statistics. This widget displays results from an external Speedtest Tracker instance - it does not run tests itself.
 
 ## Features
 
@@ -26,22 +26,35 @@ Run internet speed tests and track download/upload speeds and latency over time 
 - Configurable test intervals
 - Test result history
 
+## Requirements
+
+- Self-hosted Speedtest Tracker instance (https://github.com/alexjustesen/speedtest-tracker)
+- Network access to Speedtest Tracker server
+- Optional: API token if authentication is enabled
+
 ## Setup
 
-1. Add Speedtest widget to dashboard
+1. Install and run Speedtest Tracker on your server
 
-2. Configure:
-   - Test Interval: How often to run tests (default: manual)
-   - Server Selection: Automatic or specific server
-   - History Length: Number of results to keep
+2. Store credentials in Credential Manager (if auth enabled):
+   - Service Type: Speedtest Tracker
+   - API Token: Your tracker API token
+
+3. Add Speedtest widget to dashboard
+
+4. Configure:
+   - Speedtest Tracker URL: `http://speedtest.local:8765`
+   - Credentials: Select if authentication required
+   - History Range: Number of days to display (default: 7)
+   - Refresh Interval: Update frequency in seconds
 
 ## Configuration Options
 
-- **Automatic Testing**: Enable scheduled tests
-- **Test Interval**: Time between automated tests (minutes)
-- **Server**: Automatic selection or choose specific server
-- **History Display**: Number of historical results to show
-- **Refresh Interval**: Display update frequency
+- **Speedtest Tracker URL**: URL of your Speedtest Tracker instance
+- **Credentials**: API token credential (if auth is enabled)
+- **Show History Chart**: Display download/upload speed chart
+- **History Range**: Number of days of results to display (1-90)
+- **Refresh Interval**: How often to fetch new data (seconds)
 
 ## Display
 
@@ -59,29 +72,33 @@ Run internet speed tests and track download/upload speeds and latency over time 
 
 ## Usage Tips
 
-**Test Frequency**
-- Infrequent testing: 1-4 hours for general monitoring
-- Regular monitoring: 15-30 minutes
-- Troubleshooting: Manual tests on demand
+**Refresh Interval**
+- Frequent updates (30-60 seconds): Real-time monitoring
+- Moderate updates (5 minutes): General monitoring
+- Infrequent updates (15-30 minutes): Light usage
 
-**Performance Impact**
-- Tests consume bandwidth during execution
-- May affect other network activities
-- Consider off-peak scheduling
+**Test Scheduling**
+- Configure test schedule in your Speedtest Tracker instance
+- This widget only displays results, it does not trigger tests
+- Ensure Speedtest Tracker is scheduling tests as desired
+
+**Data Retention**
+- Adjust history range (days) based on your needs
+- Longer ranges show broader trends
+- Shorter ranges show recent performance
 
 ## Troubleshooting
 
-**Tests failing**
-- Check internet connection
-- Verify no network restrictions
-- Try different server
+**Cannot connect to Speedtest Tracker**
+- Verify Speedtest Tracker URL is correct
+- Check Speedtest Tracker is running and accessible
+- Verify network connectivity
 
-**Slow or inconsistent results**
-- Close bandwidth-heavy applications
-- Test at different times of day
-- Check for ISP throttling
+**Authentication errors**
+- Ensure API token is correct in Credential Manager
+- Check Speedtest Tracker authentication settings
 
 **No history showing**
-- Run multiple tests to build history
-- Check browser storage limits
-- Refresh widget if data not appearing
+- Ensure Speedtest Tracker has run tests and has data
+- Check that tests are being scheduled in Speedtest Tracker
+- Verify date range is appropriate

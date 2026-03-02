@@ -5,17 +5,21 @@ Display Pi-hole DNS blocking statistics.
 ## Requirements
 
 - Pi-hole instance
-- API key (optional but recommended)
+- Pi-hole credentials stored in Credential Manager (required)
 
 ## Setup
 
-1. Get API key from Pi-hole:
+1. Get API key or application password from Pi-hole:
    - Settings → API → Show API token
-2. Store in Credential Manager
+2. Store in Credential Manager:
+   - Go to user menu → Credentials
+   - Add new credential
+   - Service Type: Pi-hole
+   - Save username/password or API key
 3. Add widget
 4. Configure:
    - Pi-hole URL: `http://pi.hole/admin`
-   - API Key: Select from credentials
+   - Credentials: Select from dropdown (required)
 
 ## Display
 

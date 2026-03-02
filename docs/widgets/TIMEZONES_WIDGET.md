@@ -1,26 +1,26 @@
-# Timezones Widget
+# Timezones (Not Currently Available)
 
-Display multiple timezone clocks simultaneously.
+**Status**: This widget is not currently functional or available in the dashboard.
 
-## Configuration
+## Note
 
-1. Add widget
-2. Click "Add Timezone"
-3. Search for city or timezone
-4. Repeat for multiple locations
+The `timezones.ts` file exists in the codebase but only contains timezone data (a list of IANA timezone identifiers). It does not have a widget renderer implementation and is not registered in the widget loader.
 
-## Example Timezones
+This file may be used as a data source by other widgets (like the Clock widget for timezone selection), but it is not a standalone widget that can be added to your dashboard.
 
-```
-America/New_York (EST)
-Europe/London (GMT)
-Asia/Tokyo (JST)
-Australia/Sydney (AEST)
-```
+## Available IANA Timezones Data
 
-## Features
+The file contains a comprehensive list of timezone identifiers from the IANA timezone database, including timezones for:
+- Africa
+- Americas  
+- Antarctica
+- Arctic
+- Asia
+- Atlantic
+- Australia
+- Europe
+- Indian Ocean
+- Pacific
+- UTC
 
-- Add unlimited timezones
-- Real-time updates
-- Shows offset from local time
-- Day/night indicator
+If you need to display multiple time zones, consider using multiple [Clock Widgets](CLOCK_WIDGET.md) configured with different timezones.

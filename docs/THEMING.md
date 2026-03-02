@@ -35,7 +35,7 @@ Your preference is saved automatically!
 - **Persistent preferences** - Theme choice saved per user
 - **Accessibility-first** - WCAG AA compliant contrast ratios
 - **Reduced motion support** - Respects user motion preferences
-- **6 Built-in themes** - Light, Dark, Gruvbox, Tokyo Night, Catppuccin, and System auto-detect
+- **13 Built-in themes** - Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, and System auto-detect
 
 ## Theme Quick Reference
 
@@ -46,6 +46,13 @@ Your preference is saved automatically!
 | **Gruvbox** | `#282828` | `#fe8019` Orange | Warm, Retro | Coding, nostalgic aesthetic |
 | **Tokyo Night** | `#1a1b26` | `#7aa2f7` Blue | Sleek, Cyberpunk | Modern work, focused sessions |
 | **Catppuccin** | `#1e1e2e` | `#cba6f7` Lavender | Soft, Cozy | Creative work, extended use |
+| **Forest** | `#1e2d1e` | `#4ade80` Green | Natural, Calm | Long sessions, outdoor themes |
+| **Sunset** | `#2d1e1e` | `#fb923c` Orange | Warm, Relaxing | Evening work, creative tasks |
+| **Peachy** | `#2d221e` | `#fda4af` Pink | Soft, Playful | Creative work, casual use |
+| **Stealth** | `#0a0a0a` | `#666666` Gray | Minimalist, Focused | Distraction-free, tactical |
+| **Tactical** | `#1a1d1a` | `#a3e635` Lime | Military, Sharp | Command center, operations |
+| **Futurist** | `#0f1419` | `#00d9ff` Cyan | Tech, Sci-fi | Modern interfaces, futuristic |
+| **Retro** | `#2b1b17` | `#f0b429` Amber | Vintage, Nostalgic | Classic terminal, retro computing |
 | **System** | Auto | Auto | Adaptive | Follows OS preference |
 
 ## Design Tokens

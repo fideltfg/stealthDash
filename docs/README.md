@@ -1,13 +1,13 @@
 # stealthDash
 
-A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 20 widget types.
+A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 23 widget types.
 
 ![Dashboard Screenshot](images/dashboard.v1.png)
 
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **20 Widget Types** — Text, Image, Weather, Clock, Docker, VNC, Gmail, and more
+- **23 Widget Types** — Text, Image, Weather, Clock, Docker, VNC, Gmail, and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
 - **Public Sharing** — Share dashboards via link for anonymous read-only viewing
 - **Multi-User Auth** — Secure login, registration, password recovery, and admin management
@@ -177,22 +177,23 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 
 | Widget | Description |
 |--------|-------------|
-| **Text** | Markdown editor with real-time preview, auto-save, and transparent background |
-| **Image** | Display images from URL with contain/cover fit modes and alt text |
-| **Embed** | Sandboxed iframe for external websites with click-to-activate |
+| **Text** | Markdown-supported text editor with real-time auto-save |
+| **Image** | Display images from URL with multiple fit modes (contain, cover, fill, none) |
+| **Embed** | Sandboxed iframe for external websites, bypass X-Frame-Options via proxy |
 
 ### Time Widgets
 
 | Widget | Description |
 |--------|-------------|
-| **Clock** | Analog or digital display with 12h/24h format, seconds, and date options |
-| **Timezones** | Multiple timezone clocks — add and remove cities with real-time updates |
+| **Clock** | Digital time display with timezone support and customizable format |
 
 ### Monitoring Widgets
 
 | Widget | Description |
 |--------|-------------|
-| **Uptime Monitor** | ICMP ping monitoring with latency graphs, history, and success/failure stats |
+| **Uptime Monitor** | Network connectivity monitoring with ICMP ping and latency tracking |
+| **Glances** | Comprehensive system monitoring (CPU, memory, disk, network, containers) |
+| **Speedtest** | Display results from Speedtest Tracker with historical charts |
 | **Docker** | Monitor and manage Docker containers — start, stop, restart, and view logs |
 | **Pi-hole** | DNS blocking statistics and query metrics from your Pi-hole instance |
 
@@ -201,10 +202,11 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 | Widget | Description |
 |--------|-------------|
 | **UniFi** | Network device status and client connections from UniFi Controller |
-| **UniFi Protect** | Live camera snapshots and motion detection from UniFi Protect |
+| **UniFi Protect** | Camera feeds and motion detection events from UniFi Protect |
 | **UniFi Sensors** | Temperature, humidity, and light data from USL-Environmental devices |
 | **Home Assistant** | Display entity states and call services on your Home Assistant instance |
-| **Comet P8541** | Temperature, humidity, and pressure from Comet P8541 sensors via Modbus |
+| **Sensi** | Monitor and control Sensi WiFi thermostats via Sensi API |
+| **Comet P8541** | Temperature and humidity from Comet P8541 sensors via SNMP |
 
 ### Communication Widgets
 
@@ -217,16 +219,18 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 
 | Widget | Description |
 |--------|-------------|
-| **Weather** | Current conditions and forecast (requires weather API key) |
+| **Weather** | Current conditions and forecast using Open-Meteo API (no API key required) |
+| **Weather Dash** | Weather dashboard using Open-Meteo with coordinates and timezone |
 | **Environment Canada** | Canadian weather data and alerts — no API key required |
 
 ### Utility Widgets
 
 | Widget | Description |
 |--------|-------------|
-| **Google Calendar** | View upcoming events from Google Calendar |
-| **MTN XML** | Parse and display XML data with customizable queries |
-| **VNC Remote Desktop** | Connect to remote VNC servers with full keyboard/mouse interaction |
+| **Google Calendar** | View upcoming events from Google Calendar via OAuth |
+| **Tasks** | Task management with local storage or Todoist integration |
+| **MTN XML** | Display ski resort conditions from MTNXML feeds |
+| **VNC** | Remote desktop access via VNC protocol with noVNC web client |
 
 See [WIDGETS.md](./WIDGETS.md) for detailed widget configuration guides.
 

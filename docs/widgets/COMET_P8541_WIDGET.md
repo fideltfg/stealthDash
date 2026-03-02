@@ -18,14 +18,17 @@ Display data from Comet P8541 temperature/humidity sensors.
 
 ## Display
 
-- Temperature (°C or °F)
+- Up to 4 temperature channels (°C or °F)
 - Humidity (%)
-- Dewpoint
-- Alarm status
+- Dewpoint calculation
+- Alarm status indicators
+- Channel names (customizable)
 
 ## Features
 
-- Real-time updates
+- Real-time SNMP polling
+- Gauge or text display modes
+- Individual channel enable/disable
+- Custom channel naming
 - Alarm notifications
-- Historical graphs
-- Multi-sensor support
+- Temperature unit selection (°C/°F)

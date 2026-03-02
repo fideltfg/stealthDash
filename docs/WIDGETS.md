@@ -1,6 +1,6 @@
 # Widget Documentation Index
 
-Complete documentation for all dashboard widgets. Each widget has its own detailed documentation file with setup instructions, configuration options, and troubleshooting guidance.
+Documentation for all dashboard widgets. Each widget has its own documentation file with setup instructions, configuration options, and troubleshooting guidance.
 
 ## Overview
 
@@ -24,9 +24,8 @@ Widgets for system and network monitoring.
 
 - **[Uptime Widget](widgets/UPTIME_WIDGET.md)** - Monitor network connectivity with real-time ping
 - **[Clock Widget](widgets/CLOCK_WIDGET.md)** - Display current time with timezone support
-- **[Timezones Widget](widgets/TIMEZONES_WIDGET.md)** - Display multiple timezone clocks simultaneously
 - **[Glances Widget](widgets/GLANCES_WIDGET.md)** - Comprehensive system monitoring (CPU, memory, disk, network, sensors)
-- **[Speedtest Widget](widgets/SPEEDTEST_WIDGET.md)** - Internet speed testing with historical charts
+- **[Speedtest Widget](widgets/SPEEDTEST_WIDGET.md)** - Display speed test results from Speedtest Tracker instance
 
 ---
 
@@ -72,33 +71,55 @@ Widgets for specific use cases and legacy systems.
 
 ### Architecture
 
-Widgets use a modular, plugin-like architecture.
+Widgets use a modular, plugin-like architecture with lazy loading for optimal performance.
 
 #### Structure
 ```
-widgets/
-├── widget.ts              # Main widget utilities
-├── index.ts               # Widget registry and loader
-├── base.ts                # Base interface
-├── text.ts                # Text widget
-├── image.ts               # Image widget
-├── uptime.ts              # Uptime monitoring
-└── ...                    # Other widgets
+src/
+├── types/
+│   ├── base-widget.ts       # Widget interfaces and registry
+│   └── widget-loader.ts     # Lazy-loading widget registry
+└── widgets/
+    ├── image.ts             # Image widget
+    ├── embed.ts             # Embed widget
+    ├── clock.ts             # Clock widget
+    ├── weather.ts           # Weather widget
+    └── ...                  # Other widgets (25 total)
 ```
 
 ### Widget Registry
 
-All widgets are registered in `index.ts`:
+All widgets are registered in `src/types/widget-loader.ts` for lazy loading:
 
 ```typescript
 const widgetModules: Record<string, () => Promise<any>> = {
-  'image': () => import('./image'),
-  'embed': () => import('./embed'),
-  'weather': () => import('./weather'),
-  'clock': () => import('./clock'),
-  // ... more widgets
+  'image': () => import('../widgets/image'),
+  'embed': () => import('../widgets/embed'),
+  'weather': () => import('../widgets/weather'),
+  'clock': () => import('../widgets/clock'),
+  'rss': () => import('../widgets/rss'),
+  'uptime': () => import('../widgets/uptime'),
+  'comet-p8541': () => import('../widgets/comet-p8541'),
+  'home-assistant': () => import('../widgets/home-assistant'),
+  'mtnxml': () => import('../widgets/mtnxml'),
+  'envcanada': () => import('../widgets/envcanada'),
+  'pihole': () => import('../widgets/pihole'),
+  'google-calendar': () => import('../widgets/google-calendar'),
+  'unifi': () => import('../widgets/unifi'),
+  'unifi-protect': () => import('../widgets/unifi-protect'),
+  'unifi-sensor': () => import('../widgets/unifi-sensor'),
+  'docker': () => import('../widgets/docker'),
+  'gmail': () => import('../widgets/gmail'),
+  'vnc': () => import('../widgets/vnc'),
+  'weather-dash': () => import('../widgets/weather-dash'),
+  'sensi': () => import('../widgets/sensi'),
+  'glances': () => import('../widgets/glances'),
+  'tasks': () => import('../widgets/tasks'),
+  'speedtest': () => import('../widgets/speedtest'),
 };
 ```
+
+**Note**: Widgets are loaded dynamically only when needed, improving initial page load performance.
 
 ### Widget Renderer Interface
 
@@ -112,21 +133,26 @@ export interface WidgetRenderer {
 
 ### Creating a New Widget
 
-1. **Create widget file** in `src/widgets/types/` (e.g., `chart.ts`)
+1. **Create widget file** in `src/widgets/` (e.g., `chart.ts`)
 
 2. **Implement WidgetRenderer interface:**
 
 ```typescript
-import type { Widget } from '../types';
-import type { WidgetRenderer } from './base';
+import type { Widget } from '../types/types';
+import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
+import { dispatchWidgetUpdate } from '../utils/dom';
 
 export class ChartWidgetRenderer implements WidgetRenderer {
   render(container: HTMLElement, widget: Widget): void {
     // Your widget rendering logic here
   }
   
-  cleanup(): void {
-    // Cleanup when widget is removed
+  destroy?(): void {
+    // Optional: cleanup when widget is removed (stop timers, etc.)
+  }
+  
+  configure?(widget: Widget): void {
+    // Optional: show configuration dialog
   }
 }
 ```
@@ -134,11 +160,11 @@ export class ChartWidgetRenderer implements WidgetRenderer {
 3. **Export widget plugin:**
 
 ```typescript
-export const widget = {
+export const widget: WidgetPlugin = {
   type: 'chart',
   name: 'Chart Widget',
   description: 'Display charts and graphs',
-  icon: '📊',
+  icon: '<i class="fas fa-chart-bar"></i>',
   renderer: new ChartWidgetRenderer(),
   defaultSize: { w: 400, h: 300 },
   defaultContent: {},
@@ -146,20 +172,16 @@ export const widget = {
 };
 ```
 
-4. **Register in `src/widgets/types/index.ts`:**
+4. **Register in `src/types/widget-loader.ts`:**
 
 ```typescript
 const widgetModules: Record<string, () => Promise<any>> = {
   // ... existing widgets
-  'chart': () => import('./chart'),
+  'chart': () => import('../widgets/chart'),
 };
 ```
 
-5. **Add type to `src/types.ts`:**
-
-```typescript
-export type WidgetType = 'text' | 'image' | 'chart' | ...;
-```
+5. **Add widget type to TypeScript types** (optional, for type safety)
 
 ### Benefits
 

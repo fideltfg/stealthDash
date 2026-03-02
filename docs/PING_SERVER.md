@@ -32,42 +32,166 @@ The ping server acts as a backend proxy to enable dashboard widgets to:
 
 ### Authentication
 
-- **POST /api/login** - User login
+- **POST /auth/login** - User login
   - Body: `{ "username": "user", "password": "pass" }`
   - Returns: JWT token
-- **POST /api/register** - Create new user account
-- **POST /api/request-password-reset** - Request password reset email/token
-- **POST /api/reset-password** - Reset password with token
+- **POST /auth/register** - Create new user account
+- **POST /auth/request-password-reset** - Request password reset email/token
+- **POST /auth/reset-password** - Reset password with token
+- **POST /auth/verify-reset-token** - Verify password reset token validity
 
 ### Dashboard Management
 
-- **GET /api/dashboard** - Load user's dashboard configuration
-- **POST /api/dashboard** - Save dashboard configuration
-- **DELETE /api/dashboard** - Delete saved dashboard
+- **GET /dashboard/load** - Load user's dashboard configuration (requires auth)
+- **POST /dashboard/save** - Save dashboard configuration (requires auth)
+- **GET /dashboard/list** - List all user dashboards (requires auth)
+- **POST /dashboard/create** - Create new dashboard (requires auth)
+- **PUT /dashboard/:id/rename** - Rename dashboard (requires auth)
+- **DELETE /dashboard/:id** - Delete dashboard (requires auth)
+- **PUT /dashboard/:id/reorder** - Reorder dashboards (requires auth)
+- **POST /dashboard/:id/duplicate** - Duplicate dashboard (requires auth)
+- **PUT /dashboard/:id/public** - Toggle public sharing (requires auth)
+
+### User Management
+
+- **GET /user/profile** - Get current user profile (requires auth)
+- **POST /user/change-password** - Change password (requires auth)
+  - Body: `{ currentPassword, newPassword }`
+- **POST /user/update-profile** - Update user profile (requires auth)
+  - Body: `{ email, display_name }`
+
+### Credentials Management
+
+- **GET /user/credentials** - List user's stored credentials (requires auth)
+- **POST /user/credentials** - Create new credential (requires auth)
+  - Body: `{ name, service_type, data }`
+- **PUT /user/credentials/:id** - Update credential (requires auth)
+- **DELETE /user/credentials/:id** - Delete credential (requires auth)
+
+### Admin API
+
+- **GET /admin/users** - List all users (requires admin)
+- **POST /admin/users** - Create new user (requires admin)
+- **POST /admin/users/:userId/make-admin** - Grant admin privileges (requires admin)
+- **POST /admin/users/:userId/remove-admin** - Revoke admin privileges (requires admin)
+- **POST /admin/users/:userId/reset-password** - Reset user password (requires admin)
+- **DELETE /admin/users/:userId** - Delete user (requires admin)
+- **GET /admin/stats** - Get system statistics (requires admin)
 
 ### Widget API Proxies
 
 - **GET /api/pihole** - Pi-hole API proxy
-  - Query params: `host`, `password`, `site`
+  - Query params: `host`, `credentialId`
   - Caches authentication session (5 min)
   - Returns Pi-hole statistics
 
 - **GET /api/unifi/stats** - UniFi Controller proxy
-  - Query params: `host`, `username`, `password`, `site`
+  - Query params: `credentialId`, `site`
   - Caches authentication session (30 min)
   - Returns comprehensive network stats (devices, clients, alarms)
+
+- **GET /api/unifi/sites** - List UniFi sites
+  - Query params: `credentialId`
+  - Returns available UniFi sites
+
+- **GET /api/unifi-protect/bootstrap** - UniFi Protect bootstrap data
+  - Query params: `host`, `credentialId`
+  - Returns cameras, sensors, and events
+
+- **GET /api/unifi-protect/sensors** - UniFi Environmental Sensors (public)
+  - Query params: `host`
+  - No authentication required (uses first available credential)
+  - Returns temperature, humidity, light data
+
+- **GET /api/unifi-protect/camera/:cameraId/snapshot** - Camera snapshot
+  - Query params: `host`, `credentialId`
+  - Returns camera image
+
+- **GET /api/google-calendar/events** - Google Calendar events
+  - Query params: `credentialId`, `timeMin`, `timeMax`, `maxResults`
+  - Returns upcoming calendar events
+
+- **GET /api/glances** - Glances system monitoring data
+  - Query params: `host`, `credentialId`
+  - Returns CPU, memory, disk, network stats
+
+- **GET /api/todoist/tasks** - Todoist tasks
+  - Query params: `credentialId`, `filter`
+  - Returns task list
+
+- **POST /api/todoist/close** - Complete Todoist task
+  - Query params: `credentialId`, `taskId`
+  - Marks task as complete
+
+- **GET /api/speedtest** - Speedtest Tracker results
+  - Query params: `host`, `credentialId`, `days`
+  - Returns speed test data with history
+
+- **POST /home-assistant/states** - Home Assistant entity states
+  - Body: `{ credentialId, entityIds }`
+  - Returns entity state data
+
+- **POST /home-assistant/service** - Call Home Assistant service
+  - Body: `{ credentialId, domain, service, entityId, data }`
+  - Executes Home Assistant service call
+
+- **GET /embed-proxy** - Embed proxy for X-Frame-Options bypass
+  - Query param: `url`
+  - Returns proxied page content
 
 - **GET /proxy** - Generic HTTP/HTTPS proxy
   - Query param: `url` (target URL)
   - Handles SSL, useful for XML feeds and external APIs
 
+### Sensi Thermostat API
+
+- **POST /sensi/state** - Get thermostat state
+  - Body: `{ credentialId }`
+  - Returns current temperature, setpoints, mode
+
+- **POST /sensi/set-temperature** - Set target temperature
+  - Body: `{ credentialId, heat, cool }`
+  - Updates thermostat setpoints
+
+- **POST /sensi/set-mode** - Change HVAC mode
+  - Body: `{ credentialId, mode }`
+  - Sets mode (heat, cool, auto, off)
+
+- **POST /sensi/set-fan** - Control fan
+  - Body: `{ credentialId, mode }`
+  - Sets fan mode (auto, on)
+
+### Docker Management API
+
+- **POST /api/docker/containers** - List Docker containers
+  - Body: `{ host, credentialId, showAll }`
+  - Returns container list with status
+
+- **POST /api/docker/containers/start** - Start container
+  - Body: `{ host, credentialId, containerId }`
+  - Starts stopped container
+
+- **POST /api/docker/containers/stop** - Stop container
+  - Body: `{ host, credentialId, containerId }`
+  - Stops running container
+
+- **POST /api/docker/containers/restart** - Restart container
+  - Body: `{ host, credentialId, containerId }`
+  - Restarts container
+
+- **POST /api/docker/containers/logs** - Get container logs
+  - Body: `{ host, credentialId, containerId, tail }`
+  - Returns recent container logs
+
 ### Device Monitoring
 
-- **GET /api/snmp** - Query SNMP-enabled devices
-  - Query params: `host`, `oid`, `community`, `version`
+- **GET /snmp/get** - Query SNMP-enabled devices
+  - Query params: `host`, `oids`, `community`, `version`
+  - Returns: SNMP query results
   
-- **POST /api/modbus** - Query Modbus-RTU devices
-  - Body: Device connection and register details
+- **GET /modbus/read** - Query Modbus TCP devices
+  - Query params: `host`, `port`, `address`, `count`, `type`, `unitId`
+  - Returns: Modbus register values
 
 ## Implementation
 

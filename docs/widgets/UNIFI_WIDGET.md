@@ -10,16 +10,16 @@ Monitor UniFi network devices and clients.
 ## Setup
 
 1. Store credentials in Credential Manager:
-   - Name: `unifi_username`
-   - Value: `admin`
-   - Name: `unifi_password`
-   - Value: `your-password`
+   - Go to user menu → Credentials
+   - Add new credential
+   - Service Type: UniFi
+   - Host: `https://unifi.local:8443`
+   - Username: Your UniFi admin username
+   - Password: Your UniFi admin password
 2. Add widget
 3. Configure:
-   - Controller URL: `https://unifi.local:8443`
-   - Username: Select credential
-   - Password: Select credential
-   - Site: `default`
+   - Select saved credential from dropdown
+   - Site: `default` (or your site name)
 
 ## Display
 

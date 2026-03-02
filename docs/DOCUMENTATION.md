@@ -1,6 +1,6 @@
 # Dashboard Documentation Index
 
-Complete documentation for the StealthDash monitoring system.
+Documentation for the StealthDash monitoring system.
 
 ## Main Documentation
 
@@ -14,11 +14,12 @@ Complete guide covering:
 - Troubleshooting and support
 
 ### [WIDGETS.md](./WIDGETS.md) - Widget Configuration
-Detailed guide for all 15+ widget types:
-- Core widgets (Text, Image, Data, Embed)
-- Monitoring widgets (Uptime, Clock, Timezones)
-- Integration widgets (Weather, RSS, Calendar, Home Assistant, Pi-hole, UniFi)
-- Specialized widgets (Environment Canada, MTN XML, Comet P8541)
+Detailed guide for all 23 widget types:
+- Core widgets (Text, Image, Embed)
+- Monitoring widgets (Uptime, Clock, Glances, Speedtest)
+- Integration widgets (Weather, RSS, Calendar, Gmail, Home Assistant, Pi-hole, Docker, UniFi)
+- Smart Home & IoT widgets (UniFi Protect, UniFi Sensor, Sensi, Comet P8541)
+- Specialized widgets (Environment Canada, MTN XML, Tasks, VNC)
 - Configuration examples and troubleshooting
 
 ### [DEPLOYMENT.md](./DEPLOYMENT.md) - Production Deployment
