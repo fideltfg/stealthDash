@@ -222,7 +222,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     forecastTitle.textContent = '5-Day Forecast';
     
     const forecastContainer = document.createElement('div');
-    forecastContainer.className = 'weather-forecast-container card-grid';
+    forecastContainer.className = 'weather-forecast-container card-list';
     
     for (let i = 0; i < 5; i++) {
       const forecastDay = document.createElement('div');

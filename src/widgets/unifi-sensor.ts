@@ -216,7 +216,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
         <div class="widget-config-icon"><i class="fas fa-thermometer-half"></i></div>
         <h3 class="widget-empty-state-title">Environmental Sensors Not Configured</h3>
         <p class="widget-empty-state-text">Click the button below to configure your UniFi Protect connection</p>
-        <button class="config-btn widget-button-primary">Configure Widget</button>
+        <button class="config-btn btn btn-small btn-primary">Configure Widget</button>
       </div>
     `;
 

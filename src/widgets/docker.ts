@@ -309,7 +309,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
           <div class="widget-error-message">
             ${error instanceof Error ? error.message : 'Failed to connect to Docker host'}
           </div>
-          <button id="retry-btn" class="widget-button-primary">Retry</button>
+          <button id="retry-btn" class="btn btn-small btn-primary">Retry</button>
         </div>
       `;
 
@@ -510,10 +510,10 @@ class DockerWidgetRenderer implements WidgetRenderer {
           ${containerName} - Logs
         </h3>
         <div class="docker-logs-buttons">
-          <button id="refresh-logs-btn" class="widget-button">
+          <button id="refresh-logs-btn" class="btn btn-small btn-secondary">
             <i class="fas fa-sync-alt"></i> Refresh
           </button>
-          <button id="close-logs-btn" class="widget-button-secondary">
+          <button id="close-logs-btn" class="btn btn-small btn-secondary">
             <i class="fas fa-times"></i> Close
           </button>
         </div>

@@ -43,8 +43,8 @@ export function renderConfigPrompt(
       <div class="widget-config-icon">${icon}</div>
       <h3>${escapeHtml(title)}</h3>
       <p>${escapeHtml(description)}</p>
-      <button class="widget-button primary">Configure</button>
+      <button class="btn btn-small btn-primary">Configure</button>
     </div>
   `;
-  return container.querySelector('.widget-button') as HTMLButtonElement;
+  return container.querySelector('.btn') as HTMLButtonElement;
 }

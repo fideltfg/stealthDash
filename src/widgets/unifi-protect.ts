@@ -167,7 +167,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
         <p class="widget-text mb-20" style="max-width: 400px;">
           Configure this widget to display camera feeds and motion detections from your UniFi Protect console.
         </p>
-        <button class="config-btn widget-button primary">
+        <button class="config-btn btn btn-small btn-primary">
           Configure Widget
         </button>
       </div>

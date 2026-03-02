@@ -172,7 +172,7 @@ class GoogleCalendarRenderer implements WidgetRenderer {
           <p class="widget-hint mb-24">
             <i class="fas fa-lightbulb"></i> Tip: Create credentials first from the user menu (<i class="fas fa-key"></i> Credentials)
           </p>
-          <button id="configure-calendar-btn" class="widget-button primary">
+          <button id="configure-calendar-btn" class="btn btn-small btn-primary">
             Configure
           </button>
         </div>

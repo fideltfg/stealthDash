@@ -126,98 +126,80 @@ class PiholeRenderer implements WidgetRenderer {
     const content = widget.content as PiholeContent;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay widget-overlay';
+    overlay.className = 'widget-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'modal widget-dialog';
+    modal.className = 'widget-dialog scrollable';
 
     modal.innerHTML = `
-      <div class="pihole-config-header flex align-center gap-12 mb-20">
-        <img src="https://docs.pi-hole.net/images/logo.svg" alt="Pi-hole" class="widget-icon-large" />
-        <div>
-          <h2 class="widget-dialog-title">
-            Pi-hole Configuration
-          </h2>
-          <p class="widget-text">
-            Configure your Pi-hole connection settings
-          </p>
-        </div>
-      </div>
-
-      <form id="pihole-config-form" class="flex flex-column gap-16";
-        <div>
-          <label class="widget-dialog-label">
-            Saved Credentials *
-          </label>
+      <h3>Configure Pi-hole</h3>
+      
+      <form id="pihole-config-form">
+        <div class="form-group">
+          <label class="form-label">Saved Credentials *</label>
           <select 
             id="pihole-credential-id"
             required
-            class="widget-dialog-input"
+            class="form-select"
           >
             <option value="">Select a saved credential...</option>
           </select>
-          <small class="widget-dialog-hint">
+          <small class="form-hint">
             Manage credentials from the user menu (<i class="fa-solid fa-key"></i> Credentials)
           </small>
         </div>
 
-        <div>
-          <label class="widget-dialog-label">
-            Pi-hole Host *
-          </label>
+        <div class="form-group">
+          <label class="form-label">Pi-hole Host *</label>
           <input 
             type="text" 
             id="pihole-host" 
             value="${content.host || 'http://192.168.1.100'}"
             placeholder="http://192.168.1.100 or http://pi.hole"
             required
-            class="widget-dialog-input"
+            class="form-input"
           />
-          <small class="widget-dialog-hint">
+          <small class="form-hint">
             Example: http://192.168.1.100 or http://pi.hole
           </small>
         </div>
 
-        <div>
-          <label class="widget-dialog-label">
-            Display Mode
-          </label>
+        <div class="form-group">
+          <label class="form-label">Display Mode</label>
           <select 
             id="pihole-display-mode"
-            class="widget-dialog-input"
+            class="form-select"
           >
             <option value="minimal" ${content.displayMode === 'minimal' ? 'selected' : ''}>Minimal</option>
             <option value="detailed" ${(content.displayMode === 'detailed' || !content.displayMode) ? 'selected' : ''}>Detailed</option>
           </select>
         </div>
 
-        <div>
-          <label class="widget-dialog-label">
-            Refresh Interval (seconds)
-          </label>
+        <div class="form-group">
+          <label class="form-label">Refresh Interval (seconds)</label>
           <input 
             type="number" 
             id="pihole-refresh" 
             value="${content.refreshInterval || 30}"
             min="5"
             max="300"
-            class="widget-dialog-input"
+            class="form-input"
           />
         </div>
 
-        <div class="widget-dialog-buttons">
-          <button 
-            type="submit"
-            class="widget-dialog-button-save full-width"
-          >
-            Save
-          </button>
+        <div class="button-group">
           <button 
             type="button"
             id="cancel-btn"
-            class="widget-dialog-button-cancel full-width"
+            class="btn btn-small btn-secondary"
           >
             Cancel
+          </button>
+          <button 
+            type="submit"
+            class="btn btn-small btn-primary"
+          >
+            Save
           </button>
         </div>
       </form>

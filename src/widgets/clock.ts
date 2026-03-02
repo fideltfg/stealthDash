@@ -17,7 +17,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
       <h3>Configure Clock</h3>
       <div class="form-group">
         <label>Timezone</label>
-        <select id="clock-timezone">
+        <select id="form-select clock-timezone">
           <option value="">-- Select Timezone --</option>
           ${TIMEZONES.map(tz => `<option value="${tz}" ${content.timezone === tz ? 'selected' : ''}>${tz.replace(/_/g, ' ')}</option>`).join('')}
         </select>
@@ -34,9 +34,9 @@ export class ClockWidgetRenderer implements WidgetRenderer {
           <span>Show timezone</span>
         </label>
       </div>
-      <div class="button-group">
-        <button id="cancel-btn" class="cancel-btn">Cancel</button>
-        <button id="save-btn" class="save-btn">Save</button>
+      <div class="widget-dialog-buttons">
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
