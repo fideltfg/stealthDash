@@ -1,7 +1,13 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 import { renderLoading, renderError } from '../utils/widgetRendering';
+
+const WEATHER_STYLES = `
+.weather-current { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.weather-icon { font-size: 48px; }
+.weather-temp { font-size: 32px; font-weight: 700; }
+`;
 
 export class WeatherWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -51,6 +57,7 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('weather', WEATHER_STYLES);
     const content = widget.content as { location: string };
     const div = document.createElement('div');
     div.className = 'weather-widget';

@@ -1,10 +1,15 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { stopAllDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { renderConfigPrompt } from '../utils/widgetRendering';
 import { populateCredentialSelect } from '../utils/credentials';
+
+const DOCKER_STYLES = `
+.card-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; padding: 8px; overflow-y: auto; align-content: start; height: 100%; }
+.button-group { display: flex; gap: 8px; margin-top: 12px; }
+`;
 
 export interface DockerContent {
   host?: string;
@@ -74,6 +79,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('docker', DOCKER_STYLES);
     const content = (widget.content || {}) as DockerContent;
 
     container.className = 'widget-content';

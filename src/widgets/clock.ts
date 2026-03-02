@@ -1,12 +1,16 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { TIMEZONES } from './timezones';
-import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
+
+const CLOCK_STYLES = `
+.clock-timezone { font-size: 14px; color: var(--muted); opacity: 0.8; text-transform: uppercase; }
+`;
 
 export class ClockWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
-    
+
     const overlay = document.createElement('div');
     overlay.className = 'widget-overlay';
 
@@ -73,16 +77,17 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('clock', CLOCK_STYLES);
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
     const div = document.createElement('div');
     div.className = 'clock-widget';
-    
+
     if (!content.timezone) {
       this.renderConfigScreen(div, widget);
     } else {
       this.renderClock(div, widget, content);
     }
-    
+
     container.appendChild(div);
   }
 
@@ -90,85 +95,85 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     const icon = document.createElement('div');
     icon.className = 'widget-config-icon';
     icon.innerHTML = '<i class="fa-regular fa-clock"></i>';
-    
+
     const label = document.createElement('div');
     label.className = 'clock-config-title';
     label.textContent = 'Configure Clock';
-    
+
     const tzLabel = document.createElement('div');
     tzLabel.className = 'clock-config-label';
     tzLabel.textContent = 'Timezone:';
-    
+
     const timezoneSelect = document.createElement('select');
     timezoneSelect.className = 'clock-timezone-select';
-    
+
     const placeholderOption = document.createElement('option');
     placeholderOption.value = '';
     placeholderOption.textContent = '-- Select Timezone --';
     placeholderOption.disabled = true;
     placeholderOption.selected = true;
     timezoneSelect.appendChild(placeholderOption);
-    
+
     TIMEZONES.forEach(tz => {
       const option = document.createElement('option');
       option.value = tz;
       option.textContent = tz.replace(/_/g, ' ');
       timezoneSelect.appendChild(option);
     });
-    
+
     const formatLabel = document.createElement('div');
     formatLabel.className = 'clock-config-label';
     formatLabel.textContent = 'Time Format:';
-    
+
     const formatContainer = document.createElement('div');
     formatContainer.className = 'clock-format-container';
-    
+
     const format24h = document.createElement('button');
     format24h.className = 'clock-format-btn';
     format24h.textContent = '24-hour';
     format24h.dataset.selected = 'true';
-    
+
     const format12h = document.createElement('button');
     format12h.className = 'clock-format-btn';
     format12h.textContent = '12-hour';
     format12h.dataset.selected = 'false';
-    
+
     format24h.addEventListener('click', () => {
       format24h.dataset.selected = 'true';
       format12h.dataset.selected = 'false';
     });
-    
+
     format12h.addEventListener('click', () => {
       format12h.dataset.selected = 'true';
       format24h.dataset.selected = 'false';
     });
-    
+
     formatContainer.appendChild(format24h);
     formatContainer.appendChild(format12h);
-    
+
     const showTzLabel = document.createElement('label');
     showTzLabel.className = 'clock-tz-toggle';
-    
+
     const showTzCheckbox = document.createElement('input');
     showTzCheckbox.className = 'clock-tz-checkbox';
     showTzCheckbox.type = 'checkbox';
     showTzCheckbox.checked = true;
-    
+
     const showTzText = document.createElement('span');
     showTzText.textContent = 'Show timezone name';
-    
+
     showTzLabel.appendChild(showTzCheckbox);
     showTzLabel.appendChild(showTzText);
-    
+
     const button = document.createElement('button');
     button.className = 'clock-save-btn';
     button.textContent = 'Create Clock';
     button.disabled = true;
-    
+
     timezoneSelect.addEventListener('change', () => {
       button.disabled = !timezoneSelect.value;
     });
-    
+
     button.addEventListener('click', () => {
       if (timezoneSelect.value) {
         const is24h = format24h.dataset.selected === 'true';
@@ -180,12 +185,12 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         });
       }
     });
-    
+
     // Prevent event propagation for interactive elements
     [timezoneSelect, button].forEach(el => {
       stopWidgetDragPropagation(el);
     });
-    
+
     div.appendChild(icon);
     div.appendChild(label);
     div.appendChild(tzLabel);
@@ -199,21 +204,21 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean }): void {
     const displayContainer = document.createElement('div');
     displayContainer.className = 'clock-display-container';
-    
+
     const timeDisplay = document.createElement('div');
     timeDisplay.className = 'clock-time';
-    
+
     const dateDisplay = document.createElement('div');
     dateDisplay.className = 'clock-date';
-    
+
     const timezoneDisplay = document.createElement('div');
     timezoneDisplay.className = 'clock-timezone';
     if (content.showTimezone === false) {
-      timezoneDisplay.style.display = 'none';
+      timezoneDisplay.classList.add('hidden');
     }
-    
+
     let intervalId: number | null = null;
-    
+
     const updateTime = () => {
       try {
         const now = new Date();
@@ -224,7 +229,7 @@ export class ClockWidgetRenderer implements WidgetRenderer {
           second: '2-digit',
           hour12: !content.format24h
         };
-        
+
         const dateOptions: Intl.DateTimeFormatOptions = {
           timeZone: content.timezone,
           weekday: 'long',
@@ -232,10 +237,10 @@ export class ClockWidgetRenderer implements WidgetRenderer {
           month: 'long',
           day: 'numeric'
         };
-        
+
         const timeStr = now.toLocaleTimeString('en-US', options);
         const dateStr = now.toLocaleDateString('en-US', dateOptions);
-        
+
         timeDisplay.textContent = timeStr;
         dateDisplay.textContent = dateStr;
         timezoneDisplay.textContent = content.timezone.replace(/_/g, ' ');
@@ -244,10 +249,10 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         dateDisplay.textContent = '';
       }
     };
-    
+
     updateTime();
     intervalId = window.setInterval(updateTime, 1000);
-    
+
     // Clean up interval when widget is removed
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -258,11 +263,11 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         });
       });
     });
-    
+
     if (div.parentNode) {
       observer.observe(div.parentNode, { childList: true });
     }
-    
+
     displayContainer.appendChild(timeDisplay);
     displayContainer.appendChild(dateDisplay);
     displayContainer.appendChild(timezoneDisplay);

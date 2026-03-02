@@ -1,10 +1,22 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
-import { escapeHtml, stopAllDragPropagation } from '../utils/dom';
+import { escapeHtml, stopAllDragPropagation, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { renderConfigPrompt } from '../utils/widgetRendering';
 import { populateCredentialSelect } from '../utils/credentials';
+
+const GMAIL_STYLES = `
+.gmail-message-unread { border-left: 3px solid var(--accent); }
+.gmail-message-icon { font-size: 18px; margin-top: 2px; }
+.gmail-message-actions { opacity: 0; transition: opacity 0.2s; }
+.gmail-message:hover .gmail-message-actions { opacity: 1; }
+.gmail-label-option { cursor: pointer; }
+.gmail-label-option:hover { background: var(--hover); }
+.gmail-label-option input[type="checkbox"] { cursor: pointer; }
+.gmail-wizard { max-width: 700px !important; }
+.gmail-wizard-step-number { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+`;
 
 export interface GmailContent {
   credentialId?: number;
@@ -52,6 +64,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('gmail', GMAIL_STYLES);
     const content = (widget.content || {}) as unknown as GmailContent;
 
     // Set defaults
@@ -369,12 +382,12 @@ class GmailWidgetRenderer implements WidgetRenderer {
     if (statusEl) {
       if (error) {
         statusEl.textContent = 'Error loading';
-        statusEl.style.color = 'var(--error)';
+        statusEl.className = 'error';
       } else {
         const content = widget.content as unknown as GmailContent;
         const unreadNote = content.labelIds.includes('UNREAD') ? ' unread' : '';
         statusEl.textContent = `${count} message${count !== 1 ? 's' : ''}${unreadNote}`;
-        statusEl.style.color = 'var(--muted)';
+        statusEl.className = '';
       }
     }
   }
@@ -404,7 +417,6 @@ class GmailWidgetRenderer implements WidgetRenderer {
 
     const dialog = document.createElement('div');
     dialog.className = 'widget-dialog gmail-wizard';
-    dialog.style.maxWidth = '700px';
 
     dialog.innerHTML = `
       <div class="gmail-wizard-header">

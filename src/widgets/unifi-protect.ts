@@ -194,8 +194,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
     overlay.className = 'widget-overlay';
 
     const modal = document.createElement('div');
-    modal.className = 'widget-dialog scrollable' ;
-    modal.style.maxWidth = '600px';
+    modal.className = 'widget-dialog scrollable';
 
     modal.innerHTML = `
       <h2 class="widget-dialog-title large mb-20">
@@ -271,19 +270,19 @@ class UnifiProtectRenderer implements WidgetRenderer {
           class="widget-dialog-input">
       </div>
 
-      <div class="widget-dialog-field large-margin" id="camera-selection-container" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <label class="widget-dialog-label" style="margin-bottom: 0;">
+      <div class="widget-dialog-field large-margin hidden" id="camera-selection-container">
+        <div class="flex space-between align-center">
+          <label class="widget-dialog-label">
             Select Cameras to Display
           </label>
-          <button id="toggle-all-cameras" class="widget-dialog-button" style="padding: 4px 12px; font-size: 12px; display: none;">
+          <button id="toggle-all-cameras" class="widget-dialog-button btn-small hidden">
             Select All
           </button>
         </div>
-        <div id="camera-selection-loading" class="widget-dialog-hint" style="padding: 12px; text-align: center;">
+        <div id="camera-selection-loading" class="widget-dialog-hint text-center">
           Loading cameras...
         </div>
-        <div id="camera-selection-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; display: none;">
+        <div id="camera-selection-list" class="hidden">
         </div>
         <small class="widget-dialog-hint">
           Leave all unchecked to display all cameras
@@ -312,13 +311,13 @@ class UnifiProtectRenderer implements WidgetRenderer {
       const list = modal.querySelector('#camera-selection-list') as HTMLElement;
       
       if (!host || !credentialId) {
-        container.style.display = 'none';
+        container.classList.add('hidden');
         return;
       }
 
-      container.style.display = 'block';
-      loading.style.display = 'block';
-      list.style.display = 'none';
+      container.classList.remove('hidden');
+      loading.classList.remove('hidden');
+      list.classList.add('hidden');
       list.innerHTML = '';
 
       try {
@@ -357,13 +356,13 @@ class UnifiProtectRenderer implements WidgetRenderer {
           `).join('');
         }
 
-        loading.style.display = 'none';
-        list.style.display = 'block';
+        loading.classList.add('hidden');
+        list.classList.remove('hidden');
         
         // Show toggle button and update its text
         const toggleBtn = modal.querySelector('#toggle-all-cameras') as HTMLButtonElement;
         if (toggleBtn) {
-          toggleBtn.style.display = 'block';
+          toggleBtn.classList.remove('hidden');
           
           // Function to update button text based on checkbox states
           const updateToggleButtonText = () => {
@@ -384,8 +383,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
       } catch (error: any) {
         console.error('Error loading cameras:', error);
         list.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--error);">Failed to load cameras: ${error.message}</div>`;
-        loading.style.display = 'none';
-        list.style.display = 'block';
+        loading.classList.add('hidden');
+        list.classList.remove('hidden');
       }
     };
 

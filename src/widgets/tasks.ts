@@ -1,6 +1,6 @@
 import type { Widget, TasksContent } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
-import { stopAllDragPropagation, dispatchWidgetUpdate, escapeHtml } from '../utils/dom';
+import { stopAllDragPropagation, dispatchWidgetUpdate, escapeHtml, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { renderConfigPrompt, renderError } from '../utils/widgetRendering';
@@ -10,6 +10,23 @@ type Task = NonNullable<TasksContent['localTasks']>[number];
 type SortBy = NonNullable<TasksContent['sortBy']>;
 
 const PRIORITY_COLORS: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#fbbf24' };
+
+const TASKS_STYLES = `
+.tasks-root { display: flex; flex-direction: column; height: 100%; padding: 8px 12px; gap: 8px; }
+.task-add { display: flex; gap: 6px; }
+.task-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.task-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 4px; border-radius: var(--radius); transition: background 0.15s; }
+.task-item:hover { background: var(--hover); }
+.task-check input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+.task-title { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-done .task-title { text-decoration: line-through; opacity: 0.5; }
+.task-del { background: none; border: none; color: var(--muted); cursor: pointer; opacity: 0; padding: 2px 4px; font-size: 12px; transition: opacity 0.15s; }
+.task-item:hover .task-del { opacity: 0.6; }
+.task-del:hover { opacity: 1 !important; color: #ef4444; }
+.task-meta { width: 100%; padding-left: 28px; font-size: 11px; color: var(--muted); }
+.task-overdue { color: #ef4444; font-weight: 600; }
+.tasks-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; flex: 1; color: var(--muted); }
+`;
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
@@ -61,6 +78,7 @@ class TasksRenderer implements WidgetRenderer {
   configure(widget: Widget) { this.showConfigDialog(widget); }
 
   render(container: HTMLElement, widget: Widget) {
+    injectWidgetStyles('tasks', TASKS_STYLES);
     const c = widget.content as TasksContent;
     this.poller.stop(widget.id);
 
@@ -192,7 +210,7 @@ class TasksRenderer implements WidgetRenderer {
             <option value="todoist" ${isTodoist ? 'selected' : ''}>Todoist</option>
           </select>
         </div>
-        <div id="todoist-fields" style="display:${isTodoist ? 'block' : 'none'}" class="flex flex-column gap-16">
+        <div id="todoist-fields" class="flex flex-column gap-16 ${isTodoist ? '' : 'hidden'}">
           <div>
             <label class="widget-dialog-label">Todoist Credential *</label>
             <select id="task-cred" class="widget-dialog-input"><option value="">Select credential…</option></select>
@@ -225,7 +243,13 @@ class TasksRenderer implements WidgetRenderer {
 
     const modeSelect = modal.querySelector('#task-mode') as HTMLSelectElement;
     const todoistSection = modal.querySelector('#todoist-fields') as HTMLElement;
-    modeSelect.addEventListener('change', () => { todoistSection.style.display = modeSelect.value === 'todoist' ? 'block' : 'none'; });
+    modeSelect.addEventListener('change', () => { 
+      if (modeSelect.value === 'todoist') {
+        todoistSection.classList.remove('hidden');
+      } else {
+        todoistSection.classList.add('hidden');
+      }
+    });
 
     populateCredentialSelect(modal.querySelector('#task-cred')!, 'todoist', c.todoistCredentialId);
     stopAllDragPropagation(modal);

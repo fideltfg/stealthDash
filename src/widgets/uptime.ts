@@ -1,6 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { stopWidgetDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 
@@ -9,6 +9,20 @@ interface PingResult {
   responseTime: number | null; // null = timeout/failure
   success: boolean;
 }
+
+const UPTIME_STYLES = `
+.uptime-chart-container { flex: 1; display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+.uptime-bar-container { flex: 1; display: flex; align-items: flex-end; position: relative; height: 100%; }
+.uptime-bar { width: 100%; border-radius: 4px 4px 0 0; transition: all 150ms; }
+.uptime-bar-placeholder { width: 100%; height: 100%; background: var(--bg-secondary); border-radius: 4px 4px 0 0; }
+.uptime-bar-container:hover .uptime-tooltip { opacity: 1; visibility: visible; }
+.uptime-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 10px; opacity: 0; visibility: hidden; transition: opacity 150ms; pointer-events: none; z-index: 1000; margin-bottom: 4px; }
+.uptime-bar-excellent { background: #22c55e; }
+.uptime-bar-good { background: #84cc16; }
+.uptime-bar-ok { background: #eab308; }
+.uptime-bar-slow { background: #f97316; }
+.uptime-bar-very-slow, .uptime-bar-failed { background: #ef4444; }
+`;
 
 export class UptimeWidgetRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
@@ -79,6 +93,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('uptime', UPTIME_STYLES);
     const content = widget.content as { target?: string; interval?: number; timeout?: number };
     const div = document.createElement('div');
     div.className = 'uptime-widget';
@@ -259,7 +274,6 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     const cardFooter = document.createElement('div');
     cardFooter.className = 'card-footer button-group';
-    cardFooter.style.marginTop = '0';
 
     cardFooter.appendChild(uptimeDiv);
     cardFooter.appendChild(avgDiv);

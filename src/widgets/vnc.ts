@@ -2,7 +2,7 @@ import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
 import { getPingServerUrl } from '../utils/api';
-import { dispatchWidgetUpdate, stopAllDragPropagation, stopWidgetDragPropagation } from '../utils/dom';
+import { dispatchWidgetUpdate, stopAllDragPropagation, stopWidgetDragPropagation, injectWidgetStyles } from '../utils/dom';
 import { authService } from '../services/auth';
 // @ts-ignore — noVNC doesn't ship type declarations
 import RFB from '@novnc/novnc/core/rfb.js';
@@ -30,6 +30,29 @@ const DEFAULT_CONTENT: VncContent = {
   reconnectDelay: 5,
 };
 
+const VNC_STYLES = `
+.vnc-widget { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
+.vnc-status-bar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: var(--widget-bg, rgba(0, 0, 0, 0.6)); border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 12px; }
+.vnc-status-indicator { display: flex; align-items: center; gap: 4px; font-weight: 500; white-space: nowrap; }
+.vnc-status-indicator::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.vnc-status-indicator.disconnected::before { background: #888; }
+.vnc-status-indicator.connecting::before { background: #f0ad4e; animation: vnc-pulse 1s infinite; }
+.vnc-status-indicator.connected::before { background: #4caf50; }
+.vnc-status-indicator.error::before { background: #f44336; }
+@keyframes vnc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.vnc-status-info { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; font-size: 11px; }
+.vnc-connect-btn { padding: 2px 10px; border: 1px solid var(--border); border-radius: 4px; background: transparent; cursor: pointer; font-size: 11px; transition: background 0.2s; }
+.vnc-connect-btn:hover { background: var(--hover); }
+.vnc-display { flex: 1; overflow: hidden; position: relative; background: #000; }
+.vnc-display canvas { width: 100% !important; height: 100% !important; }
+.vnc-bell { box-shadow: inset 0 0 20px rgba(255, 255, 0, 0.3); transition: box-shadow 0.2s; }
+.vnc-config-inputs { display: flex; gap: 8px; max-width: 360px; }
+.vnc-config-port { width: 80px; }
+.vnc-config-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.vnc-password-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.vnc-password-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; min-width: 280px; display: flex; flex-direction: column; gap: 12px; }
+`;
+
 /** Get the WebSocket URL for the VNC proxy */
 function getVncWsUrl(host: string, port: number, credentialId?: number): string {
   const base = getPingServerUrl();
@@ -55,6 +78,8 @@ class VncWidgetRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('vnc', VNC_STYLES);
+    
     const content = { ...DEFAULT_CONTENT, ...(widget.content as Partial<VncContent>) };
 
     // If no credential selected, show config screen

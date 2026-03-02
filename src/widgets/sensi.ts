@@ -263,7 +263,7 @@ export class SensiRenderer implements WidgetRenderer {
           </span>
         </div>
       </div>
-      <div class="sensi-device-body" style="${isCollapsed ? 'display:none' : ''}">
+      <div class="sensi-device-body ${isCollapsed ? 'hidden' : ''}">
         <div class="sensi-reading-row">
           <div class="sensi-temp-display">
             <span class="sensi-temp-value">${temp}</span>

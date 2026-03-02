@@ -380,13 +380,12 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
       const snowfall = data.daily.snowfall_sum[i];
 
       const card = document.createElement('div');
-      card.className = 'stat-card';
+      card.className = 'stat-card text-center';
       card.title = getWeatherDescription(code);
-      card.style.cssText = 'text-align:center';
 
       card.innerHTML = `
-        <div class="card-title" style="text-align:center">${i === 0 ? 'Today' : dayName}</div>
-        <div class="card-subtitle" style="text-align:center">${dateStr}</div>
+        <div class="card-title">${i === 0 ? 'Today' : dayName}</div>
+        <div class="card-subtitle">${dateStr}</div>
         <div style="font-size:2em;margin:6px 0">${icon}</div>
         <div class="flex justify-center gap-8" style="font-size:14px">
           <h3 style="color:var(--info);">${tempMax}°</h3>

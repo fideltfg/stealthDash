@@ -3,7 +3,17 @@ import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
 import JustGage from 'justgage';
 import { getPingServerUrl } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
-import { stopAllDragPropagation } from '../utils/dom';
+import { stopAllDragPropagation, injectWidgetStyles } from '../utils/dom';
+
+const COMET_STYLES = `
+.display-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+.display-container.text-mode { flex-direction: column; gap: 12px; }
+.gauge-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 200px; flex: 1 1 calc(50% - 8px); max-width: calc(50% - 8px); }
+.gauge-container { width: 100%; height: 150px; display: flex; justify-content: center; align-items: center; }
+.alarm-div { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-align: center; background: var(--bg-success); color: var(--success); }
+.alarm-flash-hot, .alarm-flash-cold, .alarm-flash-error { animation: flash 0.5s infinite alternate; }
+@keyframes flash { from { opacity: 0.3; } to { opacity: 1; } }
+`;
 
 interface CometP8541Content {
   host: string;
@@ -90,6 +100,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('comet-p8541', COMET_STYLES);
     container.innerHTML = '';
     const content = widget.content as unknown as CometP8541Content;
 

@@ -44,6 +44,20 @@ export function dispatchWidgetUpdate(widgetId: string, content: Record<string, a
 }
 
 /**
+ * Inject widget-specific CSS into the document head.
+ * Uses a data attribute to prevent duplicate injection.
+ */
+export function injectWidgetStyles(widgetName: string, css: string): void {
+  const styleId = `widget-styles-${widgetName}`;
+  if (document.getElementById(styleId)) return; // Already injected
+
+  const styleEl = document.createElement('style');
+  styleEl.id = styleId;
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+}
+
+/**
  * Create a simple modal overlay + dialog with standard close behavior.
  * Returns { overlay, dialog, close } so callers can append content.
  */

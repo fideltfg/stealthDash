@@ -1,9 +1,23 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { stopAllDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { populateCredentialSelect } from '../utils/credentials';
+
+const HOME_ASSISTANT_STYLES = `
+.ha-entities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 12px; }
+.ha-entity-card { background: var(--card-background); border: 1px solid var(--border); border-radius: inherit; padding: 12px; transition: all 0.2s; }
+.ha-drop-highlight { background: rgba(100, 150, 255, 0.1); border: 2px dashed var(--accent); }
+.ha-sensor-value { color: var(--success); font-size: larger; font-weight: bolder; }
+.dragging { opacity: 0.5; }
+.ha-toggle-wrapper { position: relative; display: inline-block; width: 54px; height: 28px; cursor: pointer; }
+.ha-toggle-wrapper input[type="checkbox"] { opacity: 0; width: 0; height: 0; position: absolute; }
+.ha-toggle-slider { position: absolute; inset: 0; background-color: #666; border-radius: 28px; transition: background-color 0.3s ease, opacity 0.2s ease; cursor: pointer; }
+.ha-toggle-slider span { position: absolute; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: left 0.3s ease, transform 0.2s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+.ha-toggle-wrapper:hover .ha-toggle-slider span { transform: scale(1.05); }
+.ha-toggle-wrapper:active .ha-toggle-slider span { transform: scale(0.95); }
+`;
 
 interface HomeAssistantEntity {
   entity_id: string;
@@ -82,6 +96,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   }
 
   async render(container: HTMLElement, widget: Widget): Promise<void> {
+    injectWidgetStyles('home-assistant', HOME_ASSISTANT_STYLES);
     const content = widget.content as HomeAssistantContent;
     container.innerHTML = '';
 

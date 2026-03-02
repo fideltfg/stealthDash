@@ -1,6 +1,6 @@
 import type { Widget, SpeedtestContent } from '../types/types';
 import type { WidgetRenderer, WidgetPlugin } from '../types/base-widget';
-import { stopAllDragPropagation, dispatchWidgetUpdate, escapeHtml } from '../utils/dom';
+import { stopAllDragPropagation, dispatchWidgetUpdate, escapeHtml, injectWidgetStyles } from '../utils/dom';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { renderConfigPrompt, renderError } from '../utils/widgetRendering';
@@ -11,6 +11,13 @@ interface SpeedResult {
   download: number; upload: number; ping: number; jitter?: number;
   server_name?: string; timestamp: string;
 }
+
+const SPEEDTEST_STYLES = `
+.speed-card { text-align: center; }
+.speed-val { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.speed-unit { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.speed-chart { width: 100%; height: 140px; display: block; }
+`;
 
 // SVG line chart for speed history
 function chart(dl: number[], ul: number[], w = 500, h = 140): string {
@@ -53,6 +60,7 @@ class SpeedtestRenderer implements WidgetRenderer {
   configure(widget: Widget) { this.showConfigDialog(widget); }
 
   render(container: HTMLElement, widget: Widget) {
+    injectWidgetStyles('speedtest', SPEEDTEST_STYLES);
     const c = widget.content as SpeedtestContent;
     this.poller.stop(widget.id);
 

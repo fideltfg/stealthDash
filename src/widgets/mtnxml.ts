@@ -313,8 +313,6 @@ class MTNXMLWidgetRenderer implements WidgetRenderer {
     const section = document.createElement('div');
     section.className = 'card';
 
-    section.style.marginTop = '6px';
-
     // Header showing title and open/total count
     const header = document.createElement('div');
     header.className = 'card-header';

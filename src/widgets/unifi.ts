@@ -3,8 +3,12 @@ import type { WidgetRenderer } from '../types/base-widget';
 import { credentialsService } from '../services/credentials';
 import { getPingServerUrl, getAuthHeaders } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
-import { dispatchWidgetUpdate, stopAllDragPropagation } from '../utils/dom';
+import { dispatchWidgetUpdate, stopAllDragPropagation, injectWidgetStyles } from '../utils/dom';
 import { formatBytes, formatUptime, formatNumber, formatTimeAgo } from '../utils/formatting';
+
+const UNIFI_STYLES = `
+.unifi-client-card.inactive { opacity: 0.4; filter: grayscale(1); }
+`;
 
 interface UnifiContent {
   host?: string; // Deprecated - host is now stored in the credential
@@ -112,6 +116,7 @@ class UnifiRenderer implements WidgetRenderer {
   }
 
   render(container: HTMLElement, widget: Widget): void {
+    injectWidgetStyles('unifi', UNIFI_STYLES);
     const content = widget.content as UnifiContent;
     
    // console.log('UniFi widget render - Full content:', content);
@@ -857,10 +862,10 @@ class UnifiRenderer implements WidgetRenderer {
         const matchesNetwork = selectedNetwork === 'All' || network === selectedNetwork;
         
         if (matchesSearch && matchesConnection && matchesNetwork) {
-          htmlCard.style.display = '';
+          htmlCard.classList.remove('hidden');
           if (!isInactive) visibleCount++;
         } else {
-          htmlCard.style.display = 'none';
+          htmlCard.classList.add('hidden');
         }
       });
       
@@ -902,7 +907,7 @@ class UnifiRenderer implements WidgetRenderer {
       clearInactiveBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
       clearInactiveBtn.addEventListener('click', () => {
         clientsList.querySelectorAll('.unifi-client-card.inactive').forEach(card => card.remove());
-        clearInactiveBtn.style.display = 'none';
+        clearInactiveBtn.classList.add('hidden');
         const activeCount = clientsList.querySelectorAll('.unifi-client-card:not(.inactive)').length;
         clientCount.textContent = activeCount.toString();
       });
@@ -933,7 +938,11 @@ class UnifiRenderer implements WidgetRenderer {
     });
     
     if (clearInactiveBtn) {
-      clearInactiveBtn.style.display = hasInactive ? '' : 'none';
+      if (hasInactive) {
+        clearInactiveBtn.classList.remove('hidden');
+      } else {
+        clearInactiveBtn.classList.add('hidden');
+      }
     }
     
     // Update or add clients

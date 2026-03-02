@@ -35,20 +35,20 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
 
     // Build checkbox row programmatically so click events work reliably
     const proxyRow = dialog.querySelector('#embed-proxy-row') as HTMLDivElement;
-    proxyRow.style.cssText = 'display:flex;flex-direction:row;align-items:center;gap:8px;margin-bottom:8px;';
+
+    const proxyLabel = document.createElement('label');
+    proxyLabel.className = 'admin-checkbox-label';
+    proxyLabel.htmlFor = 'embed-proxy';
 
     const proxyCheckbox = document.createElement('input');
     proxyCheckbox.type = 'checkbox';
     proxyCheckbox.id = 'embed-proxy';
     proxyCheckbox.checked = !!content.useProxy;
-    proxyCheckbox.style.cssText = 'width:auto;cursor:pointer;margin:0;';
 
-    const proxyLabel = document.createElement('label');
-    proxyLabel.htmlFor = 'embed-proxy';
-    proxyLabel.textContent = 'Use proxy (bypass X-Frame-Options)';
-    proxyLabel.style.cssText = 'margin:0;cursor:pointer;user-select:none;';
+    const labelText = document.createTextNode('Use proxy (bypass X-Frame-Options)');
 
-    proxyRow.appendChild(proxyCheckbox);
+    proxyLabel.appendChild(proxyCheckbox);
+    proxyLabel.appendChild(labelText);
     proxyRow.appendChild(proxyLabel);
 
     const urlInput = dialog.querySelector('#embed-url') as HTMLInputElement;
