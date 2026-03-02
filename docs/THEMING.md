@@ -498,9 +498,13 @@ Standard widget card styling:
 
 ## Background Patterns
 
+The dashboard supports both built-in patterns and custom backgrounds (images and videos).
+
+### Built-in Patterns
+
 The canvas supports different background patterns defined in [src/css/app.css](../src/css/app.css):
 
-### Grid Pattern (Default)
+#### Grid Pattern (Default)
 
 ```css
 .canvas[data-background="grid"] {
@@ -511,7 +515,7 @@ The canvas supports different background patterns defined in [src/css/app.css](.
 }
 ```
 
-### Dots Pattern
+#### Dots Pattern
 
 ```css
 .canvas[data-background="dots"] {
@@ -520,7 +524,7 @@ The canvas supports different background patterns defined in [src/css/app.css](.
 }
 ```
 
-### Lines Pattern
+#### Lines Pattern
 
 ```css
 .canvas[data-background="lines"] {
@@ -529,7 +533,7 @@ The canvas supports different background patterns defined in [src/css/app.css](.
 }
 ```
 
-### Solid (No Pattern)
+#### Solid (No Pattern)
 
 ```css
 .canvas[data-background="solid"] {
@@ -537,7 +541,82 @@ The canvas supports different background patterns defined in [src/css/app.css](.
 }
 ```
 
-### Custom Background Patterns
+### Custom Backgrounds
+
+In addition to built-in patterns, you can use custom images or videos as backgrounds.
+
+#### Image Backgrounds
+
+Support for static images including:
+- Standard formats: JPEG, PNG, GIF, WebP
+- Animated GIFs
+- URL-based or uploaded files
+
+**Features:**
+- **Opacity Control** (0-100%): Adjust transparency for better widget visibility
+- **Blur Effect** (0-10px): Add blur to reduce distraction
+- **Brightness** (0-200%): Lighten or darken the background
+- **Fit Mode**: Choose between Cover, Contain, or Fill
+
+**Usage:**
+1. Open background settings from the toolbar
+2. Select "Image" pattern
+3. Enter a URL or upload an image file
+4. Adjust display settings as needed
+5. Click "Apply Background"
+
+**Example URLs:**
+```
+https://example.com/background.jpg
+https://example.com/animated-pattern.gif
+data:image/png;base64,... (base64 encoded)
+```
+
+#### Video Backgrounds
+
+Support for animated video backgrounds:
+- Supported formats: MP4, WebM
+- Autoplay with loop option
+- Muted by default (recommended)
+- Playback speed control
+
+**Features:**
+- **All Image Settings**: Opacity, blur, brightness, and fit mode
+- **Playback Speed** (0.25x-2x): Control animation speed
+- **Loop**: Enable/disable continuous playback
+- **Muted**: Keep videos silent to reduce memory usage
+
+**Usage:**
+1. Open background settings from the toolbar
+2. Select "Video" pattern
+3. Enter a video URL (upload not recommended for large files)
+4. Adjust display and video settings
+5. Click "Apply Background"
+
+**Example URLs:**
+```
+https://example.com/background.mp4
+https://motionbgs.com/media/9045/subtle-animation.960x540.mp4
+```
+
+**Performance Notes:**
+- Video backgrounds consume more memory than images or patterns
+- Use lower resolution videos (720p or less) for better performance
+- Keep videos muted to reduce processing overhead
+- Consider using animated GIFs for simpler animations
+- Videos are automatically cleaned up when switching backgrounds
+
+### Accessing Background Settings
+
+Click the background button (grid icon) in the toolbar to open the Background Settings dialog where you can:
+- Select pattern type (Grid, Dots, Lines, Solid, Image, Video)
+- Configure custom backgrounds with URL or file upload
+- Adjust display settings (opacity, blur, brightness, fit)
+- Configure video-specific options (playback speed, loop, muted)
+- Preview changes before applying
+- Reset to default grid pattern
+
+### Custom Background Patterns (CSS)
 
 Add new patterns by extending the pattern system:
 

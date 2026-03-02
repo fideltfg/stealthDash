@@ -109,7 +109,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Check if there are any entities (either ungrouped or in groups)
     const hasUngroupedEntities = content.entities && content.entities.length > 0;
     const hasGroupedEntities = content.groups && content.groups.some(g => g.entities && g.entities.length > 0);
-    
+
     // If no entities configured anywhere, show add entities prompt
     if (!hasUngroupedEntities && !hasGroupedEntities) {
       this.renderNoEntitiesPrompt(container, widget);
@@ -251,7 +251,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     groups.forEach((group) => {
       const groupSection = this.createSection(group.label, group, widget);
       mainContainer.appendChild(groupSection);
-      
+
       const groupGrid = groupSection.querySelector('.ha-entities-grid') as HTMLElement;
       group.entities.forEach((entity, index) => {
         const card = this.createEntityCard(entity, widget, `${group.id}-${index}`, group.id);
@@ -290,14 +290,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         e.preventDefault();
         return;
       }
-      
+
       e.stopPropagation();
       card.classList.add('dragging');
       e.dataTransfer!.effectAllowed = 'move';
       const sourceGroupId = card.dataset.groupId || 'ungrouped';
       e.dataTransfer!.setData('text/plain', `${sourceGroupId}|${entity.entity_id}`);
     });
-    
+
     card.addEventListener('dragend', (e) => {
       e.stopPropagation();
       card.classList.remove('dragging');
@@ -324,7 +324,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       e.preventDefault();
       e.stopPropagation();
       card.classList.remove('ha-drop-target');
-      
+
       const dragData = e.dataTransfer!.getData('text/plain');
       const [sourceGroupId, draggedEntityId] = dragData.split('|');
       const targetGroupId = card.dataset.groupId || 'ungrouped';
@@ -346,30 +346,30 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       card.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Remove any existing context menus
         document.querySelectorAll('.ha-context-menu').forEach(m => m.remove());
-        
+
         // Create context menu
         const menu = document.createElement('div');
         menu.className = 'ha-context-menu';
         menu.style.left = `${e.clientX}px`;
         menu.style.top = `${e.clientY}px`;
-        
+
         const ungroupOption = document.createElement('div');
         ungroupOption.className = 'ha-context-menu-item';
         ungroupOption.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i> Ungroup';
-        
+
         ungroupOption.addEventListener('click', async () => {
           await this.moveEntityToGroup(widget, entity.entity_id, groupId, 'ungrouped');
           if (menu.parentNode) {
             document.body.removeChild(menu);
           }
         });
-        
+
         menu.appendChild(ungroupOption);
         document.body.appendChild(menu);
-        
+
         // Close menu on any click outside
         const closeMenu = (e: MouseEvent) => {
           if (!menu.contains(e.target as Node)) {
@@ -379,7 +379,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
             document.removeEventListener('click', closeMenu);
           }
         };
-        
+
         setTimeout(() => {
           document.addEventListener('click', closeMenu);
         }, 0);
@@ -394,7 +394,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Control based on type
     if (entity.type === 'switch' || entity.type === 'light') {
-      
+
       // Toggle switch wrapper
       const toggleWrapper = document.createElement('label');
       toggleWrapper.className = 'ha-toggle-wrapper';
@@ -430,7 +430,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       toggleWrapper.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Show loading state
         const isCurrentlyOn = checkbox.checked;
         slider.style.opacity = '0.6';
@@ -465,11 +465,11 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       // Display sensor value
       const valueDisplay = document.createElement('div');
       valueDisplay.className = 'ha-sensor-value';
-      
+
       if (state) {
         const unit = state.attributes.unit_of_measurement || '';
         const stateValue = state.state.toLowerCase();
-        
+
         if (stateValue === 'unavailable' || stateValue === 'unknown') {
           valueDisplay.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ERROR`;
           valueDisplay.classList.add('alarm-flash-error');
@@ -480,7 +480,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         valueDisplay.textContent = '—';
         valueDisplay.style.color = '#666';
       }
-      
+
       card.appendChild(valueDisplay);
     }
 
@@ -523,18 +523,18 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           toggleWrapper.style.pointerEvents = 'auto';
         }
       }
-      
+
       // Update sensor value
       const valueDisplay = htmlCard.querySelector('.ha-sensor-value') as HTMLElement;
       if (valueDisplay) {
         const unit = state.attributes.unit_of_measurement || '';
         const stateValue = state.state.toLowerCase();
-        
+
         // Remove any existing alarm classes and inline styles
         valueDisplay.classList.remove('alarm-flash-error');
         valueDisplay.style.removeProperty('color');
         valueDisplay.style.removeProperty('background-color');
-        
+
         if (stateValue === 'unavailable' || stateValue === 'unknown') {
           valueDisplay.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ERROR`;
           valueDisplay.classList.add('alarm-flash-error');
@@ -560,7 +560,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Store states for this widget
       const widgetStates = new Map<string, HomeAssistantEntity>();
-      
+
       // Fetch states for ungrouped entities
       const entities = content.entities || [];
       for (const entity of entities) {
@@ -569,7 +569,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           widgetStates.set(entity.entity_id, state);
         }
       }
-      
+
       // Fetch states for entities in groups
       const groups = content.groups || [];
       for (const group of groups) {
@@ -580,7 +580,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           }
         }
       }
-      
+
       this.entityStates.set(widget.id, widgetStates);
     } catch (error) {
       console.error('Failed to fetch entity states:', error);
@@ -638,13 +638,13 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       }
 
       const allStates: HomeAssistantEntity[] = await response.json();
-      
+
       // Filter for sensors and switches only
       const filtered = allStates.filter(entity => {
         const domain = entity.entity_id.split('.')[0];
         return domain === 'sensor' || domain === 'switch';
       });
-      
+
       return filtered;
     } catch (error) {
       console.error('Failed to fetch all entities:', error);
@@ -730,10 +730,10 @@ export class HomeAssistantRenderer implements WidgetRenderer {
       entities.forEach(entity => {
         const item = document.createElement('div');
         item.className = 'ha-entity-list-item';
-        
+
         const domain = entity.entity_id.split('.')[0];
         const icon = domain === 'light' ? '<i class="fas fa-lightbulb"></i>' : domain === 'switch' ? '<i class="fas fa-plug"></i>' : domain === 'sensor' ? '<i class="fas fa-chart-bar"></i>' : '<i class="fas fa-home"></i>';
-        
+
         item.innerHTML = `
           <div class="ha-entity-list-item-content">
             <div class="card">
@@ -752,7 +752,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
           // Select this one
           item.classList.add('selected');
           selectedEntity = entity;
-          
+
           // Auto-fill display name if empty
           if (!displayNameInput.value) {
             displayNameInput.value = entity.attributes.friendly_name || entity.entity_id;
@@ -772,7 +772,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Search filter
     searchInput.addEventListener('input', () => {
       const query = searchInput.value.toLowerCase();
-      const filtered = allEntities.filter(entity => 
+      const filtered = allEntities.filter(entity =>
         entity.entity_id.toLowerCase().includes(query) ||
         (entity.attributes.friendly_name?.toLowerCase().includes(query))
       );
@@ -803,14 +803,14 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       const displayName = displayNameInput.value.trim();
       const domain = selectedEntity.entity_id.split('.')[0];
-      
+
       // Determine type based on domain
       let type: 'light' | 'switch' | 'sensor' = 'sensor';
       if (domain === 'light') type = 'light';
       else if (domain === 'switch') type = 'switch';
 
       const entities = content.entities || [];
-      
+
       // Check if entity already exists
       if (entities.some(e => e.entity_id === selectedEntity!.entity_id)) {
         alert('This entity has already been added');
@@ -827,7 +827,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Update widget content
       content.entities = entities;
-      
+
       // Update dashboard state and save
       const dashboard = (window as any).dashboard;
       if (dashboard && dashboard.state && dashboard.state.widgets) {
@@ -940,7 +940,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
       // Update widget content
       content.entities = entities;
-      
+
       // Update dashboard state and save
       const dashboard = (window as any).dashboard;
       if (dashboard && dashboard.state && dashboard.state.widgets) {
@@ -1120,12 +1120,12 @@ export class HomeAssistantRenderer implements WidgetRenderer {
 
     // Collect all entities (ungrouped and grouped)
     const allEntities: Array<{ entity: EntityConfig; groupId: string | null; groupName: string | null }> = [];
-    
+
     // Add ungrouped entities
     (content.entities || []).forEach(entity => {
       allEntities.push({ entity, groupId: null, groupName: null });
     });
-    
+
     // Add grouped entities
     (content.groups || []).forEach(group => {
       group.entities.forEach(entity => {
@@ -1219,7 +1219,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         const index = parseInt(target.getAttribute('data-index') || '0');
         const groupId = target.getAttribute('data-group-id') || null;
         const entityId = target.getAttribute('data-entity-id') || '';
-        
+
         const item = allEntities[index];
 
         if (confirm(`Remove ${item.entity.display_name || item.entity.entity_id}?`)) {
@@ -1240,7 +1240,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
             }
             content.entities = entities;
           }
-          
+
           // Trigger widget update
           dispatchWidgetUpdate(widget.id, content);
 
@@ -1275,7 +1275,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
   private createSection(label: string, group: EntityGroup | null, widget: Widget): HTMLElement {
     const section = document.createElement('div');
     section.className = 'card';
-    
+
     if (group) {
       section.dataset.groupId = group.id;
     }
@@ -1303,7 +1303,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         // Prevent deletion when dashboard is locked
         const isLocked = document.getElementById('app')?.classList.contains('locked');
         if (isLocked) return;
-        
+
         this.deleteGroup(widget, group.id);
       });
 
@@ -1354,7 +1354,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     if (!label) return;
 
     const content = widget.content as HomeAssistantContent;
-    
+
     const newGroup: EntityGroup = {
       id: `group-${Date.now()}`,
       label,
@@ -1363,7 +1363,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     };
 
     const updatedGroups = [...(content.groups || []), newGroup];
-    
+
     // Trigger widget update event - this will save to database
     dispatchWidgetUpdate(widget.id, {
       url: content.url,
@@ -1378,19 +1378,19 @@ export class HomeAssistantRenderer implements WidgetRenderer {
     // Prevent deletion when dashboard is locked
     const isLocked = document.getElementById('app')?.classList.contains('locked');
     if (isLocked) return;
-    
+
     if (!confirm('Delete this group? Entities will be moved to Ungrouped.')) return;
 
     const content = widget.content as HomeAssistantContent;
     const groups = content.groups || [];
     const group = groups.find(g => g.id === groupId);
-    
+
     if (!group) return;
 
     // Move all entities back to ungrouped
     const updatedEntities = [...(content.entities || []), ...group.entities];
     const updatedGroups = groups.filter(g => g.id !== groupId);
-    
+
     // Trigger widget update event - this will save to database
     dispatchWidgetUpdate(widget.id, {
       url: content.url,

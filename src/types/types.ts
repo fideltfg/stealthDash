@@ -4,7 +4,18 @@ import type { Theme } from '../themes';
 // Dynamic widget type - widgets register themselves via the plugin system
 export type WidgetType = string;
 export type { Theme };
-export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid';
+export type BackgroundPattern = 'grid' | 'dots' | 'lines' | 'solid' | 'image' | 'video';
+
+export interface BackgroundSettings {
+  url?: string;
+  opacity?: number; // 0-100
+  blur?: number; // 0-10
+  brightness?: number; // 0-200
+  objectFit?: 'cover' | 'contain' | 'fill';
+  playbackRate?: number; // for video (0.25-2.0)
+  loop?: boolean; // for video
+  muted?: boolean; // for video
+}
 
 export interface Vec2 {
   x: number;
@@ -147,6 +158,7 @@ export interface DashboardState {
   widgets: Widget[];
   theme: Theme;
   background: BackgroundPattern;
+  backgroundSettings?: BackgroundSettings;
   grid: number;
   zoom: number;
   viewport: Viewport;

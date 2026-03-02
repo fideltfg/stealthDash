@@ -4,7 +4,31 @@ import { TIMEZONES } from './timezones';
 import { stopWidgetDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 
 const CLOCK_STYLES = `
+.clock-display-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
 .clock-timezone { font-size: 14px; color: var(--muted); opacity: 0.8; text-transform: uppercase; }
+.clock-time {
+  font-size: 38px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.clock-timezone {
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.8;
+  text-transform: uppercase;
+}
 `;
 
 export class ClockWidgetRenderer implements WidgetRenderer {

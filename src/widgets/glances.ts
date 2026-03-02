@@ -116,10 +116,10 @@ class SystemResourcesRenderer implements WidgetRenderer {
     const sysInfo = [d.system.os_name, d.system.os_version].filter(Boolean).join(' ');
     const cpuName = d.quicklook?.cpu_name || '';
     const cpuHz = d.quicklook?.cpu_hz_current ? `${(d.quicklook.cpu_hz_current / 1e9).toFixed(2)} GHz` : '';
-    let htmltitle = `<div>
-    <h5>    <i class="fas fa-server"></i> ${escapeHtml(d.system.hostname)}</h5>
-    <subtitle>${[sysInfo, d.uptime ? `up ${d.uptime}` : ''].filter(Boolean).join(' · ')}</subtitle>
-    </div>`;
+    // let htmltitle = `<div>
+    // <h5>    <i class="fas fa-server"></i> ${escapeHtml(d.system.hostname)}</h5>
+    // <subtitle>${[sysInfo, d.uptime ? `up ${d.uptime}` : ''].filter(Boolean).join(' · ')}</subtitle>
+    // </div>`;
     html += `<div class="card-list">`;
 
     // CPU

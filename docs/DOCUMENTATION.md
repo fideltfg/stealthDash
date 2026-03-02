@@ -56,6 +56,8 @@ Theme system documentation:
 - Color tokens and CSS variables
 - Light/dark/system themes
 - Creating custom themes
+- Background patterns (Grid, Dots, Lines, Solid)
+- Custom backgrounds (Images and Videos)
 - Accessibility guidelines
 
 ## Integration Examples

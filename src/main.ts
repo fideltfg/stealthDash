@@ -1,4 +1,4 @@
-import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState, Theme } from './types/types';
+import type { DashboardState, Widget, Vec2, Size, WidgetType, MultiDashboardState, Theme, BackgroundPattern, BackgroundSettings } from './types/types';
 import { THEMES, THEME_CLASSES, resolveSystemTheme } from './themes';
 import { DEFAULT_WIDGET_SIZE } from './types/types';
 import { getDefaultState, generateUUID } from './components/storage';
@@ -13,6 +13,7 @@ import { AuthUI } from './components/AuthUI';
 import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
 import { CredentialsUI } from './components/CredentialsUI';
+import { BackgroundSettingsUI } from './components/BackgroundSettingsUI';
 import { widgetMetadata } from './widgetMetadata';
 
 class Dashboard {
@@ -39,6 +40,7 @@ class Dashboard {
   private userSettingsUI: UserSettingsUI;
   private adminDashboardUI: AdminDashboardUI;
   private credentialsUI: CredentialsUI;
+  private backgroundSettingsUI: BackgroundSettingsUI;
   private currentUser: User | null = null;
   private userMenuElement: HTMLElement | null = null;
   private syncNotificationBanner: HTMLElement | null = null;
@@ -72,6 +74,16 @@ class Dashboard {
     this.userSettingsUI = new UserSettingsUI();
     this.adminDashboardUI = new AdminDashboardUI();
     this.credentialsUI = new CredentialsUI();
+    this.backgroundSettingsUI = new BackgroundSettingsUI();
+    
+    // Set up background settings callback
+    this.backgroundSettingsUI.onApply((pattern: BackgroundPattern, settings?: BackgroundSettings) => {
+      this.state.background = pattern;
+      this.state.backgroundSettings = settings;
+      this.setupBackground();
+      this.saveQuiet();
+    });
+    
     this.state = getDefaultState();
     this.init();
   }
@@ -449,10 +461,10 @@ class Dashboard {
     const backgroundToggle = document.createElement('button');
     backgroundToggle.className = 'background-toggle';
     backgroundToggle.innerHTML = '<i class="fa-solid fa-border-all"></i>';
-    backgroundToggle.setAttribute('aria-label', 'Change background pattern');
-    backgroundToggle.setAttribute('title', 'Change background pattern');
+    backgroundToggle.setAttribute('aria-label', 'Background settings');
+    backgroundToggle.setAttribute('title', 'Background settings');
     backgroundToggle.addEventListener('click', () => {
-      this.toggleBackground();
+      this.backgroundSettingsUI.showDialog(this.state.background, this.state.backgroundSettings);
       this.closeMenu();
     });
 
@@ -643,6 +655,74 @@ class Dashboard {
 
   private setupBackground(): void {
     this.canvas.setAttribute('data-background', this.state.background);
+    
+    // Remove any existing custom background
+    const existingBackground = this.canvas.querySelector('.canvas-background');
+    if (existingBackground) {
+      // Clean up video if it exists to prevent memory leaks
+      const video = existingBackground.querySelector('video');
+      if (video) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      }
+      existingBackground.remove();
+    }
+    
+    // Handle custom backgrounds (image or video)
+    if ((this.state.background === 'image' || this.state.background === 'video') && this.state.backgroundSettings?.url) {
+      const settings = this.state.backgroundSettings;
+      const url = settings.url as string; // Type assertion - checked in condition above
+      
+      const bgContainer = document.createElement('div');
+      bgContainer.className = 'canvas-background';
+      
+      // Apply settings
+      const opacity = settings.opacity !== undefined ? settings.opacity / 100 : 1;
+      const blur = settings.blur !== undefined ? settings.blur : 0;
+      const brightness = settings.brightness !== undefined ? settings.brightness : 100;
+      const fit = settings.objectFit || 'cover';
+      
+      const filters = [];
+      if (blur > 0) filters.push(`blur(${blur}px)`);
+      if (brightness !== 100) filters.push(`brightness(${brightness}%)`);
+      const filterStr = filters.length > 0 ? filters.join(' ') : 'none';
+      
+      if (this.state.background === 'video') {
+        const video = document.createElement('video');
+        video.src = url;
+        video.autoplay = true;
+        video.loop = settings.loop !== false;
+        video.muted = settings.muted !== false;
+        video.playsInline = true;
+        video.style.objectFit = fit;
+        video.style.opacity = opacity.toString();
+        video.style.filter = filterStr;
+        
+        if (settings.playbackRate) {
+          video.playbackRate = settings.playbackRate;
+        }
+        
+        // Add error handling
+        video.addEventListener('error', () => {
+          console.error('Failed to load video background');
+          bgContainer.innerHTML = '<div style="color: var(--error); padding: 20px; text-align: center;">Failed to load video</div>';
+        });
+        
+        bgContainer.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Dashboard background';
+        img.style.objectFit = fit;
+        img.style.opacity = opacity.toString();
+        img.style.filter = filterStr;
+        
+        bgContainer.appendChild(img);
+      }
+      
+      this.canvas.insertBefore(bgContainer, this.canvas.firstChild);
+    }
   }
 
   private setupSyncService(): void {
@@ -671,13 +751,20 @@ class Dashboard {
     });
   }
 
+  // Cycle through basic background patterns (excludes image/video which require configuration)
   private toggleBackground(): void {
-    const backgrounds: Array<'grid' | 'dots' | 'lines' | 'solid'> = ['grid', 'dots', 'lines', 'solid'];
+    const backgrounds: BackgroundPattern[] = ['grid', 'dots', 'lines', 'solid'];
     const currentIndex = backgrounds.indexOf(this.state.background);
-    this.state.background = backgrounds[(currentIndex + 1) % backgrounds.length];
+    if (currentIndex === -1) {
+      // If current background is custom (image/video), reset to grid
+      this.state.background = 'grid';
+    } else {
+      this.state.background = backgrounds[(currentIndex + 1) % backgrounds.length];
+    }
     this.setupBackground();
     this.saveQuiet();
   }
+
 
   private setupEventListeners(): void {
     // Keyboard shortcuts

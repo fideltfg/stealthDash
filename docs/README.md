@@ -2,7 +2,7 @@
 
 A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 23 widget types.
 
-![Dashboard Screenshot](images/dashboard.v1.png)
+![Dashboard Screenshot](images/AnimatedBackgrounds.png)
 
 ## Features
 
@@ -12,6 +12,7 @@ A minimalist web dashboard with draggable, resizable widgets. Built with TypeScr
 - **Public Sharing** — Share dashboards via link for anonymous read-only viewing
 - **Multi-User Auth** — Secure login, registration, password recovery, and admin management
 - **13 Themes** — Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, and System (auto)
+- **Custom Backgrounds** — Built-in patterns (Grid, Dots, Lines, Solid) plus custom image and video backgrounds with display controls
 - **Drag & Resize** — Intuitive controls with grid snapping and visual snap guides
 - **Cross-Tab Sync** — Real-time sync across browser tabs via BroadcastChannel, plus server polling for cross-browser sync
 - **Undo/Redo** — Full history management for widget changes
@@ -140,8 +141,19 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 - Choose from 13 themes: Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, or System (follows OS preference)
 
 **Change Background**
-- Click the background toggle in the menu
-- Cycles through: Grid, Dots, Lines, Solid
+- Click the background button (grid icon) in the toolbar or menu
+- Choose from built-in patterns: Grid, Dots, Lines, Solid
+- Or select custom backgrounds:
+  - **Image**: Upload or link to JPEG, PNG, GIF, WebP images
+  - **Video**: Link to MP4 or WebM videos for animated backgrounds
+- Customize with opacity, blur, brightness, and fit settings
+- Preview changes before applying
+
+**Background Settings:**
+- **Built-in Patterns**: Quick toggle through Grid, Dots, Lines, and Solid
+- **Custom Images**: Static or animated (GIF) backgrounds with full display control
+- **Video Backgrounds**: Looping videos with playback speed control (best for subtle animations)
+- All custom backgrounds support opacity (0-100%), blur (0-10px), brightness (0-200%), and fit modes
 
 **Lock Dashboard**
 - Click the lock button (top-right)
