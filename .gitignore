@@ -20,14 +20,10 @@ dist
 # Docker volumes (if any)
 volumes/
 copilot-instructions.md
-CSS-COMPONENT-REFERENCE.md
 CSS-PHASE-2-SUMMARY.md
 CSS-REFACTORING-REPORT.md
 docs/images/SunsetTheme.png
 docs/images/LightSystemTheme.png
 docs/images/GruvBoxTheme.png
 docs/images/DarkSystmeTheme.png
-TEMP/weatherdash.html
-TEMP/NEW_WIDGET_PROPOSALS_ROUND2.md
-TEMP/NEW_WIDGET_PROPOSALS.md
-TEMP/WIDGET_DETAILED_SPECS.md
+TEMP/*
