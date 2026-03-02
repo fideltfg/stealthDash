@@ -122,11 +122,6 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
   const io = require('socket.io-client-v2');
 
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      socket.disconnect();
-      reject(new Error('Timed out waiting for Sensi state'));
-    }, timeoutMs);
-
     const socket = io(SOCKET_URL + CAPABILITIES_QUERY, {
       path: '/thermostat',
       transports: ['websocket'],
@@ -135,22 +130,63 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
       },
     });
 
-    const devices = [];
+    // Map of icd_id -> device data, accumulates from multiple state events
+    const deviceMap = new Map();
+    let stateEventCount = 0;
+    let hasReceivedCompleteState = false;
+
+    // Wait for multiple state events, then close after a delay
+    let resolveTimer;
+    const timer = setTimeout(() => {
+      socket.disconnect();
+      if (deviceMap.size === 0) {
+        reject(new Error('Timed out waiting for Sensi state'));
+      } else {
+        // Return accumulated devices even if we timed out
+        resolve(Array.from(deviceMap.values()));
+      }
+    }, timeoutMs);
 
     socket.on('connect', () => {
       console.log('Sensi socket connected');
     });
 
     socket.on('state', (data) => {
+      stateEventCount++;
+      
       if (Array.isArray(data)) {
-        for (const item of data) {
-          devices.push(item);
+        // Merge devices from this event into our map
+        for (const device of data) {
+          if (device.icd_id) {
+            const existing = deviceMap.get(device.icd_id);
+            if (existing) {
+              // Merge state if this event has it
+              if (device.state && Object.keys(device.state).length > 0) {
+                existing.state = { ...existing.state, ...device.state };
+              }
+              // Merge other properties
+              Object.assign(existing, device);
+            } else {
+              deviceMap.set(device.icd_id, device);
+            }
+            
+            // Check if this device now has complete state
+            if (device.state && device.state.display_temp !== undefined) {
+              hasReceivedCompleteState = true;
+            }
+          }
         }
       }
-      // We have state data — resolve
-      clearTimeout(timer);
-      socket.disconnect();
-      resolve(devices);
+      
+      // After we've received at least one complete state, wait a bit more then resolve
+      if (hasReceivedCompleteState && !resolveTimer) {
+        resolveTimer = setTimeout(() => {
+          clearTimeout(timer);
+          socket.disconnect();
+          console.log(`Sensi: Received ${stateEventCount} state events, returning ${deviceMap.size} devices`);
+          resolve(Array.from(deviceMap.values()));
+        }, 500); // Wait 500ms after first complete state to catch any stragglers
+      }
     });
 
     socket.on('connect_error', (err) => {

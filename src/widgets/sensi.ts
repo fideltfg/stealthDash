@@ -218,23 +218,27 @@ export class SensiRenderer implements WidgetRenderer {
     const reg = device.registration || {};
 
     const name = reg.name || device.icd_id;
+    // trim name to 24 chars for better display, but keep tooltip with full name
+    const displayName = name.length > 20 ? name.slice(0, 17) + '...' : name;
+    
+
     const isOnline = (s.status || '').toLowerCase() === 'online';
     const scale = content.temperatureUnit || (s.display_scale === 'c' ? 'C' : 'F');
-    const temp = s.display_temp != null ? s.display_temp : '--';
-    const humidity = s.humidity != null ? s.humidity : '--';
+    const temp = s.display_temp != null ? Math.round(s.display_temp) : '--';
+    const humidity = s.humidity != null ? Math.round(s.humidity) : '--';
     const mode = (s.operating_mode || 'off').toLowerCase();
     const fanMode = (s.fan_mode || 'auto').toLowerCase();
-    const heatSetpoint = s.current_heat_temp ?? '--';
-    const coolSetpoint = s.current_cool_temp ?? '--';
+    const heatSetpoint = s.current_heat_temp != null ? Math.round(s.current_heat_temp) : '--';
+    const coolSetpoint = s.current_cool_temp != null ? Math.round(s.current_cool_temp) : '--';
 
     // Determine what's actively running
     const demand = s.demand_status || {};
     let activeStatus = '';
     let activeIcon = '';
-    if (demand.heat && demand.heat > 0) { activeStatus = 'Heating'; activeIcon = '<i class="fa-solid fa-fire" style="color:#e74c3c"></i>'; }
-    else if (demand.cool && demand.cool > 0) { activeStatus = 'Cooling'; activeIcon = '<i class="fa-solid fa-snowflake" style="color:#3498db"></i>'; }
-    else if (demand.aux && demand.aux > 0) { activeStatus = 'Aux Heat'; activeIcon = '<i class="fa-solid fa-fire-flame-curved" style="color:#e67e22"></i>'; }
-    else if (demand.fan && demand.fan > 0) { activeStatus = 'Fan Running'; activeIcon = '<i class="fa-solid fa-fan" style="color:#2ecc71"></i>'; }
+    if (demand.heat && demand.heat > 0) { activeStatus = 'Heat'; activeIcon = '<i class="fa-solid fa-fire" style="color:var(--error)"></i>'; }
+    else if (demand.cool && demand.cool > 0) { activeStatus = 'Cool'; activeIcon = '<i class="fa-solid fa-snowflake" style="color:#3498db"></i>'; }
+    else if (demand.aux && demand.aux > 0) { activeStatus = 'Aux'; activeIcon = '<i class="fa-solid fa-fire-flame-curved" style="color:#e67e22"></i>'; }
+    else if (demand.fan && demand.fan > 0) { activeStatus = 'Fan'; activeIcon = '<i class="fa-solid fa-fan" style="color:var(--success)"></i>'; }
     else { activeStatus = 'Idle'; activeIcon = '<i class="fa-solid fa-pause" style="color:var(--text-secondary)"></i>'; }
 
     const card = document.createElement('div');
@@ -243,24 +247,21 @@ export class SensiRenderer implements WidgetRenderer {
 
     // Mode icon
     const modeIcons: Record<string, string> = {
-      heat: '<i class="fa-solid fa-fire" style="color:#e74c3c"></i>',
-      cool: '<i class="fa-solid fa-snowflake" style="color:#3498db"></i>',
-      auto: '<i class="fa-solid fa-arrows-rotate" style="color:#f39c12"></i>',
-      aux: '<i class="fa-solid fa-fire-flame-curved" style="color:#e67e22"></i>',
+      heat: '<i class="fa-solid fa-fire" style="color:var(--error)"></i>',
+      cool: '<i class="fa-solid fa-snowflake" style="color:var(--primary)"></i>',
+      auto: '<i class="fa-solid fa-arrows-rotate" style="color:var(--warning)"></i>',
+      aux: '<i class="fa-solid fa-fire-flame-curved" style="color:var(--aux)"></i>',
       off: '<i class="fa-solid fa-power-off" style="color:var(--text-secondary)"></i>',
     };
 
     card.innerHTML = `
       <div class="sensi-device-header">
         <div class="sensi-device-info">
-          <span class="sensi-device-name">${name}</span>
+          <span class="sensi-device-name" title="${name}">${displayName}</span>
           <span class="sensi-device-status ${isOnline ? 'online' : 'offline'}">
             <i class="fa-solid fa-circle"></i> ${isOnline ? 'Online' : 'Offline'}
           </span>
         </div>
-        <button class="sensi-collapse-btn" title="${isCollapsed ? 'Expand' : 'Collapse'}">
-          <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'}"></i>
-        </button>
       </div>
       <div class="sensi-device-body" style="${isCollapsed ? 'display:none' : ''}">
         <div class="sensi-reading-row">
@@ -301,7 +302,6 @@ export class SensiRenderer implements WidgetRenderer {
         <div class="sensi-setpoints-row">
           ${mode === 'heat' || mode === 'auto' || mode === 'aux' ? `
           <div class="sensi-setpoint-group">
-            <label>${modeIcons.heat} Heat</label>
             <div class="sensi-setpoint-controls">
               <button class="sensi-temp-btn sensi-temp-down" data-icd="${device.icd_id}" data-mode="heat" data-dir="-1">
                 <i class="fa-solid fa-minus"></i>
@@ -333,7 +333,7 @@ export class SensiRenderer implements WidgetRenderer {
         <div class="sensi-info-row">
           ${s.battery_voltage != null ? `<span class="sensi-info-item"><i class="fa-solid fa-battery-half"></i> ${s.battery_voltage.toFixed(2)}V</span>` : ''}
           ${s.wifi_connection_quality != null ? `<span class="sensi-info-item"><i class="fa-solid fa-wifi"></i> ${s.wifi_connection_quality}%</span>` : ''}
-          ${s.power_status ? `<span class="sensi-info-item"><i class="fa-solid fa-plug"></i> ${s.power_status === 'c_wire' ? 'C-Wire' : s.power_status}</span>` : ''}
+          ${s.power_status ? `<span class="sensi-info-item">${s.power_status === 'c_wire' ? '<i class="fa-solid fa-code-commit"></i> C-Wire' : s.power_status === 'battery_only' ? '<i class="fa-solid fa-battery-half"></i> Battery' : s.power_status === 'powerstealing' ? '<i class="fa-solid fa-plug"></i> Stealing' : `<i class="fa-solid fa-plug"></i> ${s.power_status}`}</span>` : ''}
         </div>
       </div>
     `;
@@ -341,18 +341,18 @@ export class SensiRenderer implements WidgetRenderer {
     // ---- Event handlers ----
 
     // Collapse toggle
-    const collapseBtn = card.querySelector('.sensi-collapse-btn') as HTMLButtonElement;
-    collapseBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const collapsed = content.collapsedDevices || [];
-      const idx = collapsed.indexOf(device.icd_id);
-      if (idx >= 0) {
-        collapsed.splice(idx, 1);
-      } else {
-        collapsed.push(device.icd_id);
-      }
-      dispatchWidgetUpdate(widget.id, { ...content, collapsedDevices: collapsed });
-    });
+    // const collapseBtn = card.querySelector('.sensi-collapse-btn') as HTMLButtonElement;
+    // collapseBtn.addEventListener('click', (e) => {
+    //   e.stopPropagation();
+    //   const collapsed = content.collapsedDevices || [];
+    //   const idx = collapsed.indexOf(device.icd_id);
+    //   if (idx >= 0) {
+    //     collapsed.splice(idx, 1);
+    //   } else {
+    //     collapsed.push(device.icd_id);
+    //   }
+    //   dispatchWidgetUpdate(widget.id, { ...content, collapsedDevices: collapsed });
+    // });
 
     // Mode select
     const modeSelect = card.querySelector('.sensi-mode-select') as HTMLSelectElement;
@@ -756,20 +756,20 @@ style.textContent = `
   font-size: 6px;
 }
 
-.sensi-collapse-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 4px;
-  transition: background 0.15s;
-}
+// .sensi-collapse-btn {
+//   background: none;
+//   border: none;
+//   color: var(--text-secondary);
+//   cursor: pointer;
+//   padding: 4px 8px;
+//   font-size: 12px;
+//   border-radius: 4px;
+//   transition: background 0.15s;
+// }
 
-.sensi-collapse-btn:hover {
-  background: var(--bg-tertiary, rgba(255,255,255,0.1));
-}
+// .sensi-collapse-btn:hover {
+//   background: var(--bg-tertiary, rgba(255,255,255,0.1));
+// }
 
 /* Body */
 .sensi-device-body {
@@ -783,7 +783,7 @@ style.textContent = `
 .sensi-reading-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -826,7 +826,6 @@ style.textContent = `
 .sensi-controls-row {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .sensi-control-group {
@@ -834,7 +833,7 @@ style.textContent = `
   flex-direction: column;
   gap: 4px;
   flex: 1;
-  min-width: 100px;
+  min-width: 80px;
 }
 
 .sensi-control-group label {
@@ -878,6 +877,8 @@ style.textContent = `
 }
 
 .sensi-setpoint-controls {
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   align-items: center;
   gap: 8px;
