@@ -119,10 +119,10 @@ All design tokens are defined in: [src/css/app.css](../src/css/app.css)
 | Token | Usage | Value |
 |-------|-------|-------|
 | `--z-widget` | Widgets | `1` |
-| `--z-selected` | Selected widget | `100` |
-| `--z-toolbar` | Toolbars/menus | `200` |
-| `--z-fab` | Floating action buttons | `300` |
-| `--z-modal` | Modals and overlays | `400` |
+| `--z-selected` | Selected widget | `9999` |
+| `--z-toolbar` | Toolbars/menus | `10000` |
+| `--z-fab` | Floating action buttons | `10100` |
+| `--z-modal` | Modals and overlays | `100000` |
 
 ## Built-in Themes
 

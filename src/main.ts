@@ -1035,6 +1035,7 @@ class Dashboard {
     // Check if clicking resize handle
     if (target.classList.contains('resize-handle')) {
       e.preventDefault();
+      this.selectWidget(widgetId); // This will bring to front
       this.startResize(widgetId, target.dataset.direction!, e);
       return;
     }
@@ -1042,9 +1043,14 @@ class Dashboard {
     // Start drag if clicking header (always allow dragging from header)
     if (target.classList.contains('widget-header') || target.classList.contains('widget-title')) {
       e.preventDefault();
-      this.selectWidget(widgetId);
+      this.selectWidget(widgetId); // This will bring to front
       this.startDrag(widgetId, e);
+      return;
     }
+
+    // Clicking anywhere else on the widget - just select and bring to front
+    // Don't prevent default or start drag - let widget content be interactive
+    this.selectWidget(widgetId); // This will bring to front
   }
 
   private handlePointerMove(e: PointerEvent): void {
@@ -1676,11 +1682,31 @@ class Dashboard {
 
     this.selectedWidgetId = widgetId;
 
-    // Add new selection
+    // Add new selection and bring to front
     if (widgetId) {
       const el = document.getElementById(`widget-${widgetId}`);
       el?.classList.add('selected');
       // Don't focus - it causes unwanted scrolling when widget is partly out of view
+      
+      // Bring widget to front
+      this.bringWidgetToFront(widgetId);
+    }
+  }
+
+  private bringWidgetToFront(widgetId: string): void {
+    const widget = this.state.widgets.find(w => w.id === widgetId);
+    if (!widget) return;
+
+    // Find the current maximum z-index
+    const maxZ = Math.max(...this.state.widgets.map(w => w.z), 0);
+    
+    // Only update if this widget isn't already on top
+    if (widget.z < maxZ) {
+      widget.z = maxZ + 1;
+      const el = document.getElementById(`widget-${widgetId}`);
+      if (el) {
+        updateWidgetZIndex(el, widget.z);
+      }
     }
   }
 
@@ -1860,14 +1886,9 @@ class Dashboard {
   }
 
   private bringForward(widgetId: string): void {
-    const widget = this.state.widgets.find(w => w.id === widgetId);
-    if (!widget) return;
-
-    const maxZ = Math.max(...this.state.widgets.map(w => w.z));
-    widget.z = maxZ + 1;
-
-    this.updateWidget(widget);
+    this.bringWidgetToFront(widgetId);
     this.saveHistory();
+    this.save();
   }
 
   private async showAddWidgetModal(): Promise<void> {

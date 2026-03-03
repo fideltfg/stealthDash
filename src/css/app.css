@@ -47,10 +47,10 @@
 
   /* Z-index */
   --z-widget: 1;
-  --z-selected: 100;
-  --z-toolbar: 200;
-  --z-fab: 300;
-  --z-modal: 400;
+  --z-selected: 9999;
+  --z-toolbar: 10000;
+  --z-fab: 10100;
+  --z-modal: 100000;
 }
 
 .theme-dark {
@@ -631,7 +631,7 @@ body {
 .snap-guide {
   position: absolute;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 15000;
   background: var(--accent);
   opacity: 0.6;
 }
@@ -851,7 +851,7 @@ body {
   box-shadow: 0 4px 16px var(--shadow);
   min-width: 200px;
   display: none;
-  z-index: 1000;
+  z-index: var(--z-toolbar);
 }
 
 .user-dropdown.visible {
@@ -991,7 +991,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: var(--z-modal);
 }
 
 .widget-dialog {
@@ -2393,7 +2393,7 @@ a:hover {
   top: -100px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10000;
+  z-index: calc(var(--z-modal) + 1000);
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   color: white;
   padding: 16px 24px;
