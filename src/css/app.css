@@ -215,6 +215,32 @@
 .theme-retro ::-webkit-scrollbar-thumb { background: #3ace3a; border-radius: 0; }
 .theme-retro ::-webkit-scrollbar-thumb:hover { background: #88ff88; }
 
+/* Ethereal Theme - Soft dreamy aesthetic with gentle glows */
+.theme-ethereal .widget { border: 1px solid rgba(167, 139, 250, 0.3); box-shadow: 0 4px 16px rgba(167, 139, 250, 0.15); background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 243, 255, 0.95) 100%); backdrop-filter: blur(10px); }
+.theme-ethereal .widget:hover, .theme-ethereal .widget:focus-within { box-shadow: 0 6px 24px rgba(167, 139, 250, 0.25), 0 0 16px rgba(196, 181, 253, 0.2); border-color: rgba(167, 139, 250, 0.5); }
+.theme-ethereal .widget.selected { box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.4), 0 8px 32px rgba(167, 139, 250, 0.3); }
+.theme-ethereal .widget-header { border-bottom-color: rgba(167, 139, 250, 0.2); background: rgba(248, 250, 255, 0.7); }
+.theme-ethereal .widget-title { font-weight: 500; letter-spacing: 0.02em; }
+.theme-ethereal .canvas[data-background="grid"] { background-image: linear-gradient(rgba(167, 139, 250, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(167, 139, 250, 0.1) 1px, transparent 1px); }
+.theme-ethereal .canvas[data-background="dots"] { background-image: radial-gradient(circle, rgba(167, 139, 250, 0.15) 1px, transparent 1px); }
+.theme-ethereal .theme-menu-dropdown, .theme-ethereal .widget-menu-dropdown { border: 1px solid rgba(167, 139, 250, 0.3); background: rgba(248, 250, 255, 0.95); box-shadow: 0 8px 32px rgba(167, 139, 250, 0.2); backdrop-filter: blur(12px); }
+.theme-ethereal .theme-menu-item:hover, .theme-ethereal .widget-menu-item:hover { background: rgba(167, 139, 250, 0.1); }
+.theme-ethereal ::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.3); }
+.theme-ethereal ::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.5); }
+
+/* Medieval Theme - Fantasy RPG aesthetic with wood and stone textures */
+.theme-medieval .widget { border: 2px solid rgba(106, 90, 72, 0.6); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(240, 232, 216, 0.1); background: linear-gradient(145deg, rgba(94, 80, 64, 0.85) 0%, rgba(74, 60, 46, 0.9) 100%); }
+.theme-medieval .widget:hover, .theme-medieval .widget:focus-within { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 165, 116, 0.15); border-color: rgba(212, 165, 116, 0.7); }
+.theme-medieval .widget.selected { box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.5), 0 8px 24px rgba(0, 0, 0, 0.5); }
+.theme-medieval .widget-header { border-bottom: 2px solid rgba(106, 90, 72, 0.5); background: linear-gradient(180deg, rgba(84, 70, 56, 0.7) 0%, rgba(64, 50, 38, 0.7) 100%); }
+.theme-medieval .widget-title { font-weight: 600; letter-spacing: 0.05em; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); }
+.theme-medieval .canvas[data-background="grid"] { background-image: linear-gradient(rgba(106, 90, 72, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(106, 90, 72, 0.15) 1px, transparent 1px); }
+.theme-medieval .canvas[data-background="dots"] { background-image: radial-gradient(circle, rgba(106, 90, 72, 0.2) 1px, transparent 1px); }
+.theme-medieval .theme-menu-dropdown, .theme-medieval .widget-menu-dropdown { border: 2px solid rgba(106, 90, 72, 0.6); background: rgba(64, 50, 38, 0.95); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+.theme-medieval .theme-menu-item:hover, .theme-medieval .widget-menu-item:hover { background: rgba(212, 165, 116, 0.2); }
+.theme-medieval ::-webkit-scrollbar-thumb { background: rgba(212, 165, 116, 0.5); }
+.theme-medieval ::-webkit-scrollbar-thumb:hover { background: rgba(212, 165, 116, 0.7); }
+
 /* Stealth Theme - Dark cyberpunk HUD with cyan neon accents */
 .theme-stealth {
   --bg: #0a0e14;
@@ -298,6 +324,48 @@
   --card-background: rgba(85, 255, 85, 0.04);
   --radius: 0px;
   --font-body: 'Press Start 2P', 'VT323', 'Share Tech Mono', 'Courier New', monospace;
+}
+
+/* Ethereal Theme - Dreamy pastel palette with soft purples and blues */
+.theme-ethereal {
+  --bg: #e8ebf7;
+  --surface: #f0f3ff;
+  --text: #4a4a6e;
+  --muted: #8b8ba8;
+  --accent: #a78bfa;
+  --ring: #c4b5fd;
+  --shadow: rgba(167, 139, 250, 0.2);
+  --border: #d8d8f0;
+  --hover: #f5f6ff;
+  --success: #a78bfa;
+  --error: #f0abfc;
+  --info: #93c5fd;
+  --bg-success: rgba(167, 139, 250, 0.15);
+  --bg-error: rgba(240, 171, 252, 0.15);
+  --bg-info: rgba(147, 197, 253, 0.15);
+  --card-background: rgba(167, 139, 250, 0.08);
+  --font-body: ui-rounded, 'Quicksand', 'Comfortaa', 'Nunito', sans-serif;
+}
+
+/* Medieval Theme - Fantasy RPG palette with earthy browns and mountain blues */
+.theme-medieval {
+  --bg: #4a3c2e;
+  --surface: #5e5040;
+  --text: #f0e8d8;
+  --muted: #b8a890;
+  --accent: #d4a574;
+  --ring: #d4a574;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #6a5a48;
+  --hover: #6e6050;
+  --success: #88b070;
+  --error: #c85a5a;
+  --info: #8a9aa8;
+  --bg-success: rgba(136, 176, 112, 0.2);
+  --bg-error: rgba(200, 90, 90, 0.2);
+  --bg-info: rgba(138, 154, 168, 0.2);
+  --card-background: rgba(212, 165, 116, 0.08);
+  --font-body: 'Cinzel', 'Trajan Pro', 'Georgia', 'Times New Roman', serif;
 }
 
 /* System theme is now resolved in JavaScript (see src/themes.ts resolveSystemTheme).
@@ -1992,7 +2060,7 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
 }
-
+.card-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; padding: 8px; overflow-y: auto; align-content: start; height: 100%; }
 
 .badge.running,
 .badge-success {
@@ -2026,6 +2094,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.list-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-left: 4px;
 }
 
 .list-item {

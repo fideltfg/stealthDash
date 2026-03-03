@@ -88,7 +88,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
     div.className = 'rss-widget';
     
     if (!content.feedUrl) {
-      this.renderConfigScreen(div, widget);
+      this.renderConfigScreen(container, widget);
     } else {
       const maxItems = content.maxItems || 10;
       const refreshInterval = content.refreshInterval !== undefined ? content.refreshInterval : 5; // Default to 5 minutes
@@ -96,14 +96,14 @@ export class RssWidgetRenderer implements WidgetRenderer {
       if (refreshInterval > 0) {
         // poller.start fires immediately, then at interval
         this.poller.start(widget.id, () => {
-          this.fetchAndRenderFeed(div, widget, content.feedUrl!, maxItems);
+          this.fetchAndRenderFeed(container, widget, content.feedUrl!, maxItems);
         }, refreshInterval * 60 * 1000);
       } else {
-        this.fetchAndRenderFeed(div, widget, content.feedUrl, maxItems);
+        this.fetchAndRenderFeed(container, widget, content.feedUrl, maxItems);
       }
     }
     
-    container.appendChild(div);
+   // container.appendChild(div);
   }
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
@@ -220,7 +220,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
     
     // Feed header
     const header = document.createElement('div');
-    header.className = 'rss-feed-header';
+    header.className = 'list-header';
     
     const feedTitle = document.createElement('div');
     feedTitle.className = 'rss-feed-title';
@@ -237,13 +237,13 @@ export class RssWidgetRenderer implements WidgetRenderer {
     
     // Items list
     const itemsList = document.createElement('div');
-    itemsList.className = 'rss-items-list';
+    itemsList.className = 'list';
     
     const displayItems = items.slice(0, maxItems);
     
     displayItems.forEach((item, index) => {
       const itemDiv = document.createElement('div');
-      itemDiv.className = 'rss-item';
+      itemDiv.className = 'card';
       
       itemDiv.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -256,7 +256,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       itemTitle.className = 'rss-item-title';
       itemTitle.textContent = item.title || 'Untitled';
       
-      const itemMeta = document.createElement('div');
+      const itemMeta = document.createElement('subtitle');
       itemMeta.className = 'rss-item-meta';
       
       const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleDateString('en', { 
@@ -271,9 +271,7 @@ export class RssWidgetRenderer implements WidgetRenderer {
       itemMeta.textContent = `${pubDate}${author}`;
       
       itemDiv.appendChild(itemTitle);
-      if (pubDate || author) {
-        itemDiv.appendChild(itemMeta);
-      }
+      
       
       if (item.description) {
         const itemDescription = document.createElement('div');
@@ -288,11 +286,13 @@ export class RssWidgetRenderer implements WidgetRenderer {
       }
       
       itemsList.appendChild(itemDiv);
+      if (pubDate || author) {
+        itemDiv.appendChild(itemMeta);
+      }
     });
     
-    feedContainer.appendChild(header);
-    feedContainer.appendChild(itemsList);
-    container.appendChild(feedContainer);
+    container.appendChild(header);
+    container.appendChild(itemsList);
   }
 }
 

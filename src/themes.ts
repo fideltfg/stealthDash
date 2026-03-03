@@ -35,6 +35,8 @@ export const THEMES: readonly ThemeDefinition[] = [
   { value: 'tactical',    label: 'Tactical',    icon: 'fa-solid fa-crosshairs' },
   { value: 'futurist',    label: 'Futurist',    icon: 'fa-solid fa-satellite' },
   { value: 'retro',       label: 'Retro',       icon: 'fa-solid fa-floppy-disk' },
+  { value: 'ethereal',    label: 'Ethereal',    icon: 'fa-solid fa-cloud' },
+  { value: 'medieval',    label: 'Medieval',    icon: 'fa-solid fa-fort-awesome' },
   { value: 'system',      label: 'System',      icon: 'fa-solid fa-desktop' },
 ] as const;
 

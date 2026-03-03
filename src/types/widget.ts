@@ -125,6 +125,13 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   menuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    // Don't open menu if dashboard is locked
+    const app = document.getElementById('app');
+    if (app?.classList.contains('locked')) {
+      return;
+    }
+    
     const isVisible = menuDropdown.style.display === 'block';
     // Close all other widget menus
     document.querySelectorAll('.widget-menu-dropdown').forEach(menu => {

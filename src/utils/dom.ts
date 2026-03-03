@@ -49,12 +49,16 @@ export function dispatchWidgetUpdate(widgetId: string, content: Record<string, a
  */
 export function injectWidgetStyles(widgetName: string, css: string): void {
   const styleId = `widget-styles-${widgetName}`;
-  if (document.getElementById(styleId)) return; // Already injected
+  if (document.getElementById(styleId)) {
+   // console.log(`♻️  Styles already injected for: ${widgetName}`);
+    return; // Already injected
+  }
 
   const styleEl = document.createElement('style');
   styleEl.id = styleId;
   styleEl.textContent = css;
   document.head.appendChild(styleEl);
+ // console.log(`💅 Injected styles for: ${widgetName}`);
 }
 
 /**

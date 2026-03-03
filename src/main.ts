@@ -88,6 +88,64 @@ class Dashboard {
     this.init();
   }
 
+  /** Wait for critical CSS to be available (especially for Vite dev mode) */
+  private async waitForStylesheets(): Promise<void> {
+    // In Vite dev mode, CSS is injected via JavaScript, so we need to check if the actual rules exist
+    const checkCriticalCSS = (): boolean => {
+      // Check multiple critical CSS classes that widgets rely on
+      const testWidget = document.createElement('div');
+      testWidget.className = 'widget';
+      const testCard = document.createElement('div');
+      testCard.className = 'card';
+      
+      testWidget.style.visibility = 'hidden';
+      testWidget.style.position = 'absolute';
+      testWidget.style.top = '-9999px';
+      testCard.style.visibility = 'hidden';
+      testCard.style.position = 'absolute';
+      testCard.style.top = '-9999px';
+      
+      document.body.appendChild(testWidget);
+      document.body.appendChild(testCard);
+      
+      const widgetStyles = window.getComputedStyle(testWidget);
+      const cardStyles = window.getComputedStyle(testCard);
+      
+      // Check if critical styles are applied (non-empty and not default values)
+      const hasWidgetStyles = widgetStyles.position === 'absolute';
+      const cardBg = cardStyles.backgroundColor;
+      const cardPadding = cardStyles.padding;
+      const cardBorder = cardStyles.borderRadius;
+      
+      // CSS is loaded when we have actual values (not empty strings or default '0px')
+      const hasCardStyles = (cardBg && cardBg !== '' && cardBg !== 'rgba(0, 0, 0, 0)') ||
+                           (cardPadding && cardPadding !== '' && cardPadding !== '0px') ||
+                           (cardBorder && cardBorder !== '' && cardBorder !== '0px');
+      
+      document.body.removeChild(testWidget);
+      document.body.removeChild(testCard);
+      
+      //console.log(`🔍 CSS Check - Widget: ${hasWidgetStyles}, Card: ${hasCardStyles}, Bg: "${cardBg}", Padding: "${cardPadding}", Border: "${cardBorder}"`);
+      return hasWidgetStyles && hasCardStyles;
+    };
+
+    // Wait up to 3 seconds for CSS to be available
+    const maxWaitTime = 3000;
+    const checkInterval = 100;
+    let elapsed = 0;
+
+    while (!checkCriticalCSS() && elapsed < maxWaitTime) {
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      elapsed += checkInterval;
+    }
+
+    if (elapsed >= maxWaitTime) {
+      console.warn('⚠️  CSS may not be fully loaded, continuing anyway');
+    } else {
+    //  console.log(`✅ CSS loaded and verified in ${elapsed}ms`);
+    }
+  }
+
   private async init(): Promise<void> {
     //console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
     
@@ -164,6 +222,22 @@ class Dashboard {
       this.setupTheme();
       this.setupBackground();
       this.setupEventListeners();
+      
+      // Wait for stylesheets AFTER theme is applied to ensure theme-specific CSS is available
+      //console.log('⏳ Waiting for theme-specific CSS to be computed...');
+      await this.waitForStylesheets();
+      //console.log('✅ Theme-specific CSS loaded');
+      
+      // Give the browser extra time to compute CSS variables and apply all theme styles
+      // This is critical in Vite dev mode where CSS is injected dynamically
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Force a repaint/reflow to ensure theme CSS variables are fully computed
+      // before rendering widgets (critical for proper styling on initial load)
+      await new Promise(resolve => requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve(undefined));
+      }));
+     // console.log('🎨 Theme fully applied, starting render...');
       
       try {
         await this.render();
@@ -364,7 +438,7 @@ class Dashboard {
 
     // Only setup DOM once (prevent duplicate elements)
     if (app.querySelector('.canvas')) {
-      console.log('DOM already setup, skipping');
+     // console.log('DOM already setup, skipping');
       return;
     }
 
@@ -556,11 +630,14 @@ class Dashboard {
 
   /**
    * Get the active theme: local preference first, then dashboard-saved theme.
+   * Theme preferences are stored per-dashboard so each can have its own theme.
    */
   private getActiveTheme(): Theme {
-    const localTheme = sessionStorage.getItem('dashboard-local-theme');
-    if (localTheme) {
-      return localTheme as Theme;
+    if (this.multiState?.activeDashboardId) {
+      const localTheme = sessionStorage.getItem(`dashboard-local-theme-${this.multiState.activeDashboardId}`);
+      if (localTheme) {
+        return localTheme as Theme;
+      }
     }
     return this.state.theme;
   }
@@ -620,8 +697,10 @@ class Dashboard {
       
       item.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Save as local preference (per-browser)
-        sessionStorage.setItem('dashboard-local-theme', theme.value);
+        // Save as local preference (per-browser, per-dashboard)
+        if (this.multiState?.activeDashboardId) {
+          sessionStorage.setItem(`dashboard-local-theme-${this.multiState.activeDashboardId}`, theme.value);
+        }
         // Also save to dashboard state as the default for other browsers
         this.state.theme = theme.value;
         this.setupTheme();
@@ -743,7 +822,7 @@ class Dashboard {
       this.isOutOfSync = status.isOutOfSync;
       
       if (status.isOutOfSync) {
-        console.warn('⚠️ Dashboard is out of sync - changes detected from another tab');
+       // console.warn('⚠️ Dashboard is out of sync - changes detected from another tab');
         this.showSyncNotification();
       } else {
         this.hideSyncNotification();
@@ -1677,8 +1756,8 @@ class Dashboard {
     const widget = this.state.widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    console.log('updateWidgetContent - Before merge:', JSON.parse(JSON.stringify(widget.content)));
-    console.log('updateWidgetContent - New content:', JSON.parse(JSON.stringify(content)));
+    //console.log('updateWidgetContent - Before merge:', JSON.parse(JSON.stringify(widget.content)));
+    //console.log('updateWidgetContent - New content:', JSON.parse(JSON.stringify(content)));
 
     // Merge content, but filter out undefined and null values to preserve existing properties
     // This is important for fields like passwords that should persist if not explicitly updated
@@ -1686,11 +1765,11 @@ class Dashboard {
       Object.entries(content).filter(([_, value]) => value !== undefined && value !== null)
     );
 
-    console.log('updateWidgetContent - Filtered content:', JSON.parse(JSON.stringify(filteredContent)));
+    //console.log('updateWidgetContent - Filtered content:', JSON.parse(JSON.stringify(filteredContent)));
 
     widget.content = { ...widget.content, ...filteredContent };
 
-    console.log('updateWidgetContent - After merge:', JSON.parse(JSON.stringify(widget.content)));
+    //console.log('updateWidgetContent - After merge:', JSON.parse(JSON.stringify(widget.content)));
 
     if (widget.meta) {
       widget.meta.updatedAt = Date.now();
@@ -1958,9 +2037,9 @@ class Dashboard {
     // Restore per-tab zoom/viewport for the target dashboard
     this.restoreLocalViewState(dashboardId);
     this.history = createHistoryManager();
-    this.render();
     this.setupTheme();
     this.setupBackground();
+    await this.render();
     
     // Update sync service with new dashboard
     const version = dashboardStorage.getDashboardVersion(dashboardId);
@@ -2510,8 +2589,12 @@ class Dashboard {
     // Load all widget modules needed for current dashboard
     const widgetTypes = this.state.widgets.map(w => w.type);
     
+    //console.log(`🎨 render() called with ${this.state.widgets.length} widgets:`, widgetTypes);
+    
     if (widgetTypes.length > 0) {
+      //console.log(`⏳ Loading widget modules...`);
       await loadWidgetModules(widgetTypes);
+      //console.log(`✅ Widget modules loaded`);
     }
 
     this.canvasContent.innerHTML = '';
@@ -2564,22 +2647,22 @@ class Dashboard {
 
   private save(): void { this.persistState(true, true); }
 
-  private undo(): void {
+  private async undo(): Promise<void> {
     if (this.isOutOfSync) return;
     const previous = this.history.undo();
     if (previous) {
       this.state = JSON.parse(JSON.stringify(previous));
-      this.render();
+      await this.render();
       this.persistState(false, true);
     }
   }
 
-  private redo(): void {
+  private async redo(): Promise<void> {
     if (this.isOutOfSync) return;
     const next = this.history.redo();
     if (next) {
       this.state = JSON.parse(JSON.stringify(next));
-      this.render();
+      await this.render();
       this.persistState(false, true);
     }
   }
@@ -2594,6 +2677,8 @@ class Dashboard {
       
       // Setup DOM without user controls
       this.setupDOM();
+      this.setupTheme();
+      this.setupBackground();
       
       // Add read-only banner
       const banner = document.createElement('div');
@@ -2674,7 +2759,7 @@ if (typeof window !== 'undefined') {
     const before = (dashboard as any).state.widgets.length;
     (dashboard as any).state.widgets = (dashboard as any).state.widgets.filter((w: any) => w.type !== type);
     const after = (dashboard as any).state.widgets.length;
-    console.log(`🗑️ Removed ${before - after} ${type} widget(s)`);
+   // console.log(`🗑️ Removed ${before - after} ${type} widget(s)`);
     (dashboard as any).render();
     (dashboard as any).saveHistory();
     (dashboard as any).save();

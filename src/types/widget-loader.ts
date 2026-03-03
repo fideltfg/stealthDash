@@ -63,10 +63,12 @@ export async function loadWidgetModule(type: string): Promise<void> {
   }
 
   try {
+   // console.log(`📦 Loading widget module: ${type}`);
     const module = await loader();
     if (module.widget) {
       registerWidget(module.widget);
       loadedWidgets.add(type);
+     // console.log(`✅ Widget registered: ${type}`);
     } else {
       console.error(`❌ Widget module loaded but no 'widget' export found for type: ${type}`);
     }
