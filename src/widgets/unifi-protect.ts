@@ -291,11 +291,11 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
       <div class="widget-dialog-buttons top-margin">
         <button id="cancel-btn" 
-          class="widget-dialog-button-cancel">
+          class="">
           Cancel
         </button>
         <button id="save-btn" 
-          class="widget-dialog-button-save">
+          class="">
           Save Configuration
         </button>
       </div>

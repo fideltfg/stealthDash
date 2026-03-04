@@ -317,8 +317,8 @@ class UnifiRenderer implements WidgetRenderer {
         </div>
 
         <div class="widget-dialog-buttons top-margin">
-          <button type="submit" class="widget-dialog-button-save extended">Save</button>
-          <button type="button" id="cancel-btn" class="widget-dialog-button-cancel extended">Cancel</button>
+          <button type="submit" class=" extended">Save</button>
+          <button type="button" id="cancel-btn" class=" extended">Cancel</button>
         </div>
       </form>
     `;

@@ -298,8 +298,8 @@ class UnifiSensorRenderer implements WidgetRenderer {
         </div>
         
         <div class="widget-dialog-buttons">
-          <button class="cancel-btn widget-dialog-button-cancel extended">Cancel</button>
-          <button class="save-btn widget-dialog-button-save extended">Save</button>
+          <button class="cancel-btn btn btn-small btn-secondary">Cancel</button>
+          <button class="save-btn btn btn-small btn-primary">Save</button>
         </div>
       </div>
     `;

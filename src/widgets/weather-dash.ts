@@ -92,8 +92,8 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
         <input type="text" id="wd-tz" value="${content.timezone || 'America/Edmonton'}" placeholder="e.g., America/Edmonton" class="form-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">Cancel</button>
-        <button id="save-btn" class="widget-dialog-button-save">Save</button>
+        <button id="cancel-btn" class="">Cancel</button>
+        <button id="save-btn" class="">Save</button>
       </div>
     `;
 

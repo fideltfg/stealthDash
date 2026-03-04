@@ -850,7 +850,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
-    saveBtn.className = 'widget-dialog-button-save green';
+    saveBtn.className = ' green';
 
     saveBtn.onclick = () => {
       const newContent: CometP8541Content = {
@@ -889,7 +889,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'widget-dialog-button-cancel dark-theme';
+    cancelBtn.className = ' dark-theme';
     cancelBtn.onclick = () => overlay.remove();
 
     btnGroup.appendChild(saveBtn);

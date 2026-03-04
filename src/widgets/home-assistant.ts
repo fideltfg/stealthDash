@@ -678,8 +678,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         <input type="text" id="display-name" placeholder="Custom display name" class="widget-dialog-input extended">
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-entity" class="widget-dialog-button-cancel extended">Cancel</button>
-        <button id="save-entity" disabled class="widget-dialog-button-save extended">Add Entity</button>
+        <button id="cancel-entity" class=" extended">Cancel</button>
+        <button id="save-entity" disabled class=" extended">Add Entity</button>
       </div>
     `;
 
@@ -886,8 +886,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </select>
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-edit-entity" class="widget-dialog-button-cancel extended">Cancel</button>
-        <button id="save-edit-entity" class="widget-dialog-button-save extended">Save Changes</button>
+        <button id="cancel-edit-entity" class=" extended">Cancel</button>
+        <button id="save-edit-entity" class=" extended">Save Changes</button>
       </div>
     `;
 

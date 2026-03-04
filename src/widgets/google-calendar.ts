@@ -293,14 +293,14 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         <div class="widget-dialog-buttons">
           <button 
             type="submit"
-            class="widget-dialog-button-save full-width"
+            class=" full-width"
           >
             Save
           </button>
           <button 
             type="button"
             id="cancel-btn"
-            class="widget-dialog-button-cancel full-width"
+            class=" full-width"
           >
             Cancel
           </button>

@@ -234,8 +234,8 @@ class TasksRenderer implements WidgetRenderer {
           </select>
         </div>
         <div class="widget-dialog-buttons">
-          <button type="submit" class="widget-dialog-button-save full-width">Save</button>
-          <button type="button" id="task-cancel" class="widget-dialog-button-cancel full-width">Cancel</button>
+          <button type="submit" class=" full-width">Save</button>
+          <button type="button" id="task-cancel" class=" full-width">Cancel</button>
         </div>
       </form>`;
     overlay.appendChild(modal);

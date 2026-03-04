@@ -1,25 +1,36 @@
 # stealthDash
 
-A minimalist web dashboard with draggable, resizable widgets. Built with TypeScript, featuring zero-chrome UI, multi-user authentication, and 23 widget types.
-
 ![Dashboard Screenshot](images/AnimatedBackgrounds.png)
+
+StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets you build your own layout with drag-and-drop panels, resize everything freely, then save, lock, and share your dashboard with other users. It comes with a bunch of built-in widgets so you can get useful fast.
+
+It started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
+
+Concordia solved that by turning “setup” into a single step: open one browser tab and everything loads instantly, reliably, in the same positions across every screen.
+
+After removing proprietary pieces, I rebuilt the core idea into what is now StealthDash.
+
+With StealthDash, you can create a personal command center without the clutter. Arrange and resize panels however you like, lock the layout when you’re done, and keep everything in one place. Run multiple dashboards at once across one or more devices, and let multiple users build and share dashboards—so everyone can stay in sync.
+
+StealthDash is still under active development, and a few minor bugs and styling rough edges remain—but it’s stable, fully usable, and improving quickly.
+
+Deployment is simple with Docker and docker-compose. In just a few minutes you can have StealthDash running and start building your own personalized dashboard.
+
+StealthDash uses plugin-style widgets to display nearly anything—from embedded webpages to remote sessions over VNC. Support for protocols like Modbus also makes it possible to connect to a wide range of industrial devices. Existing widgets for UniFi, Sensi, Home Assistant, Comet, and more provide solid examples of how the system works—and how to build your own custom widgets.
+
 
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **23 Widget Types** — Text, Image, Weather, Clock, Docker, VNC, Gmail, and more
+- **23 Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
-- **Public Sharing** — Share dashboards via link for anonymous read-only viewing
-- **Multi-User Auth** — Secure login, registration, password recovery, and admin management
-- **13 Themes** — Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, and System (auto)
-- **Custom Backgrounds** — Built-in patterns (Grid, Dots, Lines, Solid) plus custom image and video backgrounds with display controls
+- **Multi-User** — Secure login, registration, password recovery, and admin management
+- **A Bunch of Themes** — Css themes allows simple switching and users can have different themes on each dashboard
+- **Custom Backgrounds** — Built-in patterns, custom images or video backgrounds with display controls
 - **Drag & Resize** — Intuitive controls with grid snapping and visual snap guides
-- **Cross-Tab Sync** — Real-time sync across browser tabs via BroadcastChannel, plus server polling for cross-browser sync
-- **Undo/Redo** — Full history management for widget changes
-- **Keyboard Navigation** — Comprehensive keyboard shortcuts for all operations
-- **Auto-Save** — Debounced server-side persistence with PostgreSQL
+- **Cross-Tab Sync** — Real-time sync across browsers and tabs via BroadcastChanne. Keeps dashboards current on multiple tabs, screens and devices.
+- **Auto-Save** — Debounced server-side persistence with PostgreSQL with multi session de-sync detection and prevention.
 - **Credential Vault** — Encrypted (AES) storage for API keys, passwords, and tokens
-- **Network Monitoring** — Real-time ICMP ping tracking with latency graphs
 - **Lock Mode** — Prevent accidental edits by locking the canvas
 
 ## Quick Start
@@ -619,7 +630,3 @@ MIT License — see LICENSE file for details.
 - **Deployment**: [DEPLOYMENT.md](./DEPLOYMENT.md)
 - **Theming**: [THEMING.md](./THEMING.md)
 - **CSS Reference**: [CSS-COMPONENT-REFERENCE.md](./CSS-COMPONENT-REFERENCE.md)
-
----
-
-Built with TypeScript and Docker

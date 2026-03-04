@@ -46,10 +46,10 @@ export class RssWidgetRenderer implements WidgetRenderer {
           class="widget-dialog-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
+        <button id="cancel-btn" class=" btn btn-small btn-secondary">
           Cancel
         </button>
-        <button id="save-btn" class="widget-dialog-button-save">
+        <button id="save-btn" class="">
           Save
         </button>
       </div>

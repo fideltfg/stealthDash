@@ -187,7 +187,7 @@ class PiholeRenderer implements WidgetRenderer {
           />
         </div>
 
-        <div class="button-group">
+        <div class="widget-dialog-buttons">
           <button 
             type="button"
             id="cancel-btn"

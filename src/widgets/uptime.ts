@@ -175,7 +175,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     const button = document.createElement('button');
     button.textContent = 'Start Monitoring';
-    button.className = 'uptime-config-button';
+    button.className = 'btn btn-small btn-primary';
     button.disabled = true;
 
     const updateButtonState = () => {

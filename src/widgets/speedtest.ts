@@ -149,8 +149,8 @@ class SpeedtestRenderer implements WidgetRenderer {
           <input type="number" id="speed-interval" value="${c.refreshInterval || 300}" min="30" max="3600" class="widget-dialog-input"/>
         </div>
         <div class="widget-dialog-buttons">
-          <button type="submit" class="widget-dialog-button-save full-width">Save</button>
-          <button type="button" id="speed-cancel" class="widget-dialog-button-cancel full-width">Cancel</button>
+          <button type="submit" class="btn btn-small btn-primary">Save</button>
+          <button type="button" id="speed-cancel" class="btn btn-small btn-secondary">Cancel</button>
         </div>
       </form>`;
     overlay.appendChild(modal);

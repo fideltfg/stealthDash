@@ -7,7 +7,7 @@ import { renderConfigPrompt } from '../utils/widgetRendering';
 import { populateCredentialSelect } from '../utils/credentials';
 
 const DOCKER_STYLES = `
-.button-group { display: flex; gap: 8px; margin-top: 12px; }
+.container-button-group { display: flex; gap: 8px; margin-top: 12px; }
 `;
 
 export interface DockerContent {
@@ -413,7 +413,7 @@ class DockerWidgetRenderer implements WidgetRenderer {
           ` : ''}
         </div>
         <div><subtitle>${container.Image}</subtitle></div>
-        <div class="button-group">
+        <div class="container-button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
               <button class=" btn btn-small btn-danger" data-action="stop" data-id="${shortId}">

@@ -331,8 +331,8 @@ Quick reference for all available CSS components and patterns.
     <h2 class="widget-dialog-title">Modal Title</h2>
     <!-- Content here -->
     <div class="widget-dialog-buttons">
-      <button class="widget-dialog-button-cancel">Cancel</button>
-      <button class="widget-dialog-button-save">Save</button>
+      <button class="">Cancel</button>
+      <button class="">Save</button>
     </div>
   </div>
 </div>

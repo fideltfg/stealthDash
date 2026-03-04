@@ -26,10 +26,10 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
         <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="widget-dialog-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="widget-dialog-button-cancel">
+        <button id="cancel-btn" class="">
           Cancel
         </button>
-        <button id="save-btn" class="widget-dialog-button-save">
+        <button id="save-btn" class="">
           Save
         </button>
       </div>
