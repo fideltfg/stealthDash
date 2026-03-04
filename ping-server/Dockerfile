@@ -12,14 +12,14 @@ COPY package*.json ./
 
 RUN npm install --production
 
-COPY src/server.js ./
-COPY src/auth.js ./
-COPY src/db.js ./
-COPY src/crypto-utils.js ./
+COPY src/server.js ./src/
+COPY src/auth.js ./src/
+COPY src/db.js ./src/
+COPY src/crypto-utils.js ./src/
 COPY init-db.sql ./
-COPY src/vnc-proxy.js ./
+COPY src/vnc-proxy.js ./src/
 COPY routes ./routes
 
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+CMD ["node", "src/server.js"]

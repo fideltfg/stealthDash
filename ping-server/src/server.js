@@ -97,14 +97,15 @@ app.use(cors());
 app.use(express.json());
 
 // Import route modules
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const userRoutes = require('./routes/user');
-const adminRoutes = require('./routes/admin');
-const credentialsRoutes = require('./routes/credentials');
-const widgetRoutes = require('./routes/widgets');
-const dockerRoutes = require('./routes/docker');
-const sensiRoutes = require('./routes/sensi');
+const authRoutes = require('../routes/auth');
+const dashboardRoutes = require('../routes/dashboard');
+const userRoutes = require('../routes/user');
+const adminRoutes = require('../routes/admin');
+const credentialsRoutes = require('../routes/credentials');
+const widgetRoutes = require('../routes/widgets');
+const dockerRoutes = require('../routes/docker');
+const sensiRoutes = require('../routes/sensi');
+const tasksRoutes = require('../routes/tasks');
 const { initVncProxy } = require('./vnc-proxy');
 
 // Initialize auth routes with email function
@@ -125,6 +126,9 @@ app.use('/', dockerRoutes);
 
 // Sensi thermostat routes
 app.use('/', sensiRoutes);
+
+// Tasks API routes
+app.use('/api', tasksRoutes);
 
 // Start server
 const server = app.listen(PORT, () => {

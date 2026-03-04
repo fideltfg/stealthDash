@@ -122,10 +122,9 @@ export interface TasksContent {
   mode?: 'todoist' | 'local';
   todoistCredentialId?: number;
   todoistFilter?: string;
-  localTasks?: { id: string; title: string; completed: boolean; priority: number; dueDate?: string; category?: string; createdAt: number; completedAt?: number }[];
-  localCategories?: string[];
   refreshInterval?: number;
   sortBy?: 'priority' | 'due' | 'created';
+  showCompleted?: boolean;
 }
 
 export interface SpeedtestContent {
