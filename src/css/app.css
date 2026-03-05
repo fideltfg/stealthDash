@@ -2418,7 +2418,6 @@ a:hover {
 }
 
 /* === WIDGET-SPECIFIC COMPONENTS === */
-/* Text Widget */ .text-widget { width: 100%; height: 100%; border: none; outline: none; resize: none; font-size: 14px; line-height: 1.6; background: transparent; color: inherit; padding: 0; }
 /* Image Widget */ .image-widget img { width: 100%; height: 100%; object-fit: contain; }
 /* Embed Widget */ .embed-widget, .embed-widget iframe { width: 100%; height: 100%; border: none; } .embed-widget iframe { display: block; } .widget-content:has(.embed-widget) { padding: 0; overflow: hidden; }
 

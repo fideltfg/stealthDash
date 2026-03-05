@@ -46,6 +46,9 @@ services:
       - SMTP_PASS=${SMTP_PASS:-}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@dashboard.local}
       - DASHBOARD_URL=${DASHBOARD_URL:-http://localhost:3000}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3001/api/gmail/callback}
     restart: unless-stopped
     depends_on:
       - postgres

@@ -1,7 +1,10 @@
-# Gmail Widget Backend API Requirements
+# Gmail Widget Backend API Reference
 
 ## Overview
-The Gmail widget requires backend API endpoints to handle OAuth2 authentication and proxy Gmail API requests. This document outlines the required endpoints and implementation details.
+
+The Gmail widget backend is implemented as a plugin at `ping-server/plugins/gmail.js`. All endpoints described below are already built in — you only need to configure the Google OAuth environment variables to enable them.
+
+> **Quick start:** Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in your environment or `.env` file, then visit `/api/gmail/auth` while logged in.
 
 ## Gmail API Setup
 

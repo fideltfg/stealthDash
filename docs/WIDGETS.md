@@ -12,7 +12,6 @@ The dashboard ships with a comprehensive collection of widgets, each designed fo
 
 Basic widgets for content display and organization.
 
-- **[Text Widget](widgets/TEXT_WIDGET.md)** - Simple text entry widget for notes
 - **[Image Widget](widgets/IMAGE_WIDGET.md)** - Display images from URLs with various fit modes
 - **[Embed Widget](widgets/EMBED_WIDGET.md)** - Embed external websites in sandboxed iframe
 

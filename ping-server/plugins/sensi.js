@@ -1,30 +1,13 @@
+/**
+ * Sensi Plugin
+ *
+ * Provides Sensi thermostat integration via Socket.IO.
+ * Supports fetching state and controlling temperature, mode, and fan.
+ */
+
 const express = require('express');
 const router = express.Router();
-const db = require('../src/db');
-const { decryptCredentials } = require('../src/crypto-utils');
-
-// ==================== CREDENTIALS HELPER ====================
-
-async function getCredentials(credentialId, userId) {
-  const result = await db.query(
-    'SELECT credential_data FROM credentials WHERE id = $1 AND user_id = $2',
-    [credentialId, userId]
-  );
-  if (result.rows.length === 0) {
-    throw new Error('Credential not found or access denied');
-  }
-  return decryptCredentials(result.rows[0].credential_data);
-}
-
-function verifyAuth(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Authentication required');
-  }
-  const token = authHeader.substring(7);
-  const jwt = require('jsonwebtoken');
-  return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
-}
+const { db, verifyAuth, getCredentials, decryptCredentials } = require('../src/plugin-helpers');
 
 // ==================== SENSI API CONSTANTS ====================
 
@@ -34,7 +17,8 @@ const CLIENT_ID = 'fleet';
 const CLIENT_SECRET = 'JLFjJmketRhj>M9uoDhusYKyi?zUyNqhGB)H2XiwLEF#KcGKrRD2JZsDQ7ufNven';
 
 // Capabilities query string sent when connecting
-const CAPABILITIES_QUERY = '?capabilities=display_humidity,operating_mode_settings,fan_mode_settings,indoor_equipment,outdoor_equipment,indoor_stages,outdoor_stages,continuous_backlight,degrees_fc,display_time,keypad_lockout,temp_offset,compressor_lockout,boost,heat_cycle_rate,cool_cycle_rate,aux_cycle_rate,early_start,min_heat_setpoint,max_heat_setpoint,min_cool_setpoint,max_cool_setpoint,circulating_fan,humidity_control,humidity_offset,humidity_offset_lower_bound,humidity_offset_upper_bound,temp_offset_lower_bound,temp_offset_upper_bound';
+const CAPABILITIES_QUERY =
+  '?capabilities=display_humidity,operating_mode_settings,fan_mode_settings,indoor_equipment,outdoor_equipment,indoor_stages,outdoor_stages,continuous_backlight,degrees_fc,display_time,keypad_lockout,temp_offset,compressor_lockout,boost,heat_cycle_rate,cool_cycle_rate,aux_cycle_rate,early_start,min_heat_setpoint,max_heat_setpoint,min_cool_setpoint,max_cool_setpoint,circulating_fan,humidity_control,humidity_offset,humidity_offset_lower_bound,humidity_offset_upper_bound,temp_offset_lower_bound,temp_offset_upper_bound';
 
 // In-memory token cache: { refreshToken -> { accessToken, expiresAt, userId } }
 const tokenCache = new Map();
@@ -48,10 +32,12 @@ async function getAccessToken(refreshToken) {
   }
   if (refreshToken.includes('=') || refreshToken.includes('device')) {
     throw new Error(
-      'refresh_token looks like a URL parameter ("' + refreshToken.substring(0, 20) + '..."). ' +
-      'You need to copy the refresh_token value from the RESPONSE body of the token?device= request, ' +
-      'not from the URL. Open the request in DevTools Network tab, click it, go to the Response tab, ' +
-      'and copy the refresh_token field value.'
+      'refresh_token looks like a URL parameter ("' +
+        refreshToken.substring(0, 20) +
+        '..."). ' +
+        'You need to copy the refresh_token value from the RESPONSE body of the token?device= request, ' +
+        'not from the URL. Open the request in DevTools Network tab, click it, go to the Response tab, ' +
+        'and copy the refresh_token field value.'
     );
   }
 
@@ -74,7 +60,7 @@ async function getAccessToken(refreshToken) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
       'accept-language': 'en-US,en;q=0.9',
-      'accept': '*/*',
+      accept: '*/*',
     },
     body: params.toString(),
   });
@@ -84,9 +70,9 @@ async function getAccessToken(refreshToken) {
     if (response.status === 400) {
       throw new Error(
         'Sensi rejected the refresh token. This usually means the token is expired or invalid. ' +
-        'Go to manager.sensicomfort.com, log in, and in DevTools Network tab find the token?device= request. ' +
-        'Click it, go to the Response tab, and copy the refresh_token value from the JSON response. ' +
-        `(API response: ${text})`
+          'Go to manager.sensicomfort.com, log in, and in DevTools Network tab find the token?device= request. ' +
+          'Click it, go to the Response tab, and copy the refresh_token value from the JSON response. ' +
+          `(API response: ${text})`
       );
     }
     throw new Error(`OAuth token request failed (${response.status}): ${text}`);
@@ -153,7 +139,7 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
 
     socket.on('state', (data) => {
       stateEventCount++;
-      
+
       if (Array.isArray(data)) {
         // Merge devices from this event into our map
         for (const device of data) {
@@ -169,7 +155,7 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
             } else {
               deviceMap.set(device.icd_id, device);
             }
-            
+
             // Check if this device now has complete state
             if (device.state && device.state.display_temp !== undefined) {
               hasReceivedCompleteState = true;
@@ -177,7 +163,7 @@ async function connectAndGetState(accessToken, timeoutMs = 15000) {
           }
         }
       }
-      
+
       // After we've received at least one complete state, wait a bit more then resolve
       if (hasReceivedCompleteState && !resolveTimer) {
         resolveTimer = setTimeout(() => {
@@ -204,13 +190,6 @@ async function connectAndEmit(accessToken, eventName, eventData, timeoutMs = 100
   const io = require('socket.io-client-v2');
 
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      socket.disconnect();
-      reject(new Error('Timed out waiting for Sensi command response'));
-    }, timeoutMs);
-
-    let stateReceived = false;
-
     const socket = io(SOCKET_URL + CAPABILITIES_QUERY, {
       path: '/thermostat',
       transports: ['websocket'],
@@ -218,6 +197,13 @@ async function connectAndEmit(accessToken, eventName, eventData, timeoutMs = 100
         Authorization: 'bearer ' + accessToken,
       },
     });
+
+    const timer = setTimeout(() => {
+      socket.disconnect();
+      reject(new Error('Timed out waiting for Sensi command response'));
+    }, timeoutMs);
+
+    let stateReceived = false;
 
     socket.on('state', () => {
       if (stateReceived) return;
@@ -271,20 +257,21 @@ async function resolveRefreshToken(req) {
 async function updateStoredRefreshToken(credentialId, userId, newRefreshToken) {
   if (!credentialId || !userId || !newRefreshToken) return;
   try {
-    const result = await db.query(
-      'SELECT credential_data FROM credentials WHERE id = $1 AND user_id = $2',
-      [credentialId, userId]
-    );
+    const result = await db.query('SELECT credential_data FROM credentials WHERE id = $1 AND user_id = $2', [
+      credentialId,
+      userId,
+    ]);
     if (result.rows.length === 0) return;
 
     const { encryptCredentials } = require('../src/crypto-utils');
     const existing = decryptCredentials(result.rows[0].credential_data);
     existing.refresh_token = newRefreshToken;
     const encrypted = encryptCredentials(existing);
-    await db.query(
-      'UPDATE credentials SET credential_data = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3',
-      [encrypted, credentialId, userId]
-    );
+    await db.query('UPDATE credentials SET credential_data = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3', [
+      encrypted,
+      credentialId,
+      userId,
+    ]);
     console.log(`Updated Sensi refresh_token for credential ${credentialId}`);
   } catch (err) {
     console.error('Failed to update stored refresh token:', err);
@@ -421,4 +408,12 @@ router.post('/sensi/set-fan', async (req, res) => {
   }
 });
 
-module.exports = router;
+// ==================== PLUGIN EXPORT ====================
+
+module.exports = {
+  name: 'sensi',
+  description: 'Sensi thermostat integration via Socket.IO (state, temperature, mode, fan control)',
+  version: '1.0.0',
+  routes: router,
+  mountPath: '/',
+};

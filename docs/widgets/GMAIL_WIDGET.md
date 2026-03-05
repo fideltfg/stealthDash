@@ -9,36 +9,48 @@ The Gmail widget provides a clean interface to view unread emails, read messages
 ## Requirements
 
 - Google Cloud Console project with Gmail API enabled
-- OAuth 2.0 credentials configured
-- Backend API endpoints for Gmail integration
+- OAuth 2.0 credentials (Client ID, Client Secret)
+- Environment variables configured on the ping server
 
 ## Setup
 
-For detailed backend setup instructions, see [Gmail Widget Backend API Documentation](../GMAIL_WIDGET_API.md).
+### 1. Google Cloud Console
 
-### Quick Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create or select a project
+3. Enable the **Gmail API**
+4. Go to "APIs & Services" → "Credentials"
+5. Click "Create Credentials" → "OAuth client ID"
+6. Choose "Web application"
+7. Add authorized redirect URI: `https://yourdomain.com/api/gmail/callback`
+8. Save the **Client ID** and **Client Secret**
 
-1. **Google Cloud Console**
-   - Create/select project
-   - Enable Gmail API
-   - Create OAuth 2.0 credentials
-   - Configure authorized redirect URIs
+### 2. Environment Variables
 
-2. **Backend Configuration**
-   - Set environment variables (Client ID, Secret, Redirect URI)
-   - Implement required API endpoints
-   - Install googleapis npm package
+Add these to your `.env` file or `docker-compose.yml`:
 
-3. **Dashboard Setup**
-   - Navigate to `/api/gmail/auth` to authorize
-   - Complete OAuth flow
-   - Credential automatically saved
-   - Add Gmail widget to dashboard
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=https://yourdomain.com/api/gmail/callback
+```
 
-4. **Widget Configuration**
-   - Select Gmail credential from dropdown
-   - Choose labels to monitor (INBOX, UNREAD, etc.)
-   - Set refresh interval
+These are already wired into `docker-compose.yml` — just set the values.
+
+### 3. Authorize Your Account
+
+1. Log in to the dashboard
+2. Navigate to `/api/gmail/auth` (you must be authenticated)
+3. Complete the Google OAuth consent screen
+4. You'll be redirected back — a Gmail credential is automatically created
+
+### 4. Add the Widget
+
+1. Add a Gmail widget to your dashboard
+2. Open the setup wizard
+3. Select your Gmail credential from the dropdown
+4. Choose labels to monitor (INBOX, UNREAD, etc.)
+5. Set refresh interval and save
 
 ## Features
 
@@ -81,20 +93,25 @@ The widget shows:
 - Status indicators for read/unread
 - Action buttons (mark read, open in Gmail)
 
-## Required Backend Endpoints
+## Backend Plugin
 
-The Gmail widget requires these backend API endpoints:
+All backend endpoints are provided by the built-in **Gmail plugin** (`ping-server/plugins/gmail.js`). No additional setup is needed beyond setting the environment variables above.
 
-1. **OAuth Flow**
-   - `GET /api/gmail/auth` - Initiate OAuth
-   - `GET /api/gmail/callback` - OAuth callback
+### Endpoints
 
-2. **Message Operations**
-   - `GET /api/gmail/messages` - List messages
-   - `GET /api/gmail/message` - Get message details
-   - `POST /api/gmail/modify` - Modify message labels
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/gmail/status` | Check if OAuth is configured |
+| GET | `/api/gmail/auth` | Start OAuth2 flow (redirects to Google) |
+| GET | `/api/gmail/callback` | OAuth2 callback (stores tokens) |
+| GET | `/api/gmail/messages` | List messages by label |
+| GET | `/api/gmail/message` | Get single message details |
+| POST | `/api/gmail/modify` | Modify labels (mark read/unread, star) |
+| GET | `/api/gmail/profile` | Get Gmail profile info |
 
-See [Gmail Widget Backend API Documentation](../GMAIL_WIDGET_API.md) for complete implementation details.
+Token refresh is handled automatically — when an access token expires, the plugin uses the stored refresh token to obtain a new one.
+
+For full API details, see [Gmail Widget Backend API Documentation](../GMAIL_WIDGET_API.md).
 
 ## OAuth Scopes
 
@@ -138,7 +155,6 @@ Optional scopes:
 
 ## Limitations
 
-- Requires backend API implementation
 - OAuth setup required (one-time per user)
 - Gmail API rate limits apply
 - Read-only by default (unless additional scopes granted)

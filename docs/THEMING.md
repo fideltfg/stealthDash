@@ -496,9 +496,9 @@ Standard widget card styling:
 }
 ```
 
-## Background Patterns
+## Backgrounds
 
-The dashboard supports both built-in patterns and custom backgrounds (images and videos).
+The dashboard supports both built-in patterns and custom backgrounds (images and videos). 
 
 ### Built-in Patterns
 
@@ -540,7 +540,7 @@ The canvas supports different background patterns defined in [src/css/app.css](.
   background-image: none;
 }
 ```
-
+![Dashboard Screenshot](images/AnimatedBackgrounds2.png)
 ### Custom Backgrounds
 
 In addition to built-in patterns, you can use custom images or videos as backgrounds.
@@ -575,7 +575,7 @@ data:image/png;base64,... (base64 encoded)
 #### Video Backgrounds
 
 Support for animated video backgrounds:
-- Supported formats: MP4, WebM
+- Supported formats: MP4, WebM. Check out [https://motionbgs.com/](https://motionbgs.com/) for exmples of back ground videos you could use.
 - Autoplay with loop option
 - Muted by default (recommended)
 - Playback speed control

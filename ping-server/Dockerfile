@@ -16,9 +16,12 @@ COPY src/server.js ./src/
 COPY src/auth.js ./src/
 COPY src/db.js ./src/
 COPY src/crypto-utils.js ./src/
-COPY init-db.sql ./
 COPY src/vnc-proxy.js ./src/
+COPY src/plugin-loader.js ./src/
+COPY src/plugin-helpers.js ./src/
+COPY init-db.sql ./
 COPY routes ./routes
+COPY plugins ./plugins
 
 EXPOSE 3001
 

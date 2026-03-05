@@ -1,0 +1,132 @@
+/**
+ * Widget Plugin Template
+ * 
+ * Copy this file to create a new widget plugin:
+ * 1. Copy to plugins/my-widget.js
+ * 2. Update the name, description, and version
+ * 3. Implement your routes
+ * 4. Restart the ping server
+ * 
+ * Available helpers from plugin-helpers:
+ * - db: Database connection
+ * - authMiddleware: Express middleware for JWT auth
+ * - verifyAuth(req): Verify auth and get decoded token
+ * - getCredentials(credentialId, userId): Fetch encrypted credentials
+ * - createCache(ttlMs): Create a TTL cache
+ * - asyncHandler(fn): Wrap async routes with error handling
+ * - respond: Response helpers (success, error, badRequest, etc.)
+ */
+
+const express = require('express');
+const router = express.Router();
+const { 
+  db, 
+  authMiddleware, 
+  verifyAuth, 
+  getCredentials, 
+  createCache, 
+  asyncHandler, 
+  respond 
+} = require('../src/plugin-helpers');
+
+// Optional: Create a cache for API responses (60-second TTL)
+const cache = createCache(60000);
+
+// ==================== YOUR ROUTES HERE ====================
+
+// Example: Public endpoint (no auth required)
+router.get('/api/my-widget/status', (req, res) => {
+  res.json({ status: 'ok', plugin: 'my-widget' });
+});
+
+// Example: Endpoint that fetches external data with caching
+router.get('/api/my-widget/data', asyncHandler(async (req, res) => {
+  const { host } = req.query;
+  
+  if (!host) {
+    return respond.badRequest(res, 'Missing required parameter: host');
+  }
+  
+  // Check cache first
+  const cacheKey = `data:${host}`;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return res.json(cached);
+  }
+  
+  // Fetch external data
+  const fetch = (await import('node-fetch')).default;
+  const response = await fetch(`${host}/api/data`, {
+    headers: { 'Accept': 'application/json' },
+    timeout: 10000
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  cache.set(cacheKey, data);
+  res.json(data);
+}));
+
+// Example: Endpoint with credential support
+router.get('/api/my-widget/secure-data', asyncHandler(async (req, res) => {
+  const { host, credentialId } = req.query;
+  
+  if (!host) {
+    return respond.badRequest(res, 'Missing required parameter: host');
+  }
+  
+  const fetch = (await import('node-fetch')).default;
+  const headers = { 'Accept': 'application/json' };
+  
+  // If credentialId is provided, fetch and use credentials
+  if (credentialId) {
+    try {
+      const decoded = verifyAuth(req);
+      const credentials = await getCredentials(credentialId, decoded.userId);
+      
+      // Use credentials (example: API key)
+      if (credentials.api_key) {
+        headers['Authorization'] = `Bearer ${credentials.api_key}`;
+      }
+    } catch (err) {
+      return respond.unauthorized(res, 'Authentication required when using credentialId');
+    }
+  }
+  
+  const response = await fetch(`${host}/api/secure-data`, { headers, timeout: 10000 });
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  res.json(data);
+}));
+
+// Example: Endpoint that requires authentication
+router.get('/api/my-widget/user-data', authMiddleware, asyncHandler(async (req, res) => {
+  // req.user contains the authenticated user info
+  const userId = req.user.userId;
+  
+  // Query database
+  const result = await db.query(
+    'SELECT * FROM some_table WHERE user_id = $1',
+    [userId]
+  );
+  
+  respond.success(res, { data: result.rows });
+}));
+
+// ==================== PLUGIN EXPORT ====================
+
+module.exports = {
+  name: 'my-widget',                              // Required: Plugin identifier
+  description: 'Description of my widget',        // Optional: Human-readable description
+  version: '1.0.0',                               // Optional: Plugin version
+  routes: router,                                  // Required: Express Router
+  mountPath: '/',                                  // Optional: Where to mount (default: '/')
+  // init: async function() { }                   // Optional: Async initialization
+};
