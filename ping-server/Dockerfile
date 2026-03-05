@@ -10,7 +10,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install --production
+RUN npm install
 
 COPY src/server.js ./src/
 COPY src/auth.js ./src/
@@ -22,6 +22,8 @@ COPY src/plugin-helpers.js ./src/
 COPY init-db.sql ./
 COPY routes ./routes
 COPY plugins ./plugins
+COPY jest.config.js ./
+COPY tests ./tests
 
 EXPOSE 3001
 

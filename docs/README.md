@@ -139,7 +139,6 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 | `Cmd/Ctrl + Shift + Z` | Redo |
 | `Arrow Keys` | Move selected widget |
 | `Shift + Arrow` | Move widget 10x faster |
-| `Alt + Arrow` | Resize selected widget |
 | `Escape` | Deselect widget |
 | `Spacebar` (hold) | Pan mode — drag to scroll canvas |
 | `Tab` | Navigate UI controls |
@@ -335,17 +334,21 @@ docker compose -f docker-compose.prod.yml down
 ### Makefile Commands
 
 ```bash
-make dev          # Start development server
-make dev-d        # Start development server (background)
-make prod         # Start production server
-make logs         # View logs
-make down         # Stop all containers
-make clean        # Clean up Docker resources
-make rebuild      # Rebuild development without cache
-make rebuild-prod # Rebuild production without cache
-make shell        # Open shell in development container
-make ps           # Show running containers
-make help         # Show all available commands
+make dev            # Start development server
+make dev-d          # Start development server (background)
+make prod           # Start production server
+make logs           # View logs
+make down           # Stop all containers
+make clean          # Clean up Docker resources
+make rebuild        # Rebuild development without cache
+make rebuild-prod   # Rebuild production without cache
+make shell          # Open shell in development container
+make ps             # Show running containers
+make test           # Run all tests (routes + security)
+make test-routes    # Run route/API tests only
+make test-security  # Run security tests only
+make test-report    # Run tests and print report location
+make help           # Show all available commands
 ```
 
 ## Configuration
@@ -465,6 +468,8 @@ Dashboard/
 │   │   ├── auth.js                # JWT authentication middleware
 │   │   ├── crypto-utils.js        # AES encryption for credentials
 │   │   ├── db.js                  # PostgreSQL connection pool
+│   │   ├── plugin-helpers.js      # Shared plugin utilities & cache
+│   │   ├── plugin-loader.js       # Dynamic plugin auto-loader
 │   │   ├── transform.js           # Data transformation utilities
 │   │   └── vnc-proxy.js           # WebSocket VNC proxy (websockify)
 │   ├── routes/
@@ -472,9 +477,19 @@ Dashboard/
 │   │   ├── auth.js                # Login, register, password recovery
 │   │   ├── credentials.js         # Encrypted credential CRUD
 │   │   ├── dashboard.js           # Dashboard save/load/delete/public
-│   │   ├── docker.js              # Docker container management proxy
-│   │   ├── user.js                # User profile endpoints
-│   │   └── widgets.js             # Widget proxy APIs (ping, SNMP, Modbus, etc.)
+│   │   └── user.js                # User profile endpoints
+│   ├── plugins/                   # Widget backend plugins (auto-loaded)
+│   │   ├── crypto.js, docker.js, glances.js, gmail.js, ...
+│   │   └── _template.js.example   # Plugin template
+│   ├── tests/                     # Test suite (Jest)
+│   │   ├── helpers.js             # Shared test utilities & API client
+│   │   ├── run-tests.sh           # Shell script test runner
+│   │   ├── setup/                 # Global setup & teardown
+│   │   ├── reporters/             # Custom HTML reporter
+│   │   ├── routes/                # Route & API tests (6 files)
+│   │   └── security/              # Security vulnerability tests
+│   ├── test-reports/              # Generated test reports (git-ignored)
+│   ├── jest.config.js             # Jest configuration
 │   └── init-db.sql                # Database schema initialization
 ├── http/
 │   └── index.html                 # HTML entry point
@@ -556,6 +571,46 @@ If a "Dashboard out of sync" banner appears:
 - Click "Reload Dashboard" to pull the latest version from the server
 - This occurs when the same dashboard is edited in another tab or browser
 
+## Testing
+
+StealthDash includes a comprehensive test suite with **202 tests** across 7 suites covering all API routes, plugin endpoints, and security vulnerabilities.
+
+### Quick Start
+
+```bash
+# Run all tests
+make test
+
+# Run only route tests
+make test-routes
+
+# Run only security tests
+make test-security
+
+# Run tests and get HTML report location
+make test-report
+```
+
+### Test Coverage
+
+| Suite | Tests | Description |
+|-------|-------|-------------|
+| Authentication | 28 | Register, login, token verification, password recovery |
+| Dashboard | 19 | Save, load, versioning, public sharing, deletion |
+| User Management | 12 | Profile, password changes, profile updates |
+| Admin | 22 | User CRUD, admin promotion, stats |
+| Credentials | 17 | Encrypted credential CRUD, IDOR protection |
+| Plugins | 48 | All 17 plugin endpoints |
+| Security | 56 | SQL injection, XSS, auth bypass, SSRF, and more |
+
+### Reports
+
+HTML and JSON reports are generated in `ping-server/test-reports/`:
+- `latest-report.html` — Most recent HTML report
+- `test-results.json` — Machine-readable JSON results
+
+See [TESTING.md](./TESTING.md) for the full testing guide.
+
 ## Security Considerations
 
 - **Change default passwords** in `.env` file
@@ -629,6 +684,7 @@ MIT License — see LICENSE file for details.
 - **Issues**: [GitHub Issues](https://github.com/fideltfg/stealthDash/issues)
 - **Documentation**: See the `docs/` folder for additional guides
 - **Widget Guide**: [WIDGETS.md](./WIDGETS.md)
+- **Testing**: [TESTING.md](./TESTING.md)
 - **Deployment**: [DEPLOYMENT.md](./DEPLOYMENT.md)
 - **Theming**: [THEMING.md](./THEMING.md)
 - **CSS Reference**: [CSS-COMPONENT-REFERENCE.md](./CSS-COMPONENT-REFERENCE.md)

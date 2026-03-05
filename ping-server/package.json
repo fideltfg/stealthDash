@@ -4,7 +4,14 @@
   "description": "Simple ping service for dashboard uptime widget",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest --config jest.config.js --colors --verbose",
+    "test:security": "jest --config jest.config.js tests/security --colors --verbose",
+    "test:routes": "jest --config jest.config.js tests/routes --colors --verbose",
+    "test:watch": "jest --config jest.config.js --watch"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   },
   "dependencies": {
     "express": "^4.18.2",

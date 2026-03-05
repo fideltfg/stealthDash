@@ -193,6 +193,48 @@ The ping server acts as a backend proxy to enable dashboard widgets to:
   - Query params: `host`, `port`, `address`, `count`, `type`, `unitId`
   - Returns: Modbus register values
 
+## Testing
+
+The ping-server has a comprehensive test suite built with Jest that covers all routes, plugins, and security:
+
+```bash
+# Run all tests (from project root)
+make test
+
+# Run specific categories
+make test-routes      # Route and API tests only
+make test-security    # Security vulnerability tests only
+
+# Run directly via Docker
+docker compose exec ping-server npx jest --config jest.config.js --verbose --forceExit
+
+# Run a single test file
+docker compose exec ping-server npx jest --config jest.config.js tests/routes/auth.test.js --verbose --forceExit
+```
+
+### Test Structure
+
+```
+tests/
+├── helpers.js              # Shared test utilities & API client
+├── run-tests.sh            # Shell script test runner
+├── setup/                  # Global setup (DB readiness) & teardown (cleanup)
+├── reporters/              # Custom HTML + JSON reporter
+├── routes/                 # Route tests
+│   ├── auth.test.js        # Authentication (28 tests)
+│   ├── dashboard.test.js   # Dashboard CRUD (19 tests)
+│   ├── user.test.js        # User profile (12 tests)
+│   ├── admin.test.js       # Admin management (22 tests)
+│   ├── credentials.test.js # Credential vault (17 tests)
+│   └── plugins.test.js     # All 17 plugins (48 tests)
+└── security/
+    └── security.test.js    # Security vulnerabilities (56 tests)
+```
+
+Reports are generated to `test-reports/latest-report.html` (HTML) and `test-reports/test-results.json` (JSON).
+
+See [TESTING.md](../docs/TESTING.md) for the full testing documentation.
+
 ## Implementation
 
 ### With Docker Compose (Recommended)
@@ -247,6 +289,8 @@ Sessions are automatically refreshed when expired.
 PostgreSQL tables:
 - `users` - User accounts with hashed passwords
 - `dashboards` - User dashboard configurations (JSON)
+- `credentials` - AES-encrypted credential storage
+- `tasks` - Task management data
 - Password reset tokens with expiration
 
 ---

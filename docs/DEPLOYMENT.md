@@ -725,6 +725,32 @@ echo "*.key" >> .gitignore
 
 ---
 
+## Testing
+
+Run the test suite before deploying to verify all endpoints work correctly:
+
+```bash
+# Run all tests (202 tests across 7 suites)
+make test
+
+# Run security-focused tests only
+make test-security
+
+# Run route/API tests only
+make test-routes
+
+# Run tests and generate HTML report
+make test-report
+```
+
+Review the HTML report at `ping-server/test-reports/latest-report.html` for detailed results and security findings.
+
+For production deployments, pay special attention to the security test results — they flag issues like default credentials, exposed headers, and CORS configuration that should be addressed before going live.
+
+See [TESTING.md](./TESTING.md) for the full testing guide, including CI/CD integration examples.
+
+---
+
 ## Troubleshooting
 
 ### Container Won't Start
@@ -861,4 +887,4 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 ---
 
-**Last Updated:** November 2025
+**Last Updated:** March 2026

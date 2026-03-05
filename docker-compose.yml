@@ -27,6 +27,9 @@ services:
       # Mount source files for hot reload
       - ./ping-server/src:/app/src
       - ./ping-server/routes:/app/routes
+      - ./ping-server/tests:/app/tests
+      - ./ping-server/jest.config.js:/app/jest.config.js
+      - ./ping-server/test-reports:/app/test-reports
       # Prevent node_modules from being overwritten
       - /app/node_modules
       # Mount Docker socket to access host's Docker daemon

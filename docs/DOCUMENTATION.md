@@ -60,11 +60,6 @@ Theme system documentation:
 - Custom backgrounds (Images and Videos)
 - Accessibility guidelines
 
-## Integration Examples
-
-### [Docs/SENSOR_GRAPH_API_EXAMPLE.md](./Docs/SENSOR_GRAPH_API_EXAMPLE.md)
-PHP API endpoint examples for sensor data integration.
-
 ---
 
 ## Quick Navigation
@@ -79,6 +74,9 @@ PHP API endpoint examples for sensor data integration.
 - Widget development: [src/widgets/README.md](./src/widgets/README.md)
 - API reference: [ping-server/README.md](./ping-server/README.md)
 - Theming: [Docs/THEMING.md](./Docs/THEMING.md)
+- Testing guide: [TESTING.md](./TESTING.md)
+- Running tests: [TESTING.md#running-tests](./TESTING.md#running-tests)
+- Security tests: [TESTING.md#security-tests](./TESTING.md#security-tests)
 
 **For Production:**
 - Deployment: [DEPLOYMENT.md](./DEPLOYMENT.md)

@@ -33,7 +33,7 @@ class Dashboard {
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
   private hideHeadersButton!: HTMLElement;
-  private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
+  private readonly SNAP_THRESHOLD = 5; // distance at which snapping occurs
   private readonly PAN_LIMIT = 3000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
   private isPanModeActive: boolean = false; // Track if spacebar is held for panning

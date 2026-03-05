@@ -82,5 +82,15 @@ ps: ## Show running containers
 install: ## Install npm dependencies in container
 	$(DOCKER_COMPOSE) run --rm dashboard npm install
 
-test: ## Run tests (if any)
-	$(DOCKER_COMPOSE) run --rm dashboard npm test
+test: ## Run all tests (routes + security)
+	$(DOCKER_COMPOSE) exec ping-server npx jest --config jest.config.js --colors --verbose --forceExit
+
+test-security: ## Run security tests only
+	$(DOCKER_COMPOSE) exec ping-server npx jest --config jest.config.js tests/security --colors --verbose --forceExit
+
+test-routes: ## Run route tests only
+	$(DOCKER_COMPOSE) exec ping-server npx jest --config jest.config.js tests/routes --colors --verbose --forceExit
+
+test-report: ## Run tests and open HTML report
+	$(DOCKER_COMPOSE) exec ping-server npx jest --config jest.config.js --colors --verbose --forceExit
+	@echo "\n📊 Report: ping-server/test-reports/latest-report.html"
