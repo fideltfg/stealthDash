@@ -161,6 +161,7 @@ export interface DashboardState {
   grid: number;
   zoom: number;
   viewport: Viewport;
+  hideHeadersWhenLocked?: boolean;
   version: number;
 }
 

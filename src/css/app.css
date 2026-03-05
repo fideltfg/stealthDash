@@ -921,6 +921,11 @@ body {
   cursor: auto !important;
 }
 
+/* Hide widget headers when both locked and hide-headers option is enabled */
+#app.locked.hide-headers .widget-header {
+  display: none !important;
+}
+
 /* === DIALOG SYSTEM === */
 .dialog {
   position: fixed;
@@ -2020,6 +2025,22 @@ body {
 .card-row-value {
   font-weight: 600;
   color: var(--text);
+}
+
+/* Progress bar for system resources */
+.sr-bar {
+  height: 6px;
+  width: 100%;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.sr-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
+  border-radius: 3px;
 }
 
 .card-items {

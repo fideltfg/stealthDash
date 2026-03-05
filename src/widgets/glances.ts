@@ -31,7 +31,7 @@ function sparkline(points: number[], w = 120, h = 28): string {
   const max = Math.max(...points, 1);
   const step = w / (points.length - 1);
   const pts = points.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>`;
+  return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width=".75"/></svg>`;
 }
 
 function barColor(pct: number): string {
@@ -42,7 +42,8 @@ function barColor(pct: number): string {
 }
 
 function progressBar(pct: number): string {
-  return `<div class="sr-bar"><div class="sr-bar-fill" style="width:${Math.min(pct, 100)}%;background:${barColor(pct)}"></div></div>`;
+  if(pct <= 0) return '';
+  return `<div class="sr-bar"><div class="sr-bar-fill" style="width:${pct}%;background:${barColor(pct)}"></div></div>`;
 }
 
 /** Stat card using existing .card / .card-header / .card-body / .card-row patterns */
@@ -137,9 +138,9 @@ class SystemResourcesRenderer implements WidgetRenderer {
       html += `<div class="card">
         <div class="card-header"><i class="fas fa-bars-staggered"></i><span class="card-title">Per-Core</span></div>
         ${d.percpu.map(core => {
-          const pct = Math.min(core.total, 100);
-          return `<div class="card-row"><span class="card-row-label">${core.cpu_number}</span><div class="flex-1">${progressBar(pct)}</div><span class="card-row-value">${pct.toFixed(0)}%</span></div>`;
-        }).join('')}
+        const pct = Math.min(core.total, 100);
+        return `<div class="card-row"><span class="card-row-label">${core.cpu_number}</span><div class="flex-1">${progressBar(pct)}</div><span class="card-row-value">${pct.toFixed(0)}%</span></div>`;
+      }).join('')}
       </div>`;
     }
 
@@ -173,7 +174,7 @@ class SystemResourcesRenderer implements WidgetRenderer {
       const fsLabel = fs.mnt_point === '/rootfs' ? '/' : fs.mnt_point;
       html += statCard('<i class="fas fa-hard-drive"></i>', fsLabel, `${fs.percent.toFixed(1)}%`,
         [['Used / Total', `${formatBytes(fs.used)} / ${formatBytes(fs.size)}`],
-         ...(fs.fs_type ? [['Type', fs.fs_type] as [string, string]] : [])], fs.percent, '');
+        ...(fs.fs_type ? [['Type', fs.fs_type] as [string, string]] : [])], fs.percent, '');
     }
 
     // Disk I/O
@@ -181,10 +182,10 @@ class SystemResourcesRenderer implements WidgetRenderer {
       html += `<div class="card">
         <div class="card-header"><i class="fas fa-arrow-right-arrow-left"></i><span class="card-title">Disk I/O</span></div>
         ${d.diskio.map(disk => {
-          const rHist = this.push(`dio-r-${disk.disk_name}`, disk.read_bytes_rate);
-          return `<div class="card-row"><span class="card-row-label">${escapeHtml(disk.disk_name)}</span><span class="card-row-value">R ${formatBytes(disk.read_bytes_rate)}/s · W ${formatBytes(disk.write_bytes_rate)}/s</span></div>
+        const rHist = this.push(`dio-r-${disk.disk_name}`, disk.read_bytes_rate);
+        return `<div class="card-row"><span class="card-row-label">${escapeHtml(disk.disk_name)}</span><span class="card-row-value">R ${formatBytes(disk.read_bytes_rate)}/s · W ${formatBytes(disk.write_bytes_rate)}/s</span></div>
             <div style="margin-top:2px">${sparkline(rHist, 100, 20)}</div>`;
-        }).join('')}
+      }).join('')}
       </div>`;
     }
 
@@ -213,8 +214,8 @@ class SystemResourcesRenderer implements WidgetRenderer {
       html += `<div class="card">
         <div class="card-header"><i class="fas fa-temperature-half"></i><span class="card-title">Sensors</span></div>
         ${d.sensors.map(s =>
-          `<div class="card-row"><span class="card-row-label">${escapeHtml(s.label)}</span><span class="card-row-value">${s.value}${s.unit || '°C'}</span></div>`
-        ).join('')}
+        `<div class="card-row"><span class="card-row-label">${escapeHtml(s.label)}</span><span class="card-row-value">${s.value}${s.unit || '°C'}</span></div>`
+      ).join('')}
       </div>`;
     }
 
@@ -232,14 +233,14 @@ class SystemResourcesRenderer implements WidgetRenderer {
       html += `<div class="card">
         <div class="card-header"><i class="fab fa-docker"></i><span class="card-title">Containers (${d.containers.length})</span></div>
         <div class="card-items">${d.containers.slice(0, 20).map(ct => {
-          const isUp = ct.status === 'running' || ct.status === 'healthy';
-          const badgeCls = isUp ? 'badge-success' : 'badge-secondary';
-          return `<div class="card-item">
+        const isUp = ct.status === 'running' || ct.status === 'healthy';
+        const badgeCls = isUp ? 'badge-success' : 'badge-secondary';
+        return `<div class="card-item">
             <span class="badge ${badgeCls}">${escapeHtml(ct.status)}</span>
             <span class="card-item-name">${escapeHtml(ct.name)}</span>
             <subtitle>${ct.cpu_percent.toFixed(1)}% · ${formatBytes(ct.memory_usage)} · ${escapeHtml(ct.uptime)}</subtitle>
           </div>`;
-        }).join('')}</div>
+      }).join('')}</div>
       </div>`;
     }
 

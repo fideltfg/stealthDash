@@ -32,6 +32,7 @@ class Dashboard {
   private touchStartTime: number = 0;
   private isLocked: boolean = false;
   private lockButton!: HTMLElement;
+  private hideHeadersButton!: HTMLElement;
   private readonly SNAP_THRESHOLD = 4; // distance at which snapping occurs
   private readonly PAN_LIMIT = 3000; // Maximum distance to pan from origin (in pixels)
   private snapGuides: HTMLElement[] = [];
@@ -89,62 +90,84 @@ class Dashboard {
   }
 
   /** Wait for critical CSS to be available (especially for Vite dev mode) */
-  private async waitForStylesheets(): Promise<void> {
-    // In Vite dev mode, CSS is injected via JavaScript, so we need to check if the actual rules exist
-    const checkCriticalCSS = (): boolean => {
-      // Check multiple critical CSS classes that widgets rely on
-      const testWidget = document.createElement('div');
-      testWidget.className = 'widget';
-      const testCard = document.createElement('div');
-      testCard.className = 'card';
+  // private async waitForStylesheets(): Promise<void> {
+  //   // In Vite dev mode, CSS is injected via JavaScript, so we need to check if the actual rules exist
+  //   const checkCriticalCSS = (): boolean => {
+  //     // Check multiple critical CSS classes that widgets rely on
+  //     const testWidget = document.createElement('div');
+  //     testWidget.className = 'widget';
+  //     const testCard = document.createElement('div');
+  //     testCard.className = 'card';
+  //     const testCardList = document.createElement('div');
+  //     testCardList.className = 'card-list';
       
-      testWidget.style.visibility = 'hidden';
-      testWidget.style.position = 'absolute';
-      testWidget.style.top = '-9999px';
-      testCard.style.visibility = 'hidden';
-      testCard.style.position = 'absolute';
-      testCard.style.top = '-9999px';
+  //     // Only set visibility to hide them - don't set properties we want to check!
+  //     testWidget.style.visibility = 'hidden';
+  //     testWidget.style.pointerEvents = 'none';
+  //     testCard.style.visibility = 'hidden';
+  //     testCard.style.pointerEvents = 'none';
+  //     testCardList.style.visibility = 'hidden';
+  //     testCardList.style.pointerEvents = 'none';
       
-      document.body.appendChild(testWidget);
-      document.body.appendChild(testCard);
+  //     document.body.appendChild(testWidget);
+  //     document.body.appendChild(testCard);
+  //     document.body.appendChild(testCardList);
       
-      const widgetStyles = window.getComputedStyle(testWidget);
-      const cardStyles = window.getComputedStyle(testCard);
+  //     const widgetStyles = window.getComputedStyle(testWidget);
+  //     const cardStyles = window.getComputedStyle(testCard);
+  //     const cardListStyles = window.getComputedStyle(testCardList);
       
-      // Check if critical styles are applied (non-empty and not default values)
-      const hasWidgetStyles = widgetStyles.position === 'absolute';
-      const cardBg = cardStyles.backgroundColor;
-      const cardPadding = cardStyles.padding;
-      const cardBorder = cardStyles.borderRadius;
+  //     // Check properties that MUST come from CSS (not our inline styles)
+  //     const widgetPosition = widgetStyles.position;
+  //     const widgetBorder = widgetStyles.border;
+  //     const cardBg = cardStyles.backgroundColor;
+  //     const cardPadding = cardStyles.padding;
+  //     const cardBorder = cardStyles.borderRadius;
+  //     const cardListDisplay = cardListStyles.display;
+  //     const cardListGap = cardListStyles.gap;
       
-      // CSS is loaded when we have actual values (not empty strings or default '0px')
-      const hasCardStyles = (cardBg && cardBg !== '' && cardBg !== 'rgba(0, 0, 0, 0)') ||
-                           (cardPadding && cardPadding !== '' && cardPadding !== '0px') ||
-                           (cardBorder && cardBorder !== '' && cardBorder !== '0px');
+  //     // .widget must have position: absolute and a non-default border from CSS
+  //     // (background can be transparent in some themes, so don't check it)
+  //     const hasBorder = widgetBorder !== 'none' && 
+  //                       widgetBorder !== '' && 
+  //                       widgetBorder !== '0px none rgb(0, 0, 0)' &&
+  //                       !widgetBorder.includes('0px none');
+  //     const hasWidgetStyles = widgetPosition === 'absolute' && hasBorder;
       
-      document.body.removeChild(testWidget);
-      document.body.removeChild(testCard);
+  //     // .card must have background, padding, AND border-radius from CSS (all required)
+  //     const hasCardStyles = (cardBg !== '' && cardBg !== 'rgba(0, 0, 0, 0)') &&
+  //                          (cardPadding !== '' && cardPadding !== '0px') &&
+  //                          (cardBorder !== '' && cardBorder !== '0px');
       
-      //console.log(`🔍 CSS Check - Widget: ${hasWidgetStyles}, Card: ${hasCardStyles}, Bg: "${cardBg}", Padding: "${cardPadding}", Border: "${cardBorder}"`);
-      return hasWidgetStyles && hasCardStyles;
-    };
+  //     // .card-list must have display: grid and gap from CSS
+  //     const hasCardListStyles = (cardListDisplay === 'grid') && (cardListGap !== '') && (cardListGap !== '0px' && cardListGap !== 'normal');
+      
+  //     document.body.removeChild(testWidget);
+  //     document.body.removeChild(testCard);
+  //     document.body.removeChild(testCardList);
+      
+  //     console.log(`🔍 CSS Check - Widget border="${widgetBorder}"`);
+  //     console.log(`   Card bg="${cardBg}" padding=${cardPadding}, CardList display=${cardListDisplay} gap=${cardListGap}`);
+  //     console.log(`   Result: Widget=${hasWidgetStyles}, Card=${hasCardStyles}, CardList=${hasCardListStyles}`);
+  //     return hasWidgetStyles && hasCardStyles && hasCardListStyles;
+  //   };
 
-    // Wait up to 3 seconds for CSS to be available
-    const maxWaitTime = 3000;
-    const checkInterval = 100;
-    let elapsed = 0;
+  //   // Wait up to 3 seconds for CSS to be available
+  //   const maxWaitTime = 3000;
+  //   const checkInterval = 100;
+  //   let elapsed = 0;
 
-    while (!checkCriticalCSS() && elapsed < maxWaitTime) {
-      await new Promise(resolve => setTimeout(resolve, checkInterval));
-      elapsed += checkInterval;
-    }
+  //   while (!checkCriticalCSS() && elapsed < maxWaitTime) {
+  //     await new Promise(resolve => setTimeout(resolve, checkInterval));
+  //     elapsed += checkInterval;
+  //   }
 
-    if (elapsed >= maxWaitTime) {
-      console.warn('⚠️  CSS may not be fully loaded, continuing anyway');
-    } else {
-    //  console.log(`✅ CSS loaded and verified in ${elapsed}ms`);
-    }
-  }
+  //   if (elapsed >= maxWaitTime) {
+  //     console.warn('⚠️  CSS may not be fully loaded, continuing anyway');
+  //   } else {
+  //     console.log(`✅ CSS loaded and verified in ${elapsed}ms`);
+  //   }
+  // }
 
   private async init(): Promise<void> {
     //console.log('🚀 Init called, isAuthenticated:', authService.isAuthenticated());
@@ -211,7 +234,7 @@ class Dashboard {
         this.restoreLocalViewState(activeDashboard.id);
        //console.log('✅ Loaded active dashboard:', activeDashboard.name, 'with', this.state.widgets.length, 'widgets');
       } else {
-        console.warn('⚠️  No active dashboard found, using default state');
+       // console.warn('⚠️  No active dashboard found, using default state');
         this.state = getDefaultState();
       }
 
@@ -225,7 +248,7 @@ class Dashboard {
       
       // Wait for stylesheets AFTER theme is applied to ensure theme-specific CSS is available
       //console.log('⏳ Waiting for theme-specific CSS to be computed...');
-      await this.waitForStylesheets();
+      //await this.waitForStylesheets();
       //console.log('✅ Theme-specific CSS loaded');
       
       // Give the browser extra time to compute CSS variables and apply all theme styles
@@ -422,15 +445,30 @@ class Dashboard {
     if (this.isLocked) {
       // Lock the dashboard
       app.classList.add('locked');
+      if (this.state.hideHeadersWhenLocked) {
+        app.classList.add('hide-headers');
+      }
       this.lockButton.innerHTML = '<i class="fas fa-lock"></i>';
       this.lockButton.setAttribute('aria-label', 'Unlock dashboard');
       this.selectWidget(null);
     } else {
       // Unlock the dashboard
       app.classList.remove('locked');
+      app.classList.remove('hide-headers');
       this.lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
       this.lockButton.setAttribute('aria-label', 'Lock dashboard');
     }
+  }
+
+  private updateHideHeadersButton(): void {
+    if (!this.hideHeadersButton) return;
+    
+    this.hideHeadersButton.innerHTML = this.state.hideHeadersWhenLocked 
+      ? '<i class="fa-solid fa-eye-slash"></i>' 
+      : '<i class="fa-solid fa-eye"></i>';
+    this.hideHeadersButton.setAttribute('title', this.state.hideHeadersWhenLocked 
+      ? 'Show widget headers when locked' 
+      : 'Hide widget headers when locked');
   }
 
   private setupDOM(): void {
@@ -542,6 +580,28 @@ class Dashboard {
       this.closeMenu();
     });
 
+    // Hide Headers Toggle
+    this.hideHeadersButton = document.createElement('button');
+    this.hideHeadersButton.className = 'hide-headers-toggle';
+    this.updateHideHeadersButton();
+    this.hideHeadersButton.addEventListener('click', () => {
+      this.state.hideHeadersWhenLocked = !this.state.hideHeadersWhenLocked;
+      this.updateHideHeadersButton();
+      
+      // Update CSS class if currently locked
+      if (this.isLocked) {
+        const app = document.getElementById('app')!;
+        if (this.state.hideHeadersWhenLocked) {
+          app.classList.add('hide-headers');
+        } else {
+          app.classList.remove('hide-headers');
+        }
+      }
+      
+      this.saveQuiet();
+      this.closeMenu();
+    });
+
     // Lock Toggle (positioned at top-right, replaces user button when locked)
     this.lockButton = document.createElement('button');
     this.lockButton.className = 'lock-toggle';
@@ -581,6 +641,7 @@ class Dashboard {
     controlsContainer.appendChild(resetViewButton);
     controlsContainer.appendChild(themeToggle);
     controlsContainer.appendChild(backgroundToggle);
+    controlsContainer.appendChild(this.hideHeadersButton);
 
     // Dashboard navigation arrows
     const prevDashboardBtn = document.createElement('button');
@@ -2074,6 +2135,10 @@ class Dashboard {
     if (button) {
       this.updateDashboardSwitcherButton(button);
     }
+    
+    // Update hide headers button to reflect new dashboard's state
+    this.updateHideHeadersButton();
+    
     // No server save here - switching dashboards is a local navigation action.
     // Only content changes trigger server saves.
   }

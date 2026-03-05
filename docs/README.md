@@ -4,6 +4,8 @@
 
 StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets you build your own layout with drag-and-drop panels, resize everything freely, then save, lock, and share your dashboard with other users. It comes with a bunch of built-in widgets so you can get useful fast.
 
+The goal of StealthDash is to bring together information from multiple services securely and simply—so your “personal homepage” and your monitoring command center can be the same clean, reliable place.
+
 It started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
 
 Concordia solved that by turning “setup” into a single step: open one browser tab and everything loads instantly, reliably, in the same positions across every screen.
@@ -17,7 +19,6 @@ StealthDash is still under active development, and a few minor bugs and styling 
 Deployment is simple with Docker and docker-compose. In just a few minutes you can have StealthDash running and start building your own personalized dashboard.
 
 StealthDash uses plugin-style widgets to display nearly anything—from embedded webpages to remote sessions over VNC. Support for protocols like Modbus also makes it possible to connect to a wide range of industrial devices. Existing widgets for UniFi, Sensi, Home Assistant, Comet, and more provide solid examples of how the system works—and how to build your own custom widgets.
-
 
 ## Features
 
@@ -169,6 +170,7 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 **Lock Dashboard**
 - Click the lock button (top-right)
 - Prevents accidental widget changes and hides edit controls
+- Optional: Toggle "Hide Headers" button (eye icon) in menu to hide widget headers when dashboard is locked (great for clean presentation mode)
 
 **Fullscreen**
 - Toggle fullscreen mode from the menu

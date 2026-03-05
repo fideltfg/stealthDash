@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: dashboard-production
+    container_name: stealth-dashboard-app-prod
     ports:
       - "3000:80"
     restart: unless-stopped

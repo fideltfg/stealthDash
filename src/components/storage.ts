@@ -25,6 +25,7 @@ export function getDefaultState(): DashboardState {
     grid: DEFAULT_GRID_SIZE,
     zoom: DEFAULT_ZOOM,
     viewport: { x: 0, y: 0 },
+    hideHeadersWhenLocked: false,
     version: CURRENT_VERSION
   };
 }
