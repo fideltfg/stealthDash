@@ -240,5 +240,20 @@ export const widgetMetadata: WidgetMetadataEntry[] = [
     defaultSize: { w: 650, h: 450 },
     defaultContent: { refreshInterval: 300 },
     hasSettings: true
+  },
+  {
+    type: 'crypto',
+    name: 'Crypto Ticker',
+    icon: '<i class="fa-brands fa-bitcoin"></i>',
+    description: 'Track cryptocurrency prices with live updates and historical charts',
+    defaultSize: { w: 450, h: 600 },
+    defaultContent: {
+      coins: ['bitcoin', 'ethereum'],
+      currency: 'usd',
+      refreshInterval: 120,
+      showChart: true,
+      chartDays: 7
+    },
+    hasSettings: true
   }
 ];

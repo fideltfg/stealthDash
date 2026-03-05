@@ -1963,52 +1963,109 @@ class Dashboard {
           <h2 class="dialog-title"><i class="fa-solid fa-plus"></i> Add Widget</h2>
           <button id="close-add-widget" class="dialog-close-button">×</button>
         </div>
+        <div class="add-widget-controls">
+          <div class="add-widget-search-container">
+            <i class="fa-solid fa-search"></i>
+            <input 
+              type="text" 
+              id="widget-search" 
+              class="add-widget-search" 
+              placeholder="Search widgets..."
+              autocomplete="off"
+            />
+          </div>
+          <select id="widget-sort" class="add-widget-sort">
+            <option value="default">Default Order</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+          </select>
+        </div>
         <div class="card-list" id="widget-type-list"></div>
       </div>
     `;
 
     document.body.appendChild(dialog);
 
-    // Populate widget types
     const typesList = dialog.querySelector('#widget-type-list') as HTMLElement;
-    try {
-      widgetMetadata.forEach((widgetMeta) => {
-        const row = document.createElement('button');
-        row.className = 'card';
-        row.tabIndex = 0;
+    const searchInput = dialog.querySelector('#widget-search') as HTMLInputElement;
+    const sortSelect = dialog.querySelector('#widget-sort') as HTMLSelectElement;
 
-        const icon = document.createElement('div');
-        icon.className = 'widget-type-icon';
-        icon.innerHTML = widgetMeta.icon;
+    // Function to render widgets based on current filters
+    const renderWidgets = () => {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const sortOption = sortSelect.value;
 
-        const content = document.createElement('div');
-        content.className = 'widget-type-content';
-
-        const name = document.createElement('div');
-        name.className = 'widget-type-name';
-        name.textContent = widgetMeta.name;
-
-        const description = document.createElement('div');
-        description.className = 'widget-type-description';
-        description.textContent = widgetMeta.description || '';
-
-        content.appendChild(name);
-        content.appendChild(description);
-
-        row.appendChild(icon);
-        row.appendChild(content);
-
-        row.addEventListener('click', () => {
-          this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
-          dialog.remove();
-        });
-
-        typesList.appendChild(row);
+      // Filter widgets
+      let filteredWidgets = widgetMetadata.filter((widget) => {
+        if (!searchTerm) return true;
+        return (
+          widget.name.toLowerCase().includes(searchTerm) ||
+          widget.description.toLowerCase().includes(searchTerm) ||
+          widget.type.toLowerCase().includes(searchTerm)
+        );
       });
-    } catch (error) {
-      console.error('Failed to load widget metadata:', error);
-      typesList.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
-    }
+
+      // Sort widgets
+      if (sortOption === 'name-asc') {
+        filteredWidgets.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortOption === 'name-desc') {
+        filteredWidgets.sort((a, b) => b.name.localeCompare(a.name));
+      }
+
+      // Clear and populate
+      typesList.innerHTML = '';
+
+      if (filteredWidgets.length === 0) {
+        typesList.innerHTML = '<div class="add-widget-no-results">No widgets found matching your search.</div>';
+        return;
+      }
+
+      try {
+        filteredWidgets.forEach((widgetMeta) => {
+          const row = document.createElement('button');
+          row.className = 'card';
+          row.tabIndex = 0;
+
+          const icon = document.createElement('div');
+          icon.className = 'widget-type-icon';
+          icon.innerHTML = widgetMeta.icon;
+
+          const content = document.createElement('div');
+          content.className = 'widget-type-content';
+
+          const name = document.createElement('div');
+          name.className = 'widget-type-name';
+          name.textContent = widgetMeta.name;
+
+          const description = document.createElement('div');
+          description.className = 'widget-type-description';
+          description.textContent = widgetMeta.description || '';
+
+          content.appendChild(name);
+          content.appendChild(description);
+
+          row.appendChild(icon);
+          row.appendChild(content);
+
+          row.addEventListener('click', () => {
+            this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
+            dialog.remove();
+          });
+
+          typesList.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Failed to load widget metadata:', error);
+        typesList.innerHTML = '<div style="padding: 20px; color: var(--error);">Failed to load widget types. Please try again.</div>';
+      }
+    };
+
+    // Initial render
+    renderWidgets();
+
+    // Add event listeners
+    searchInput.addEventListener('input', renderWidgets);
+    sortSelect.addEventListener('change', renderWidgets);
 
     // Close button
     dialog.querySelector('#close-add-widget')?.addEventListener('click', () => {

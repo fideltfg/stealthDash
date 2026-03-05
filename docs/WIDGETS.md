@@ -41,6 +41,7 @@ Widgets that integrate with external services and APIs.
 - **[Home Assistant Widget](widgets/HOME_ASSISTANT_WIDGET.md)** - Display sensor data from Home Assistant
 - **[Pi-hole Widget](widgets/PIHOLE_WIDGET.md)** - Display Pi-hole DNS blocking statistics
 - **[Docker Widget](widgets/DOCKER_WIDGET.md)** - Monitor and manage Docker containers
+- **[Crypto Ticker Widget](widgets/CRYPTO_WIDGET.md)** - Track cryptocurrency prices with live updates and historical charts
 
 ---
 

@@ -2,11 +2,11 @@
 
 ![Dashboard Screenshot](images/AnimatedBackgrounds.png)
 
-StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets you build your own layout with drag-and-drop panels, resize everything freely, then save, lock, and share your dashboard with other users. It comes with a bunch of built-in widgets so you can get useful fast.
+StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets you build your own layout with drag-and-drop panels, resize everything freely, then save, lock, and share your dashboard with other users. It comes with a bunch of built-in widgets so you can get useful fast. Think of it as a dashboard sandbox.
 
 The goal of StealthDash is to bring together information from multiple services securely and simply—so your “personal homepage” and your monitoring command center can be the same clean, reliable place.
 
-It started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
+StealthDash started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and other dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
 
 Concordia solved that by turning “setup” into a single step: open one browser tab and everything loads instantly, reliably, in the same positions across every screen.
 
@@ -23,7 +23,7 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **23 Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet and more
+- **20+ Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
 - **Multi-User** — Secure login, registration, password recovery, and admin management
 - **A Bunch of Themes** — Css themes allows simple switching and users can have different themes on each dashboard

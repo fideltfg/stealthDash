@@ -45,6 +45,7 @@ const widgetModules: Record<string, () => Promise<any>> = {
   'glances': () => import('../widgets/glances'),
   'tasks': () => import('../widgets/tasks'),
   'speedtest': () => import('../widgets/speedtest'),
+  'crypto': () => import('../widgets/crypto'),
 };
 
 // Track which widgets have been loaded

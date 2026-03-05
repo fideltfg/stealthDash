@@ -45,6 +45,7 @@ const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
   'glances': ['host', 'credentialId', 'refreshInterval', 'displayMode', 'showPerCpu', 'showContainers', 'showDiskIO', 'showAllFs', 'showAllNet'],
   'tasks': ['mode', 'todoistCredentialId', 'todoistFilter', 'localTasks', 'localCategories', 'refreshInterval', 'sortBy'],
   'speedtest': ['host', 'credentialId', 'refreshInterval', 'showChart', 'historyDays'],
+  'crypto': ['coins', 'currency', 'refreshInterval', 'showChart', 'chartDays'],
 };
 
 /**

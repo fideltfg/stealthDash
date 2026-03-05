@@ -135,7 +135,15 @@ export interface SpeedtestContent {
   historyDays?: number;
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent | SystemResourcesContent | TasksContent | SpeedtestContent;
+export interface CryptoContent {
+  coins: string[];
+  currency: string;
+  refreshInterval: number;
+  showChart: boolean;
+  chartDays: number;
+}
+
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent | SystemResourcesContent | TasksContent | SpeedtestContent | CryptoContent;
 
 export interface Widget {
   id: string;
