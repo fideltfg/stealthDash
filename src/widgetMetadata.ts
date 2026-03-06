@@ -1,13 +1,9 @@
 /**
  * Widget Metadata Registry
  * 
- * This file contains metadata for all available widgets.
- * It provides widget information to the client without requiring
- * the client to load all widget code.
- * 
- * When adding a new widget:
- * 1. Add its metadata here
- * 2. Add the widget module to src/widgets/types/index.ts
+ * Loads widget metadata from a JSON file generated at container startup
+ * by scripts/generate-widget-metadata.js. This avoids duplicating metadata
+ * and means adding a new widget only requires creating one file in src/widgets/.
  */
 
 export interface WidgetMetadataEntry {
@@ -20,240 +16,16 @@ export interface WidgetMetadataEntry {
   hasSettings: boolean;
 }
 
-export const widgetMetadata: WidgetMetadataEntry[] = [
-  {
-    type: 'image',
-    name: 'Image',
-    icon: '<i class="fa-regular fa-image"></i>',
-    description: 'Display images from URLs',
-    defaultSize: { w: 400, h: 400 },
-    defaultContent: { src: '', objectFit: 'contain' },
-    hasSettings: true
-  },
-  {
-    type: 'embed',
-    name: 'Embed',
-    icon: '<i class="fa-solid fa-globe"></i>',
-    description: 'Embed external websites in an iframe',
-    defaultSize: { w: 600, h: 400 },
-    defaultContent: { url: '' },
-    hasSettings: true
-  },
-  {
-    type: 'weather',
-    name: 'Weather',
-    icon: '<i class="fa-solid fa-cloud-sun"></i>',
-    description: 'Display weather information',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'clock',
-    name: 'Clock',
-    icon: '<i class="fa-regular fa-clock"></i>',
-    description: 'Display an analog or digital clock',
-    defaultSize: { w: 400, h: 500 },
-    defaultContent: { mode: 'analog' },
-    hasSettings: true
-  },
-  {
-    type: 'rss',
-    name: 'RSS Feed',
-    icon: '<i class="fa-solid fa-rss"></i>',
-    description: 'Display RSS feed items',
-    defaultSize: { w: 400, h: 500 },
-    defaultContent: { url: '', maxItems: 10 },
-    hasSettings: true
-  },
-  {
-    type: 'uptime',
-    name: 'Uptime Monitor',
-    icon: '<i class="fa-solid fa-chart-line"></i>',
-    description: 'Monitor website uptime and response times',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'comet-p8541',
-    name: 'Comet P8541',
-    icon: '<i class="fa-solid fa-temperature-half"></i>',
-    description: 'Display Comet P8541 sensor data',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'home-assistant',
-    name: 'Home Assistant',
-    icon: '<i class="fa-solid fa-house"></i>',
-    description: 'Display Home Assistant entities',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'mtnxml',
-    name: 'MTN XML',
-    icon: '<i class="fa-solid fa-person-skiing"></i>',
-    description: 'Display MTN XML data',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'envcanada',
-    name: 'Environment Canada',
-    icon: '<i class="fa-brands fa-canadian-maple-leaf"></i>',
-    description: 'Display Environment Canada weather data',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'pihole',
-    name: 'Pi-hole',
-    icon: '<i class="fa-solid fa-shield-halved"></i>',
-    description: 'Display Pi-hole statistics',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'google-calendar',
-    name: 'Google Calendar',
-    icon: '<i class="fa-solid fa-calendar-days"></i>',
-    description: 'Display Google Calendar events',
-    defaultSize: { w: 400, h: 500 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'unifi',
-    name: 'UniFi',
-    icon: '<i class="fa-solid fa-wifi"></i>',
-    description: 'Display UniFi network statistics',
-    defaultSize: { w: 400, h: 300 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'unifi-protect',
-    name: 'UniFi Protect',
-    icon: '<i class="fa-solid fa-video"></i>',
-    description: 'View UniFi Protect cameras and motion detections',
-    defaultSize: { w: 600, h: 500 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'unifi-sensor',
-    name: 'UniFi Environmental Sensors',
-    icon: '<i class="fa-solid fa-temperature-half"></i>',
-    description: 'Monitor temperature, humidity, and light from USL-Environmental devices',
-    defaultSize: { w: 400, h: 400 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'docker',
-    name: 'Docker',
-    icon: '<i class="fa-brands fa-docker"></i>',
-    description: 'Monitor and manage Docker containers',
-    defaultSize: { w: 400, h: 500 },
-    defaultContent: {},
-    hasSettings: true
-  },
-  {
-    type: 'gmail',
-    name: 'Gmail',
-    icon: '<i class="fa-solid fa-envelope"></i>',
-    description: 'Display Gmail inbox with unread messages and quick actions',
-    defaultSize: { w: 400, h: 600 },
-    defaultContent: {
-      labelIds: ['INBOX'],
-      maxResults: 20,
-      refreshInterval: 300
-    },
-    hasSettings: true
-  },
-  {
-    type: 'weather-dash',
-    name: 'Weather Dashboard',
-    icon: '<i class="fa-solid fa-mountain-sun"></i>',
-    description: 'Full weather dashboard with 24-hour hourly and 7-day daily forecasts',
-    defaultSize: { w: 1200, h: 800 },
-    defaultContent: { latitude: 0, longitude: 0, timezone: 'America/Edmonton', locationName: '' },
-    hasSettings: true
-  },
-  {
-    type: 'vnc',
-    name: 'VNC Remote Desktop',
-    icon: '<i class="fa-solid fa-desktop"></i>',
-    description: 'Connect to remote VNC servers and display their desktops',
-    defaultSize: { w: 800, h: 600 },
-    defaultContent: {
-      viewOnly: false,
-      scaleMode: 'local',
-      clipToWindow: true,
-      showDotCursor: false,
-      qualityLevel: 6,
-      compressionLevel: 2,
-      autoConnect: true,
-      reconnectDelay: 5
-    },
-    hasSettings: true
-  },
-  {
-    type: 'sensi',
-    name: 'Sensi Thermostat',
-    icon: '<i class="fa-solid fa-temperature-arrow-up"></i>',
-    description: 'Display and control Sensi thermostats',
-    defaultSize: { w: 420, h: 550 },
-    defaultContent: { refreshInterval: 30 },
-    hasSettings: true
-  },
-  {
-    type: 'glances',
-    name: 'Glances',
-    icon: '<i class="fa-solid fa-microchip"></i>',
-    description: 'Monitor CPU, memory, disk, network and load via Glances',
-    defaultSize: { w: 650, h: 450 },
-    defaultContent: { refreshInterval: 5 },
-    hasSettings: true
-  },
-  {
-    type: 'tasks',
-    name: 'Task List',
-    icon: '<i class="fa-solid fa-list-check"></i>',
-    description: 'Manage tasks locally or via Todoist',
-    defaultSize: { w: 380, h: 500 },
-    defaultContent: { mode: 'local', localTasks: [], sortBy: 'priority' },
-    hasSettings: true
-  },
-  {
-    type: 'speedtest',
-    name: 'Speedtest',
-    icon: '<i class="fa-solid fa-gauge-high"></i>',
-    description: 'Display internet speed results from Speedtest Tracker',
-    defaultSize: { w: 650, h: 450 },
-    defaultContent: { refreshInterval: 300 },
-    hasSettings: true
-  },
-  {
-    type: 'crypto',
-    name: 'Crypto Ticker',
-    icon: '<i class="fa-brands fa-bitcoin"></i>',
-    description: 'Track cryptocurrency prices with live updates and historical charts',
-    defaultSize: { w: 450, h: 600 },
-    defaultContent: {
-      coins: ['bitcoin', 'ethereum'],
-      currency: 'usd',
-      refreshInterval: 120,
-      showChart: true,
-      chartDays: 7
-    },
-    hasSettings: true
+let cachedMetadata: WidgetMetadataEntry[] | null = null;
+
+export async function loadWidgetMetadata(): Promise<WidgetMetadataEntry[]> {
+  if (cachedMetadata) return cachedMetadata;
+
+  const response = await fetch('/widget-metadata.json');
+  if (!response.ok) {
+    console.error('Failed to load widget-metadata.json:', response.status);
+    return [];
   }
-];
+  cachedMetadata = await response.json();
+  return cachedMetadata!;
+}

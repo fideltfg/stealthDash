@@ -620,4 +620,5 @@ export const widget: WidgetPlugin = {
     refreshInterval: 300,
   },
   hasSettings: true,
+  allowedFields: ['credentialId', 'labelIds', 'maxResults', 'refreshInterval'],
 };

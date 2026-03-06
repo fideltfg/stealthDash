@@ -1,4 +1,5 @@
 import type { Widget, MultiDashboardState } from '../types/types';
+import { getWidgetPlugin } from '../types/base-widget';
 
 /**
  * Sanitizes widget content before saving to remove sensitive credentials and runtime data.
@@ -17,46 +18,20 @@ import type { Widget, MultiDashboardState } from '../types/types';
  * - User configuration (URLs, hosts, ports, settings)
  * - Credential references (credentialId - reference to saved credential)
  * - Display preferences (modes, formats, enabled features)
+ * 
+ * Each widget declares its own allowedFields in its WidgetPlugin export.
  */
-
-// Define allowed fields for each widget type (configuration only, no runtime data or direct credentials)
-const ALLOWED_WIDGET_FIELDS: Record<string, string[]> = {
-  'text': ['markdown'],
-  'image': ['src', 'objectFit', 'alt'],
-  'embed': ['url', 'sandbox'],
-  'weather': ['location'], // Remove apiKey - widgets should use credentialId
-  'clock': ['timezone', 'format24h', 'showTimezone'],
-  'rss': ['feedUrl', 'maxItems', 'refreshInterval'],
-  'uptime': ['target', 'interval', 'timeout'],
-  'home-assistant': ['url', 'credentialId', 'entities', 'groups', 'refreshInterval'], // Remove token - use credentialId
-  'comet-p8541': ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName'],
-  'mtnxml': ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather'],
-  'envcanada': ['latitude', 'longitude', 'language', 'refreshInterval'],
-  'pihole': ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts'],
-  'unifi': ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts'],
-  'unifi-protect': ['host', 'credentialId', 'selectedCameras', 'displayMode', 'viewMode', 'maxDetections', 'detectionTypes', 'refreshInterval', 'autoRefreshDetections'],
-  'unifi-sensor': ['host', 'credentialId', 'selectedSensors', 'showTemperature', 'showHumidity', 'showLight', 'temperatureUnit', 'refreshInterval'],
-  'google-calendar': ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime'],
-  'docker': ['host', 'credentialId', 'refreshInterval', 'showAll'],
-  'gmail': ['credentialId', 'labelIds', 'maxResults', 'refreshInterval'],
-  'vnc': ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
-  'weather-dash': ['latitude', 'longitude', 'timezone', 'locationName'],
-  'sensi': ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices'],
-  'glances': ['host', 'credentialId', 'refreshInterval', 'displayMode', 'showPerCpu', 'showContainers', 'showDiskIO', 'showAllFs', 'showAllNet'],
-  'tasks': ['mode', 'todoistCredentialId', 'todoistFilter', 'localTasks', 'localCategories', 'refreshInterval', 'sortBy'],
-  'speedtest': ['host', 'credentialId', 'refreshInterval', 'showChart', 'historyDays'],
-  'crypto': ['coins', 'currency', 'refreshInterval', 'showChart', 'chartDays'],
-};
 
 /**
  * Sanitize a single widget's content
  */
 function sanitizeWidgetContent(widget: Widget): any {
-  const allowedFields = ALLOWED_WIDGET_FIELDS[widget.type];
-  
-  // If widget type not in allowlist, return empty object (safest approach)
+  const plugin = getWidgetPlugin(widget.type);
+  const allowedFields = plugin?.allowedFields;
+
+  // If widget type has no allowedFields, return empty object (safest approach)
   if (!allowedFields) {
-    console.warn(`Unknown widget type '${widget.type}' - saving with empty content for safety`);
+    console.warn(`Widget type '${widget.type}' has no allowedFields - saving with empty content for safety`);
     return {};
   }
   

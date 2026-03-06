@@ -656,5 +656,6 @@ export const widget = {
     refreshInterval: 30,
     showAll: false
   },
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'refreshInterval', 'showAll']
 };

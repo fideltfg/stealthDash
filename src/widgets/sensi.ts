@@ -949,4 +949,5 @@ export const widget = {
     refreshInterval: 30,
   } as SensiContent,
   hasSettings: true,
+  allowedFields: ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices'],
 };

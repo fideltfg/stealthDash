@@ -303,5 +303,6 @@ export const widget = {
   description: 'Display RSS/Atom feeds',
   renderer: new RssWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },
-  defaultContent: { feedUrl: '', maxItems: 10, refreshInterval: 300 }
+  defaultContent: { feedUrl: '', maxItems: 10, refreshInterval: 300 },
+  allowedFields: ['feedUrl', 'maxItems', 'refreshInterval']
 };

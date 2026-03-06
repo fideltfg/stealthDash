@@ -104,5 +104,6 @@ export const widget = {
   description: 'Display images from URLs',
   renderer: new ImageWidgetRenderer(),
   defaultSize: { w: 400, h: 400 },
-  defaultContent: { src: '', objectFit: 'contain' }
+  defaultContent: { src: '', objectFit: 'contain' },
+  allowedFields: ['src', 'objectFit', 'alt']
 };

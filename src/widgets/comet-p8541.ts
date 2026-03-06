@@ -1004,5 +1004,6 @@ export const widget: WidgetPlugin = {
       temp4: '',
       humidity: ''
     }
-  }
+  },
+  allowedFields: ['host', 'port', 'unitId', 'refreshInterval', 'enabledChannels', 'channelNames', 'temperatureUnit', 'displayMode', 'showAlarms', 'deviceName']
 };

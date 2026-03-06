@@ -306,5 +306,6 @@ export const widget = {
   description: 'World clock with timezone support',
   renderer: new ClockWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },
-  defaultContent: { timezone: '', format24h: false, showTimezone: true }
+  defaultContent: { timezone: '', format24h: false, showTimezone: true },
+  allowedFields: ['timezone', 'format24h', 'showTimezone']
 };

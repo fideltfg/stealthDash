@@ -1525,6 +1525,7 @@ export const widget = {
     entities: [],
     groups: [],
     refreshInterval: 5
-  }
+  },
+  allowedFields: ['url', 'credentialId', 'entities', 'groups', 'refreshInterval']
 };
 

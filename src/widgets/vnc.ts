@@ -665,4 +665,5 @@ export const widget = {
   defaultSize: { w: 800, h: 600 },
   defaultContent: { ...DEFAULT_CONTENT },
   hasSettings: true,
+  allowedFields: ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
 };

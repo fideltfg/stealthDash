@@ -199,6 +199,14 @@ class AuthService {
     return (await this.del(`/dashboard/${dashboardId}`)).success;
   }
 
+  async duplicateDashboard(sourceDashboardId: string, newDashboardId: string, newName: string): Promise<{ success: boolean; version?: number; dashboard?: any; error?: string }> {
+    if (!this.token) return { success: false, error: 'Not authenticated' };
+    const r = await this.post(`/dashboard/duplicate/${sourceDashboardId}`, { newDashboardId, newName });
+    return r.success
+      ? { success: true, version: r.data.version, dashboard: r.data.dashboard }
+      : { success: false, error: r.error };
+  }
+
   async toggleDashboardPublic(dashboardId: string, isPublic: boolean): Promise<{ success: boolean; isPublic?: boolean; error?: string }> {
     if (!this.token) return { success: false, error: 'Not authenticated' };
     const r = await this.post(`/dashboard/toggle-public/${dashboardId}`, { isPublic });

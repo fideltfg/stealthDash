@@ -16,6 +16,7 @@ export interface WidgetPlugin {
   renderer: WidgetRenderer;
   defaultSize?: { w: number; h: number };
   defaultContent?: any;
+  allowedFields?: string[]; // Content fields to persist when saving (sanitization allowlist)
   hasSettings?: boolean; // Whether to show settings button
 }
 

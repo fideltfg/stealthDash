@@ -14,7 +14,7 @@ import { UserSettingsUI } from './components/UserSettingsUI';
 import { AdminDashboardUI } from './components/AdminDashboardUI';
 import { CredentialsUI } from './components/CredentialsUI';
 import { BackgroundSettingsUI } from './components/BackgroundSettingsUI';
-import { widgetMetadata } from './widgetMetadata';
+import { loadWidgetMetadata } from './widgetMetadata';
 
 class Dashboard {
   private state: DashboardState;
@@ -1771,7 +1771,7 @@ class Dashboard {
     }
   }
 
-  private async addWidget(type: WidgetType, content: any): Promise<void> {
+  private async addWidget(type: WidgetType, content: any, defaultSize?: { w: number; h: number }): Promise<void> {
     // Load the widget module if not already loaded
     await loadWidgetModule(type);
 
@@ -1788,10 +1788,8 @@ class Dashboard {
     const canvasCenterX = centerX - this.state.viewport.x / this.state.zoom;
     const canvasCenterY = centerY - this.state.viewport.y / this.state.zoom;
 
-    // Set size based on widget type
-    const size = type === 'clock'
-      ? { w: 400, h: 500 }
-      : { ...DEFAULT_WIDGET_SIZE };
+    // Use widget-specific default size, fall back to global default
+    const size = defaultSize ? { ...defaultSize } : { ...DEFAULT_WIDGET_SIZE };
 
     const widget: Widget = {
       id,
@@ -1990,6 +1988,9 @@ class Dashboard {
     const searchInput = dialog.querySelector('#widget-search') as HTMLInputElement;
     const sortSelect = dialog.querySelector('#widget-sort') as HTMLSelectElement;
 
+    // Load metadata from generated JSON
+    const widgetMetadata = await loadWidgetMetadata();
+
     // Function to render widgets based on current filters
     const renderWidgets = () => {
       const searchTerm = searchInput.value.toLowerCase().trim();
@@ -2048,7 +2049,7 @@ class Dashboard {
           row.appendChild(content);
 
           row.addEventListener('click', () => {
-            this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {});
+            this.addWidget(widgetMeta.type as WidgetType, widgetMeta.defaultContent || {}, widgetMeta.defaultSize);
             dialog.remove();
           });
 
@@ -2558,6 +2559,9 @@ class Dashboard {
                 <button class="dashboard-manager-action-btn dashboard-manager-action-btn-rename dm-rename-btn" data-dashboard-id="${dashboard.id}" data-dashboard-name="${dashboard.name}" title="Rename">
                   <i class="fa-regular fa-pen-to-square"></i>
                 </button>
+                <button class="dashboard-manager-action-btn dashboard-manager-action-btn-duplicate dm-duplicate-btn" data-dashboard-id="${dashboard.id}" data-dashboard-name="${dashboard.name}" title="Duplicate">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
                 ${dashboards.length > 1 ? `
                   <button class="dashboard-manager-action-btn dashboard-manager-action-btn-delete dm-delete-btn" data-dashboard-id="${dashboard.id}" data-dashboard-name="${dashboard.name}" title="Delete">
                     <i class="fa-regular fa-trash-can"></i>
@@ -2653,6 +2657,46 @@ class Dashboard {
         } catch (error) {
           console.error('Error toggling public status:', error);
           alert('Failed to update dashboard visibility');
+        }
+      });
+    });
+
+    // Duplicate buttons
+    dialog.querySelectorAll('.dm-duplicate-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        const dashId = target.dataset.dashboardId!;
+        const currentName = target.dataset.dashboardName!;
+        const newName = prompt('Enter name for duplicated dashboard:', `${currentName} (copy)`);
+        if (newName && newName.trim()) {
+          const newId = generateUUID();
+          if (authService.isAuthenticated() && this.multiState) {
+            const result = await authService.duplicateDashboard(dashId, newId, newName.trim());
+            if (result.success && result.dashboard) {
+              // Re-key all widgets with new IDs to avoid duplicates
+              const clonedState = JSON.parse(JSON.stringify(result.dashboard.state));
+              clonedState.widgets = clonedState.widgets.map((w: Widget) => ({
+                ...w,
+                id: generateUUID()
+              }));
+              const newDashboard = {
+                id: newId,
+                name: newName.trim(),
+                state: clonedState,
+                isPublic: false,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+              };
+              this.multiState.dashboards.push(newDashboard);
+              // Save the re-keyed widget state back to the server
+              await authService.saveSingleDashboard(newId, newName.trim(), clonedState);
+              dialog.remove();
+              this.switchToDashboard(newId);
+            } else {
+              alert('Failed to duplicate dashboard: ' + (result.error || 'Unknown error'));
+            }
+          }
         }
       });
     });

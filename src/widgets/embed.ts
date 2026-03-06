@@ -167,5 +167,6 @@ export const widget = {
   description: 'Embed websites via iframe',
   renderer: new EmbedWidgetRenderer(),
   defaultSize: { w: 600, h: 400 },
-  defaultContent: { url: '' }
+  defaultContent: { url: '' },
+  allowedFields: ['url', 'sandbox']
 };

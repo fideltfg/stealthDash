@@ -112,6 +112,7 @@ export interface SystemResourcesContent {
   refreshInterval?: number;
   displayMode?: 'full' | 'compact';
   showPerCpu?: boolean;
+  showProcessCount?: boolean;
   showContainers?: boolean;
   showDiskIO?: boolean;
   showAllFs?: boolean;

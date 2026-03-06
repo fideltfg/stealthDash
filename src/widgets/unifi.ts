@@ -1786,6 +1786,7 @@ export const widget = {
   icon: '<i class="fas fa-wifi"></i>',
   description: 'Monitor UniFi network statistics and connected devices',
   renderer: new UnifiRenderer(),
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: '',
     site: 'default',
@@ -1794,5 +1795,6 @@ export const widget = {
     showClients: true,
     showAlerts: true
   },
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'site', 'displayMode', 'refreshInterval', 'showClients', 'showAlerts']
 };

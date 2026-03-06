@@ -1,0 +1,404 @@
+[
+  {
+    "type": "clock",
+    "name": "Clock",
+    "icon": "<i class=\"fas fa-clock\"></i>",
+    "description": "World clock with timezone support",
+    "defaultSize": {
+      "w": 400,
+      "h": 500
+    },
+    "defaultContent": {
+      "timezone": "",
+      "format24h": false,
+      "showTimezone": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "comet-p8541",
+    "name": "Comet P8541",
+    "icon": "<i class=\"fas fa-temperature-high\"></i>",
+    "description": "Multi-channel temperature and humidity sensor (Modbus TCP)",
+    "defaultSize": {
+      "w": 400,
+      "h": 500
+    },
+    "defaultContent": {
+      "host": "",
+      "port": 502,
+      "unitId": 1,
+      "refreshInterval": 10,
+      "temperatureUnit": "C",
+      "displayMode": "gauge",
+      "showAlarms": true,
+      "enabledChannels": {
+        "temp1": true,
+        "temp2": true,
+        "temp3": true,
+        "temp4": true,
+        "humidity": true
+      },
+      "channelNames": {
+        "temp1": "",
+        "temp2": "",
+        "temp3": "",
+        "temp4": "",
+        "humidity": ""
+      }
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "crypto",
+    "name": "Crypto Ticker",
+    "icon": "<i class=\"fa-brands fa-bitcoin\"></i>",
+    "description": "Track cryptocurrency prices with live updates and historical charts",
+    "defaultSize": {
+      "w": 450,
+      "h": 600
+    },
+    "defaultContent": {
+      "coins": [
+        "bitcoin",
+        "ethereum"
+      ],
+      "currency": "usd",
+      "refreshInterval": 120,
+      "showChart": true,
+      "chartDays": 7
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "docker",
+    "name": "Docker",
+    "icon": "<i class=\"fab fa-docker\"></i>",
+    "description": "Monitor and manage Docker containers",
+    "defaultSize": {
+      "w": 400,
+      "h": 500
+    },
+    "defaultContent": {
+      "host": "",
+      "credentialId": null,
+      "refreshInterval": 30,
+      "showAll": false
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "embed",
+    "name": "Embed",
+    "icon": "<i class=\"fas fa-globe\"></i>",
+    "description": "Embed websites via iframe",
+    "defaultSize": {
+      "w": 600,
+      "h": 400
+    },
+    "defaultContent": {
+      "url": ""
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "envcanada",
+    "name": "Environment Canada",
+    "icon": "<i class=\"fas fa-leaf\"></i>",
+    "description": "Display weather forecasts from Environment Canada",
+    "defaultSize": {
+      "w": 350,
+      "h": 500
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "glances",
+    "name": "System Resources",
+    "icon": "<i class=\"fa-solid fa-microchip\"></i>",
+    "description": "Monitor CPU, memory, disk, network, processes, containers and more via Glances",
+    "defaultSize": {
+      "w": 700,
+      "h": 550
+    },
+    "defaultContent": {
+      "refreshInterval": 5,
+      "showPerCpu": false,
+      "showProcessCount": false,
+      "showContainers": false,
+      "showDiskIO": false,
+      "showAllFs": false,
+      "showAllNet": false
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "gmail",
+    "name": "Gmail",
+    "icon": "<i class=\"fa-solid fa-envelope\"></i>",
+    "description": "Display Gmail inbox with unread messages and quick actions",
+    "defaultSize": {
+      "w": 400,
+      "h": 600
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "google-calendar",
+    "name": "Google Calendar",
+    "icon": "<i class=\"fas fa-calendar\"></i>",
+    "description": "Display upcoming events from Google Calendar",
+    "defaultSize": {
+      "w": 400,
+      "h": 600
+    },
+    "defaultContent": {
+      "calendarId": "",
+      "apiKey": "",
+      "maxEvents": 10,
+      "daysAhead": 30,
+      "refreshInterval": 300,
+      "displayMode": "compact",
+      "showTime": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "home-assistant",
+    "name": "Home Assistant",
+    "icon": "<i class=\"fas fa-home\"></i>",
+    "description": "Monitor and control Home Assistant entities",
+    "defaultSize": {
+      "w": 600,
+      "h": 400
+    },
+    "defaultContent": {
+      "url": "",
+      "token": "",
+      "entities": [],
+      "groups": [],
+      "refreshInterval": 5
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "image",
+    "name": "Image",
+    "icon": "<i class=\"fas fa-image\"></i>",
+    "description": "Display images from URLs",
+    "defaultSize": {
+      "w": 400,
+      "h": 400
+    },
+    "defaultContent": {
+      "src": "",
+      "objectFit": "contain"
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "mtnxml",
+    "name": "Mountain XML",
+    "icon": "<i class=\"fas fa-skiing\"></i>",
+    "description": "Display ski resort conditions from MTNXML feeds",
+    "defaultSize": {
+      "w": 350,
+      "h": 500
+    },
+    "defaultContent": {
+      "feedUrl": "",
+      "refreshInterval": 300,
+      "displayMode": "summary",
+      "showLifts": true,
+      "showTrails": true,
+      "showSnow": true,
+      "showWeather": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "pihole",
+    "name": "Pi-hole",
+    "icon": "<i class=\"fas fa-shield-alt\"></i>",
+    "description": "Display Pi-hole DNS statistics and blocking information",
+    "defaultSize": {
+      "w": 400,
+      "h": 500
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "rss",
+    "name": "RSS Feed",
+    "icon": "<i class=\"fas fa-rss\"></i>",
+    "description": "Display RSS/Atom feeds",
+    "defaultSize": {
+      "w": 400,
+      "h": 500
+    },
+    "defaultContent": {
+      "feedUrl": "",
+      "maxItems": 10,
+      "refreshInterval": 300
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "sensi",
+    "name": "Sensi Thermostat",
+    "icon": "<i class=\"fa-solid fa-temperature-arrow-up\"></i>",
+    "description": "Display and control Sensi thermostats",
+    "defaultSize": {
+      "w": 420,
+      "h": 550
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "speedtest",
+    "name": "Speedtest",
+    "icon": "<i class=\"fa-solid fa-gauge-high\"></i>",
+    "description": "Display internet speed results from Speedtest Tracker",
+    "defaultSize": {
+      "w": 650,
+      "h": 450
+    },
+    "defaultContent": {
+      "refreshInterval": 300,
+      "showChart": true,
+      "historyDays": 7
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "tasks",
+    "name": "Task List",
+    "icon": "<i class=\"fa-solid fa-list-check\"></i>",
+    "description": "Manage tasks with priorities, due dates, and categories",
+    "defaultSize": {
+      "w": 420,
+      "h": 550
+    },
+    "defaultContent": {
+      "mode": "local",
+      "sortBy": "priority",
+      "showCompleted": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "unifi-protect",
+    "name": "UniFi Protect",
+    "icon": "<i class=\"fas fa-video\"></i>",
+    "description": "View UniFi Protect cameras and motion detections",
+    "defaultSize": {
+      "w": 600,
+      "h": 500
+    },
+    "defaultContent": {
+      "host": "",
+      "displayMode": "both",
+      "viewMode": "snapshots",
+      "maxDetections": 10,
+      "refreshInterval": 30,
+      "selectedCameras": [],
+      "detectionTypes": [],
+      "autoRefreshDetections": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "unifi-sensor",
+    "name": "UniFi Environmental Sensors",
+    "icon": "<i class=\"fas fa-thermometer-half\"></i>",
+    "description": "Monitor temperature, humidity, and light from USL-Environmental devices",
+    "defaultSize": {
+      "w": 400,
+      "h": 400
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "unifi",
+    "name": "UniFi Network",
+    "icon": "<i class=\"fas fa-wifi\"></i>",
+    "description": "Monitor UniFi network statistics and connected devices",
+    "defaultSize": {
+      "w": 400,
+      "h": 300
+    },
+    "defaultContent": {
+      "host": "",
+      "site": "default",
+      "refreshInterval": 30,
+      "displayMode": "compact",
+      "showClients": true,
+      "showAlerts": true
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "uptime",
+    "name": "Uptime Monitor",
+    "icon": "<i class=\"fas fa-chart-bar\"></i>",
+    "description": "Monitor uptime via ping",
+    "defaultSize": {
+      "w": 500,
+      "h": 300
+    },
+    "defaultContent": {
+      "target": "",
+      "interval": 60,
+      "timeout": 5000
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "vnc",
+    "name": "VNC Remote Desktop",
+    "icon": "<i class=\"fas fa-desktop\"></i>",
+    "description": "Connect to remote VNC servers and display their desktops",
+    "defaultSize": {
+      "w": 800,
+      "h": 600
+    },
+    "defaultContent": {},
+    "hasSettings": true
+  },
+  {
+    "type": "weather-dash",
+    "name": "Weather Dashboard",
+    "icon": "<i class=\"fas fa-mountain-sun\"></i>",
+    "description": "Full weather dashboard with 24-hour hourly and 7-day daily forecasts",
+    "defaultSize": {
+      "w": 1200,
+      "h": 800
+    },
+    "defaultContent": {
+      "latitude": 0,
+      "longitude": 0,
+      "timezone": "America/Edmonton",
+      "locationName": ""
+    },
+    "hasSettings": true
+  },
+  {
+    "type": "weather",
+    "name": "Weather",
+    "icon": "<i class=\"fas fa-cloud-sun\"></i>",
+    "description": "Display weather information",
+    "defaultSize": {
+      "w": 340,
+      "h": 580
+    },
+    "defaultContent": {
+      "location": ""
+    },
+    "hasSettings": true
+  }
+]

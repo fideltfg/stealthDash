@@ -8,6 +8,7 @@ services:
       # Mount source code for hot reload during development
       - ./src:/app/src
       - ./http:/app/http
+      - ./scripts:/app/scripts
       - ./vite.config.ts:/app/vite.config.ts
       # Prevent node_modules from being overwritten
       - /app/node_modules

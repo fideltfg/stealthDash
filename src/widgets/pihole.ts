@@ -374,5 +374,6 @@ export const widget = {
     refreshInterval: 30,
     displayMode: 'detailed',
     showCharts: false
-  }
+  },
+  allowedFields: ['host', 'credentialId', 'displayMode', 'refreshInterval', 'showCharts']
 };

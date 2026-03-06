@@ -337,6 +337,60 @@ router.get('/api/unifi-protect/camera/:cameraId/snapshot', async (req, res) => {
   }
 });
 
+// Event thumbnail endpoint
+router.get('/api/unifi-protect/event/:eventId/thumbnail', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { host, credentialId } = req.query;
+    
+    if (!host || !credentialId || !eventId) {
+      return respond.badRequest(res, 'Missing required parameters');
+    }
+    
+    let credentials;
+    try {
+      const decoded = verifyAuth(req);
+      credentials = await getCredentials(credentialId, decoded.userId);
+    } catch (err) {
+      return respond.unauthorized(res, 'Invalid authentication token');
+    }
+    
+    if (!credentials.username || !credentials.password) {
+      return respond.badRequest(res, 'Credentials missing username or password');
+    }
+    
+    const fetch = (await import('node-fetch')).default;
+    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    const cacheKey = crypto.createHash('md5').update(`${host}:${credentialId}`).digest('hex');
+    
+    const { authToken, cookies } = await getProtectSession(fetch, httpsAgent, host, credentials.username, credentials.password, cacheKey);
+    
+    const headers = {};
+    if (cookies.length > 0) headers['Cookie'] = cookies.join('; ');
+    if (authToken) headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    
+    const thumbnailUrl = `${host}/proxy/protect/api/events/${eventId}/thumbnail`;
+    const thumbnailResponse = await fetch(thumbnailUrl, {
+      headers: headers,
+      agent: httpsAgent,
+      timeout: 10000
+    });
+    
+    if (!thumbnailResponse.ok) {
+      return res.status(thumbnailResponse.status).json({ error: 'Failed to fetch event thumbnail', details: thumbnailResponse.statusText });
+    }
+    
+    res.set('Content-Type', thumbnailResponse.headers.get('content-type') || 'image/jpeg');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    thumbnailResponse.body.pipe(res);
+    
+  } catch (error) {
+    console.error('UniFi Protect thumbnail error:', error);
+    res.status(500).json({ error: error.message, details: 'Failed to fetch event thumbnail' });
+  }
+});
+
 module.exports = {
   name: 'unifi-protect',
   description: 'UniFi Protect API proxy (cameras, events, sensors)',

@@ -275,5 +275,6 @@ export const widget = {
   description: 'Display weather information',
   renderer: new WeatherWidgetRenderer(),
   defaultSize: { w: 340, h: 580 },
-  defaultContent: { location: '' }
+  defaultContent: { location: '' },
+  allowedFields: ['location']
 };

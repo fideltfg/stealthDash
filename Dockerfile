@@ -12,8 +12,11 @@ RUN npm install
 # Copy application files
 COPY . .
 
+# Generate widget metadata JSON from widget source files
+RUN node scripts/generate-widget-metadata.js
+
 # Expose Vite dev server port
 EXPOSE 3000
 
 # Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["sh", "-c", "node scripts/generate-widget-metadata.js && npm run dev -- --host 0.0.0.0"]

@@ -380,5 +380,6 @@ export const widget = {
     temperatureUnit: 'both',
     refreshInterval: 30
   },
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'selectedSensors', 'showTemperature', 'showHumidity', 'showLight', 'temperatureUnit', 'refreshInterval']
 };

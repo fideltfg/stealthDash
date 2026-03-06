@@ -1,6 +1,6 @@
 # stealthDash
 
-![Dashboard Screenshot](images/AnimatedBackgrounds.png)
+
 
 StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets you build your own layout with drag-and-drop panels, resize everything freely, then save, lock, and share your dashboard with other users. It comes with a bunch of built-in widgets so you can get useful fast. Think of it as a dashboard sandbox.
 
@@ -19,6 +19,8 @@ StealthDash is still under active development, and a few minor bugs and styling 
 Deployment is simple with Docker and docker-compose. In just a few minutes you can have StealthDash running and start building your own personalized dashboard.
 
 StealthDash uses plugin-style widgets to display nearly anything—from embedded webpages to remote sessions over VNC. Support for protocols like Modbus also makes it possible to connect to a wide range of industrial devices. Existing widgets for UniFi, Sensi, Home Assistant, Comet, and more provide solid examples of how the system works—and how to build your own custom widgets.
+
+![Dashboard Screenshot](images/AnimatedBackgrounds.png)
 
 ## Features
 
@@ -173,6 +175,8 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 
 **Fullscreen**
 - Toggle fullscreen mode from the menu
+
+![Dashboard Screenshot](images/AnimatedBackgrounds3.png)
 
 ### Credential Management
 

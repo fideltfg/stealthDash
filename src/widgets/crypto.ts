@@ -427,6 +427,17 @@ export class CryptoWidgetRenderer implements WidgetRenderer {
 export const widget = {
     type: 'crypto',
     name: 'Crypto Ticker',
+    icon: '<i class="fa-brands fa-bitcoin"></i>',
+    description: 'Track cryptocurrency prices with live updates and historical charts',
     renderer: new CryptoWidgetRenderer(),
+    defaultSize: { w: 450, h: 600 },
+    defaultContent: {
+        coins: ['bitcoin', 'ethereum'],
+        currency: 'usd',
+        refreshInterval: 120,
+        showChart: true,
+        chartDays: 7
+    },
     hasSettings: true,
+    allowedFields: ['coins', 'currency', 'refreshInterval', 'showChart', 'chartDays'],
 };

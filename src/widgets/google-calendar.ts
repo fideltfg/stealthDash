@@ -603,5 +603,6 @@ export const widget = {
     refreshInterval: 300,
     displayMode: 'compact',
     showTime: true
-  }
+  },
+  allowedFields: ['credentialId', 'displayMode', 'maxEvents', 'daysAhead', 'refreshInterval', 'showTime']
 };

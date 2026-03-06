@@ -188,5 +188,6 @@ export const widget: WidgetPlugin = {
   renderer: new SpeedtestRenderer(),
   defaultSize: { w: 650, h: 450 },
   defaultContent: { refreshInterval: 300, showChart: true, historyDays: 7 },
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'refreshInterval', 'showChart', 'historyDays']
 };

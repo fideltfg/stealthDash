@@ -137,6 +137,9 @@ class UnifiProtectRenderer implements WidgetRenderer {
           this.renderBoth(contentEl, data, content);
         }
         
+        // Load images through authenticated fetch
+        this.loadAuthImages(contentEl);
+        
       } catch (error: any) {
         console.error('Error fetching UniFi Protect data:', error);
         contentEl.innerHTML = `
@@ -527,16 +530,16 @@ class UnifiProtectRenderer implements WidgetRenderer {
       : event.type;
 
     const thumbnailUrl = event.thumbnail 
-      ? `${content.host}/proxy/protect/api/events/${event.id}/thumbnail?${new URLSearchParams({ credentialId: content.credentialId?.toString() || '' })}`
+      ? `${getPingServerUrl()}/api/unifi-protect/event/${event.id}/thumbnail?host=${encodeURIComponent(content.host)}&credentialId=${content.credentialId}`
       : '';
 
     return `
       <div class="list-item">
         ${thumbnailUrl ? `
           <div class="protect-detection-thumbnail">
-            <img src="${thumbnailUrl}" 
+            <img data-auth-src="${thumbnailUrl}" 
               class="protect-detection-img"
-              onerror="this.onerror=null; this.src='https://placehold.co/60';">
+              style="width:60px;height:60px;object-fit:cover;background:var(--surface);">
           </div>
         ` : ''}
         <div class="flex-1 truncate">
@@ -595,16 +598,15 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const statusText = isOnline ? 'Online' : 'Offline';
     
     const snapshotUrl = isOnline 
-      ? `/api/unifi-protect/camera/${camera.id}/snapshot?host=${encodeURIComponent(content.host)}&credentialId=${content.credentialId}&ts=${Date.now()}`
+      ? `${getPingServerUrl()}/api/unifi-protect/camera/${camera.id}/snapshot?host=${encodeURIComponent(content.host)}&credentialId=${content.credentialId}&ts=${Date.now()}`
       : '';
 
     return `
       <div class="card" style="overflow: hidden;">
         ${(viewMode === 'snapshots' || viewMode === 'both') && isOnline ? `
           <div style="width: 100%; height: 180px; background: var(--surface); position: relative;">
-            <img src="${snapshotUrl}" 
-              style="width: 100%; height: 100%; object-fit: cover;"
-              onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:14px;\\'>Snapshot unavailable</div>'">
+            <img data-auth-src="${snapshotUrl}" 
+              style="width: 100%; height: 100%; object-fit: cover;">
             ${camera.isRecording ? `
               <div style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.9); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
                 <span style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></span>
@@ -684,6 +686,31 @@ class UnifiProtectRenderer implements WidgetRenderer {
     `;
   }
 
+  private loadAuthImages(container: HTMLElement): void {
+    const images = container.querySelectorAll('img[data-auth-src]') as NodeListOf<HTMLImageElement>;
+    images.forEach(img => {
+      const url = img.getAttribute('data-auth-src');
+      if (!url) return;
+      img.removeAttribute('data-auth-src');
+      fetch(url, { headers: getAuthHeaders(false) })
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.blob();
+        })
+        .then(blob => {
+          img.src = URL.createObjectURL(blob);
+          img.onload = () => URL.revokeObjectURL(img.src);
+        })
+        .catch(() => {
+          const parent = img.parentElement;
+          if (parent) {
+            img.style.display = 'none';
+            parent.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:14px;">Snapshot unavailable</div>';
+          }
+        });
+    });
+  }
+
   destroy(): void {
     this.poller.stopAll();
     this.eventStreams.forEach(stream => stream.close());
@@ -697,6 +724,7 @@ export const widget = {
   icon: '<i class="fas fa-video"></i>',
   description: 'View UniFi Protect cameras and motion detections',
   renderer: new UnifiProtectRenderer(),
+  defaultSize: { w: 600, h: 500 },
   defaultContent: {
     host: '',
     displayMode: 'both',
@@ -707,5 +735,6 @@ export const widget = {
     detectionTypes: [],
     autoRefreshDetections: true
   },
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'selectedCameras', 'displayMode', 'viewMode', 'maxDetections', 'detectionTypes', 'refreshInterval', 'autoRefreshDetections']
 };

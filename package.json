@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "generate-metadata": "node scripts/generate-widget-metadata.js",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node scripts/generate-widget-metadata.js && tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {

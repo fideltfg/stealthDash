@@ -339,6 +339,64 @@ router.get('/public/:dashboardId', async (req, res) => {
   }
 });
 
+// Duplicate a dashboard (including all settings and widgets)
+router.post('/duplicate/:dashboardId', authMiddleware, async (req, res) => {
+  const { dashboardId } = req.params;
+  const { newDashboardId, newName } = req.body;
+
+  if (!newDashboardId || !newName) {
+    return res.status(400).json({ error: 'New dashboard ID and name are required' });
+  }
+
+  try {
+    // Find the source dashboard
+    const source = await db.query(
+      `SELECT dashboard_id, name, dashboard_data, is_public
+       FROM dashboards
+       WHERE user_id = $1 AND dashboard_id = $2`,
+      [req.user.userId, dashboardId]
+    );
+
+    if (source.rows.length === 0) {
+      return res.status(404).json({ error: 'Source dashboard not found' });
+    }
+
+    const row = source.rows[0];
+
+    // Insert the duplicated dashboard (always private, not active)
+    const result = await db.query(`
+      INSERT INTO dashboards (user_id, dashboard_id, name, dashboard_data, is_active, is_public)
+      VALUES ($1, $2, $3, $4, false, false)
+      RETURNING EXTRACT(EPOCH FROM updated_at) as version
+    `, [
+      req.user.userId,
+      newDashboardId,
+      newName,
+      JSON.stringify(row.dashboard_data)
+    ]);
+
+    const version = result.rows[0]?.version ? parseFloat(result.rows[0].version) : undefined;
+
+    console.log('✅ Duplicated dashboard', dashboardId, '->', newDashboardId, 'for user', req.user.userId);
+    res.json({
+      success: true,
+      message: 'Dashboard duplicated successfully',
+      version,
+      dashboard: {
+        id: newDashboardId,
+        name: newName,
+        state: row.dashboard_data,
+        isPublic: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+    });
+  } catch (error) {
+    console.error('Duplicate dashboard error:', error);
+    res.status(500).json({ error: 'Failed to duplicate dashboard' });
+  }
+});
+
 // Lightweight version check - returns only timestamps per dashboard
 router.get('/versions', authMiddleware, async (req, res) => {
   try {

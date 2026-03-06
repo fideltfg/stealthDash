@@ -447,5 +447,6 @@ export const widget = {
     longitude: '',
     language: 'e',
     refreshInterval: 1800 // 30 minutes
-  }
+  },
+  allowedFields: ['latitude', 'longitude', 'language', 'refreshInterval']
 };

@@ -571,5 +571,6 @@ export const widget: WidgetPlugin = {
   renderer: new TasksRenderer(),
   defaultSize: { w: 420, h: 550 },
   defaultContent: { mode: 'local', sortBy: 'priority', showCompleted: true } as TasksContent,
-  hasSettings: true
+  hasSettings: true,
+  allowedFields: ['mode', 'todoistCredentialId', 'todoistFilter', 'localTasks', 'localCategories', 'refreshInterval', 'sortBy']
 };

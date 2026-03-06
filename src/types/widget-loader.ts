@@ -19,34 +19,19 @@ import { registerWidget } from './base-widget';
  * - Better user experience, especially on slower connections
  * 
  * ADDING NEW WIDGETS:
- * Just add the widget type to the widgetModules map below with its lazy import.
+ * Just drop a new .ts file in src/widgets/ with an `export const widget` object.
+ * It will be auto-discovered — no manual registration needed.
  */
-const widgetModules: Record<string, () => Promise<any>> = {
-  'image': () => import('../widgets/image'),
-  'embed': () => import('../widgets/embed'),
-  'weather': () => import('../widgets/weather'),
-  'clock': () => import('../widgets/clock'),
-  'rss': () => import('../widgets/rss'),
-  'uptime': () => import('../widgets/uptime'),
-  'comet-p8541': () => import('../widgets/comet-p8541'),
-  'home-assistant': () => import('../widgets/home-assistant'),
-  'mtnxml': () => import('../widgets/mtnxml'),
-  'envcanada': () => import('../widgets/envcanada'),
-  'pihole': () => import('../widgets/pihole'),
-  'google-calendar': () => import('../widgets/google-calendar'),
-  'unifi': () => import('../widgets/unifi'),
-  'unifi-protect': () => import('../widgets/unifi-protect'),
-  'unifi-sensor': () => import('../widgets/unifi-sensor'),
-  'docker': () => import('../widgets/docker'),
-  'gmail': () => import('../widgets/gmail'),
-  'vnc': () => import('../widgets/vnc'),
-  'weather-dash': () => import('../widgets/weather-dash'),
-  'sensi': () => import('../widgets/sensi'),
-  'glances': () => import('../widgets/glances'),
-  'tasks': () => import('../widgets/tasks'),
-  'speedtest': () => import('../widgets/speedtest'),
-  'crypto': () => import('../widgets/crypto'),
-};
+
+// Auto-discover all widget modules via Vite's import.meta.glob (lazy by default)
+const rawModules = import.meta.glob('../widgets/*.ts') as Record<string, () => Promise<any>>;
+const widgetModules: Record<string, () => Promise<any>> = {};
+for (const [path, loader] of Object.entries(rawModules)) {
+  const name = path.replace('../widgets/', '').replace('.ts', '');
+  if (name !== 'timezones') {
+    widgetModules[name] = loader;
+  }
+}
 
 // Track which widgets have been loaded
 const loadedWidgets = new Set<string>();

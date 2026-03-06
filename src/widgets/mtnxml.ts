@@ -495,5 +495,6 @@ export const widget = {
     showTrails: true,
     showSnow: true,
     showWeather: true
-  }
+  },
+  allowedFields: ['feedUrl', 'refreshInterval', 'displayMode', 'showLifts', 'showTrails', 'showSnow', 'showWeather']
 };

@@ -12,6 +12,9 @@ RUN npm install
 # Copy source
 COPY . .
 
+# Generate widget metadata JSON from widget source files
+RUN node scripts/generate-widget-metadata.js
+
 # Build application
 RUN npm run build
 

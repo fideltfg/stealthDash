@@ -440,5 +440,6 @@ export const widget = {
   description: 'Full weather dashboard with 24-hour hourly and 7-day daily forecasts',
   renderer: new WeatherDashWidgetRenderer(),
   defaultSize: { w: 1200, h: 800 },
-  defaultContent: { latitude: 0, longitude: 0, timezone: 'America/Edmonton', locationName: '' }
+  defaultContent: { latitude: 0, longitude: 0, timezone: 'America/Edmonton', locationName: '' },
+  allowedFields: ['latitude', 'longitude', 'timezone', 'locationName']
 };

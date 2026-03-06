@@ -31,7 +31,7 @@ function sparkline(points: number[], w = 120, h = 28): string {
   const max = Math.max(...points, 1);
   const step = w / (points.length - 1);
   const pts = points.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width=".75"/></svg>`;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--text)" stroke-width=".75"/></svg>`;
 }
 
 function barColor(pct: number): string {
@@ -42,8 +42,8 @@ function barColor(pct: number): string {
 }
 
 function progressBar(pct: number): string {
-  if(pct <= 0) return '';
-  return `<div class="sr-bar"><div class="sr-bar-fill" style="width:${pct}%;background:${barColor(pct)}"></div></div>`;
+  if (pct <= 0) return '';
+  return `<div class="sr-bar" style="margin: 0;"><div class="sr-bar-fill" style=" width:${pct}%;background:${barColor(pct)}"></div></div>`;
 }
 
 /** Stat card using existing .card / .card-header / .card-body / .card-row patterns */
@@ -52,12 +52,12 @@ function statCard(icon: string, label: string, value: string, rows: [string, str
     <div class="card-header">${icon}<span class="card-title">${label}</span></div>
     <div class="card-body" style="font-size:1.5em;font-weight:700">${value}</div>
     ${progressBar(pct)}
-    ${spark ? `<div style="margin-top:4px">${spark}</div>` : ''}
+    ${spark ? `<div class="sparkline-container">${spark}</div>` : ''}
     ${rows.map(([l, v]) => `<div class="card-row"><span class="card-row-label">${l}</span><span class="card-row-value">${v}</span></div>`).join('')}
   </div>`;
 }
 
-class SystemResourcesRenderer implements WidgetRenderer {
+class GlancesRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
   private history = new Map<string, number[]>();
   private maxPoints = 30;
@@ -116,7 +116,7 @@ class SystemResourcesRenderer implements WidgetRenderer {
     // System info header
     const sysInfo = [d.system.os_name, d.system.os_version].filter(Boolean).join(' ');
     const cpuName = d.quicklook?.cpu_name || '';
-    const cpuHz = d.quicklook?.cpu_hz_current ? `${(d.quicklook.cpu_hz_current / 1e9).toFixed(2)} GHz` : '';
+    //const cpuHz = d.quicklook?.cpu_hz_current ? `${(d.quicklook.cpu_hz_current / 1e9).toFixed(2)} GHz` : '';
     // let htmltitle = `<div>
     // <h5>    <i class="fas fa-server"></i> ${escapeHtml(d.system.hostname)}</h5>
     // <subtitle>${[sysInfo, d.uptime ? `up ${d.uptime}` : ''].filter(Boolean).join(' · ')}</subtitle>
@@ -127,10 +127,14 @@ class SystemResourcesRenderer implements WidgetRenderer {
     const cpuRows: [string, string][] = [
       ['User / System', `${d.cpu.user.toFixed(0)}% / ${d.cpu.system.toFixed(0)}%`],
     ];
-    if (d.cpu.iowait > 0) cpuRows.push(['I/O Wait', `${d.cpu.iowait.toFixed(1)}%`]);
-    if (cpuName) cpuRows.push(['Model', `${cpuName}${cpuHz ? ` · ${cpuHz}` : ''}`]);
+    cpuRows.push(['I/O Wait', `${d.cpu.iowait.toFixed(1)}%`]);
+    // if (cpuName) cpuRows.push(['Model', `${cpuName}`]);
     if (d.cpu.cpucore) cpuRows.push(['Cores', `${d.cpu.cpucore}`]);
-    html += statCard('<i class="fas fa-microchip"></i>', 'CPU', `${d.cpu.total.toFixed(1)}%`,
+
+    const l = (d.load.min1) * 100;
+    cpuRows.push(['Load (1m)', `${d.load.min1.toFixed(2)} (${l.toFixed(0)}%)`]);
+    cpuRows.push([sysInfo ? 'OS' : '', sysInfo]);
+    html += statCard('<i class="fas fa-microchip"></i>', 'SYSTEM', `${d.cpu.total.toFixed(1)}%`,
       cpuRows, d.cpu.total, sparkline(cpuHist));
 
     // Per-CPU bars
@@ -138,8 +142,9 @@ class SystemResourcesRenderer implements WidgetRenderer {
       html += `<div class="card">
         <div class="card-header"><i class="fas fa-bars-staggered"></i><span class="card-title">Per-Core</span></div>
         ${d.percpu.map(core => {
-        const pct = Math.min(core.total, 100);
-        return `<div class="card-row"><span class="card-row-label">${core.cpu_number}</span><div class="flex-1">${progressBar(pct)}</div><span class="card-row-value">${pct.toFixed(0)}%</span></div>`;
+        const pct1 = Math.min(core.total, 100);
+        const pct2 = Math.min(core.total, 100);
+        return `<div class="card-row"><span class="card-row-label" style="padding: 0 3px;">${core.cpu_number}</span><div class="flex-1">${progressBar(pct1)}</div><span class="card-row-value" style="padding: 0 3px;">${pct2.toFixed(0)}%</span></div>`;
       }).join('')}
       </div>`;
     }
@@ -155,20 +160,23 @@ class SystemResourcesRenderer implements WidgetRenderer {
       memRows, d.mem.percent, sparkline(memHist));
 
     // Load
-    if (!compact) {
-      const loadPct = (d.load.min1 / (d.load.cpucore || 1)) * 100;
-      html += statCard('<i class="fas fa-tachometer-alt"></i>', 'Load', d.load.min1.toFixed(2),
-        [['5m / 15m', `${d.load.min5.toFixed(2)} / ${d.load.min15.toFixed(2)}`]], loadPct, '');
-    }
+    // if (!compact) {
+    //   const loadPct = (d.load.min1 / (d.load.cpucore || 1)) * 100;
+    //   html += statCard('<i class="fas fa-tachometer-alt"></i>', 'Load', d.load.min1.toFixed(2),
+    //     [['5m / 15m', `${d.load.min5.toFixed(2)} / ${d.load.min15.toFixed(2)}`]], loadPct, '');
+    // }
 
     // Processes
-    if (d.processcount && !compact) {
+    if (c.showProcessCount ) {
       const p = d.processcount;
-      html += statCard('<i class="fas fa-list-ol"></i>', 'Processes', `${p.total}`,
+      if(p){
+      html += statCard('<i class="fas fa-list-ol"></i>', 'Process Count', `${p.total}`,
         [['Running', `${p.running}`], ['Sleeping', `${p.sleeping}`], ['Threads', `${p.thread}`]], 0, '');
     }
+  }
 
     // Filesystems
+    if(c.showAllFs) {
     const fsList = c.showAllFs ? d.fs : d.fs.slice(0, 1);
     for (const fs of fsList) {
       const fsLabel = fs.mnt_point === '/rootfs' ? '/' : fs.mnt_point;
@@ -176,9 +184,10 @@ class SystemResourcesRenderer implements WidgetRenderer {
         [['Used / Total', `${formatBytes(fs.used)} / ${formatBytes(fs.size)}`],
         ...(fs.fs_type ? [['Type', fs.fs_type] as [string, string]] : [])], fs.percent, '');
     }
+  }
 
     // Disk I/O
-    if (c.showDiskIO && d.diskio.length > 0 && !compact) {
+    if (c.showDiskIO) {
       html += `<div class="card">
         <div class="card-header"><i class="fas fa-arrow-right-arrow-left"></i><span class="card-title">Disk I/O</span></div>
         ${d.diskio.map(disk => {
@@ -190,19 +199,21 @@ class SystemResourcesRenderer implements WidgetRenderer {
     }
 
     // Network
-    const netList = c.showAllNet ? d.network : d.network.slice(0, 1);
-    for (const net of netList) {
-      const rxHist = this.push(`net-rx-${net.interface_name}`, net.rx);
-      const speedLabel = net.speed > 0 ? (net.speed >= 1e9 ? (net.speed / 1e9).toFixed(0) + ' Gbps' : (net.speed / 1e6).toFixed(0) + ' Mbps') : '';
-      const netRows: [string, string][] = [
-        ['Download', `${formatBytes(net.rx)}/s`],
-        ['Upload', `${formatBytes(net.tx)}/s`],
-      ];
-      if (speedLabel) netRows.push(['Link Speed', speedLabel]);
-      html += statCard('<i class="fas fa-network-wired"></i>', net.interface_name, `↓ ${formatBytes(net.rx)}/s`,
-        netRows, 0, sparkline(rxHist));
-    }
+    if (c.showAllNet) {
+      const netList = c.showAllNet ? d.network : d.network.slice(0, 1);
+      for (const net of netList) {
+        const rxHist = this.push(`net-rx-${net.interface_name}`, net.rx);
+        const speedLabel = net.speed > 0 ? (net.speed >= 1e9 ? (net.speed / 1e9).toFixed(0) + ' Gbps' : (net.speed / 1e6).toFixed(0) + ' Mbps') : '';
+        const netRows: [string, string][] = [
+          ['Download', `${formatBytes(net.rx)}/s`],
+          ['Upload', `${formatBytes(net.tx)}/s`],
+        ];
+        if (speedLabel) netRows.push(['Link Speed', speedLabel]);
+        html += statCard('<i class="fas fa-network-wired"></i>', net.interface_name, `↓ ${formatBytes(net.rx)}/s`,
+          netRows, 0, sparkline(rxHist));
+      }
 
+    }
     // Swap
     if (d.swap.total > 0 && !compact) {
       html += statCard('<i class="fas fa-rotate"></i>', 'Swap', `${d.swap.percent.toFixed(1)}%`,
@@ -292,6 +303,9 @@ class SystemResourcesRenderer implements WidgetRenderer {
       <div class="widget-dialog-field large-margin">
         <label class="widget-checkbox-label"><input type="checkbox" id="sr-percpu" class="widget-checkbox" ${c.showPerCpu ? 'checked' : ''}/><span>Show per-core CPU bars</span></label>
       </div>
+        <div class="widget-dialog-field large-margin">
+        <label class="widget-checkbox-label"><input type="checkbox" id="sr-processcount" class="widget-checkbox" ${c.showProcessCount ? 'checked' : ''}/><span>Show process count</span></label>
+      </div>
       <div class="widget-dialog-field large-margin">
         <label class="widget-checkbox-label"><input type="checkbox" id="sr-containers" class="widget-checkbox" ${c.showContainers ? 'checked' : ''}/><span>Show Docker containers</span></label>
       </div>
@@ -331,6 +345,7 @@ class SystemResourcesRenderer implements WidgetRenderer {
         displayMode: (dialog.querySelector('#sr-mode') as HTMLSelectElement).value as 'full' | 'compact',
         refreshInterval: parseInt((dialog.querySelector('#sr-interval') as HTMLInputElement).value) || 5,
         showPerCpu: (dialog.querySelector('#sr-percpu') as HTMLInputElement).checked,
+        showProcessCount: (dialog.querySelector('#sr-processcount') as HTMLInputElement).checked,
         showContainers: (dialog.querySelector('#sr-containers') as HTMLInputElement).checked,
         showDiskIO: (dialog.querySelector('#sr-diskio') as HTMLInputElement).checked,
         showAllFs: (dialog.querySelector('#sr-allfs') as HTMLInputElement).checked,
@@ -346,8 +361,9 @@ export const widget: WidgetPlugin = {
   name: 'System Resources',
   icon: '<i class="fa-solid fa-microchip"></i>',
   description: 'Monitor CPU, memory, disk, network, processes, containers and more via Glances',
-  renderer: new SystemResourcesRenderer(),
+  renderer: new GlancesRenderer(),
   defaultSize: { w: 700, h: 550 },
-  defaultContent: { refreshInterval: 5, showPerCpu: false, showContainers: true, showDiskIO: false, showAllFs: false, showAllNet: false },
-  hasSettings: true
+  defaultContent: { refreshInterval: 5, showPerCpu: false, showProcessCount: false, showContainers: false, showDiskIO: false, showAllFs: false, showAllNet: false },
+  hasSettings: true,
+  allowedFields: ['host', 'credentialId', 'refreshInterval', 'displayMode', 'showPerCpu', 'showProcessCount', 'showContainers', 'showDiskIO', 'showAllFs', 'showAllNet']
 };

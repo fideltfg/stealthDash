@@ -430,5 +430,6 @@ export const widget = {
   description: 'Monitor uptime via ping',
   renderer: new UptimeWidgetRenderer(),
   defaultSize: { w: 500, h: 300 },
-  defaultContent: { target: '', interval: 60, timeout: 5000 }
+  defaultContent: { target: '', interval: 60, timeout: 5000 },
+  allowedFields: ['target', 'interval', 'timeout']
 };
