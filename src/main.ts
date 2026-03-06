@@ -48,6 +48,8 @@ class Dashboard {
   private isOutOfSync: boolean = false;
   private syncStatusUnsubscribe: (() => void) | null = null;
   private _systemThemeListener: (() => void) | null = null;
+  private uiFadeTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly UI_FADE_DELAY = 5000; // 30 seconds of inactivity before fading UI
 
   /** Save zoom + viewport to sessionStorage for the given dashboard */
   private saveLocalViewState(dashboardId: string): void {
@@ -988,6 +990,42 @@ class Dashboard {
     this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
     this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+
+    // UI auto-fade on inactivity
+    this.setupUIAutoFade();
+  }
+
+  private setupUIAutoFade(): void {
+    const resetFadeTimer = () => {
+      const app = document.getElementById('app');
+      if (!app) return;
+
+      // If currently faded, use restoring class for fast fade-in
+      if (app.classList.contains('ui-faded')) {
+        app.classList.add('ui-restoring');
+        app.classList.remove('ui-faded');
+        // Remove restoring class after the fade-in completes
+        setTimeout(() => app.classList.remove('ui-restoring'), 300);
+      }
+
+      // Clear existing timer
+      if (this.uiFadeTimer) {
+        clearTimeout(this.uiFadeTimer);
+      }
+
+      // Start new countdown
+      this.uiFadeTimer = setTimeout(() => {
+        app.classList.remove('ui-restoring');
+        app.classList.add('ui-faded');
+      }, this.UI_FADE_DELAY);
+    };
+
+    // Track user activity — only actual interactions, not passive mouse movement
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    events.forEach(evt => document.addEventListener(evt, resetFadeTimer, { passive: true }));
+
+    // Start initial countdown
+    resetFadeTimer();
   }
 
   private handleKeyboard(e: KeyboardEvent): void {

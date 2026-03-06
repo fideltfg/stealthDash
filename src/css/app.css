@@ -3404,3 +3404,26 @@ a:hover {
   border-color: white;
   transform: rotate(90deg);
 }
+
+/* === UI AUTO-FADE ON INACTIVITY === */
+/* Faded state: slow fade-out over 2s */
+#app.ui-faded .dashboard-switcher,
+#app.ui-faded .dashboard-nav-btn,
+#app.ui-faded .menu-button,
+#app.ui-faded .lock-toggle,
+#app.ui-faded .controls-container,
+#app.ui-faded .user-menu {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 2s ease !important;
+}
+
+/* Restoring state: fast fade-in over 0.3s */
+#app.ui-restoring .dashboard-switcher,
+#app.ui-restoring .dashboard-nav-btn,
+#app.ui-restoring .menu-button,
+#app.ui-restoring .lock-toggle,
+#app.ui-restoring .controls-container,
+#app.ui-restoring .user-menu {
+  transition: opacity 0.3s ease !important;
+}
