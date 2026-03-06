@@ -35,7 +35,7 @@ Your preference is saved automatically!
 - **Persistent preferences** - Theme choice saved per user
 - **Accessibility-first** - WCAG AA compliant contrast ratios
 - **Reduced motion support** - Respects user motion preferences
-- **13 Built-in themes** - Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, and System auto-detect
+- **15 Built-in themes** - Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, Ethereal, Medieval, and System auto-detect
 
 ## Theme Quick Reference
 
@@ -53,6 +53,8 @@ Your preference is saved automatically!
 | **Tactical** | `#1a1d1a` | `#a3e635` Lime | Military, Sharp | Command center, operations |
 | **Futurist** | `#0f1419` | `#00d9ff` Cyan | Tech, Sci-fi | Modern interfaces, futuristic |
 | **Retro** | `#2b1b17` | `#f0b429` Amber | Vintage, Nostalgic | Classic terminal, retro computing |
+| **Ethereal** | `#e8ebf7` | `#a78bfa` Lavender | Dreamy, Soft | Creative work, calm sessions |
+| **Medieval** | `#4a3c2e` | `#d4a574` Gold | Fantasy, Earthy | RPG themes, unique dashboards |
 | **System** | Auto | Auto | Adaptive | Follows OS preference |
 
 ## Design Tokens
@@ -252,6 +254,197 @@ Soft pastel theme with gentle lavender accents and a warm, cozy atmosphere. Part
 
 **Use Cases:** Creative work, comfortable extended use, aesthetic dashboards, personal projects.
 
+### Forest Theme
+
+Natural green theme with calming tones. Perfect for long work sessions.
+
+```css
+.theme-forest {
+  --bg: #1e2d1e;
+  --surface: #2a3c2a;
+  --text: #d4e8d4;
+  --muted: #8aaa8a;
+  --accent: #4ade80;
+  --ring: #4ade80;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #3a4f3a;
+  --hover: #344834;
+}
+```
+
+**Use Cases:** Long sessions, nature-inspired themes, outdoor monitoring.
+
+### Sunset Theme
+
+Warm reddish tones with a relaxing, evening atmosphere.
+
+```css
+.theme-sunset {
+  --bg: #2d1e1e;
+  --surface: #3c2a2a;
+  --text: #e8d4d4;
+  --muted: #aa8a8a;
+  --accent: #fb923c;
+  --ring: #fb923c;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #4f3a3a;
+  --hover: #483434;
+}
+```
+
+**Use Cases:** Evening work, warm aesthetic, creative tasks.
+
+### Peachy Theme
+
+Soft, warm tones with playful pink accents.
+
+```css
+.theme-peachy {
+  --bg: #2d221e;
+  --surface: #3c302a;
+  --text: #e8ddd4;
+  --muted: #aa9a8a;
+  --accent: #fda4af;
+  --ring: #fda4af;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #4f433a;
+  --hover: #483c34;
+}
+```
+
+**Use Cases:** Creative work, casual use, playful aesthetic.
+
+### Stealth Theme
+
+Ultra-minimal monochrome theme. All grayscale for maximum focus.
+
+```css
+.theme-stealth {
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --text: #cccccc;
+  --muted: #888888;
+  --accent: #666666;
+  --ring: #666666;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #333333;
+  --hover: #2a2a2a;
+}
+```
+
+**Use Cases:** Distraction-free work, tactical displays, minimalist preference.
+
+### Tactical Theme
+
+Military-inspired with sharp lime green accents on a dark olive background.
+
+```css
+.theme-tactical {
+  --bg: #1a1d1a;
+  --surface: #2a2d2a;
+  --text: #d4e8d4;
+  --muted: #8aaa8a;
+  --accent: #a3e635;
+  --ring: #a3e635;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --border: #3a3f3a;
+  --hover: #344834;
+}
+```
+
+**Use Cases:** Command center operations, monitoring walls, military aesthetic.
+
+### Futurist Theme
+
+Sci-fi inspired with bright cyan accents on a deep dark background.
+
+```css
+.theme-futurist {
+  --bg: #0f1419;
+  --surface: #1a2029;
+  --text: #c0d0e8;
+  --muted: #8899aa;
+  --accent: #00d9ff;
+  --ring: #00d9ff;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #2a3040;
+  --hover: #232a35;
+}
+```
+
+**Use Cases:** Modern interfaces, futuristic dashboards, tech-forward aesthetics.
+
+### Retro Theme
+
+Vintage amber on dark brown, inspired by classic CRT terminals.
+
+```css
+.theme-retro {
+  --bg: #2b1b17;
+  --surface: #3c2b25;
+  --text: #e8d8c4;
+  --muted: #aa9880;
+  --accent: #f0b429;
+  --ring: #f0b429;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #4f3f35;
+  --hover: #483830;
+}
+```
+
+**Use Cases:** Classic terminal aesthetic, retro computing, nostalgic vibes.
+
+### Ethereal Theme
+
+Dreamy pastel palette with soft purples and blues. A light theme with a mystical feel.
+
+```css
+.theme-ethereal {
+  --bg: #e8ebf7;
+  --surface: #f0f3ff;
+  --text: #4a4a6e;
+  --muted: #8b8ba8;
+  --accent: #a78bfa;
+  --ring: #c4b5fd;
+  --shadow: rgba(167, 139, 250, 0.2);
+  --border: #d8d8f0;
+  --hover: #f5f6ff;
+}
+```
+
+**Features:**
+- Soft pastel light theme with dreamy purple accents
+- Backdrop-filter blur effects on widgets for a floating feel
+- Rounded, airy aesthetic with custom font suggestions (Quicksand, Comfortaa, Nunito)
+
+**Use Cases:** Creative work, calm sessions, light-mode preference with personality.
+
+### Medieval Theme
+
+Fantasy RPG palette with earthy browns and warm gold accents. Uses serif fonts for a storybook feel.
+
+```css
+.theme-medieval {
+  --bg: #4a3c2e;
+  --surface: #5e5040;
+  --text: #f0e8d8;
+  --muted: #b8a890;
+  --accent: #d4a574;
+  --ring: #d4a574;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --border: #6a5a48;
+  --hover: #6e6050;
+}
+```
+
+**Features:**
+- Earthy brown tones with warm gold accents
+- Text shadows for a textured, old-world appearance
+- Serif font family (Cinzel, Trajan Pro, Georgia) for thematic consistency
+- Heavy borders giving widgets a parchment-card look
+
+**Use Cases:** RPG-themed dashboards, unique aesthetics, fantasy-inspired personal pages.
+
 ### Switching Between Themes
 
 Click the theme button in the bottom-left controls menu to cycle through all available themes:
@@ -262,7 +455,16 @@ Click the theme button in the bottom-left controls menu to cycle through all ava
 3. Gruvbox
 4. Tokyo Night
 5. Catppuccin
-6. System (auto)
+6. Forest
+7. Sunset
+8. Peachy
+9. Stealth
+10. Tactical
+11. Futurist
+12. Retro
+13. Ethereal
+14. Medieval
+15. System (auto)
 
 Your theme preference is saved automatically and persists across sessions.
 

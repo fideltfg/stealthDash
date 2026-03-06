@@ -209,6 +209,30 @@ Response:
 }
 ```
 
+## Installed Plugins
+
+The server ships with 17 plugins. Each has detailed API documentation:
+
+| Plugin | File | Documentation |
+|--------|------|---------------|
+| Ping | `ping.js` | [Ping Plugin](plugins/PING_PLUGIN.md) |
+| Proxy | `proxy.js` | [Proxy Plugin](plugins/PROXY_PLUGIN.md) |
+| Crypto | `crypto.js` | [Crypto Plugin](plugins/CRYPTO_PLUGIN.md) |
+| Docker | `docker.js` | [Docker Plugin](plugins/DOCKER_PLUGIN.md) |
+| Glances | `glances.js` | [Glances Plugin](plugins/GLANCES_PLUGIN.md) |
+| Gmail | `gmail.js` | [Gmail Plugin](plugins/GMAIL_PLUGIN.md) |
+| Google Calendar | `google-calendar.js` | [Google Calendar Plugin](plugins/GOOGLE_CALENDAR_PLUGIN.md) |
+| Home Assistant | `home-assistant.js` | [Home Assistant Plugin](plugins/HOME_ASSISTANT_PLUGIN.md) |
+| Pi-hole | `pihole.js` | [Pi-hole Plugin](plugins/PIHOLE_PLUGIN.md) |
+| Sensi | `sensi.js` | [Sensi Plugin](plugins/SENSI_PLUGIN.md) |
+| Speedtest | `speedtest.js` | [Speedtest Plugin](plugins/SPEEDTEST_PLUGIN.md) |
+| Tasks | `tasks.js` | [Tasks Plugin](plugins/TASKS_PLUGIN.md) |
+| Todoist | `todoist.js` | [Todoist Plugin](plugins/TODOIST_PLUGIN.md) |
+| UniFi | `unifi.js` | [UniFi Plugin](plugins/UNIFI_PLUGIN.md) |
+| UniFi Protect | `unifi-protect.js` | [UniFi Protect Plugin](plugins/UNIFI_PROTECT_PLUGIN.md) |
+| SNMP | `snmp.js` | [SNMP Plugin](plugins/SNMP_PLUGIN.md) |
+| Modbus | `modbus.js` | [Modbus Plugin](plugins/MODBUS_PLUGIN.md) |
+
 ## Example Plugins
 
 See these files for reference implementations:

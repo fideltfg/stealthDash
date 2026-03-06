@@ -8,17 +8,19 @@ The ping server acts as a backend proxy to enable dashboard widgets to:
 - **Ping network devices** - Real ICMP ping for uptime monitoring
 - **Proxy external APIs** - Bypass CORS restrictions when fetching data from external services
 - **Authenticate with third-party services** - Handle Pi-hole, UniFi Controller, and other API authentications with session caching
-- **Query network devices** - SNMP and Modbus-RTU device monitoring
+- **Query network devices** - SNMP and Modbus TCP device monitoring
 - **Manage user accounts** - PostgreSQL-backed authentication and dashboard persistence
 
 ## Key Features
 
 - **Network Monitoring**: ICMP ping, batch ping operations
-- **API Proxying**: Pi-hole, UniFi Controller, generic HTTP proxy
+- **API Proxying**: Pi-hole, UniFi Controller, CoinGecko, Speedtest, generic HTTP proxy
 - **Authentication**: JWT-based user authentication, password recovery
 - **Session Caching**: Reduces API calls to rate-limited services (Pi-hole, UniFi)
-- **Device Protocols**: SNMP queries, Modbus-RTU for industrial devices
-- **Database**: PostgreSQL integration for user and dashboard storage
+- **Device Protocols**: SNMP queries, Modbus TCP for industrial devices
+- **Database**: PostgreSQL integration for user, dashboard, credential, and task storage
+- **Plugin System**: 17 auto-loaded backend plugins (see [PLUGIN_SYSTEM.md](./PLUGIN_SYSTEM.md))
+- **Credential Vault**: AES-encrypted storage for API keys, passwords, and tokens
 
 ## API Endpoints
 
@@ -78,120 +80,31 @@ The ping server acts as a backend proxy to enable dashboard widgets to:
 - **DELETE /admin/users/:userId** - Delete user (requires admin)
 - **GET /admin/stats** - Get system statistics (requires admin)
 
-### Widget API Proxies
+### Plugin API Endpoints
 
-- **GET /api/pihole** - Pi-hole API proxy
-  - Query params: `host`, `credentialId`
-  - Caches authentication session (5 min)
-  - Returns Pi-hole statistics
+Widget backends are provided by 17 auto-loaded plugins. Each plugin has its own documentation with full route details, parameters, and setup instructions.
 
-- **GET /api/unifi/stats** - UniFi Controller proxy
-  - Query params: `credentialId`, `site`
-  - Caches authentication session (30 min)
-  - Returns comprehensive network stats (devices, clients, alarms)
+| Plugin | Mount Path | Description | Documentation |
+|--------|-----------|-------------|---------------|
+| **Ping** | `/health`, `/ping` | Health check and ICMP ping | [Ping Plugin](plugins/PING_PLUGIN.md) |
+| **Proxy** | `/embed-proxy`, `/proxy` | CORS bypass and embed proxy | [Proxy Plugin](plugins/PROXY_PLUGIN.md) |
+| **Crypto** | `/api/crypto` | CoinGecko price data with caching | [Crypto Plugin](plugins/CRYPTO_PLUGIN.md) |
+| **Docker** | `/api/docker` | Container management (list, start, stop, logs) | [Docker Plugin](plugins/DOCKER_PLUGIN.md) |
+| **Glances** | `/api/glances` | System monitoring proxy | [Glances Plugin](plugins/GLANCES_PLUGIN.md) |
+| **Gmail** | `/api/gmail` | OAuth2 flow, messages, labels | [Gmail Plugin](plugins/GMAIL_PLUGIN.md) |
+| **Google Calendar** | `/api/google-calendar` | Calendar events proxy | [Google Calendar Plugin](plugins/GOOGLE_CALENDAR_PLUGIN.md) |
+| **Home Assistant** | `/home-assistant` | Entity states and service calls | [Home Assistant Plugin](plugins/HOME_ASSISTANT_PLUGIN.md) |
+| **Pi-hole** | `/api/pihole` | Pi-hole v6+ stats with session caching | [Pi-hole Plugin](plugins/PIHOLE_PLUGIN.md) |
+| **Sensi** | `/sensi` | Thermostat control via Socket.IO | [Sensi Plugin](plugins/SENSI_PLUGIN.md) |
+| **Speedtest** | `/api/speedtest` | Speedtest Tracker results proxy | [Speedtest Plugin](plugins/SPEEDTEST_PLUGIN.md) |
+| **Tasks** | `/api/tasks` | Server-side task CRUD and stats | [Tasks Plugin](plugins/TASKS_PLUGIN.md) |
+| **Todoist** | `/api/todoist` | Todoist task management proxy | [Todoist Plugin](plugins/TODOIST_PLUGIN.md) |
+| **UniFi** | `/api/unifi` | Network controller (Cloud + Legacy) | [UniFi Plugin](plugins/UNIFI_PLUGIN.md) |
+| **UniFi Protect** | `/api/unifi-protect` | Cameras, events, sensors | [UniFi Protect Plugin](plugins/UNIFI_PROTECT_PLUGIN.md) |
+| **SNMP** | `/snmp` | SNMP device queries | [SNMP Plugin](plugins/SNMP_PLUGIN.md) |
+| **Modbus** | `/modbus` | Modbus TCP register reads | [Modbus Plugin](plugins/MODBUS_PLUGIN.md) |
 
-- **GET /api/unifi/sites** - List UniFi sites
-  - Query params: `credentialId`
-  - Returns available UniFi sites
-
-- **GET /api/unifi-protect/bootstrap** - UniFi Protect bootstrap data
-  - Query params: `host`, `credentialId`
-  - Returns cameras, sensors, and events
-
-- **GET /api/unifi-protect/sensors** - UniFi Environmental Sensors (public)
-  - Query params: `host`
-  - No authentication required (uses first available credential)
-  - Returns temperature, humidity, light data
-
-- **GET /api/unifi-protect/camera/:cameraId/snapshot** - Camera snapshot
-  - Query params: `host`, `credentialId`
-  - Returns camera image
-
-- **GET /api/google-calendar/events** - Google Calendar events
-  - Query params: `credentialId`, `timeMin`, `timeMax`, `maxResults`
-  - Returns upcoming calendar events
-
-- **GET /api/glances** - Glances system monitoring data
-  - Query params: `host`, `credentialId`
-  - Returns CPU, memory, disk, network stats
-
-- **GET /api/todoist/tasks** - Todoist tasks
-  - Query params: `credentialId`, `filter`
-  - Returns task list
-
-- **POST /api/todoist/close** - Complete Todoist task
-  - Query params: `credentialId`, `taskId`
-  - Marks task as complete
-
-- **GET /api/speedtest** - Speedtest Tracker results
-  - Query params: `host`, `credentialId`, `days`
-  - Returns speed test data with history
-
-- **POST /home-assistant/states** - Home Assistant entity states
-  - Body: `{ credentialId, entityIds }`
-  - Returns entity state data
-
-- **POST /home-assistant/service** - Call Home Assistant service
-  - Body: `{ credentialId, domain, service, entityId, data }`
-  - Executes Home Assistant service call
-
-- **GET /embed-proxy** - Embed proxy for X-Frame-Options bypass
-  - Query param: `url`
-  - Returns proxied page content
-
-- **GET /proxy** - Generic HTTP/HTTPS proxy
-  - Query param: `url` (target URL)
-  - Handles SSL, useful for XML feeds and external APIs
-
-### Sensi Thermostat API
-
-- **POST /sensi/state** - Get thermostat state
-  - Body: `{ credentialId }`
-  - Returns current temperature, setpoints, mode
-
-- **POST /sensi/set-temperature** - Set target temperature
-  - Body: `{ credentialId, heat, cool }`
-  - Updates thermostat setpoints
-
-- **POST /sensi/set-mode** - Change HVAC mode
-  - Body: `{ credentialId, mode }`
-  - Sets mode (heat, cool, auto, off)
-
-- **POST /sensi/set-fan** - Control fan
-  - Body: `{ credentialId, mode }`
-  - Sets fan mode (auto, on)
-
-### Docker Management API
-
-- **POST /api/docker/containers** - List Docker containers
-  - Body: `{ host, credentialId, showAll }`
-  - Returns container list with status
-
-- **POST /api/docker/containers/start** - Start container
-  - Body: `{ host, credentialId, containerId }`
-  - Starts stopped container
-
-- **POST /api/docker/containers/stop** - Stop container
-  - Body: `{ host, credentialId, containerId }`
-  - Stops running container
-
-- **POST /api/docker/containers/restart** - Restart container
-  - Body: `{ host, credentialId, containerId }`
-  - Restarts container
-
-- **POST /api/docker/containers/logs** - Get container logs
-  - Body: `{ host, credentialId, containerId, tail }`
-  - Returns recent container logs
-
-### Device Monitoring
-
-- **GET /snmp/get** - Query SNMP-enabled devices
-  - Query params: `host`, `oids`, `community`, `version`
-  - Returns: SNMP query results
-  
-- **GET /modbus/read** - Query Modbus TCP devices
-  - Query params: `host`, `port`, `address`, `count`, `type`, `unitId`
-  - Returns: Modbus register values
+See [PLUGIN_SYSTEM.md](./PLUGIN_SYSTEM.md) for how to create custom plugins.
 
 ## Testing
 

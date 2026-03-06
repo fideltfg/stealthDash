@@ -89,37 +89,18 @@ src/
 
 ### Widget Registry
 
-All widgets are registered in `src/types/widget-loader.ts` for lazy loading:
+Widgets are auto-discovered and lazily loaded using Vite's `import.meta.glob` in `src/types/widget-loader.ts`:
 
 ```typescript
-const widgetModules: Record<string, () => Promise<any>> = {
-  'image': () => import('../widgets/image'),
-  'embed': () => import('../widgets/embed'),
-  'weather': () => import('../widgets/weather'),
-  'clock': () => import('../widgets/clock'),
-  'rss': () => import('../widgets/rss'),
-  'uptime': () => import('../widgets/uptime'),
-  'comet-p8541': () => import('../widgets/comet-p8541'),
-  'home-assistant': () => import('../widgets/home-assistant'),
-  'mtnxml': () => import('../widgets/mtnxml'),
-  'envcanada': () => import('../widgets/envcanada'),
-  'pihole': () => import('../widgets/pihole'),
-  'google-calendar': () => import('../widgets/google-calendar'),
-  'unifi': () => import('../widgets/unifi'),
-  'unifi-protect': () => import('../widgets/unifi-protect'),
-  'unifi-sensor': () => import('../widgets/unifi-sensor'),
-  'docker': () => import('../widgets/docker'),
-  'gmail': () => import('../widgets/gmail'),
-  'vnc': () => import('../widgets/vnc'),
-  'weather-dash': () => import('../widgets/weather-dash'),
-  'sensi': () => import('../widgets/sensi'),
-  'glances': () => import('../widgets/glances'),
-  'tasks': () => import('../widgets/tasks'),
-  'speedtest': () => import('../widgets/speedtest'),
-};
+const rawModules = import.meta.glob('../widgets/*.ts') as Record<string, () => Promise<any>>;
 ```
 
-**Note**: Widgets are loaded dynamically only when needed, improving initial page load performance.
+This means **no manual registration** is needed — simply creating a `.ts` file in `src/widgets/` with the correct `export const widget` structure is enough to make it available.
+
+**Key functions:**
+- `loadWidgetModule(type)` — Load a single widget on demand
+- `loadWidgetModules(types[])` — Load multiple widgets at once
+- `getAvailableWidgetTypes()` — List all available widget types without loading them
 
 ### Widget Renderer Interface
 
@@ -172,16 +153,17 @@ export const widget: WidgetPlugin = {
 };
 ```
 
-4. **Register in `src/types/widget-loader.ts`:**
+4. **That's it!** The widget is automatically discovered by `import.meta.glob` in `widget-loader.ts`. No manual registration needed.
 
-```typescript
-const widgetModules: Record<string, () => Promise<any>> = {
-  // ... existing widgets
-  'chart': () => import('../widgets/chart'),
-};
+5. **Generate metadata** (for the add-widget picker):
+
+```bash
+npm run generate-metadata
 ```
 
-5. **Add widget type to TypeScript types** (optional, for type safety)
+   This reads the `export const widget` block from your file and updates `http/widget-metadata.json`.
+
+6. **Add widget type to TypeScript types** (optional, for type safety)
 
 ### Benefits
 

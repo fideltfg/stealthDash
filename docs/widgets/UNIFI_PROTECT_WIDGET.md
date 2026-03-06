@@ -7,7 +7,7 @@ A comprehensive widget for displaying UniFi Protect camera feeds and motion dete
 ### Camera Display
 - **Live Camera Grid**: View all or selected cameras in a responsive grid layout
 - **Snapshot View**: Display camera snapshots with automatic refresh
-- **Live Streams**: Support for RTSP live streaming (coming soon)
+- **Live Streams**: Support for live video streaming via RTSP-enabled cameras
 - **Camera Status**: Real-time online/offline status indicators
 - **Recording Indicator**: Visual indication when cameras are recording
 - **Motion Detection Alert**: Highlights cameras detecting motion
@@ -98,8 +98,5 @@ A comprehensive widget for displaying UniFi Protect camera feeds and motion dete
 
 ## Known Limitations
 
-1. RTSP stream support is planned for future release
-2. UI for selecting specific cameras coming soon
-3. Advanced filtering by detection type coming soon
-4. Event video clips not yet supported (thumbnails only)
-5. PTZ controls not implemented yet
+1. Event video clips not yet supported (thumbnails only)
+2. PTZ controls not implemented yet

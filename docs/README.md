@@ -25,7 +25,7 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **20+ Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet and more
+- **24 Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet, Crypto and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
 - **Multi-User** — Secure login, registration, password recovery, and admin management
 - **A Bunch of Themes** — Css themes allows simple switching and users can have different themes on each dashboard
@@ -151,7 +151,7 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 
 **Change Theme**
 - Open the theme picker from the hamburger menu (bottom-left)
-- Choose from 13 themes: Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, or System (follows OS preference)
+- Choose from 15 themes: Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, Ethereal, Medieval, or System (follows OS preference)
 
 **Change Background**
 - Click the background button (grid icon) in the toolbar or menu
@@ -205,7 +205,6 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 
 | Widget | Description |
 |--------|-------------|
-| **Text** | Markdown-supported text editor with real-time auto-save |
 | **Image** | Display images from URL with multiple fit modes (contain, cover, fill, none) |
 | **Embed** | Sandboxed iframe for external websites, bypass X-Frame-Options via proxy |
 
@@ -224,6 +223,7 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 | **Speedtest** | Display results from Speedtest Tracker with historical charts |
 | **Docker** | Monitor and manage Docker containers — start, stop, restart, and view logs |
 | **Pi-hole** | DNS blocking statistics and query metrics from your Pi-hole instance |
+| **Crypto** | Track cryptocurrency prices with live updates and historical charts via CoinGecko |
 
 ### Network & IoT Widgets
 
@@ -415,11 +415,12 @@ services:
 Dashboard/
 ├── src/
 │   ├── main.ts                    # Application entry point (Dashboard class)
-│   ├── themes.ts                  # Theme registry (13 themes)
+│   ├── themes.ts                  # Theme registry (15 themes)
 │   ├── widgetMetadata.ts          # Widget metadata for the add-widget menu
 │   ├── components/
 │   │   ├── AdminDashboardUI.ts    # Admin user management panel
 │   │   ├── AuthUI.ts              # Login / registration UI
+│   │   ├── BackgroundSettingsUI.ts # Background image/video settings
 │   │   ├── CredentialsUI.ts       # Credential vault management
 │   │   ├── PasswordRecoveryUI.ts  # Password reset flow
 │   │   ├── UserSettingsUI.ts      # User profile & settings
@@ -434,6 +435,7 @@ Dashboard/
 │   │   └── dashboardSync.ts       # Cross-tab & cross-browser sync
 │   ├── types/
 │   │   ├── base-widget.ts         # Widget lifecycle & cleanup
+│   │   ├── justgage.d.ts          # JustGage type declarations
 │   │   ├── types.ts               # Core TypeScript type definitions
 │   │   ├── widget.ts              # Widget DOM creation & manipulation
 │   │   └── widget-loader.ts       # Dynamic widget module loader
@@ -448,9 +450,11 @@ Dashboard/
 │   └── widgets/                   # Widget implementations (one file per type)
 │       ├── clock.ts
 │       ├── comet-p8541.ts
+│       ├── crypto.ts
 │       ├── docker.ts
 │       ├── embed.ts
 │       ├── envcanada.ts
+│       ├── glances.ts
 │       ├── gmail.ts
 │       ├── google-calendar.ts
 │       ├── home-assistant.ts
@@ -458,14 +462,17 @@ Dashboard/
 │       ├── mtnxml.ts
 │       ├── pihole.ts
 │       ├── rss.ts
-│       ├── text.ts
+│       ├── sensi.ts
+│       ├── speedtest.ts
+│       ├── tasks.ts
 │       ├── timezones.ts
 │       ├── unifi.ts
 │       ├── unifi-protect.ts
 │       ├── unifi-sensor.ts
 │       ├── uptime.ts
 │       ├── vnc.ts
-│       └── weather.ts
+│       ├── weather.ts
+│       └── weather-dash.ts
 ├── ping-server/                   # Backend API server (Node.js / Express)
 │   ├── src/
 │   │   ├── server.js              # Express server & middleware
@@ -659,8 +666,10 @@ node src/server.js
 ### Adding New Widgets
 
 1. Create a widget file in `src/widgets/your-widget.ts`
-2. Implement the widget renderer interface
-3. Add widget metadata to `src/widgetMetadata.ts`
+2. Implement the widget renderer interface and export `const widget`
+3. Run `npm run generate-metadata` to update the widget picker
+
+Widgets are auto-discovered by `import.meta.glob` — no manual registration needed.
 
 See existing widgets for examples and [WIDGETS.md](./WIDGETS.md) for the development guide.
 
