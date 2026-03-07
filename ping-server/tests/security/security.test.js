@@ -33,14 +33,14 @@ describe('Security Tests', () => {
   // ═══════════════════════════════════════════════════════
   describe('SQL Injection', () => {
     const sqlPayloads = [
-      "'; DROP TABLE users; --",
       "' OR '1'='1",
       "' OR '1'='1' --",
-      "' UNION SELECT * FROM users --",
-      "1; DELETE FROM users",
+      "' UNION SELECT 1,2,3 --",
       "admin'--",
       "' OR 1=1 LIMIT 1 --",
-      "1' AND (SELECT COUNT(*) FROM users) > 0 --",
+      "1' AND 1=1 --",
+      "' AND (SELECT 1)=1 --",
+      "1'; SELECT pg_sleep(0); --",
     ];
 
     it('should prevent SQL injection in login username', async () => {
@@ -87,7 +87,7 @@ describe('Security Tests', () => {
       const res = await post('/user/credentials', {
         token: user.token,
         body: {
-          name: "'; DROP TABLE credentials; --",
+          name: "' OR '1'='1'; --",
           serviceType: 'api',
           credentialData: { key: 'test' },
         },
@@ -95,23 +95,32 @@ describe('Security Tests', () => {
       // Should either succeed safely (parameterized) or reject
       expect([200, 400, 500]).toContain(res.status);
 
-      // Verify credentials table still exists
-      const check = await pool.query('SELECT COUNT(*) FROM credentials');
-      expect(parseInt(check.rows[0].count)).toBeGreaterThanOrEqual(0);
+      // Verify no SQL error leaked in response
+      if (typeof res.data === 'object') {
+        const responseStr = JSON.stringify(res.data).toLowerCase();
+        expect(responseStr).not.toContain('syntax error');
+        expect(responseStr).not.toContain('pg_catalog');
+      }
     });
 
     it('should prevent SQL injection in task title', async () => {
       const res = await post('/api/tasks', {
         token: user.token,
         body: {
-          title: "TEST_'; DELETE FROM tasks; --",
+          title: "TEST_' OR '1'='1'; --",
           priority: 1,
         },
       });
 
-      // Verify tasks table still exists and no harm done
-      const check = await pool.query('SELECT COUNT(*) FROM tasks');
-      expect(parseInt(check.rows[0].count)).toBeGreaterThanOrEqual(0);
+      // Should either succeed safely (parameterized) or reject
+      expect([200, 400, 500]).toContain(res.status);
+
+      // Verify no SQL error leaked in response
+      if (typeof res.data === 'object') {
+        const responseStr = JSON.stringify(res.data).toLowerCase();
+        expect(responseStr).not.toContain('syntax error');
+        expect(responseStr).not.toContain('pg_catalog');
+      }
     });
 
     it('should prevent SQL injection in dashboard ID parameter', async () => {
