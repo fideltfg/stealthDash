@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StealthDash — Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1e1e2e;
+      --surface:   #313244;
+      --border:    #45475a;
+      --text:      #cdd6f4;
+      --subtext:   #a6adc8;
+      --accent:    #89b4fa;
+      --accent-h:  #b4befe;
+      --error:     #f38ba8;
+      --success:   #a6e3a1;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      user-select: none;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin-bottom: .25rem;
+    }
+
+    .subtitle {
+      color: var(--subtext);
+      font-size: .8rem;
+      margin-bottom: 1.75rem;
+    }
+
+    form {
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+    }
+
+    label {
+      font-size: .75rem;
+      color: var(--subtext);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: .55rem .75rem;
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder {
+      color: var(--border);
+    }
+
+    .row {
+      display: flex;
+      gap: .75rem;
+    }
+
+    .row .field:first-child { flex: 1 1 auto; }
+    .row .field:last-child  { flex: 0 0 90px; }
+
+    .actions {
+      display: flex;
+      gap: .6rem;
+      margin-top: .4rem;
+    }
+
+    button {
+      flex: 1;
+      padding: .6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: .9rem;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+
+    button:hover { background: var(--border); }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1e1e2e;
+      font-weight: 600;
+    }
+
+    button.primary:hover { background: var(--accent-h); border-color: var(--accent-h); }
+
+    .status {
+      min-height: 1.2rem;
+      font-size: .8rem;
+      text-align: center;
+      color: var(--subtext);
+    }
+
+    .status.ok    { color: var(--success); }
+    .status.error { color: var(--error); }
+  </style>
+</head>
+<body>
+
+  <div class="logo">⬡ StealthDash</div>
+  <div class="subtitle">Desktop background dashboard</div>
+
+  <form id="form" autocomplete="off">
+    <div class="row">
+      <div class="field">
+        <label for="host">Server address</label>
+        <input id="host" type="text" placeholder="192.168.1.10" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label for="port">Port</label>
+        <input id="port" type="number" placeholder="3000" min="1" max="65535" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="btn-cancel">Cancel</button>
+      <button type="submit" class="primary" id="btn-connect">Connect</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </form>
+
+  <script>
+    const form     = document.getElementById('form');
+    const hostEl   = document.getElementById('host');
+    const portEl   = document.getElementById('port');
+    const statusEl = document.getElementById('status');
+    const btnCancel = document.getElementById('btn-cancel');
+
+    // ── Load saved settings ──────────────────────────────────────────────────
+    async function init() {
+      const s = await window.stealthDash.getSettings();
+      if (s) {
+        hostEl.value = s.host || '';
+        portEl.value = s.port || '';
+      } else {
+        portEl.value = '3000';
+      }
+      hostEl.focus();
+    }
+
+    init();
+
+    // ── Listen for confirmation from main process ────────────────────────────
+    window.stealthDash.onSettingsSaved(() => {
+      setStatus('Connected! Window will update.', 'ok');
+      setTimeout(() => window.close(), 1200);
+    });
+
+    // ── Form submit ──────────────────────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const host = hostEl.value.trim();
+      const port = parseInt(portEl.value.trim(), 10);
+
+      if (!host) return setStatus('Server address is required.', 'error');
+      if (!port || port < 1 || port > 65535) return setStatus('Port must be 1–65535.', 'error');
+
+      setStatus('Saving…', '');
+
+      try {
+        await window.stealthDash.saveSettings({ host, port });
+      } catch (err) {
+        setStatus('Error: ' + err.message, 'error');
+      }
+    });
+
+    // ── Cancel ───────────────────────────────────────────────────────────────
+    btnCancel.addEventListener('click', () => window.close());
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (type || '');
+    }
+  </script>
+</body>
+</html>
