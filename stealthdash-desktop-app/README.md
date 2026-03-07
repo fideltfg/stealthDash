@@ -11,7 +11,7 @@ A cross-platform Electron wrapper that displays the StealthDash dashboard as a *
 - Connection error page with Retry and Settings buttons
 - Works on **Windows** and **Linux**
 
-## How it works
+## How it works s
 
 | Platform | "Stay at back" mechanism |
 |----------|--------------------------|
