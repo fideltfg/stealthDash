@@ -67,6 +67,30 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
    - Register your first user account
    - Start adding widgets!
 
+### Desktop App (Optional)
+
+StealthDash also includes an Electron desktop app in `stealthdash-desktop-app/` for Linux and Windows.
+
+- Linux prebuilt package: `.deb`
+- Windows prebuilt package: `.exe` (installer and portable)
+
+Prebuilt binaries are published on the project Releases page. Download the latest files for your OS, install, then point the app to your running StealthDash server (`host:port`).
+
+Build packages locally:
+
+```bash
+cd stealthdash-desktop-app
+npm install
+
+# Build Linux packages (.AppImage + .deb)
+npm run build:linux
+
+# Build Windows packages (.exe installer + portable .exe)
+npm run build:win
+```
+
+Build output is written to `stealthdash-desktop-app/dist/`.
+
 ### First User Setup
 
 The first registered user needs admin privileges:
@@ -408,6 +432,27 @@ services:
     ports:
       - "3001:3001"   # Change 3001 to desired port
 ```
+### Desktop App (Optional)
+
+StealthDash also includes an Electron desktop app in `stealthdash-desktop-app/` for Linux and Windows.
+
+- Linux prebuilt package: `.deb`
+- Windows prebuilt package: `.exe` (installer and portable)
+
+Build packages locally:
+
+```bash
+cd stealthdash-desktop-app
+npm install
+
+# Build Linux packages (.AppImage + .deb)
+npm run build:linux
+
+# Build Windows packages (.exe installer + portable .exe)
+npm run build:win
+```
+
+Build output is written to `stealthdash-desktop-app/dist/`.
 
 ## Project Structure
 
@@ -505,6 +550,12 @@ Dashboard/
 ├── http/
 │   └── index.html                 # HTML entry point
 ├── docs/                          # Documentation
+├── stealthdash-desktop-app/       # Electron desktop client and release packaging
+│   ├── main.js                    # Main process (window/tray/background behavior)
+│   ├── preload.js                 # Secure API bridge for renderer pages
+│   ├── settings.html              # Desktop app settings UI
+│   ├── assets/                    # App and tray icons
+│   └── dist/                      # Built artifacts (.exe, .deb, AppImage)
 ├── docker-compose.yml             # Development Docker setup
 ├── docker-compose.prod.yml        # Production Docker setup
 ├── Dockerfile                     # Development container
@@ -699,5 +750,6 @@ MIT License — see LICENSE file for details.
 - **Widget Guide**: [WIDGETS.md](./WIDGETS.md)
 - **Testing**: [TESTING.md](./TESTING.md)
 - **Deployment**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **Desktop App**: [../stealthdash-desktop-app/README.md](../stealthdash-desktop-app/README.md)
 - **Theming**: [THEMING.md](./THEMING.md)
 - **CSS Reference**: [CSS-COMPONENT-REFERENCE.md](./CSS-COMPONENT-REFERENCE.md)

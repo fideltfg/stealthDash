@@ -11,7 +11,7 @@ A cross-platform Electron wrapper that displays the StealthDash dashboard as a *
 - Connection error page with Retry and Settings buttons
 - Works on **Windows** and **Linux**
 
-## How it works s
+## How it works
 
 | Platform | "Stay at back" mechanism |
 |----------|--------------------------|
@@ -25,10 +25,26 @@ A cross-platform Electron wrapper that displays the StealthDash dashboard as a *
 - Node.js ≥ 18 and npm
 - A running StealthDash server (see the main project README)
 
+## Install prebuilt packages
+
+If you do not want to build from source, use the prebuilt release artifacts:
+
+- **Windows**: download and run `StealthDash Setup *.exe` (installer) or `StealthDash *.exe` (portable)
+- **Linux (Debian/Ubuntu)**: download `StealthDash_*.deb`
+
+Install on Debian/Ubuntu:
+
+```bash
+sudo dpkg -i StealthDash_*.deb
+sudo apt-get install -f
+```
+
+After install, launch **StealthDash** from your application menu, then configure the dashboard server address and port in Settings.
+
 ## Install dependencies
 
 ```bash
-cd electron-app
+cd stealthdash-desktop-app
 npm install
 ```
 
@@ -80,7 +96,7 @@ Double-clicking the tray icon also opens the settings dialog.
 ## Project structure
 
 ```
-electron-app/
+stealthdash-desktop-app/
 ├── main.js          Main process — window management, tray, IPC, always-bottom logic
 ├── preload.js       Context-bridge — exposes a safe API to renderer pages
 ├── settings.html    Settings dialog UI

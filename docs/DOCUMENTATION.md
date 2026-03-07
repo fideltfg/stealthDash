@@ -32,6 +32,13 @@ Production deployment guide:
 - Cloud deployment (AWS, DigitalOcean, GCP)
 - Security hardening
 
+### [../stealthdash-desktop-app/README.md](../stealthdash-desktop-app/README.md) - Desktop App
+Desktop app guide covering:
+- Desktop wallpaper-style app behavior on Linux/Windows
+- Prebuilt package install (`.exe` and `.deb`)
+- Build commands for release artifacts
+- Tray/settings usage and platform notes
+
 ## Technical Documentation
 
 ### [PING_SERVER.md](./PING_SERVER.md) - Backend API
@@ -92,4 +99,8 @@ Theme system documentation:
 - Deployment: [DEPLOYMENT.md](./DEPLOYMENT.md)
 - Security: [DEPLOYMENT.md#security-hardening](./DEPLOYMENT.md#security-hardening)
 - Backup: [DEPLOYMENT.md#database-backup](./DEPLOYMENT.md#database-backup)
+
+**Desktop App:**
+- Desktop guide: [../stealthdash-desktop-app/README.md](../stealthdash-desktop-app/README.md)
+- Install prebuilt packages: [../stealthdash-desktop-app/README.md#install-prebuilt-packages](../stealthdash-desktop-app/README.md#install-prebuilt-packages)
 
