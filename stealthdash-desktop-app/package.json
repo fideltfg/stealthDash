@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "StealthDash desktop app — borderless background dashboard viewer",
   "main": "main.js",
+  "author": "fideltgf <fideltfg@gmail.com>",
+  "homepage": "https://github.com/fideltgf/stealthdash",
   "scripts": {
     "start": "electron .",
     "build:win": "electron-builder --win",
