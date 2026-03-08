@@ -230,25 +230,32 @@ setup_first_user() {
 
   log "Creating first user: $username..."
 
-  # Hash password using ping-server container (uses bcryptjs, must match)
+  # Hash password using ping-server container (uses bcryptjs async, matching API exactly)
   local password_hash
   password_hash=$(docker exec stealth-ping-server node -e "
     const bcrypt = require('bcryptjs');
     const password = process.argv[1];
-    const hash = bcrypt.hashSync(password, 10);
-    console.log(hash);
-  " "$password" 2>/dev/null)
+    bcrypt.hash(password, 10).then(hash => {
+      console.log(hash);
+    }).catch(err => {
+      console.error('Hash error:', err);
+      process.exit(1);
+    });
+  " "$password" 2>&1 | grep '^\$2[aby]\$')
 
   if [[ -z "$password_hash" ]]; then
     echo "ERROR: Failed to hash password."
     return 1
   fi
 
-  # Insert user directly into database with bcrypt hash using parameterized query
+  echo "Debug: Hash generated: $password_hash"
+
+  # Insert user directly into database with bcrypt hash
+  # Use parameterized psql query to avoid issues with $ in bcrypt hash
   local result
-  result=$(docker exec stealth-postgres psql -U dashboard -d dashboard -c "
+  result=$(docker exec stealth-postgres psql -U dashboard -d dashboard -v user="$username" -v email="$email" -v hash="$password_hash" -c "
 INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at)
-VALUES (E'$(echo "$username" | sed "s/'/''/g")', E'$(echo "$email" | sed "s/'/''/g")', E'$password_hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES (:'user', :'email', :'hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (username) DO NOTHING
 RETURNING id, username, email;" 2>&1)
 
