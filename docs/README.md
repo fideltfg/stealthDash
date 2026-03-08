@@ -6,6 +6,8 @@ StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets 
 
 The goal of StealthDash is to bring together information from multiple services securely and simply—so your “personal homepage” and your monitoring command center can be the same clean, reliable place.
 
+![Dashboard Screenshot](images/AnimatedBackgrounds.png)
+
 StealthDash started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and other dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
 
 Concordia solved that by turning “setup” into a single step: open one browser tab and everything loads instantly, reliably, in the same positions across every screen.
@@ -20,7 +22,6 @@ Deployment is simple with Docker and docker-compose. In just a few minutes you c
 
 StealthDash uses plugin-style widgets to display nearly anything—from embedded webpages to remote sessions over VNC. Support for protocols like Modbus also makes it possible to connect to a wide range of industrial devices. Existing widgets for UniFi, Sensi, Home Assistant, Comet, and more provide solid examples of how the system works—and how to build your own custom widgets.
 
-![Dashboard Screenshot](images/AnimatedBackgrounds.png)
 
 ## Features
 
@@ -35,8 +36,24 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 - **Auto-Save** — Debounced server-side persistence with PostgreSQL with multi session de-sync detection and prevention.
 - **Credential Vault** — Encrypted (AES) storage for API keys, passwords, and tokens
 - **Lock Mode** — Prevent accidental edits by locking the canvas
+- **Desktop App** - The app allows you to display your dashboard as a 'background' app on your deshtop.
 
 ## Quick Start
+
+### One-Command Ubuntu Setup (Fresh System)
+
+For a fresh Ubuntu-based install (no Docker/tools installed), run:
+
+```bash
+git clone https://github.com/fideltfg/stealthDash.git
+cd stealthDash/Dashboard
+chmod +x setup.sh
+./setup.sh
+```
+
+The script installs Docker Engine + Compose plugin, creates `.env` from `.env.example`, and starts StealthDash automatically.
+
+After setup, open `http://localhost:3000`.
 
 ### Prerequisites
 
@@ -44,6 +61,8 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 - Git
 
 ### Installation
+
+Stealthdash runs inside three containers, one for the web app, one for the database and one for backend the Ping/proxy server. to get started clone the repo, set your settings in the .envfile, run docker compose up -d  and your all set. Open your browser, enter the address and port (defalt 3000) and you are ready to start building your first dashboard.
 
 1. **Clone the repository**
    ```bash
@@ -67,36 +86,13 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
    - Register your first user account
    - Start adding widgets!
 
-### Desktop App (Optional)
-
-StealthDash also includes an Electron desktop app in `stealthdash-desktop-app/` for Linux and Windows.
-
-- Linux prebuilt package: `.deb`
-- Windows prebuilt package: `.exe` (installer and portable)
-
-Prebuilt binaries are published on the project Releases page. Download the latest files for your OS, install, then point the app to your running StealthDash server (`host:port`).
-
-Build packages locally:
-
-```bash
-cd stealthdash-desktop-app
-npm install
-
-# Build Linux packages (.AppImage + .deb)
-npm run build:linux
-
-# Build Windows packages (.exe installer + portable .exe)
-npm run build:win
-```
-
-Build output is written to `stealthdash-desktop-app/dist/`.
 
 ### First User Setup
 
 The first registered user needs admin privileges:
 
 ```bash
-docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
   "UPDATE users SET is_admin = true WHERE id = 1;"
 ```
 
@@ -177,6 +173,8 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
 - Open the theme picker from the hamburger menu (bottom-left)
 - Choose from 15 themes: Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, Ethereal, Medieval, or System (follows OS preference)
 
+![Dashboard Themes](images/ThemeList.png)
+
 **Change Background**
 - Click the background button (grid icon) in the toolbar or menu
 - Choose from built-in patterns: Grid, Dots, Lines, Solid
@@ -185,6 +183,7 @@ docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
   - **Video**: Link to MP4 or WebM videos for animated backgrounds
 - Customize with opacity, blur, brightness, and fit settings
 - Preview changes before applying
+
 
 **Background Settings:**
 - **Built-in Patterns**: Quick toggle through Grid, Dots, Lines, and Solid
@@ -210,6 +209,8 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 2. Select "Manage Credentials"
 3. Add a credential with a name, type, and value
 4. Reference credentials in widget settings
+
+![Dashboard Themes](images/Creadentials1.png)
 
 **Supported Credential Types:**
 - API Keys (Weather, etc.)
