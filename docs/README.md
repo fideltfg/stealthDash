@@ -304,7 +304,7 @@ Admins have access to user management with statistics and controls:
 
 **Via Database:**
 ```bash
-docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
   "UPDATE users SET is_admin = true WHERE username = 'username';"
 ```
 

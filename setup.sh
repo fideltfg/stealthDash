@@ -200,81 +200,21 @@ wait_for_api() {
 
 setup_first_user() {
   echo ""
+  wait_for_api
   log "Setting up first admin user..."
-  echo ""
-
-  local username
+  log "Access http://localhost:3000 and create an account to get started."
+  log "Once you have an account, return here and enter your username to upgrade the user to admin:"
   read -p "Username: " username
   if [[ -z "$username" ]]; then
-    log "Skipping first user setup."
+    log "No username entered. Skipping admin setup."
     return
   fi
+  docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
+  "UPDATE users SET is_admin = true WHERE username = '$username';"
 
-  local email
-  read -p "Email: " email
-  if [[ -z "$email" ]]; then
-    echo "Email is required."
-    return
-  fi
 
-  local password
-  read -sp "Password: " password
-  echo ""
 
-  if [[ -z "$password" ]]; then
-    echo "Password is required."
-    return
-  fi
-
-  wait_for_api
-
-  log "Creating first user: $username..."
-
-  # Use ping-server container which has bcryptjs + pg already set up with correct env vars
-  local node_result
-  node_result=$(docker exec stealth-ping-server node -e "
-    const bcrypt = require('bcryptjs');
-    const { Pool } = require('pg');
-
-    const pool = new Pool({
-      host: process.env.DB_HOST || 'postgres',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'dashboard',
-      user: process.env.DB_USER || 'dashboard',
-      password: process.env.DB_PASSWORD || 'dashboard123',
-    });
-
-    const [username, email, password] = process.argv.slice(1);
-
-    (async () => {
-      try {
-        const hash = await bcrypt.hash(password, 10);
-        const res = await pool.query(
-          'INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at) VALUES (\$1, \$2, \$3, true, NOW(), NOW()) ON CONFLICT (username) DO NOTHING RETURNING id, username',
-          [username, email, hash]
-        );
-        if (res.rowCount > 0) {
-          console.log('SUCCESS:' + res.rows[0].username);
-        } else {
-          console.log('CONFLICT: username already exists');
-        }
-      } catch (err) {
-        console.error('ERROR: ' + err.message);
-        process.exit(1);
-      } finally {
-        await pool.end();
-      }
-    })();
-  " "$username" "$email" "$password" 2>&1)
-
-  if echo "$node_result" | grep -q '^SUCCESS:'; then
-    log "User '$username' created and set as admin."
-  elif echo "$node_result" | grep -q '^CONFLICT'; then
-    log "User '$username' already exists."
-  else
-    echo "ERROR: Failed to create user. Response: $node_result"
-    return 1
-  fi
+  log ""
 }
 
 print_next_steps() {
