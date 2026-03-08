@@ -230,26 +230,28 @@ setup_first_user() {
 
   log "Creating first user: $username..."
 
-  # Register via API
-  local register_response
-  register_response=$(curl -s -X POST http://localhost:3001/api/auth/register \
-    -H "Content-Type: application/json" \
-    -d "{\"username\":\"$username\",\"email\":\"$email\",\"password\":\"$password\"}" 2>/dev/null)
+  # Hash password using ping-server container (has bcrypt available)
+  local password_hash
+  password_hash=$(docker exec stealth-ping-server node -e "
+    const bcrypt = require('bcrypt');
+    const password = process.argv[1];
+    const hash = bcrypt.hashSync(password, 10);
+    console.log(hash);
+  " "$password" 2>/dev/null)
 
-  if echo "$register_response" | grep -q '"success"' || echo "$register_response" | grep -q '"id"'; then
-    log "User created successfully. Promoting to admin..."
-    
-    # Give database a moment to settle
-    sleep 2
-
-    # Promote to admin via database
-    docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
-      "UPDATE users SET is_admin = true WHERE username = '$username';" 2>/dev/null || true
-
-    log "User '$username' is now admin."
-  else
-    log "Failed to create user. Response: $register_response"
+  if [[ -z "$password_hash" ]]; then
+    log "Failed to hash password."
+    return
   fi
+
+  # Insert user directly into database with bcrypt hash
+  docker exec -i stealth-postgres psql -U dashboard -d dashboard <<SQL 2>/dev/null
+INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at)
+VALUES ('$username', '$email', '$password_hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (username) DO NOTHING;
+SQL
+
+  log "User '$username' created and set as admin."
 }
 
 print_next_steps() {
