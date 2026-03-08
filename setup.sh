@@ -96,7 +96,7 @@ prompt_env_values() {
   local smtp_user
   read -p "SMTP User (email) []: " smtp_user
 
-  local smtp_pass
+  local smtp_pass=""
   if [[ -n "$smtp_user" ]]; then
     read -sp "SMTP Password []: " smtp_pass
     echo ""
