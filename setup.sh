@@ -19,6 +19,22 @@ check_docker() {
     exit 1
   fi
 
+  # Check if user can access docker socket
+  if ! docker ps >/dev/null 2>&1; then
+    if groups "$USER" | grep -q '\bdocker\b'; then
+      echo "You are in the docker group but cannot access the socket."
+      echo "Try logging out and back in."
+      exit 1
+    else
+      echo "Adding user '$USER' to docker group..."
+      sudo usermod -aG docker "$USER"
+      echo ""
+      echo "User added to docker group. You must log out and log back in before continuing."
+      echo "After re-login, run this script again."
+      exit 0
+    fi
+  fi
+
   log "Docker and Docker Compose found."
 }
 
