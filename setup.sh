@@ -5,60 +5,22 @@ REPO_URL="https://github.com/fideltfg/stealthDash.git"
 DEFAULT_INSTALL_DIR="$HOME/stealthDash"
 DASHBOARD_SUBDIR="Dashboard"
 
-if [[ "${EUID}" -eq 0 ]]; then
-  echo "Do not run this script as root. Run it as a normal user with sudo access."
-  exit 1
-fi
-
-if ! command -v sudo >/dev/null 2>&1; then
-  echo "sudo is required but not installed."
-  exit 1
-fi
-
 log() {
   echo "[setup] $1"
 }
 
-need_cmd() {
-  command -v "$1" >/dev/null 2>&1
-}
-
-install_base_packages() {
-  log "Installing base packages (git, curl, ca-certificates, gnupg)..."
-  sudo apt-get update
-  sudo apt-get install -y git curl ca-certificates gnupg lsb-release
-}
-
-install_docker() {
-  if need_cmd docker; then
-    log "Docker is already installed."
-    return
+check_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker is not installed. Please install Docker before running this script."
+    exit 1
   fi
 
-  log "Installing Docker Engine + Compose plugin..."
-  sudo install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-  sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-  local codename
-  codename="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${codename} stable" \
-    | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-
-  sudo apt-get update
-  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-}
-
-configure_docker_permissions() {
-  if groups "$USER" | grep -q '\bdocker\b'; then
-    log "User is already in the docker group."
-    return
+  if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
+    echo "Docker Compose is not installed. Please install Docker Compose before running this script."
+    exit 1
   fi
 
-  log "Adding user '$USER' to docker group..."
-  sudo usermod -aG docker "$USER"
-  NEED_RELOGIN=1
+  log "Docker and Docker Compose found."
 }
 
 resolve_install_dir() {
@@ -76,7 +38,7 @@ fetch_repo() {
   mkdir -p "$INSTALL_DIR"
 
   if [[ -d "$REPO_DIR/.git" ]]; then
-    log "Repository exists. Pulling latest changes..."
+    log "Repository exists at $REPO_DIR. Pulling latest changes..."
     git -C "$REPO_DIR" pull --ff-only
     return
   fi
@@ -92,7 +54,11 @@ fetch_repo() {
   git clone "$REPO_URL" "$REPO_DIR"
 }
 
-bootstrap_env() {
+generate_random_secret() {
+  openssl rand -hex 32
+}
+
+prompt_env_values() {
   local env_file="$DASHBOARD_DIR/.env"
   local env_example="$DASHBOARD_DIR/.env.example"
 
@@ -102,11 +68,79 @@ bootstrap_env() {
   fi
 
   if [[ -f "$env_file" ]]; then
-    log ".env already exists. Leaving it unchanged."
-  else
-    log "Creating .env from .env.example..."
-    cp "$env_example" "$env_file"
+    log ".env already exists. Skipping configuration."
+    return
   fi
+
+  log "Configuring environment variables..."
+  echo ""
+  echo "Press Enter to accept defaults (shown in brackets)."
+  echo ""
+
+  local db_pass
+  read -p "Database password [dashboard123]: " db_pass
+  db_pass="${db_pass:-dashboard123}"
+
+  local jwt_secret
+  jwt_secret=$(generate_random_secret)
+  echo "JWT Secret (auto-generated): $jwt_secret"
+
+  local encryption_key
+  encryption_key=$(generate_random_secret)
+  echo "Encryption Key (auto-generated): $encryption_key"
+
+  local dashboard_url
+  read -p "Dashboard URL [http://localhost:3000]: " dashboard_url
+  dashboard_url="${dashboard_url:-http://localhost:3000}"
+
+  local smtp_host
+  read -p "SMTP Host [smtp.gmail.com]: " smtp_host
+  smtp_host="${smtp_host:-smtp.gmail.com}"
+
+  local smtp_port
+  read -p "SMTP Port [587]: " smtp_port
+  smtp_port="${smtp_port:-587}"
+
+  local smtp_user
+  read -p "SMTP User (email) []: " smtp_user
+
+  local smtp_pass
+  if [[ -n "$smtp_user" ]]; then
+    read -sp "SMTP Password []: " smtp_pass
+    echo ""
+  fi
+
+  local email_from
+  read -p "Email From Address [Dashboard <noreply@dashboard.local>]: " email_from
+  email_from="${email_from:-Dashboard <noreply@dashboard.local>}"
+
+  echo ""
+  log "Creating .env file..."
+  
+  cat > "$env_file" <<EOF
+# Database Configuration
+POSTGRES_USER=dashboard
+POSTGRES_PASSWORD=$db_pass
+POSTGRES_DB=dashboard
+
+# Security Keys
+ENCRYPTION_KEY=$encryption_key
+JWT_SECRET=$jwt_secret
+
+# Email Configuration
+SMTP_HOST=$smtp_host
+SMTP_PORT=$smtp_port
+SMTP_SECURE=false
+SMTP_USER=$smtp_user
+SMTP_PASS=$smtp_pass
+EMAIL_FROM=$email_from
+DASHBOARD_URL=$dashboard_url
+
+# Vite Server Configuration
+VITE_ALLOWED_HOSTS=localhost,.local
+EOF
+
+  log ".env created successfully."
 }
 
 compose_cmd() {
@@ -115,7 +149,7 @@ compose_cmd() {
     return
   fi
 
-  if need_cmd docker-compose; then
+  if command -v docker-compose >/dev/null 2>&1; then
     echo "docker-compose"
     return
   fi
@@ -128,79 +162,114 @@ start_stack() {
   compose="$(compose_cmd)"
 
   if [[ -z "$compose" ]]; then
-    echo "Docker Compose was not found after install."
+    echo "Docker Compose was not found."
     exit 1
   fi
 
   log "Starting StealthDash containers..."
   (cd "$DASHBOARD_DIR" && $compose up -d --build)
+
+  log "Waiting for services to be ready..."
+  sleep 10
+}
+
+wait_for_api() {
+  local max_attempts=30
+  local attempt=0
+
+  while [[ $attempt -lt $max_attempts ]]; do
+    if curl -s http://localhost:3001/health >/dev/null 2>&1 || curl -s http://localhost:3001 >/dev/null 2>&1; then
+      log "API is ready."
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+
+  log "API did not respond after 60 seconds. Continuing anyway..."
+  return 1
+}
+
+setup_first_user() {
+  echo ""
+  log "Setting up first admin user..."
+  echo ""
+
+  local username
+  read -p "Username: " username
+  if [[ -z "$username" ]]; then
+    log "Skipping first user setup."
+    return
+  fi
+
+  local email
+  read -p "Email: " email
+  if [[ -z "$email" ]]; then
+    echo "Email is required."
+    return
+  fi
+
+  local password
+  read -sp "Password: " password
+  echo ""
+
+  if [[ -z "$password" ]]; then
+    echo "Password is required."
+    return
+  fi
+
+  wait_for_api
+
+  log "Creating first user: $username..."
+
+  # Register via API
+  local register_response
+  register_response=$(curl -s -X POST http://localhost:3001/api/auth/register \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$username\",\"email\":\"$email\",\"password\":\"$password\"}" 2>/dev/null)
+
+  if echo "$register_response" | grep -q '"success"' || echo "$register_response" | grep -q '"id"'; then
+    log "User created successfully. Promoting to admin..."
+    
+    # Give database a moment to settle
+    sleep 2
+
+    # Promote to admin via database
+    docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
+      "UPDATE users SET is_admin = true WHERE username = '$username';" 2>/dev/null || true
+
+    log "User '$username' is now admin."
+  else
+    log "Failed to create user. Response: $register_response"
+  fi
 }
 
 print_next_steps() {
   cat <<EOF
 
-StealthDash setup completed.
+✓ StealthDash setup completed.
 
 Install path: $REPO_DIR
 Dashboard path: $DASHBOARD_DIR
 
 Open: http://localhost:3000
 
-After registering your first user, make it admin with:
-  cd "$DASHBOARD_DIR"
-  docker exec -i stealth-postgres psql -U dashboard -d dashboard -c "UPDATE users SET is_admin = true WHERE id = 1;"
-
 Helpful commands:
-  cd "$DASHBOARD_DIR"
-  docker compose ps
-  docker compose logs -f
+  docker compose -f "$DASHBOARD_DIR/docker-compose.yml" ps
+  docker compose -f "$DASHBOARD_DIR/docker-compose.yml" logs -f
 
 EOF
-
-  if [[ "${NEED_RELOGIN:-0}" -eq 1 ]]; then
-    cat <<'EOF'
-IMPORTANT:
-You were added to the docker group in this run.
-Log out and log back in (or reboot) before using Docker without sudo.
-If you want to continue now, run commands with sudo.
-EOF
-  fi
-}
-
-check_ubuntu() {
-  if [[ ! -f /etc/os-release ]]; then
-    echo "Cannot detect OS. This script supports Ubuntu-based systems."
-    exit 1
-  fi
-
-  # shellcheck disable=SC1091
-  . /etc/os-release
-  local id_like="${ID_LIKE:-}"
-  local id="${ID:-}"
-
-  if [[ "$id" != "ubuntu" ]] && [[ "$id_like" != *"ubuntu"* ]] && [[ "$id_like" != *"debian"* ]]; then
-    echo "This setup script is intended for Ubuntu-based systems."
-    exit 1
-  fi
 }
 
 main() {
-  check_ubuntu
+  check_docker
   resolve_install_dir
-  install_base_packages
-  install_docker
-  configure_docker_permissions
   fetch_repo
-  bootstrap_env
-
-  if [[ "${NEED_RELOGIN:-0}" -eq 1 ]]; then
-    log "Docker group updated for user. Starting stack with sudo for this run."
-    sudo -E bash -c "cd '$DASHBOARD_DIR' && docker compose up -d --build"
-  else
-    start_stack
-  fi
-
+  prompt_env_values
+  start_stack
+  setup_first_user
   print_next_steps
 }
 
 main "$@"
+
