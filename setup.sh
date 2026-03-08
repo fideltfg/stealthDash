@@ -3,7 +3,6 @@ set -euo pipefail
 
 REPO_URL="https://github.com/fideltfg/stealthDash.git"
 DEFAULT_INSTALL_DIR="$HOME/stealthDash"
-DASHBOARD_SUBDIR="Dashboard"
 
 log() {
   echo "[setup] $1"
@@ -24,34 +23,27 @@ check_docker() {
 }
 
 resolve_install_dir() {
-  if [[ -n "${STEALTHDASH_DIR:-}" ]]; then
-    INSTALL_DIR="$STEALTHDASH_DIR"
-  else
-    INSTALL_DIR="$DEFAULT_INSTALL_DIR"
-  fi
-
-  REPO_DIR="$INSTALL_DIR"
-  DASHBOARD_DIR="$REPO_DIR/$DASHBOARD_SUBDIR"
+  DASHBOARD_DIR="${STEALTHDASH_DIR:-$DEFAULT_INSTALL_DIR}"
 }
 
 fetch_repo() {
-  mkdir -p "$INSTALL_DIR"
-
-  if [[ -d "$REPO_DIR/.git" ]]; then
-    log "Repository exists at $REPO_DIR. Pulling latest changes..."
-    git -C "$REPO_DIR" pull --ff-only
+  if [[ -d "$DASHBOARD_DIR/.git" ]]; then
+    log "Repository exists at $DASHBOARD_DIR. Pulling latest changes..."
+    git -C "$DASHBOARD_DIR" pull --ff-only
     return
   fi
 
-  if [[ -d "$REPO_DIR" ]] && [[ -n "$(ls -A "$REPO_DIR")" ]]; then
-    echo "Install directory '$REPO_DIR' is not empty and is not a git repository."
+  if [[ -d "$DASHBOARD_DIR" ]] && [[ -n "$(ls -A "$DASHBOARD_DIR")" ]]; then
+    echo "Install directory '$DASHBOARD_DIR' is not empty and is not a git repository."
     echo "Set STEALTHDASH_DIR to an empty path and rerun."
     exit 1
   fi
 
-  log "Cloning repository into $REPO_DIR..."
-  rm -rf "$REPO_DIR"
-  git clone "$REPO_URL" "$REPO_DIR"
+  mkdir -p "$(dirname "$DASHBOARD_DIR")"
+
+  log "Cloning repository into $DASHBOARD_DIR..."
+  rm -rf "$DASHBOARD_DIR"
+  git clone "$REPO_URL" "$DASHBOARD_DIR"
 }
 
 generate_random_secret() {
@@ -249,8 +241,7 @@ print_next_steps() {
 
 ✓ StealthDash setup completed.
 
-Install path: $REPO_DIR
-Dashboard path: $DASHBOARD_DIR
+Install path: $DASHBOARD_DIR
 
 Open: http://localhost:3000
 
