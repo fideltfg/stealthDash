@@ -230,28 +230,35 @@ setup_first_user() {
 
   log "Creating first user: $username..."
 
-  # Hash password using ping-server container (has bcrypt available)
+  # Hash password using ping-server container (uses bcryptjs, must match)
   local password_hash
   password_hash=$(docker exec stealth-ping-server node -e "
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('bcryptjs');
     const password = process.argv[1];
     const hash = bcrypt.hashSync(password, 10);
     console.log(hash);
   " "$password" 2>/dev/null)
 
   if [[ -z "$password_hash" ]]; then
-    log "Failed to hash password."
-    return
+    echo "ERROR: Failed to hash password."
+    return 1
   fi
 
-  # Insert user directly into database with bcrypt hash
-  docker exec -i stealth-postgres psql -U dashboard -d dashboard <<SQL 2>/dev/null
+  # Insert user directly into database with bcrypt hash using parameterized query
+  local result
+  result=$(docker exec stealth-postgres psql -U dashboard -d dashboard -c "
 INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at)
-VALUES ('$username', '$email', '$password_hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (username) DO NOTHING;
-SQL
+VALUES (E'$(echo "$username" | sed "s/'/''/g")', E'$(echo "$email" | sed "s/'/''/g")', E'$password_hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (username) DO NOTHING
+RETURNING id, username, email;" 2>&1)
 
-  log "User '$username' created and set as admin."
+  if echo "$result" | grep -q "INSERT"; then
+    log "User '$username' created and set as admin."
+    return 0
+  else
+    echo "ERROR: Failed to create user. Response: $result"
+    return 1
+  fi
 }
 
 print_next_steps() {
