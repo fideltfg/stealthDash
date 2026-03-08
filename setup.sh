@@ -230,40 +230,49 @@ setup_first_user() {
 
   log "Creating first user: $username..."
 
-  # Hash password using ping-server container (uses bcryptjs async, matching API exactly)
-  local password_hash
-  password_hash=$(docker exec stealth-ping-server node -e "
+  # Use ping-server container which has bcryptjs + pg already set up with correct env vars
+  local node_result
+  node_result=$(docker exec stealth-ping-server node -e "
     const bcrypt = require('bcryptjs');
-    const password = process.argv[1];
-    bcrypt.hash(password, 10).then(hash => {
-      console.log(hash);
-    }).catch(err => {
-      console.error('Hash error:', err);
-      process.exit(1);
+    const { Pool } = require('pg');
+
+    const pool = new Pool({
+      host: process.env.DB_HOST || 'postgres',
+      port: parseInt(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME || 'dashboard',
+      user: process.env.DB_USER || 'dashboard',
+      password: process.env.DB_PASSWORD || 'dashboard123',
     });
-  " "$password" 2>&1 | grep '^\$2[aby]\$')
 
-  if [[ -z "$password_hash" ]]; then
-    echo "ERROR: Failed to hash password."
-    return 1
-  fi
+    const [username, email, password] = process.argv.slice(1);
 
-  echo "Debug: Hash generated: $password_hash"
+    (async () => {
+      try {
+        const hash = await bcrypt.hash(password, 10);
+        const res = await pool.query(
+          'INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at) VALUES (\$1, \$2, \$3, true, NOW(), NOW()) ON CONFLICT (username) DO NOTHING RETURNING id, username',
+          [username, email, hash]
+        );
+        if (res.rowCount > 0) {
+          console.log('SUCCESS:' + res.rows[0].username);
+        } else {
+          console.log('CONFLICT: username already exists');
+        }
+      } catch (err) {
+        console.error('ERROR: ' + err.message);
+        process.exit(1);
+      } finally {
+        await pool.end();
+      }
+    })();
+  " "$username" "$email" "$password" 2>&1)
 
-  # Insert user directly into database with bcrypt hash
-  # Use parameterized psql query to avoid issues with $ in bcrypt hash
-  local result
-  result=$(docker exec stealth-postgres psql -U dashboard -d dashboard -v user="$username" -v email="$email" -v hash="$password_hash" -c "
-INSERT INTO users (username, email, password_hash, is_admin, created_at, updated_at)
-VALUES (:'user', :'email', :'hash', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (username) DO NOTHING
-RETURNING id, username, email;" 2>&1)
-
-  if echo "$result" | grep -q "INSERT"; then
+  if echo "$node_result" | grep -q '^SUCCESS:'; then
     log "User '$username' created and set as admin."
-    return 0
+  elif echo "$node_result" | grep -q '^CONFLICT'; then
+    log "User '$username' already exists."
   else
-    echo "ERROR: Failed to create user. Response: $result"
+    echo "ERROR: Failed to create user. Response: $node_result"
     return 1
   fi
 }
