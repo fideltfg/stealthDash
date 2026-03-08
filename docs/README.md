@@ -41,14 +41,10 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 ## Quick Start
 
 ### One-Command Ubuntu Setup (Fresh System)
-
-For a fresh Ubuntu-based install (no Docker/tools installed), run:
+For a fresh Ubuntu-based OS install, run:
 
 ```bash
-git clone https://github.com/fideltfg/stealthDash.git
-cd stealthDash/Dashboard
-chmod +x setup.sh
-./setup.sh
+git clone https://github.com/fideltfg/stealthDash.git && cd stealthDash && chmod +x setup.sh && ./setup.sh
 ```
 
 The script installs Docker Engine + Compose plugin, creates `.env` from `.env.example`, and starts StealthDash automatically.
