@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Install ping utility
-RUN apk add --no-cache iputils
+# Install ping and traceroute utilities
+RUN apk add --no-cache iputils traceroute
 
 # Add docker group with GID 988 (match host) and add node user to it
 RUN addgroup -g 988 docker && addgroup node docker

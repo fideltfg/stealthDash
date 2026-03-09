@@ -75,10 +75,16 @@ export interface RssContent {
   refreshInterval?: number;
 }
 
+export interface UptimeTarget {
+  host: string;
+  label?: string;
+}
+
 export interface UptimeContent {
-  target: string;
-  interval?: number; // seconds between pings
-  timeout?: number; // milliseconds
+  targets?: UptimeTarget[];  // multi-target (new)
+  target?: string;           // single target (legacy, backward compat)
+  interval?: number;         // seconds between pings
+  timeout?: number;          // milliseconds
 }
 
 export interface CometP8541Content {

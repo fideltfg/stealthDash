@@ -7,7 +7,48 @@
 const express = require('express');
 const router = express.Router();
 const ping = require('ping');
+const { execFile } = require('child_process');
 const { respond } = require('../src/plugin-helpers');
+
+/** Strict target validation: only hostname/IP characters, no shell metacharacters */
+function isValidTarget(target) {
+  return typeof target === 'string' &&
+    /^[a-zA-Z0-9._-]+$/.test(target) &&
+    target.length > 0 &&
+    target.length <= 253;
+}
+
+/** Parse traceroute stdout into structured hop objects */
+function parseTracerouteOutput(raw) {
+  const hops = [];
+  const lines = raw.trim().split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const m = trimmed.match(/^(\d+)\s+(.*)/);
+    if (!m) continue;
+    const hopNum = parseInt(m[1]);
+    const rest = m[2].trim();
+    // All timeouts on this hop
+    if (/^[\*\s]+$/.test(rest)) {
+      hops.push({ hop: hopNum, address: '*', rtts: ['*', '*', '*'] });
+      continue;
+    }
+    const parts = rest.split(/\s+/);
+    const address = parts[0];
+    const rtts = [];
+    for (let i = 1; i < parts.length; i++) {
+      if (parts[i] === '*') {
+        rtts.push('*');
+      } else if (!isNaN(parseFloat(parts[i])) && parts[i + 1] === 'ms') {
+        rtts.push(parseFloat(parts[i]).toFixed(2) + ' ms');
+        i++; // skip 'ms' token
+      }
+    }
+    hops.push({ hop: hopNum, address, rtts });
+  }
+  return hops;
+}
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -90,6 +131,30 @@ router.post('/ping-batch', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Traceroute endpoint
+router.get('/traceroute/:target', (req, res) => {
+  const { target } = req.params;
+
+  if (!isValidTarget(target)) {
+    return respond.badRequest(res, 'Invalid target: only hostname/IP characters are allowed');
+  }
+
+  // execFile is used (not exec) so no shell is spawned — no injection risk
+  execFile('traceroute', ['-n', '-m', '20', '-w', '2', target], { timeout: 60000 }, (error, stdout, stderr) => {
+    const raw = stdout || '';
+    const hops = parseTracerouteOutput(raw);
+
+    if (hops.length === 0 && error) {
+      return res.status(500).json({
+        error: error.message || 'traceroute failed',
+        target
+      });
+    }
+
+    res.json({ target, hops, raw });
+  });
 });
 
 module.exports = {
