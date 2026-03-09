@@ -67,7 +67,7 @@ class UnifiSensorRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-        <div class="grid grid-auto sensor-grid widget-grid-auto">
+        <div class="card-list sensor-grid">
           <div class="loading widget-loading">Loading sensors...</div>
         </div>
     `;

@@ -38,19 +38,6 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 - **Lock Mode** — Prevent accidental edits by locking the canvas
 - **Desktop App** - The app allows you to display your dashboard as a 'background' app on your deshtop.
 
-## Quick Start
-
-### One-Command Ubuntu Setup (Fresh System)
-For a fresh Ubuntu-based OS install, run:
-
-```bash
-git clone https://github.com/fideltfg/stealthDash.git && cd stealthDash && chmod +x setup.sh && ./setup.sh
-```
-
-The script installs Docker Engine + Compose plugin, creates `.env` from `.env.example`, and starts StealthDash automatically.
-
-After setup, open `http://localhost:3000`.
-
 ### Prerequisites
 
 - Docker and Docker Compose
@@ -58,7 +45,7 @@ After setup, open `http://localhost:3000`.
 
 ### Installation
 
-Stealthdash runs inside three containers, one for the web app, one for the database and one for backend the Ping/proxy server. to get started clone the repo, set your settings in the .envfile, run docker compose up -d  and your all set. Open your browser, enter the address and port (defalt 3000) and you are ready to start building your first dashboard.
+Stealthdash runs inside three containers, one for the web app, one for the database and one for backend the Ping/proxy server. To get started clone the repo, set your settings in the .env file, run docker compose up -d --build. Once compleated, open your browser, enter the address and port (defalt 3000) and you are ready to start building your first dashboard.
 
 1. **Clone the repository**
    ```bash
@@ -74,7 +61,7 @@ Stealthdash runs inside three containers, one for the web app, one for the datab
 
 3. **Start the application**
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 
 4. **Access the dashboard**
@@ -83,14 +70,19 @@ Stealthdash runs inside three containers, one for the web app, one for the datab
    - Start adding widgets!
 
 
-### First User Setup
+## Quick Start
 
-The first registered user needs admin privileges:
+### One-Command Setup Script (Fresh System)
+(STILL IN TESTING!!!)
 
 ```bash
-docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
-  "UPDATE users SET is_admin = true WHERE id = 1;"
+git clone https://github.com/fideltfg/stealthDash.git && cd stealthDash && chmod +x setup.sh && ./setup.sh
 ```
+
+The script creates `.env` from `.env.example`, builds then starts StealthDash automatically. 
+
+After setup, open `http://localhost:3000` to register your account.
+
 
 ## Usage Guide
 
@@ -285,6 +277,15 @@ See [WIDGETS.md](./WIDGETS.md) for detailed widget configuration guides.
 
 ## Administration
 
+### Admin User Setup
+
+Give the first registered user admin privaliges by running this command on your host machine. Modify the command to use your database credentials
+
+```bash
+docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
+  "UPDATE users SET is_admin = true WHERE id = 1;"
+```
+
 ### Admin Dashboard
 
 Admins have access to user management with statistics and controls:
@@ -300,13 +301,7 @@ Admins have access to user management with statistics and controls:
 - Reset user passwords
 - Delete user accounts and their dashboards
 
-### Making Users Admin
 
-**Via Database:**
-```bash
-docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
-  "UPDATE users SET is_admin = true WHERE username = 'username';"
-```
 
 **Via Admin UI:**
 1. Log in as an admin

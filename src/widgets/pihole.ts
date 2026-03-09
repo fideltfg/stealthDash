@@ -342,10 +342,6 @@ class PiholeRenderer implements WidgetRenderer {
           ${this.createStatCard('Cached', formatNumber(data.queries.cached), '<i class="fas fa-database"></i>', '#607d8b')}
         </div>
 
-        <!-- Gravity Update -->
-        <subtitle class="mt-12">
-          Gravity updated ${gravityDate}
-        </subtitle>
       </div>
     `;
   }

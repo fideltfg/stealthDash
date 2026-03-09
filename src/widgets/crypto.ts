@@ -250,7 +250,7 @@ export class CryptoWidgetRenderer implements WidgetRenderer {
         const currency = content.currency || 'usd';
         const showChart = content.showChart !== false;
 
-        let html = '<div class="crypto-widget"><div class="card-list">';
+        let html = '<div class="card-list">';
 
         for (const coin of coinsData) {
             const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
@@ -293,8 +293,7 @@ export class CryptoWidgetRenderer implements WidgetRenderer {
             html += '</div>';
         }
 
-        html += '</div>';
-        html += `<div class="crypto-last-update">Last updated: ${new Date().toLocaleTimeString()}</div>`;
+        // html += `<div class="crypto-last-update">Last updated: ${new Date().toLocaleTimeString()}</div>`;
         html += '</div>';
 
         container.innerHTML = html;

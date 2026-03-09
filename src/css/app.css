@@ -791,7 +791,7 @@ body {
   cursor: default;
   overflow: visible;
   transition: box-shadow var(--transition);
-  padding-bottom: 40px;
+  padding-bottom: 28px;
 }
 
 .widget:hover,
@@ -819,6 +819,7 @@ body {
   justify-content: space-between;
   overflow: visible;
   border-radius: var(--radius) var(--radius) 0 0;
+  /* position: absolute; */
 }
 
 
@@ -2781,7 +2782,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .card-title {
