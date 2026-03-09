@@ -19,20 +19,20 @@ const MAX_HISTORY = 60;
 const DISPLAY_BARS = 30;
 
 const UPTIME_STYLES = `
-.uptime-widget { display: flex; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; gap: 8px; padding: 2px; box-sizing: border-box; }
-.uptime-target-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.uptime-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.uptime-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: background 300ms, box-shadow 300ms; }
+.uptime-widget { display: flex; flex-direction: column; width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; gap: 8px; padding: 2px; box-sizing: border-box; }
+.uptime-target-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden; }
+.uptime-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; }
+.uptime-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: background 300ms, box-shadow 300ms; margin-right: 6px; }
 .uptime-status-dot.up { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
 .uptime-status-dot.down { background: #ef4444; box-shadow: 0 0 6px #ef444488; }
 .uptime-status-dot.unknown { background: var(--text-muted, #888); }
-.uptime-target-name { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.uptime-target-name {flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .uptime-current-rtt { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
 .uptime-current-rtt.timeout { color: #ef4444; }
-.uptime-chart-row { display: flex; align-items: flex-end; gap: 2px; height: 30px; }
+.uptime-chart-row { display: flex; align-items: flex-end; gap: 2px; height: 25px; min-width: 0; overflow: hidden; padding: 2px 0; }
 .uptime-bar-wrap { flex: 1; display: flex; align-items: flex-end; position: relative; height: 100%; cursor: default; }
-.uptime-bar { width: 100%; border-radius: 3px 3px 0 0; transition: height 120ms; }
-.uptime-bar-placeholder { width: 100%; height: 100%; background: rgba(128,128,128,0.12); border-radius: 3px 3px 0 0; }
+.uptime-bar { width: 100%; border-radius: 3px; transition: height 120ms; }
+.uptime-bar-placeholder { width: 100%; height: 100%; background: rgba(128,128,128,0.12); border-radius: 3px; }
 .uptime-bar-wrap:hover .uptime-bar-tooltip { opacity: 1; visibility: visible; }
 .uptime-bar-tooltip { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; font-size: 10px; line-height: 1.5; opacity: 0; visibility: hidden; transition: opacity 120ms; pointer-events: none; z-index: 1000; white-space: nowrap; text-align: center; }
 .uptime-bar-excellent { background: #22c55e; }
@@ -43,13 +43,12 @@ const UPTIME_STYLES = `
 .uptime-bar-failed { background: #ef4444; }
 .uptime-stats-row { display: flex; gap: 0; }
 .uptime-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
-.uptime-stat-value { font-size: 13px; font-weight: 600; color: var(--text); }
-.uptime-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.uptime-stat-value { color: var(--text); }
 .uptime-stat-value.good { color: #22c55e; }
 .uptime-stat-value.warn { color: #eab308; }
 .uptime-stat-value.bad { color: #ef4444; }
 .uptime-card-actions { display: flex; justify-content: flex-end; gap: 6px; }
-.uptime-action-btn { font-size: 10px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: border-color 120ms, color 120ms, background 120ms; white-space: nowrap; }
+.uptime-action-btn { font-size: 8px; padding: 1px 1px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: border-color 120ms, color 120ms, background 120ms; white-space: nowrap; }
 .uptime-action-btn:hover { border-color: var(--accent, #6366f1); color: var(--accent, #6366f1); background: rgba(99,102,241,0.08); }
 .uptime-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; display: flex; align-items: center; justify-content: center; }
 .uptime-popup { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; width: 580px; max-width: 94vw; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
@@ -87,17 +86,59 @@ const UPTIME_STYLES = `
 .uptime-config-remove-btn { flex-shrink: 0; padding: 5px 8px; background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-muted); font-size: 12px; line-height: 1; }
 .uptime-config-remove-btn:hover { border-color: #ef4444; color: #ef4444; }
 .uptime-config-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 2px; }
-.uptime-config-col-header { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; display: grid; grid-template-columns: 2fr 1fr 24px; gap: 6px; }
+.uptime-config-col-header { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; display: grid; grid-template-columns: 20px 2fr 1fr 24px; gap: 6px; }
 .uptime-config-global { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.uptime-config-drag-handle { cursor: grab; color: var(--text-muted); flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 20px; padding: 0 2px; border-radius: 3px; transition: color 120ms; user-select: none; }
+.uptime-config-drag-handle:hover { color: var(--text); }
+.uptime-config-drag-handle:active { cursor: grabbing; }
+.uptime-config-target-row.dragging { opacity: 0.35; }
+.uptime-config-target-row.drag-over { outline: 2px solid var(--accent, #6366f1); outline-offset: 1px; border-radius: 4px; }
 `;
 
 export class UptimeWidgetRenderer implements WidgetRenderer {
   private poller = new WidgetPoller();
-  // Map<widgetId, Map<targetHost, PingResult[]>>
+  // In-memory cache; localStorage is the source of truth across reloads
   private pingHistory: Map<string, Map<string, PingResult[]>> = new Map();
 
   destroy(): void {
     this.poller.stopAll();
+  }
+
+  private storageKey(widgetId: string, host: string): string {
+    return `uptime-history:${widgetId}:${host}`;
+  }
+
+  private saveHistory(widgetId: string, host: string, hist: PingResult[]): void {
+    try {
+      localStorage.setItem(this.storageKey(widgetId, host), JSON.stringify(hist));
+    } catch {
+      // localStorage full or unavailable — continue with in-memory only
+    }
+  }
+
+  private loadHistory(widgetId: string, host: string): PingResult[] {
+    try {
+      const raw = localStorage.getItem(this.storageKey(widgetId, host));
+      if (raw) return JSON.parse(raw) as PingResult[];
+    } catch {
+      // Corrupted entry — start fresh
+      localStorage.removeItem(this.storageKey(widgetId, host));
+    }
+    return [];
+  }
+
+  /** Remove localStorage entries for hosts that are no longer assigned to this widget */
+  private pruneStaleHistory(widgetId: string, activeHosts: Set<string>): void {
+    const prefix = `uptime-history:${widgetId}:`;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        const host = key.slice(prefix.length);
+        if (!activeHosts.has(host)) toRemove.push(key);
+      }
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
   }
 
   /** Resolve targets from widget content, supporting new multi-target and legacy single-target formats */
@@ -113,16 +154,20 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
   }
 
   private getTargetHistory(widgetId: string, host: string): PingResult[] {
-    return this.pingHistory.get(widgetId)?.get(host) ?? [];
+    // Serve from in-memory cache; populate from localStorage on first access
+    if (!this.pingHistory.get(widgetId)?.has(host)) {
+      const fromStorage = this.loadHistory(widgetId, host);
+      if (!this.pingHistory.has(widgetId)) this.pingHistory.set(widgetId, new Map());
+      this.pingHistory.get(widgetId)!.set(host, fromStorage);
+    }
+    return this.pingHistory.get(widgetId)!.get(host)!;
   }
 
   private addToTargetHistory(widgetId: string, host: string, result: PingResult): void {
-    if (!this.pingHistory.has(widgetId)) this.pingHistory.set(widgetId, new Map());
-    const wmap = this.pingHistory.get(widgetId)!;
-    if (!wmap.has(host)) wmap.set(host, []);
-    const hist = wmap.get(host)!;
+    const hist = this.getTargetHistory(widgetId, host); // ensures cache is warm
     hist.push(result);
     if (hist.length > MAX_HISTORY) hist.shift();
+    this.saveHistory(widgetId, host, hist);
   }
 
   configure(widget: Widget): void {
@@ -144,7 +189,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       <div class="widget-dialog-field" id="targets-section">
         <div class="uptime-config-section-title">Targets</div>
         <div class="uptime-config-col-header">
-          <span>Host / IP Address</span><span>Label (optional)</span><span></span>
+          <span></span><span>Host / IP Address</span><span>Label (optional)</span><span></span>
         </div>
         <div id="uptime-target-rows" class="uptime-config-targets"></div>
         <button id="add-target-btn" class="btn btn-small btn-secondary" style="align-self:flex-start;margin-top:4px;">
@@ -172,11 +217,52 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     const rowsContainer = dialog.querySelector('#uptime-target-rows') as HTMLElement;
 
+    let dragSourceIndex: number | null = null;
+
     const renderRows = () => {
       rowsContainer.innerHTML = '';
       dialogTargets.forEach((t, i) => {
         const row = document.createElement('div');
         row.className = 'uptime-config-target-row';
+
+        const dragHandle = document.createElement('span');
+        dragHandle.className = 'uptime-config-drag-handle';
+        dragHandle.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+        dragHandle.title = 'Drag to reorder';
+        // Only allow drag to start from the handle
+        dragHandle.addEventListener('mousedown', () => { row.draggable = true; });
+
+        row.addEventListener('dragstart', (e) => {
+          dragSourceIndex = i;
+          e.dataTransfer!.effectAllowed = 'move';
+          e.dataTransfer!.setData('text/plain', String(i));
+          setTimeout(() => row.classList.add('dragging'), 0);
+        });
+        row.addEventListener('dragend', () => {
+          row.draggable = false;
+          row.classList.remove('dragging');
+          dragSourceIndex = null;
+          rowsContainer.querySelectorAll('.uptime-config-target-row').forEach(r => r.classList.remove('drag-over'));
+        });
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (dragSourceIndex === null || dragSourceIndex === i) return;
+          e.dataTransfer!.dropEffect = 'move';
+          rowsContainer.querySelectorAll('.uptime-config-target-row').forEach(r => r.classList.remove('drag-over'));
+          row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drag-over');
+        });
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          if (dragSourceIndex !== null && dragSourceIndex !== i) {
+            const [moved] = dialogTargets.splice(dragSourceIndex, 1);
+            dialogTargets.splice(i, 0, moved);
+            renderRows();
+          }
+        });
 
         const hostInput = document.createElement('input');
         hostInput.type = 'text';
@@ -208,6 +294,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
         });
         stopWidgetDragPropagation(removeBtn);
 
+        row.appendChild(dragHandle);
         row.appendChild(hostInput);
         row.appendChild(labelInput);
         row.appendChild(removeBtn);
@@ -248,7 +335,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     injectWidgetStyles('uptime', UPTIME_STYLES);
 
     const div = document.createElement('div');
-    div.className = 'uptime-widget';
+    div.className = 'card-list';
 
     const targets = this.getTargets(widget);
     if (targets.length === 0) {
@@ -322,6 +409,9 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     const targets = this.getTargets(widget);
     const content = widget.content as { timeout?: number };
     const timeout = content.timeout || 5000;
+    // Remove history for any targets that are no longer in the widget config
+    const activeHosts = new Set(targets.map(t => t.host));
+    this.pruneStaleHistory(widget.id, activeHosts);
     for (const target of targets) {
       container.appendChild(this.buildTargetCard(widget, target, timeout));
     }
@@ -337,17 +427,17 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
     const minRtt = rtts.length > 0 ? Math.min(...rtts) : NaN;
 
     const card = document.createElement('div');
-    card.className = 'uptime-target-card';
+    card.className = 'card';
     card.dataset.host = target.host;
 
     // Header: status dot | name | current RTT
     const header = document.createElement('div');
-    header.className = 'uptime-card-header';
+    header.className = 'card-header';
 
     const dot = document.createElement('div');
     dot.className = 'uptime-status-dot ' + (history.length === 0 ? 'unknown' : lastPing?.success ? 'up' : 'down');
 
-    const nameEl = document.createElement('div');
+    const nameEl = document.createElement('h5');
     nameEl.className = 'uptime-target-name';
     nameEl.textContent = target.label || target.host;
     nameEl.title = target.label ? `${target.label} (${target.host})` : target.host;
@@ -369,7 +459,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     // Bar chart
     const chartRow = document.createElement('div');
-    chartRow.className = 'uptime-chart-row';
+    chartRow.className = 'card-body uptime-chart-row';
     this.renderBars(chartRow, history, timeout, DISPLAY_BARS);
 
     // Stats row
@@ -384,22 +474,26 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
       },
       { label: 'Avg RTT', value: isNaN(avgRtt) ? '—' : `${avgRtt.toFixed(0)}ms` },
       { label: 'Min RTT', value: isNaN(minRtt) ? '—' : `${minRtt.toFixed(0)}ms` },
-      { label: 'Samples', value: `${history.length}/${MAX_HISTORY}` }
     ];
 
     for (const s of statDefs) {
       const el = document.createElement('div');
       el.className = 'uptime-stat';
-      const valEl = document.createElement('div');
+
+      const valEl = document.createElement('h6');
       valEl.className = 'uptime-stat-value' + (s.colorClass ? ' ' + s.colorClass : '');
       valEl.textContent = s.value;
-      const lblEl = document.createElement('div');
-      lblEl.className = 'uptime-stat-label';
+
+      const lblEl = document.createElement('subtitle');
       lblEl.textContent = s.label;
-      el.appendChild(valEl);
+
       el.appendChild(lblEl);
+      el.appendChild(valEl);
       statsRow.appendChild(el);
     }
+
+
+
 
     // Action buttons
     const actionsRow = document.createElement('div');
@@ -407,7 +501,7 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     const histBtn = document.createElement('button');
     histBtn.className = 'uptime-action-btn';
-    histBtn.innerHTML = '<i class="fas fa-history"></i> History';
+    histBtn.innerHTML = '<i class="fas fa-history"></i>';
     histBtn.title = 'View ping history';
     histBtn.addEventListener('click', () =>
       this.showHistoryPopup(target, this.getTargetHistory(widget.id, target.host), timeout)
@@ -416,18 +510,41 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
     const traceBtn = document.createElement('button');
     traceBtn.className = 'uptime-action-btn';
-    traceBtn.innerHTML = '<i class="fas fa-route"></i> Traceroute';
+    traceBtn.innerHTML = '<i class="fas fa-route"></i>';
     traceBtn.title = 'Run traceroute to this host';
     traceBtn.addEventListener('click', () => this.showTraceroutePopup(target));
     stopWidgetDragPropagation(traceBtn);
 
-    actionsRow.appendChild(histBtn);
-    actionsRow.appendChild(traceBtn);
+    const histBtn2 = histBtn.cloneNode(true) as HTMLElement;
 
-    card.appendChild(header);
+    histBtn2.addEventListener('click', () =>
+      this.showHistoryPopup(target, this.getTargetHistory(widget.id, target.host), timeout)
+    );
+    const bel = document.createElement('div');
+    bel.className = 'uptime-stat';
+    stopWidgetDragPropagation(bel);
+    bel.appendChild(histBtn2);
+
+    const traceBtn2 = traceBtn.cloneNode(true) as HTMLElement;
+    traceBtn2.addEventListener('click', () => this.showTraceroutePopup(target));
+    
+    statsRow.appendChild(bel);
+    bel.appendChild(traceBtn2);
+
+
+    statsRow.appendChild(bel);
+
+
+
+
+    //actionsRow.appendChild(histBtn);
+  //  actionsRow.appendChild(traceBtn);
+
+    card.appendChild(header); 
+  // card.appendChild(actionsRow);
     card.appendChild(chartRow);
     card.appendChild(statsRow);
-    card.appendChild(actionsRow);
+
     return card;
   }
 
@@ -455,16 +572,18 @@ export class UptimeWidgetRenderer implements WidgetRenderer {
 
       if (result.success && result.responseTime !== null) {
         const h = Math.min(Math.max((result.responseTime / timeout) * 100, 8), 100);
-        bar.style.height = `${h}%`;
+        bar.style.height = `100%`;
         const rt = result.responseTime;
         if (rt < 50) bar.classList.add('uptime-bar-excellent');
         else if (rt < 150) bar.classList.add('uptime-bar-good');
         else if (rt < 300) bar.classList.add('uptime-bar-ok');
         else if (rt < 1000) bar.classList.add('uptime-bar-slow');
         else bar.classList.add('uptime-bar-very-slow');
+        bar.title = `${new Date(result.timestamp).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} — ${result.responseTime.toFixed(1)} ms`;
       } else {
         bar.style.height = '100%';
         bar.classList.add('uptime-bar-failed');
+        bar.title = 'Ping failed or timed out';
       }
 
       const tooltip = document.createElement('div');
