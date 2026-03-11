@@ -38,7 +38,7 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   // Create menu button
   const menuBtn = document.createElement('button');
   menuBtn.className = 'widget-menu-btn';
-  menuBtn.innerHTML = '⋮';
+  menuBtn.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>';
   menuBtn.title = 'Widget menu';
   menuBtn.setAttribute('aria-label', 'Widget menu');
   
@@ -47,19 +47,13 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   menuDropdown.className = 'widget-menu-dropdown';
   menuDropdown.style.display = 'none';
   
-  // Add custom menu items from widget renderer
+  // Add custom inline header buttons from widget renderer (rendered directly in header, not in dropdown)
+  const inlineHeaderButtons: HTMLElement[] = [];
   if (renderer?.getHeaderButtons) {
-    const customButtons = renderer.getHeaderButtons(widget);
-    customButtons.forEach((btn: HTMLElement) => {
-      const menuItem = document.createElement('button');
-      menuItem.className = 'widget-menu-item';
-      menuItem.innerHTML = `<span class="widget-menu-icon">${btn.innerHTML}</span><span class="widget-menu-label">${btn.title || btn.getAttribute('aria-label') || 'Action'}</span>`;
-      menuItem.onclick = (e) => {
-        e.stopPropagation();
-        btn.click();
-        menuDropdown.style.display = 'none';
-      };
-      menuDropdown.appendChild(menuItem);
+    renderer.getHeaderButtons(widget).forEach((btn: HTMLElement) => {
+      btn.classList.add('widget-header-inline-btn');
+      btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+      inlineHeaderButtons.push(btn);
     });
   }
   
@@ -153,6 +147,9 @@ export function createWidgetElement(widget: Widget, _gridSize: number): HTMLElem
   
   headerButtons.appendChild(menuBtn);
   headerButtons.appendChild(menuDropdown);
+
+  // Insert inline header buttons before the menu button
+  inlineHeaderButtons.forEach((btn) => headerButtons.insertBefore(btn, menuBtn));
   
   header.appendChild(title);
   header.appendChild(headerButtons);

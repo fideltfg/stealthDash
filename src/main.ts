@@ -1419,8 +1419,12 @@ class Dashboard {
     widget.size = newSize;
     widget.position = newPos;
 
-    // Show visual guides for snapped edges
-    this.showSnapGuides({ x: snapTargets.x, y: snapTargets.y });
+    // Show visual guides for snapped edges at the correct edge based on resize direction
+    const hasXSnap = snapTargets.x !== null || snapTargets.w !== null;
+    const hasYSnap = snapTargets.y !== null || snapTargets.h !== null;
+    const guideX = hasXSnap ? (dir.includes('e') ? newPos.x + newSize.w : newPos.x) : null;
+    const guideY = hasYSnap ? (dir.includes('s') ? newPos.y + newSize.h : newPos.y) : null;
+    this.showSnapGuides({ x: guideX, y: guideY });
 
     // Don't save during resize - only update visuals
     this.updateWidget(widget, false);
@@ -2377,16 +2381,15 @@ class Dashboard {
       return;
     }
 
-    // Create a copy of the widget with a new ID
-    const newWidget: Widget = {
-      ...widget,
-      id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      z: targetDashboard.state.widgets.length, // Place on top
-      meta: {
-        ...widget.meta,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }
+    // Create a deep copy of the widget with a new ID so no nested objects
+    // (position, size, content, config, etc.) remain shared with the original
+    const newWidget: Widget = JSON.parse(JSON.stringify(widget));
+    newWidget.id = `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    newWidget.z = targetDashboard.state.widgets.length; // Place on top
+    newWidget.meta = {
+      ...newWidget.meta,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
 
     // Add to target dashboard

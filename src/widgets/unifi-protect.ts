@@ -93,16 +93,14 @@ class UnifiProtectRenderer implements WidgetRenderer {
 
     // Create widget structure
     container.innerHTML = `
-      <div class="unifi-protect-widget">
-        <div class="protect-content card-list">
+        <div class="card-list">
           <div class="protect-loading widget-loading centered">
             Loading cameras and detections...
           </div>
-        </div>
       </div>
     `;
 
-    const contentEl = container.querySelector('.protect-content') as HTMLElement;
+    const contentEl = container.querySelector('.card-list') as HTMLElement;
     
     const fetchAndRender = async () => {
       try {
@@ -586,9 +584,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
     const viewMode = content.viewMode || 'snapshots';
     
     container.innerHTML = `
-      <div class="card-list">
         ${cameras.map(camera => this.renderCameraCard(camera, content, viewMode)).join('')}
-      </div>
     `;
   }
 
@@ -604,7 +600,7 @@ class UnifiProtectRenderer implements WidgetRenderer {
     return `
       <div class="card" style="overflow: hidden;">
         ${(viewMode === 'snapshots' || viewMode === 'both') && isOnline ? `
-          <div style="width: 100%; height: 180px; background: var(--surface); position: relative;">
+          <div style="width: 100%; height: 140px; background: var(--surface); position: relative;">
             <img data-auth-src="${snapshotUrl}" 
               style="width: 100%; height: 100%; object-fit: cover;">
             ${camera.isRecording ? `
@@ -620,22 +616,19 @@ class UnifiProtectRenderer implements WidgetRenderer {
             ` : ''}
           </div>
         ` : `
-          <div style="width: 100%; height: 180px; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted);">
+          <div style="width: 100%; height: 140px; background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted);">
             <div style="text-align: center;">
               <div style="font-size: 48px; margin-bottom: 8px;"><i class="fas fa-video"></i></div>
               <div style="font-size: 14px;">${isOnline ? 'Camera' : 'Offline'}</div>
             </div>
           </div>
         `}
-        <div style="padding: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+        <div style="padding: 2px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
             <div style="font-weight: 600; font-size: 14px; color: var(--text);">${camera.name}</div>
             <div style="display: flex; align-items: center; gap: 4px;">
             <div class="badge ${statusColor}">${statusText}</div>
             </div>
-          </div>
-          <div><subtitle style="float: left;">${camera.model}</subtitle><subtitle style="float: right;">Last seen: ${formatTimeAgo(camera.lastSeen)}
-            </subtitle>
           </div>
         </div>
       </div>

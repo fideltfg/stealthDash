@@ -791,7 +791,7 @@ body {
   cursor: default;
   overflow: visible;
   transition: box-shadow var(--transition);
-  padding-bottom: 28px;
+  padding-bottom: 40px;
 }
 
 .widget:hover,
@@ -810,7 +810,7 @@ body {
 
 .widget-header {
   inset: 0 0 auto 0;
-  padding: 10px 12px 6px 12px;
+  padding: 6px 12px 6px 12px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   cursor: move;
@@ -837,7 +837,7 @@ body {
 }
 
 .widget-content {
-  padding: 8px;
+  padding: 6px;
   height: 100%;
   overflow: auto;
   border-radius: 0 0 var(--radius) var(--radius);
@@ -845,7 +845,7 @@ body {
 
 
 /* Widget Menu Button */
-.widget-menu-btn {
+/* .widget-menu-btn {
   background: transparent;
   border: none;
   color: var(--muted);
@@ -859,11 +859,38 @@ body {
   border-radius: 4px;
   transition: all 0.2s;
   opacity: 0.6;
-}
+} */
 
 .widget-menu-btn:hover {
   opacity: 1;
   background: var(--hover);
+}
+
+.widget-menu-btn,
+.widget-header-inline-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.widget-header-inline-btn:hover {
+  opacity: 1;
+  background: var(--hover);
+}
+
+.widget-header-inline-btn.active {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .widget-menu-dropdown {
@@ -1012,13 +1039,13 @@ body {
 }
 
 .snap-guide-vertical {
-  width: 2px;
+  width: 1px;
   height: 100%;
   top: 0;
 }
 
 .snap-guide-horizontal {
-  height: 2px;
+  height: 1px;
   width: 100%;
   left: 0;
 }
@@ -2771,6 +2798,7 @@ body {
   border-radius: 8px;
   padding: 12px;
   transition: all 0.2s;
+  overflow: hidden;
 }
 
 /* .card:hover {

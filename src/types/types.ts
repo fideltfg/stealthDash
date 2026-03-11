@@ -134,6 +134,22 @@ export interface TasksContent {
   showCompleted?: boolean;
 }
 
+export interface LinkItem {
+  id: string;
+  title: string;
+  url: string;
+  category?: string;
+  iconUrl?: string;
+}
+
+export interface LinksContent {
+  links?: LinkItem[];
+  displayMode?: 'text' | 'icon' | 'both';
+  sortBy?: 'manual' | 'title' | 'category';
+  showSearch?: boolean;
+  showCategories?: boolean;
+}
+
 export interface SpeedtestContent {
   host?: string;
   credentialId?: number;
@@ -150,7 +166,7 @@ export interface CryptoContent {
   chartDays: number;
 }
 
-export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent | SystemResourcesContent | TasksContent | SpeedtestContent | CryptoContent;
+export type WidgetContent = TextContent | ImageContent | DataContent | EmbedContent | WeatherContent | ClockContent | RssContent | UptimeContent | CometP8541Content | WeatherDashContent | SystemResourcesContent | TasksContent | SpeedtestContent | CryptoContent | LinksContent;
 
 export interface Widget {
   id: string;

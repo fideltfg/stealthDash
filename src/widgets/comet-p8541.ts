@@ -6,9 +6,7 @@ import { WidgetPoller } from '../utils/polling';
 import { stopAllDragPropagation, injectWidgetStyles } from '../utils/dom';
 
 const COMET_STYLES = `
-.display-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
-.display-container.text-mode { flex-direction: column; gap: 12px; }
-.gauge-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 200px; flex: 1 1 calc(50% - 8px); max-width: calc(50% - 8px); }
+.gauge-wrapper.card { min-width: 100px; max-width: 100%; align-items: center; justify-content: center; }
 .gauge-container { width: 100%; height: 150px; display: flex; justify-content: center; align-items: center; }
 .alarm-div { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-align: center; background: var(--bg-success); color: var(--success); }
 .alarm-flash-hot, .alarm-flash-cold, .alarm-flash-error { animation: flash 0.5s infinite alternate; }
@@ -303,7 +301,7 @@ export class CometP8541Renderer implements WidgetRenderer {
         let displayContainer = wrapper.querySelector('.display-container') as HTMLElement;
         if (!displayContainer) {
           displayContainer = document.createElement('div');
-          displayContainer.className = 'display-container';
+          displayContainer.className = 'card-list display-container';
           wrapper.appendChild(displayContainer);
         }
 
@@ -615,7 +613,7 @@ export class CometP8541Renderer implements WidgetRenderer {
         deviceInfo.textContent = content.host;
 
         headerLeft.appendChild(header);
-        headerLeft.appendChild(deviceInfo);
+       // headerLeft.appendChild(deviceInfo);
         headerRow.appendChild(headerLeft);
         wrapper.appendChild(headerRow);
 
@@ -966,7 +964,7 @@ export class CometP8541Renderer implements WidgetRenderer {
     // Add "View Charts" link
 
     headerLeft.appendChild(header);
-    headerLeft.appendChild(deviceInfo);
+   // headerLeft.appendChild(deviceInfo);
 
     
 
