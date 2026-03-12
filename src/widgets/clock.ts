@@ -1,7 +1,7 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { TIMEZONES } from './timezones';
-import { stopWidgetDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
+import { stopAllDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 
 const CLOCK_STYLES = `
 .clock-display-container {
@@ -11,29 +11,72 @@ const CLOCK_STYLES = `
   gap: 12px;
   width: 100%;
 }
-.clock-timezone { font-size: 14px; color: var(--muted); opacity: 0.8; text-transform: uppercase; }
 .clock-time {
   font-size: 38px;
   font-weight: 300;
   font-variant-numeric: tabular-nums;
 }
-
 .clock-date {
   font-size: 18px;
   color: var(--muted);
 }
-
 .clock-timezone {
   font-size: 14px;
   color: var(--muted);
   opacity: 0.8;
   text-transform: uppercase;
 }
+/* Analog clock */
+.clock-analog-svg {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  overflow: visible;
+}
+.clock-face-bg {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 3;
+}
+.clock-tick {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.clock-tick-major {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+.clock-hour-num {
+  font-size: 14px;
+  fill: var(--text);
+  font-weight: 500;
+}
+.clock-hand-hour {
+  stroke: var(--text);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.clock-hand-minute {
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.clock-hand-second {
+  stroke: var(--accent, #e05a5a);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.clock-center-dot {
+  fill: var(--text);
+}
+.clock-center-cover {
+  fill: var(--accent, #e05a5a);
+}
 `;
 
 export class ClockWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
-    const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean };
+    const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean; showDate?: boolean; displayMode?: 'digital' | 'analog' };
 
     const overlay = document.createElement('div');
     overlay.className = 'widget-overlay';
@@ -41,63 +84,93 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     const dialog = document.createElement('div');
     dialog.className = 'widget-dialog scrollable';
 
+    // Build checkboxes programmatically so click events work reliably
+    const format24Input = document.createElement('input');
+    format24Input.type = 'checkbox';
+    format24Input.checked = !!content.format24h;
+
+    const showTzInput = document.createElement('input');
+    showTzInput.type = 'checkbox';
+    showTzInput.checked = content.showTimezone !== false;
+
+    const showDateInput = document.createElement('input');
+    showDateInput.type = 'checkbox';
+    showDateInput.checked = content.showDate !== false;
+
     dialog.innerHTML = `
       <h3>Configure Clock</h3>
       <div class="form-group">
         <label>Timezone</label>
-        <select id="form-select clock-timezone">
+        <select id="clock-timezone">
           <option value="">-- Select Timezone --</option>
           ${TIMEZONES.map(tz => `<option value="${tz}" ${content.timezone === tz ? 'selected' : ''}>${tz.replace(/_/g, ' ')}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="clock-24h" ${content.format24h ? 'checked' : ''} />
-          <span>Use 24-hour format</span>
-        </label>
+        <label>Display Mode</label>
+        <select id="clock-display-mode">
+          <option value="digital" ${content.displayMode !== 'analog' ? 'selected' : ''}>Digital</option>
+          <option value="analog" ${content.displayMode === 'analog' ? 'selected' : ''}>Analog</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="clock-show-tz" ${content.showTimezone !== false ? 'checked' : ''} />
-          <span>Show timezone</span>
-        </label>
-      </div>
+      <div id="clock-24h-row" class="form-group"></div>
+      <div id="clock-show-date-row" class="form-group"></div>
+      <div id="clock-show-tz-row" class="form-group"></div>
       <div class="widget-dialog-buttons">
         <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
         <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
+    const format24Label = document.createElement('label');
+    format24Label.className = 'widget-dialog-label';
+    format24Label.appendChild(format24Input);
+    format24Label.appendChild(document.createTextNode(' Use 24-hour format'));
+    (dialog.querySelector('#clock-24h-row') as HTMLElement).appendChild(format24Label);
+
+    const showTzLabel = document.createElement('label');
+    showTzLabel.className = 'widget-dialog-label';
+    showTzLabel.appendChild(showTzInput);
+    showTzLabel.appendChild(document.createTextNode(' Show timezone'));
+    (dialog.querySelector('#clock-show-tz-row') as HTMLElement).appendChild(showTzLabel);
+
+    const showDateLabel = document.createElement('label');
+    showDateLabel.className = 'widget-dialog-label';
+    showDateLabel.appendChild(showDateInput);
+    showDateLabel.appendChild(document.createTextNode(' Show date'));
+    (dialog.querySelector('#clock-show-date-row') as HTMLElement).appendChild(showDateLabel);
+
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+    // Prevent dialog pointerdown from reaching canvas handlers
+    dialog.addEventListener('pointerdown', (e) => e.stopPropagation());
+
     const tzSelect = dialog.querySelector('#clock-timezone') as HTMLSelectElement;
-    const format24Input = dialog.querySelector('#clock-24h') as HTMLInputElement;
-    const showTzInput = dialog.querySelector('#clock-show-tz') as HTMLInputElement;
+    const displayModeSelect = dialog.querySelector('#clock-display-mode') as HTMLSelectElement;
     const saveBtn = dialog.querySelector('#save-btn') as HTMLButtonElement;
     const cancelBtn = dialog.querySelector('#cancel-btn') as HTMLButtonElement;
 
     const close = () => overlay.remove();
 
-    cancelBtn.onclick = close;
-    overlay.onclick = (e) => e.target === overlay && close();
+    cancelBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
-    // Prevent propagation for form inputs
-    [tzSelect, format24Input, showTzInput].forEach(input => {
-      stopWidgetDragPropagation(input);
-    });
+    stopAllDragPropagation(dialog);
 
-    saveBtn.onclick = () => {
-      const timezone = tzSelect.value;
+    saveBtn.addEventListener('click', () => {
+      const timezone = tzSelect.value || content.timezone;
       if (timezone) {
         dispatchWidgetUpdate(widget.id, {
           timezone,
           format24h: format24Input.checked,
-          showTimezone: showTzInput.checked
+          showTimezone: showTzInput.checked,
+          showDate: showDateInput.checked,
+          displayMode: displayModeSelect.value as 'digital' | 'analog'
         });
         close();
       }
-    };
+    });
   }
 
   render(container: HTMLElement, widget: Widget): void {
@@ -175,6 +248,36 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     formatContainer.appendChild(format24h);
     formatContainer.appendChild(format12h);
 
+    // Display mode selector
+    const displayModeLabel = document.createElement('div');
+    displayModeLabel.className = 'clock-config-label';
+    displayModeLabel.textContent = 'Display Mode:';
+
+    const displayModeContainer = document.createElement('div');
+    displayModeContainer.className = 'clock-format-container';
+
+    const digitalBtn = document.createElement('button');
+    digitalBtn.className = 'clock-format-btn';
+    digitalBtn.textContent = 'Digital';
+    digitalBtn.dataset.selected = 'true';
+
+    const analogBtn = document.createElement('button');
+    analogBtn.className = 'clock-format-btn';
+    analogBtn.textContent = 'Analog';
+    analogBtn.dataset.selected = 'false';
+
+    digitalBtn.addEventListener('click', () => {
+      digitalBtn.dataset.selected = 'true';
+      analogBtn.dataset.selected = 'false';
+    });
+    analogBtn.addEventListener('click', () => {
+      analogBtn.dataset.selected = 'true';
+      digitalBtn.dataset.selected = 'false';
+    });
+
+    displayModeContainer.appendChild(digitalBtn);
+    displayModeContainer.appendChild(analogBtn);
+
     const showTzLabel = document.createElement('label');
     showTzLabel.className = 'clock-tz-toggle';
 
@@ -188,6 +291,20 @@ export class ClockWidgetRenderer implements WidgetRenderer {
 
     showTzLabel.appendChild(showTzCheckbox);
     showTzLabel.appendChild(showTzText);
+
+    const showDateLabel2 = document.createElement('label');
+    showDateLabel2.className = 'clock-tz-toggle';
+
+    const showDateCheckbox = document.createElement('input');
+    showDateCheckbox.className = 'clock-tz-checkbox';
+    showDateCheckbox.type = 'checkbox';
+    showDateCheckbox.checked = true;
+
+    const showDateText = document.createElement('span');
+    showDateText.textContent = 'Show date';
+
+    showDateLabel2.appendChild(showDateCheckbox);
+    showDateLabel2.appendChild(showDateText);
 
     const button = document.createElement('button');
     button.className = 'clock-save-btn';
@@ -205,14 +322,11 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         dispatchWidgetUpdate(widget.id, {
           timezone: timezoneSelect.value,
           format24h: is24h,
-          showTimezone: showTz
+          showTimezone: showTz,
+          showDate: showDateCheckbox.checked,
+          displayMode: analogBtn.dataset.selected === 'true' ? 'analog' : 'digital'
         });
       }
-    });
-
-    // Prevent event propagation for interactive elements
-    [timezoneSelect, button].forEach(el => {
-      stopWidgetDragPropagation(el);
     });
 
     div.appendChild(icon);
@@ -221,61 +335,26 @@ export class ClockWidgetRenderer implements WidgetRenderer {
     div.appendChild(timezoneSelect);
     div.appendChild(formatLabel);
     div.appendChild(formatContainer);
+    div.appendChild(displayModeLabel);
+    div.appendChild(displayModeContainer);
     div.appendChild(showTzLabel);
+    div.appendChild(showDateLabel2);
     div.appendChild(button);
+
+    // Prevent event propagation for all interactive elements in this config screen
+    stopAllDragPropagation(div);
   }
 
-  private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean }): void {
+  private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean; showDate?: boolean; displayMode?: 'digital' | 'analog' }): void {
     const displayContainer = document.createElement('div');
     displayContainer.className = 'clock-display-container';
 
-    const timeDisplay = document.createElement('div');
-    timeDisplay.className = 'clock-time';
-
-    const dateDisplay = document.createElement('div');
-    dateDisplay.className = 'clock-date';
-
-    const timezoneDisplay = document.createElement('div');
-    timezoneDisplay.className = 'clock-timezone';
-    if (content.showTimezone === false) {
-      timezoneDisplay.classList.add('hidden');
-    }
-
     let intervalId: number | null = null;
-
-    const updateTime = () => {
-      try {
-        const now = new Date();
-        const options: Intl.DateTimeFormatOptions = {
-          timeZone: content.timezone,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: !content.format24h
-        };
-
-        const dateOptions: Intl.DateTimeFormatOptions = {
-          timeZone: content.timezone,
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        };
-
-        const timeStr = now.toLocaleTimeString('en-US', options);
-        const dateStr = now.toLocaleDateString('en-US', dateOptions);
-
-        timeDisplay.textContent = timeStr;
-        dateDisplay.textContent = dateStr;
-        timezoneDisplay.textContent = content.timezone.replace(/_/g, ' ');
-      } catch (error) {
-        timeDisplay.textContent = 'Invalid timezone';
-        dateDisplay.textContent = '';
-      }
-    };
-
-    updateTime();
-    intervalId = window.setInterval(updateTime, 1000);
+    if (content.displayMode === 'analog') {
+      intervalId = this.renderAnalogClock(displayContainer, content);
+    } else {
+      intervalId = this.renderDigitalClock(displayContainer, content);
+    }
 
     // Clean up interval when widget is removed
     const observer = new MutationObserver((mutations) => {
@@ -292,10 +371,177 @@ export class ClockWidgetRenderer implements WidgetRenderer {
       observer.observe(div.parentNode, { childList: true });
     }
 
-    displayContainer.appendChild(timeDisplay);
-    displayContainer.appendChild(dateDisplay);
-    displayContainer.appendChild(timezoneDisplay);
     div.appendChild(displayContainer);
+  }
+
+  private renderDigitalClock(container: HTMLElement, content: { timezone: string; format24h?: boolean; showTimezone?: boolean; showDate?: boolean }): number {
+    const timeDisplay = document.createElement('div');
+    timeDisplay.className = 'clock-time';
+
+    const dateDisplay = document.createElement('div');
+    dateDisplay.className = 'clock-date';
+    if (content.showDate === false) dateDisplay.classList.add('hidden');
+
+    const timezoneDisplay = document.createElement('div');
+    timezoneDisplay.className = 'clock-timezone';
+    if (content.showTimezone === false) {
+      timezoneDisplay.classList.add('hidden');
+    }
+
+    const updateTime = () => {
+      try {
+        const now = new Date();
+        const options: Intl.DateTimeFormatOptions = {
+          timeZone: content.timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: !content.format24h
+        };
+        const dateOptions: Intl.DateTimeFormatOptions = {
+          timeZone: content.timezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+        timeDisplay.textContent = now.toLocaleTimeString('en-US', options);
+        dateDisplay.textContent = now.toLocaleDateString('en-US', dateOptions);
+        timezoneDisplay.textContent = content.timezone.replace(/_/g, ' ');
+      } catch {
+        timeDisplay.textContent = 'Invalid timezone';
+        dateDisplay.textContent = '';
+      }
+    };
+
+    updateTime();
+    const intervalId = window.setInterval(updateTime, 1000);
+
+    container.appendChild(timeDisplay);
+    container.appendChild(dateDisplay);
+    container.appendChild(timezoneDisplay);
+
+    return intervalId;
+  }
+
+  private renderAnalogClock(container: HTMLElement, content: { timezone: string; showTimezone?: boolean; showDate?: boolean }): number {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 200');
+    svg.classList.add('clock-analog-svg');
+
+    // Background circle
+    const bg = document.createElementNS(svgNS, 'circle');
+    bg.setAttribute('cx', '100');
+    bg.setAttribute('cy', '100');
+    bg.setAttribute('r', '96');
+    bg.classList.add('clock-face-bg');
+    svg.appendChild(bg);
+
+    // 60 tick marks (12 major, 48 minor)
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * 2 * Math.PI;
+      const isMajor = i % 5 === 0;
+      const innerR = isMajor ? 80 : 88;
+      const tick = document.createElementNS(svgNS, 'line');
+      tick.setAttribute('x1', String(100 + innerR * Math.sin(angle)));
+      tick.setAttribute('y1', String(100 - innerR * Math.cos(angle)));
+      tick.setAttribute('x2', String(100 + 94 * Math.sin(angle)));
+      tick.setAttribute('y2', String(100 - 94 * Math.cos(angle)));
+      tick.classList.add('clock-tick');
+      if (isMajor) tick.classList.add('clock-tick-major');
+      svg.appendChild(tick);
+    }
+
+    // Hour numbers 1–12
+    for (let i = 1; i <= 12; i++) {
+      const angle = (i / 12) * 2 * Math.PI;
+      const r = 70;
+      const text = document.createElementNS(svgNS, 'text');
+      text.setAttribute('x', String(100 + r * Math.sin(angle)));
+      text.setAttribute('y', String(100 - r * Math.cos(angle)));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+      text.classList.add('clock-hour-num');
+      text.textContent = String(i);
+      svg.appendChild(text);
+    }
+
+    // Hands
+    const hourHand = document.createElementNS(svgNS, 'line');
+    hourHand.classList.add('clock-hand-hour');
+    svg.appendChild(hourHand);
+
+    const minuteHand = document.createElementNS(svgNS, 'line');
+    minuteHand.classList.add('clock-hand-minute');
+    svg.appendChild(minuteHand);
+
+    const secondHand = document.createElementNS(svgNS, 'line');
+    secondHand.classList.add('clock-hand-second');
+    svg.appendChild(secondHand);
+
+    // Center dot + accent cover
+    const centerDot = document.createElementNS(svgNS, 'circle');
+    centerDot.setAttribute('cx', '100');
+    centerDot.setAttribute('cy', '100');
+    centerDot.setAttribute('r', '5');
+    centerDot.classList.add('clock-center-dot');
+    svg.appendChild(centerDot);
+
+    const centerCover = document.createElementNS(svgNS, 'circle');
+    centerCover.setAttribute('cx', '100');
+    centerCover.setAttribute('cy', '100');
+    centerCover.setAttribute('r', '2.5');
+    centerCover.classList.add('clock-center-cover');
+    svg.appendChild(centerCover);
+
+    container.appendChild(svg);
+
+    // Date + timezone below
+    const dateDisplay = document.createElement('div');
+    dateDisplay.className = 'clock-date';
+    if (content.showDate === false) dateDisplay.classList.add('hidden');
+    container.appendChild(dateDisplay);
+
+    const timezoneDisplay = document.createElement('div');
+    timezoneDisplay.className = 'clock-timezone';
+    if (content.showTimezone === false) timezoneDisplay.classList.add('hidden');
+    container.appendChild(timezoneDisplay);
+
+    // Helper: position a hand at angleDeg (0 = 12 o'clock), length toward tip, back behind center
+    const setHand = (hand: Element, angleDeg: number, length: number, back: number) => {
+      const rad = angleDeg * Math.PI / 180;
+      hand.setAttribute('x1', String(100 - back * Math.sin(rad)));
+      hand.setAttribute('y1', String(100 + back * Math.cos(rad)));
+      hand.setAttribute('x2', String(100 + length * Math.sin(rad)));
+      hand.setAttribute('y2', String(100 - length * Math.cos(rad)));
+    };
+
+    const update = () => {
+      try {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: content.timezone,
+          hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
+        }).formatToParts(now);
+
+        const h = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0');
+        const m = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0');
+        const s = parseInt(parts.find(p => p.type === 'second')?.value ?? '0');
+
+        setHand(hourHand,   (h % 12) / 12 * 360 + m / 60 * 30, 55, 12);
+        setHand(minuteHand, m / 60 * 360 + s / 60 * 6,          72, 15);
+        setHand(secondHand, s / 60 * 360,                        78, 20);
+
+        dateDisplay.textContent = new Date().toLocaleDateString('en-US', {
+          timeZone: content.timezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        timezoneDisplay.textContent = content.timezone.replace(/_/g, ' ');
+      } catch { /* invalid timezone */ }
+    };
+
+    update();
+    return window.setInterval(update, 1000);
   }
 }
 
@@ -306,6 +552,6 @@ export const widget = {
   description: 'World clock with timezone support',
   renderer: new ClockWidgetRenderer(),
   defaultSize: { w: 400, h: 500 },
-  defaultContent: { timezone: '', format24h: false, showTimezone: true },
-  allowedFields: ['timezone', 'format24h', 'showTimezone']
+  defaultContent: { timezone: '', format24h: false, showTimezone: true, showDate: true, displayMode: 'digital' },
+  allowedFields: ['timezone', 'format24h', 'showTimezone', 'showDate', 'displayMode']
 };
