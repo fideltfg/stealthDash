@@ -26,12 +26,8 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
         <input type="text" id="weather-location" value="${content.location || ''}" placeholder="e.g., London, New York, Tokyo" class="widget-dialog-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="">
-          Cancel
-        </button>
-        <button id="save-btn" class="">
-          Save
-        </button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -80,17 +76,17 @@ export class WeatherWidgetRenderer implements WidgetRenderer {
     icon.innerHTML = '<i class="fas fa-cloud-sun"></i>';
     
     const label = document.createElement('div');
-    label.className = 'weather-config-prompt';
+    label.className = 'widget-config-description';
     label.textContent = 'Enter location for weather';
     
     const locationInput = document.createElement('input');
     locationInput.type = 'text';
     locationInput.placeholder = 'e.g., London, New York, Tokyo';
-    locationInput.className = 'weather-input';
+    locationInput.className = 'widget-dialog-input';
     
     const button = document.createElement('button');
     button.textContent = 'Get Weather';
-    button.className = 'weather-button';
+    button.className = 'btn btn-primary btn-full';
     button.disabled = true;
     
     const updateButtonState = () => {
@@ -274,7 +270,7 @@ export const widget = {
   icon: '<i class="fas fa-cloud-sun"></i>',
   description: 'Display weather information',
   renderer: new WeatherWidgetRenderer(),
-  defaultSize: { w: 340, h: 580 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { location: '' },
   allowedFields: ['location']
 };

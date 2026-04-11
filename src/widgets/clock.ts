@@ -1,5 +1,6 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
+import { renderConfigPrompt } from '../utils/widgetRendering';
 import { TIMEZONES } from './timezones';
 import { stopAllDragPropagation, dispatchWidgetUpdate, injectWidgetStyles } from '../utils/dom';
 
@@ -75,6 +76,7 @@ const CLOCK_STYLES = `
 `;
 
 export class ClockWidgetRenderer implements WidgetRenderer {
+  
   configure(widget: Widget): void {
     const content = widget.content as { timezone: string; format24h?: boolean; showTimezone?: boolean; showDate?: boolean; displayMode?: 'digital' | 'analog' };
 
@@ -189,161 +191,10 @@ export class ClockWidgetRenderer implements WidgetRenderer {
   }
 
   private renderConfigScreen(div: HTMLElement, widget: Widget): void {
-    const icon = document.createElement('div');
-    icon.className = 'widget-config-icon';
-    icon.innerHTML = '<i class="fa-regular fa-clock"></i>';
-
-    const label = document.createElement('div');
-    label.className = 'clock-config-title';
-    label.textContent = 'Configure Clock';
-
-    const tzLabel = document.createElement('div');
-    tzLabel.className = 'clock-config-label';
-    tzLabel.textContent = 'Timezone:';
-
-    const timezoneSelect = document.createElement('select');
-    timezoneSelect.className = 'clock-timezone-select';
-
-    const placeholderOption = document.createElement('option');
-    placeholderOption.value = '';
-    placeholderOption.textContent = '-- Select Timezone --';
-    placeholderOption.disabled = true;
-    placeholderOption.selected = true;
-    timezoneSelect.appendChild(placeholderOption);
-
-    TIMEZONES.forEach(tz => {
-      const option = document.createElement('option');
-      option.value = tz;
-      option.textContent = tz.replace(/_/g, ' ');
-      timezoneSelect.appendChild(option);
-    });
-
-    const formatLabel = document.createElement('div');
-    formatLabel.className = 'clock-config-label';
-    formatLabel.textContent = 'Time Format:';
-
-    const formatContainer = document.createElement('div');
-    formatContainer.className = 'clock-format-container';
-
-    const format24h = document.createElement('button');
-    format24h.className = 'clock-format-btn';
-    format24h.textContent = '24-hour';
-    format24h.dataset.selected = 'true';
-
-    const format12h = document.createElement('button');
-    format12h.className = 'clock-format-btn';
-    format12h.textContent = '12-hour';
-    format12h.dataset.selected = 'false';
-
-    format24h.addEventListener('click', () => {
-      format24h.dataset.selected = 'true';
-      format12h.dataset.selected = 'false';
-    });
-
-    format12h.addEventListener('click', () => {
-      format12h.dataset.selected = 'true';
-      format24h.dataset.selected = 'false';
-    });
-
-    formatContainer.appendChild(format24h);
-    formatContainer.appendChild(format12h);
-
-    // Display mode selector
-    const displayModeLabel = document.createElement('div');
-    displayModeLabel.className = 'clock-config-label';
-    displayModeLabel.textContent = 'Display Mode:';
-
-    const displayModeContainer = document.createElement('div');
-    displayModeContainer.className = 'clock-format-container';
-
-    const digitalBtn = document.createElement('button');
-    digitalBtn.className = 'clock-format-btn';
-    digitalBtn.textContent = 'Digital';
-    digitalBtn.dataset.selected = 'true';
-
-    const analogBtn = document.createElement('button');
-    analogBtn.className = 'clock-format-btn';
-    analogBtn.textContent = 'Analog';
-    analogBtn.dataset.selected = 'false';
-
-    digitalBtn.addEventListener('click', () => {
-      digitalBtn.dataset.selected = 'true';
-      analogBtn.dataset.selected = 'false';
-    });
-    analogBtn.addEventListener('click', () => {
-      analogBtn.dataset.selected = 'true';
-      digitalBtn.dataset.selected = 'false';
-    });
-
-    displayModeContainer.appendChild(digitalBtn);
-    displayModeContainer.appendChild(analogBtn);
-
-    const showTzLabel = document.createElement('label');
-    showTzLabel.className = 'clock-tz-toggle';
-
-    const showTzCheckbox = document.createElement('input');
-    showTzCheckbox.className = 'clock-tz-checkbox';
-    showTzCheckbox.type = 'checkbox';
-    showTzCheckbox.checked = true;
-
-    const showTzText = document.createElement('span');
-    showTzText.textContent = 'Show timezone name';
-
-    showTzLabel.appendChild(showTzCheckbox);
-    showTzLabel.appendChild(showTzText);
-
-    const showDateLabel2 = document.createElement('label');
-    showDateLabel2.className = 'clock-tz-toggle';
-
-    const showDateCheckbox = document.createElement('input');
-    showDateCheckbox.className = 'clock-tz-checkbox';
-    showDateCheckbox.type = 'checkbox';
-    showDateCheckbox.checked = true;
-
-    const showDateText = document.createElement('span');
-    showDateText.textContent = 'Show date';
-
-    showDateLabel2.appendChild(showDateCheckbox);
-    showDateLabel2.appendChild(showDateText);
-
-    const button = document.createElement('button');
-    button.className = 'clock-save-btn';
-    button.textContent = 'Create Clock';
-    button.disabled = true;
-
-    timezoneSelect.addEventListener('change', () => {
-      button.disabled = !timezoneSelect.value;
-    });
-
-    button.addEventListener('click', () => {
-      if (timezoneSelect.value) {
-        const is24h = format24h.dataset.selected === 'true';
-        const showTz = showTzCheckbox.checked;
-        dispatchWidgetUpdate(widget.id, {
-          timezone: timezoneSelect.value,
-          format24h: is24h,
-          showTimezone: showTz,
-          showDate: showDateCheckbox.checked,
-          displayMode: analogBtn.dataset.selected === 'true' ? 'analog' : 'digital'
-        });
-      }
-    });
-
-    div.appendChild(icon);
-    div.appendChild(label);
-    div.appendChild(tzLabel);
-    div.appendChild(timezoneSelect);
-    div.appendChild(formatLabel);
-    div.appendChild(formatContainer);
-    div.appendChild(displayModeLabel);
-    div.appendChild(displayModeContainer);
-    div.appendChild(showTzLabel);
-    div.appendChild(showDateLabel2);
-    div.appendChild(button);
-
-    // Prevent event propagation for all interactive elements in this config screen
-    stopAllDragPropagation(div);
-  }
+    
+    const btn = renderConfigPrompt(div, '<i class="fa-regular fa-clock"></i>', 'Clock', 'Configure clock settings');
+      btn.addEventListener('click', () => this.configure(widget));
+    }
 
   private renderClock(div: HTMLElement, _widget: Widget, content: { timezone: string; format24h?: boolean; showTimezone?: boolean; showDate?: boolean; displayMode?: 'digital' | 'analog' }): void {
     const displayContainer = document.createElement('div');
@@ -529,9 +380,9 @@ export class ClockWidgetRenderer implements WidgetRenderer {
         const m = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0');
         const s = parseInt(parts.find(p => p.type === 'second')?.value ?? '0');
 
-        setHand(hourHand,   (h % 12) / 12 * 360 + m / 60 * 30, 55, 12);
-        setHand(minuteHand, m / 60 * 360 + s / 60 * 6,          72, 15);
-        setHand(secondHand, s / 60 * 360,                        78, 20);
+        setHand(hourHand, (h % 12) / 12 * 360 + m / 60 * 30, 55, 12);
+        setHand(minuteHand, m / 60 * 360 + s / 60 * 6, 72, 15);
+        setHand(secondHand, s / 60 * 360, 78, 20);
 
         dateDisplay.textContent = new Date().toLocaleDateString('en-US', {
           timeZone: content.timezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -551,7 +402,7 @@ export const widget = {
   icon: '<i class="fas fa-clock"></i>',
   description: 'World clock with timezone support',
   renderer: new ClockWidgetRenderer(),
-  defaultSize: { w: 400, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { timezone: '', format24h: false, showTimezone: true, showDate: true, displayMode: 'digital' },
   allowedFields: ['timezone', 'format24h', 'showTimezone', 'showDate', 'displayMode']
 };

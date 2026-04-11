@@ -723,7 +723,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fas fa-link"></i>',
   description: 'Manage and launch web links and local applications',
   renderer: new LinksRenderer(),
-  defaultSize: { w: 380, h: 480 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     links: [] as LinkItem[],
     displayMode: 'both',

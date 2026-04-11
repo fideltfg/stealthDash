@@ -6,12 +6,14 @@
     "description": "World clock with timezone support",
     "defaultSize": {
       "w": 400,
-      "h": 500
+      "h": 300
     },
     "defaultContent": {
       "timezone": "",
       "format24h": false,
-      "showTimezone": true
+      "showTimezone": true,
+      "showDate": true,
+      "displayMode": "digital"
     },
     "hasSettings": true
   },
@@ -22,7 +24,7 @@
     "description": "Multi-channel temperature and humidity sensor (Modbus TCP)",
     "defaultSize": {
       "w": 400,
-      "h": 500
+      "h": 300
     },
     "defaultContent": {
       "host": "",
@@ -77,7 +79,7 @@
     "description": "Monitor and manage Docker containers",
     "defaultSize": {
       "w": 400,
-      "h": 500
+      "h": 300
     },
     "defaultContent": {
       "host": "",
@@ -93,8 +95,8 @@
     "icon": "<i class=\"fas fa-globe\"></i>",
     "description": "Embed websites via iframe",
     "defaultSize": {
-      "w": 600,
-      "h": 400
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "url": ""
@@ -107,8 +109,8 @@
     "icon": "<i class=\"fas fa-leaf\"></i>",
     "description": "Display weather forecasts from Environment Canada",
     "defaultSize": {
-      "w": 350,
-      "h": 500
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -119,8 +121,8 @@
     "icon": "<i class=\"fa-solid fa-microchip\"></i>",
     "description": "Monitor CPU, memory, disk, network, processes, containers and more via Glances",
     "defaultSize": {
-      "w": 700,
-      "h": 550
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "refreshInterval": 5,
@@ -140,7 +142,7 @@
     "description": "Display Gmail inbox with unread messages and quick actions",
     "defaultSize": {
       "w": 400,
-      "h": 600
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -152,7 +154,7 @@
     "description": "Display upcoming events from Google Calendar",
     "defaultSize": {
       "w": 400,
-      "h": 600
+      "h": 300
     },
     "defaultContent": {
       "calendarId": "",
@@ -171,8 +173,8 @@
     "icon": "<i class=\"fas fa-home\"></i>",
     "description": "Monitor and control Home Assistant entities",
     "defaultSize": {
-      "w": 600,
-      "h": 400
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "url": "",
@@ -190,7 +192,7 @@
     "description": "Display images from URLs",
     "defaultSize": {
       "w": 400,
-      "h": 400
+      "h": 300
     },
     "defaultContent": {
       "src": "",
@@ -204,8 +206,8 @@
     "icon": "<i class=\"fas fa-link\"></i>",
     "description": "Manage and launch web links and local applications",
     "defaultSize": {
-      "w": 380,
-      "h": 480
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -237,7 +239,7 @@
     "description": "Display Pi-hole DNS statistics and blocking information",
     "defaultSize": {
       "w": 400,
-      "h": 500
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -249,7 +251,7 @@
     "description": "Display RSS/Atom feeds",
     "defaultSize": {
       "w": 400,
-      "h": 500
+      "h": 300
     },
     "defaultContent": {
       "feedUrl": "",
@@ -276,8 +278,8 @@
     "icon": "<i class=\"fa-solid fa-gauge-high\"></i>",
     "description": "Display internet speed results from Speedtest Tracker",
     "defaultSize": {
-      "w": 650,
-      "h": 450
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "refreshInterval": 300,
@@ -292,8 +294,8 @@
     "icon": "<i class=\"fa-solid fa-list-check\"></i>",
     "description": "Manage tasks with priorities, due dates, and categories",
     "defaultSize": {
-      "w": 420,
-      "h": 550
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "mode": "local",
@@ -308,8 +310,8 @@
     "icon": "<i class=\"fas fa-video\"></i>",
     "description": "View UniFi Protect cameras and motion detections",
     "defaultSize": {
-      "w": 600,
-      "h": 500
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "host": "",
@@ -330,7 +332,7 @@
     "description": "Monitor temperature, humidity, and light from USL-Environmental devices",
     "defaultSize": {
       "w": 400,
-      "h": 400
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -360,7 +362,7 @@
     "icon": "<i class=\"fas fa-chart-bar\"></i>",
     "description": "Monitor uptime via ping — multiple targets, history & traceroute",
     "defaultSize": {
-      "w": 500,
+      "w": 400,
       "h": 300
     },
     "defaultContent": {
@@ -376,8 +378,8 @@
     "icon": "<i class=\"fas fa-desktop\"></i>",
     "description": "Connect to remote VNC servers and display their desktops",
     "defaultSize": {
-      "w": 800,
-      "h": 600
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {},
     "hasSettings": true
@@ -388,8 +390,8 @@
     "icon": "<i class=\"fas fa-mountain-sun\"></i>",
     "description": "Full weather dashboard with 24-hour hourly and 7-day daily forecasts",
     "defaultSize": {
-      "w": 1200,
-      "h": 800
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "latitude": 0,
@@ -405,8 +407,8 @@
     "icon": "<i class=\"fas fa-cloud-sun\"></i>",
     "description": "Display weather information",
     "defaultSize": {
-      "w": 340,
-      "h": 580
+      "w": 400,
+      "h": 300
     },
     "defaultContent": {
       "location": ""

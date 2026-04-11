@@ -293,14 +293,14 @@ class GoogleCalendarRenderer implements WidgetRenderer {
         <div class="widget-dialog-buttons">
           <button 
             type="submit"
-            class=" full-width"
+            class="btn btn-small btn-primary"
           >
             Save
           </button>
           <button 
             type="button"
             id="cancel-btn"
-            class=" full-width"
+            class="btn btn-small btn-secondary"
           >
             Cancel
           </button>
@@ -594,7 +594,7 @@ export const widget = {
   icon: '<i class="fas fa-calendar"></i>',
   description: 'Display upcoming events from Google Calendar',
   renderer: new GoogleCalendarRenderer(),
-  defaultSize: { w: 400, h: 600 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: {
     calendarId: '',
     apiKey: '',

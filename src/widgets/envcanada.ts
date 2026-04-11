@@ -441,7 +441,7 @@ export const widget = {
   icon: '<i class="fas fa-leaf"></i>',
   description: 'Display weather forecasts from Environment Canada',
   renderer: new EnvCanadaWidgetRenderer(),
-  defaultSize: { w: 350, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     latitude: '',
     longitude: '',

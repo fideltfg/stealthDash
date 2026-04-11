@@ -144,7 +144,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
               <i class="fas fa-lightbulb"></i> Tip: Create Home Assistant credentials from the user menu (<i class="fas fa-key"></i> Credentials). Store your long-lived access token from Profile → Security → Long-Lived Access Tokens
             </small>
           </div>
-          <button id="save-ha-config" class="ha-config-button">
+          <button id="save-ha-config" class="btn btn-primary btn-full">
             Save Configuration
           </button>
         </div>
@@ -183,7 +183,7 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         <div class="widget-config-icon"><i class="fas fa-home"></i></div>
         <h3 class="ha-empty-title">No Entities Added</h3>
         <p class="ha-empty-text">Add Home Assistant entities to monitor and control.</p>
-        <button id="add-entity-btn" class="ha-empty-button">
+        <button id="add-entity-btn" class="btn btn-primary">
           + Add Entity
         </button>
       </div>
@@ -678,8 +678,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         <input type="text" id="display-name" placeholder="Custom display name" class="widget-dialog-input extended">
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-entity" class=" extended">Cancel</button>
-        <button id="save-entity" disabled class=" extended">Add Entity</button>
+        <button id="cancel-entity" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-entity" disabled class="btn btn-small btn-primary">Add Entity</button>
       </div>
     `;
 
@@ -886,8 +886,8 @@ export class HomeAssistantRenderer implements WidgetRenderer {
         </select>
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-edit-entity" class=" extended">Cancel</button>
-        <button id="save-edit-entity" class=" extended">Save Changes</button>
+        <button id="cancel-edit-entity" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-edit-entity" class="btn btn-small btn-primary">Save Changes</button>
       </div>
     `;
 
@@ -1518,7 +1518,7 @@ export const widget = {
   icon: '<i class="fas fa-home"></i>',
   description: 'Monitor and control Home Assistant entities',
   renderer: new HomeAssistantRenderer(),
-  defaultSize: { w: 600, h: 400 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: {
     url: '',
     token: '',

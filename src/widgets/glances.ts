@@ -362,7 +362,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fa-solid fa-microchip"></i>',
   description: 'Monitor CPU, memory, disk, network, processes, containers and more via Glances',
   renderer: new GlancesRenderer(),
-  defaultSize: { w: 700, h: 550 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: { refreshInterval: 5, showPerCpu: false, showProcessCount: false, showContainers: false, showDiskIO: false, showAllFs: false, showAllNet: false },
   hasSettings: true,
   allowedFields: ['host', 'credentialId', 'refreshInterval', 'displayMode', 'showPerCpu', 'showProcessCount', 'showContainers', 'showDiskIO', 'showAllFs', 'showAllNet']

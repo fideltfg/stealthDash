@@ -839,7 +839,7 @@ export const widget = {
   icon: '<i class="fas fa-chart-bar"></i>',
   description: 'Monitor uptime via ping — multiple targets, history & traceroute',
   renderer: new UptimeWidgetRenderer(),
-  defaultSize: { w: 500, h: 300 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { targets: [], interval: 30, timeout: 5000 },
   allowedFields: ['targets', 'target', 'interval', 'timeout']
 };

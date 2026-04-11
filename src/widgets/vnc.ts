@@ -336,20 +336,20 @@ class VncWidgetRenderer implements WidgetRenderer {
     const input = document.createElement('input');
     input.type = 'password';
     input.placeholder = 'Enter VNC password (or leave blank)';
-    input.className = 'vnc-password-input';
+    input.className = 'widget-dialog-input';
     stopWidgetDragPropagation(input);
 
     const btnRow = document.createElement('div');
-    btnRow.className = 'vnc-password-buttons';
+    btnRow.style.cssText = 'display: flex; gap: 8px; justify-content: flex-end;';
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'vnc-password-cancel';
+    cancelBtn.className = 'btn btn-small btn-secondary';
     stopWidgetDragPropagation(cancelBtn);
 
     const connectBtn = document.createElement('button');
     connectBtn.textContent = 'Connect';
-    connectBtn.className = 'vnc-password-connect';
+    connectBtn.className = 'btn btn-small btn-primary';
     stopWidgetDragPropagation(connectBtn);
 
     btnRow.appendChild(cancelBtn);
@@ -393,14 +393,14 @@ class VncWidgetRenderer implements WidgetRenderer {
 
     const label = document.createElement('div');
     label.textContent = 'Configure VNC Connection';
-    label.className = 'vnc-config-label';
+    label.className = 'widget-config-description';
 
     const inputGroup = document.createElement('div');
-    inputGroup.className = 'vnc-config-inputs';
+    inputGroup.style.cssText = 'width: 100%;';
 
     // Credential selector
     const credSelect = document.createElement('select');
-    credSelect.className = 'vnc-config-input';
+    credSelect.className = 'widget-dialog-input';
     credSelect.innerHTML = '<option value="">Select VNC credential...</option>';
 
     let credentials: any[] = [];
@@ -419,7 +419,7 @@ class VncWidgetRenderer implements WidgetRenderer {
 
     const button = document.createElement('button');
     button.textContent = 'Connect';
-    button.className = 'vnc-config-button';
+    button.className = 'btn btn-primary btn-full';
     button.disabled = true;
 
     credSelect.addEventListener('change', () => {
@@ -527,8 +527,8 @@ class VncWidgetRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="">Cancel</button>
-        <button id="save-btn" class="">Save</button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -662,7 +662,7 @@ export const widget = {
   icon: '<i class="fas fa-desktop"></i>',
   description: 'Connect to remote VNC servers and display their desktops',
   renderer: new VncWidgetRenderer(),
-  defaultSize: { w: 800, h: 600 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { ...DEFAULT_CONTENT },
   hasSettings: true,
   allowedFields: ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],

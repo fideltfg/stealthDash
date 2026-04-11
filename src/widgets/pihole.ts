@@ -60,7 +60,7 @@ class PiholeRenderer implements WidgetRenderer {
     this.poller.stop(widget.id);
 
     if (!content.host || content.host === 'http://pi.hole' || !content.credentialId) {
-      const btn = renderConfigPrompt(container, '<i class="fa-solid fa-shield-halved"></i>', 'Configure Pi-hole', 'Configure your Pi-hole server connection. Tip: Create credentials first from the user menu (<i class="fa-solid fa-key"></i> Credentials)');
+      const btn = renderConfigPrompt(container, '<i class="fa-solid fa-shield-halved"></i>', 'Configure Pi-hole', 'Configure your Pi-hole server connection. Tip: Create credentials first from the user menu');
       btn.addEventListener('click', () => this.showConfigDialog(widget));
       return;
     }
@@ -349,7 +349,7 @@ class PiholeRenderer implements WidgetRenderer {
   private createStatCard(label: string, value: string, icon: string, color: string): string {
     return `
       <div class="card">
-        <div class="">${icon}</div>
+        <div class="widget-config-icon">${icon}</div>
         <h4 style="color: ${color};">${value}</h4>
         <subtitle>${label}</subtitle>
       </div>
@@ -364,7 +364,7 @@ export const widget = {
   icon: '<i class="fas fa-shield-alt"></i>',
   description: 'Display Pi-hole DNS statistics and blocking information',
   renderer: new PiholeRenderer(),
-  defaultSize: { w: 400, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: 'http://pi.hole',
     refreshInterval: 30,

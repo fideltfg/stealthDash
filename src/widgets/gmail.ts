@@ -59,7 +59,7 @@ class GmailWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
     const container = document.getElementById(`widget-${widget.id}`)?.querySelector('.widget-content') as HTMLElement;
     if (container) {
-      this.showSettings(container, widget);
+      //this.showSettings(container, widget);
     }
   }
 
@@ -86,18 +86,19 @@ class GmailWidgetRenderer implements WidgetRenderer {
     const body = document.createElement('div');
     body.className = 'widget-body gmail-body';
 
-    container.appendChild(header);
+    
     container.appendChild(body);
 
     if (!content.credentialId) {
       this.showSetupMessage(body, widget);
       // Auto-open wizard on first render
-      if (!content._wizardShown) {
-        content._wizardShown = true;
-        widget.content = content as any;
-        setTimeout(() => this.showSetupWizard(container, widget), 500);
-      }
+      // if (!content._wizardShown) {
+      //   content._wizardShown = true;
+      //   widget.content = content as any;
+      //   setTimeout(() => this.showSetupWizard(container, widget), 500);
+      // }
     } else {
+      container.appendChild(header);
       if (content.refreshInterval > 0) {
         this.poller.start(widget.id, () => {
           const gmailBody = document.getElementById(`widget-${widget.id}`)?.querySelector('.gmail-body') as HTMLElement;
@@ -613,7 +614,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fa-solid fa-envelope"></i>',
   description: 'Display Gmail inbox with unread messages and quick actions',
   renderer: new GmailWidgetRenderer(),
-  defaultSize: { w: 400, h: 600 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: {
     labelIds: ['INBOX'],
     maxResults: 20,

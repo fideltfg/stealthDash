@@ -4,6 +4,7 @@ import JustGage from 'justgage';
 import { getPingServerUrl } from '../utils/api';
 import { WidgetPoller } from '../utils/polling';
 import { stopAllDragPropagation, injectWidgetStyles } from '../utils/dom';
+import { renderConfigPrompt } from '../utils/widgetRendering';
 
 const COMET_STYLES = `
 .gauge-wrapper.card { min-width: 100px; max-width: 100%; align-items: center; justify-content: center; }
@@ -94,8 +95,11 @@ export class CometP8541Renderer implements WidgetRenderer {
     }
   }
 
-  // Styles are now loaded from ../css/comet-p8541.css
 
+  private showEmptyState(container: HTMLElement, widget: Widget): void {
+    const btn = renderConfigPrompt(container, '<i class="fas fa-thermometer-half"></i>', 'Comet P8541', 'Configure Comet P8541 settings');
+    btn.addEventListener('click', () => this.configure(widget));
+  }
 
   render(container: HTMLElement, widget: Widget): void {
     injectWidgetStyles('comet-p8541', COMET_STYLES);
@@ -103,7 +107,7 @@ export class CometP8541Renderer implements WidgetRenderer {
     const content = widget.content as unknown as CometP8541Content;
 
     if (!content.host) {
-      this.renderConfigPrompt(container, widget);
+      this.showEmptyState(container, widget);
       return;
     }
     const wrapper = document.createElement('div');
@@ -293,7 +297,7 @@ export class CometP8541Renderer implements WidgetRenderer {
         if (!existingDisplayContainer) {
           // First render - create everything
           wrapper.innerHTML = '';
-          const headerRow = this.createHeader(content, container, widget, deviceName);
+          const headerRow = this.createHeader(content, deviceName);
           wrapper.appendChild(headerRow);
         }
 
@@ -637,82 +641,6 @@ export class CometP8541Renderer implements WidgetRenderer {
     container.appendChild(errorDiv);
   }
 
-  private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
-    const content = widget.content as unknown as CometP8541Content;
-
-    const form = document.createElement('div');
-    form.className = 'comet-config-form';
-
-    const title = document.createElement('div');
-    title.className = 'comet-config-title';
-    title.innerHTML = '<i class="fas fa-thermometer-half"></i> Configure Comet P8541';
-    form.appendChild(title);
-
-    const fields = [
-      { label: 'Device Name (optional)', key: 'deviceName', type: 'text', placeholder: 's/n: 21941503', value: content.deviceName || '' },
-      { label: 'IP Address', key: 'host', type: 'text', placeholder: '192.168.1.100', required: true },
-      { label: 'Port', key: 'port', type: 'number', placeholder: '502', value: content.port || 502 },
-      { label: 'Unit ID', key: 'unitId', type: 'number', placeholder: '1', value: content.unitId || 1 },
-      { label: 'Refresh Interval (sec)', key: 'refreshInterval', type: 'number', placeholder: '10', value: content.refreshInterval || 10 }
-    ];
-
-    const inputs: { [key: string]: HTMLInputElement } = {};
-
-    fields.forEach(field => {
-      const group = document.createElement('div');
-      group.className = 'comet-form-group';
-
-      const label = document.createElement('label');
-      label.textContent = field.label;
-      label.className = 'widget-dialog-label small';
-
-      const input = document.createElement('input');
-      input.type = field.type;
-      input.placeholder = field.placeholder;
-      input.value = field.value?.toString() || (content as any)[field.key] || '';
-      input.className = 'comet-form-input';
-
-      inputs[field.key] = input;
-      group.appendChild(label);
-      group.appendChild(input);
-      form.appendChild(group);
-    });
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save & Connect';
-    saveBtn.className = 'comet-btn-primary';
-
-    saveBtn.onclick = () => {
-      const newContent = {
-        ...content,
-        deviceName: inputs.deviceName.value || '',
-        host: inputs.host.value,
-        port: parseInt(inputs.port.value) || 502,
-        unitId: parseInt(inputs.unitId.value) || 1,
-        refreshInterval: parseInt(inputs.refreshInterval.value) || 10,
-        temperatureUnit: content.temperatureUnit || 'C',
-        showAlarms: content.showAlarms !== false,
-        enabledChannels: content.enabledChannels || {
-          temp1: true,
-          temp2: true,
-          temp3: true,
-          temp4: true,
-          humidity: true
-        }
-      };
-
-      widget.content = newContent as any;
-
-      // Trigger save
-      const event = new CustomEvent('widget-updated', { detail: { widget } });
-      window.dispatchEvent(event);
-
-      this.render(container, widget);
-    };
-
-    form.appendChild(saveBtn);
-    container.appendChild(form);
-  }
 
   private showSettings(container: HTMLElement, widget: Widget): void {
     const content = widget.content as unknown as CometP8541Content;
@@ -721,10 +649,10 @@ export class CometP8541Renderer implements WidgetRenderer {
     overlay.className = 'widget-overlay dark';
 
     const modal = document.createElement('div');
-    modal.className = 'widget-dialog dark-theme';
+    modal.className = 'widget-dialog';
 
     const title = document.createElement('div');
-    title.className = 'comet-modal-title';
+    title.className = 'widget-dialog-title';
     title.innerHTML = '<i class="fas fa-cog"></i> Comet P8541 Settings';
     modal.appendChild(title);
 
@@ -740,16 +668,16 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     fields.forEach(field => {
       const group = document.createElement('div');
-      group.className = 'widget-dialog-group';
+      group.className = 'form-group';
 
       const label = document.createElement('label');
       label.textContent = field.label;
-      label.className = 'widget-dialog-label small';
+      label.className = 'form-label';
 
       const input = document.createElement('input');
       input.type = field.type;
       input.value = field.value?.toString() || '';
-      input.className = 'widget-dialog-input dark-theme';
+      input.className = 'widget-dialog-input';
 
       inputs[field.key] = input;
       group.appendChild(label);
@@ -759,14 +687,14 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Temperature unit selector
     const tempGroup = document.createElement('div');
-    tempGroup.className = 'widget-dialog-group';
+    tempGroup.className = 'form-group';
 
     const tempLabel = document.createElement('label');
     tempLabel.textContent = 'Temperature Unit';
-    tempLabel.className = 'widget-dialog-label small';
+    tempLabel.className = 'form-label';
 
     const tempSelect = document.createElement('select');
-    tempSelect.className = 'comet-form-select';
+    tempSelect.className = 'widget-dialog-input';
 
     ['C', 'F'].forEach(unit => {
       const option = document.createElement('option');
@@ -782,14 +710,14 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Display mode selector
     const displayGroup = document.createElement('div');
-    displayGroup.className = 'widget-dialog-group';
+    displayGroup.className = 'form-group';
 
     const displayLabel = document.createElement('label');
     displayLabel.textContent = 'Display Mode';
-    displayLabel.className = 'widget-dialog-label small';
+    displayLabel.className = 'form-label';
 
     const displaySelect = document.createElement('select');
-    displaySelect.className = 'comet-form-select';
+    displaySelect.className = 'widget-dialog-input';
 
     ['gauge', 'text'].forEach(mode => {
       const option = document.createElement('option');
@@ -844,11 +772,11 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     // Buttons
     const btnGroup = document.createElement('div');
-    btnGroup.className = 'widget-dialog-buttons small-gap';
+    btnGroup.className = 'widget-dialog-buttons';
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
-    saveBtn.className = ' green';
+    saveBtn.className = 'btn btn-small btn-primary';
 
     saveBtn.onclick = () => {
       const newContent: CometP8541Content = {
@@ -887,7 +815,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = ' dark-theme';
+    cancelBtn.className = 'btn btn-small btn-secondary';
     cancelBtn.onclick = () => overlay.remove();
 
     btnGroup.appendChild(saveBtn);
@@ -946,7 +874,7 @@ export class CometP8541Renderer implements WidgetRenderer {
 
 
   // Helper method to create header with settings button
-  private createHeader(content: CometP8541Content, container: HTMLElement, widget: Widget, deviceName?: string): HTMLElement {
+  private createHeader(content: CometP8541Content, deviceName?: string): HTMLElement {
     const headerRow = document.createElement('div');
     headerRow.className = 'comet-header-row';
 
@@ -979,7 +907,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fas fa-temperature-high"></i>',
   description: 'Multi-channel temperature and humidity sensor (Modbus TCP)',
   renderer: new CometP8541Renderer(),
-  defaultSize: { w: 400, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: '',
     port: 502,

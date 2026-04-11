@@ -186,7 +186,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fa-solid fa-gauge-high"></i>',
   description: 'Display internet speed results from Speedtest Tracker',
   renderer: new SpeedtestRenderer(),
-  defaultSize: { w: 650, h: 450 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: { refreshInterval: 300, showChart: true, historyDays: 7 },
   hasSettings: true,
   allowedFields: ['host', 'credentialId', 'refreshInterval', 'showChart', 'historyDays']

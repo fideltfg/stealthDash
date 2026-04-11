@@ -569,7 +569,7 @@ export const widget: WidgetPlugin = {
   icon: '<i class="fa-solid fa-list-check"></i>',
   description: 'Manage tasks with priorities, due dates, and categories',
   renderer: new TasksRenderer(),
-  defaultSize: { w: 420, h: 550 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { mode: 'local', sortBy: 'priority', showCompleted: true } as TasksContent,
   hasSettings: true,
   allowedFields: ['mode', 'todoistCredentialId', 'todoistFilter', 'localTasks', 'localCategories', 'refreshInterval', 'sortBy']

@@ -729,7 +729,7 @@ style.textContent = `
 
 .sensi-device-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 20px;
   color: var(--text-primary);
 }
 
@@ -741,7 +741,7 @@ style.textContent = `
 }
 
 .sensi-device-status.online {
-  color: #2ecc71;
+  color: var(--success);
 }
 
 .sensi-device-status.online i {
@@ -749,7 +749,7 @@ style.textContent = `
 }
 
 .sensi-device-status.offline {
-  color: #e74c3c;
+  color: var(--error);
 }
 
 .sensi-device-status.offline i {

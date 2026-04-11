@@ -1,7 +1,8 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { stopWidgetDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
+import { renderConfigPrompt } from '../utils/widgetRendering';
 import { getPingServerUrl } from '../utils/api';
+import { dispatchWidgetUpdate } from '../utils/dom';
 
 export class EmbedWidgetRenderer implements WidgetRenderer {
   configure(widget: Widget): void {
@@ -21,12 +22,8 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
       </div>
       <div id="embed-proxy-row"></div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="">
-          Cancel
-        </button>
-        <button id="save-btn" class="">
-          Save
-        </button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -37,7 +34,7 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     const proxyRow = dialog.querySelector('#embed-proxy-row') as HTMLDivElement;
 
     const proxyLabel = document.createElement('label');
-    proxyLabel.className = 'admin-checkbox-label';
+    proxyLabel.className = 'widget-checkbox-label';
     proxyLabel.htmlFor = 'embed-proxy';
 
     const proxyCheckbox = document.createElement('input');
@@ -69,6 +66,22 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
     };
   }
 
+  getHeaderButtons(widget: Widget): HTMLElement[] {
+    const content = widget.content as { url: string; sandbox?: string[]; useProxy?: boolean };
+    if (!content.url) return [];
+
+    const refreshBtn = document.createElement('button');
+    refreshBtn.innerHTML = '<i class="fas fa-rotate-right"></i>';
+    refreshBtn.title = 'Reload';
+    refreshBtn.onclick = () => {
+      const iframe = document.querySelector(`#widget-${widget.id} iframe`) as HTMLIFrameElement | null;
+      if (iframe) {
+        iframe.src = iframe.src;
+      }
+    };
+    return [refreshBtn];
+  }
+
   render(container: HTMLElement, widget: Widget): void {
     const content = widget.content as { url: string; sandbox?: string[]; useProxy?: boolean };
     const div = document.createElement('div');
@@ -88,76 +101,17 @@ export class EmbedWidgetRenderer implements WidgetRenderer {
       }
       div.appendChild(iframe);
     } else {
-      this.renderConfigScreen(div, widget);
+      this.showEmptyState(container, widget);
     }
     
     container.appendChild(div);
   }
 
-  private renderConfigScreen(div: HTMLElement, widget: Widget): void {
-    const inputContainer = document.createElement('div');
-    inputContainer.className = 'widget-config-screen padded';
-    
-    const icon = document.createElement('div');
-    icon.innerHTML = '<i class="fas fa-globe"></i>';
-    icon.className = 'widget-config-icon';
-    
-    const label = document.createElement('div');
-    label.textContent = 'Enter URL to embed';
-    label.className = 'embed-config-label';
-    
-    const urlInput = document.createElement('input');
-    urlInput.type = 'text';
-    urlInput.placeholder = 'https://example.com';
-    urlInput.className = 'embed-config-input';
-    
-    const button = document.createElement('button');
-    button.textContent = 'Load URL';
-    button.className = 'embed-config-button';
-    button.disabled = true;
-    
-    const isValidUrl = (url: string): boolean => {
-      try {
-        const urlObj = new URL(url);
-        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    };
-    
-    const updateButtonState = () => {
-      const url = urlInput.value.trim();
-      if (isValidUrl(url)) {
-        button.disabled = false;
-      } else {
-        button.disabled = true;
-      }
-    };
-    
-    const loadUrl = () => {
-      const url = urlInput.value.trim();
-      if (isValidUrl(url)) {
-        dispatchWidgetUpdate(widget.id, { url, sandbox: [] });
-      }
-    };
-    
-    button.addEventListener('click', loadUrl);
-    urlInput.addEventListener('input', updateButtonState);
-    urlInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !button.disabled) {
-        loadUrl();
-      }
-    });
-    
-    stopWidgetDragPropagation(urlInput);
-    stopWidgetDragPropagation(button);
-    
-    inputContainer.appendChild(icon);
-    inputContainer.appendChild(label);
-    inputContainer.appendChild(urlInput);
-    inputContainer.appendChild(button);
-    div.appendChild(inputContainer);
+  private showEmptyState(container: HTMLElement, widget: Widget): void {
+    const btn = renderConfigPrompt(container, '<i class="fas fa-globe"></i>', 'Embed', 'Configure URL to embed');
+    btn.addEventListener('click', () => this.configure(widget));
   }
+
 }
 
 export const widget = {
@@ -166,7 +120,7 @@ export const widget = {
   icon: '<i class="fas fa-globe"></i>',
   description: 'Embed websites via iframe',
   renderer: new EmbedWidgetRenderer(),
-  defaultSize: { w: 600, h: 400 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { url: '' },
   allowedFields: ['url', 'sandbox']
 };

@@ -1763,6 +1763,60 @@ body {
   margin-top: 12px;
 }
 
+.widget-dialog-buttons.top-margin {
+  margin-top: 20px;
+}
+
+.widget-dialog-buttons.border-top {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+/* Widget dialog fields — used within widget configure dialogs */
+.widget-dialog-field {
+  margin-bottom: 14px;
+}
+
+.widget-dialog-field.large-margin {
+  margin-bottom: 20px;
+}
+
+.widget-dialog-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.widget-dialog-hint,
+.widget-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+/* Full-width modifier for dialog inputs */
+.widget-dialog-input.extended {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Checkbox label inside dialogs */
+.widget-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+}
+
+.widget-checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+}
+
 /* === MESSAGES === */
 .message {
   padding: 12px;

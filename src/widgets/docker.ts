@@ -416,19 +416,19 @@ class DockerWidgetRenderer implements WidgetRenderer {
         <div class="container-button-group">
           ${hasControlAccess ? `
             ${isRunning ? `
-              <button class=" btn btn-small btn-danger" data-action="stop" data-id="${shortId}">
+              <button class="btn btn-small btn-danger" data-action="stop" data-id="${shortId}">
                 <i class="fas fa-stop"></i>
               </button>
-              <button class=" btn btn-small btn-warning" data-action="restart" data-id="${shortId}">
+              <button class="btn btn-small btn-warning" data-action="restart" data-id="${shortId}">
                 <i class="fas fa-sync-alt"></i>
               </button>
             ` : `
-              <button class=" btn btn-small btn-success" data-action="start" data-id="${shortId}">
+              <button class="btn btn-small btn-success" data-action="start" data-id="${shortId}">
                 <i class="fas fa-play"></i>
               </button>
             `}
           ` : ''}
-          <button class=" btn btn-small btn-secondary" data-action="logs" data-id="${shortId}">
+          <button class="btn btn-small btn-secondary" data-action="logs" data-id="${shortId}">
             <i class="fas fa-file-alt"></i>
           </button>
         </div>
@@ -649,7 +649,7 @@ export const widget = {
   icon: '<i class="fab fa-docker"></i>',
   description: 'Monitor and manage Docker containers',
   renderer: new DockerWidgetRenderer(),
-  defaultSize: { w: 400, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: '',
     credentialId: null,

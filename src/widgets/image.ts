@@ -34,12 +34,8 @@ export class ImageWidgetRenderer implements WidgetRenderer {
         </select>
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="">
-          Cancel
-        </button>
-        <button id="save-btn" class="">
-          Save
-        </button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -103,7 +99,7 @@ export const widget = {
   icon: '<i class="fas fa-image"></i>',
   description: 'Display images from URLs',
   renderer: new ImageWidgetRenderer(),
-  defaultSize: { w: 400, h: 400 },
+   defaultSize: { w: 400, h: 300 },
   defaultContent: { src: '', objectFit: 'contain' },
   allowedFields: ['src', 'objectFit', 'alt']
 };

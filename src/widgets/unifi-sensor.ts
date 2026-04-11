@@ -369,7 +369,7 @@ export const widget = {
   icon: '<i class="fas fa-thermometer-half"></i>',
   description: 'Monitor temperature, humidity, and light from USL-Environmental devices',
   renderer: new UnifiSensorRenderer(),
-  defaultSize: { w: 400, h: 400 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: '',
     credentialId: undefined,

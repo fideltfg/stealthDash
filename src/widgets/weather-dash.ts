@@ -92,8 +92,8 @@ export class WeatherDashWidgetRenderer implements WidgetRenderer {
         <input type="text" id="wd-tz" value="${content.timezone || 'America/Edmonton'}" placeholder="e.g., America/Edmonton" class="form-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="">Cancel</button>
-        <button id="save-btn" class="">Save</button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -439,7 +439,7 @@ export const widget = {
   icon: '<i class="fas fa-mountain-sun"></i>',
   description: 'Full weather dashboard with 24-hour hourly and 7-day daily forecasts',
   renderer: new WeatherDashWidgetRenderer(),
-  defaultSize: { w: 1200, h: 800 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { latitude: 0, longitude: 0, timezone: 'America/Edmonton', locationName: '' },
   allowedFields: ['latitude', 'longitude', 'timezone', 'locationName']
 };

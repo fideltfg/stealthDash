@@ -208,14 +208,13 @@ class UnifiRenderer implements WidgetRenderer {
   }
 
   private renderConfigPrompt(container: HTMLElement, widget: Widget): void {
-    container.innerHTML = `<div class="">
-      <div class="widget-config-screen padded text-center h-100">
+    container.innerHTML = `
+      <div class="widget-config-screen text-center h-100">
         <div class="widget-config-icon"><i class="fas fa-wifi"></i></div>
-        <div class="unifi-config-title">UniFi Network Widget</div>
+        <div class="widget-dialog-title">UniFi Network Widget</div>
         <div class="widget-config-description">Configure your UniFi Controller connection</div>
-        <div class="widget-config-sublabel"><i class="fa-solid fa-lightbulb"></i> Tip: Create credentials first — use <b>UniFi (Legacy)</b> for username/password or <b>UniFi (API Key)</b> for UOS consoles</div>
-        <button class="configure-btn widget-config-button">Configure</button>
-      </div>
+        <div class="form-hint"><i class="fa-solid fa-lightbulb"></i> Tip: Create credentials first — use <b>UniFi (Legacy)</b> for username/password or <b>UniFi (API Key)</b> for UOS consoles</div>
+        <button class="configure-btn btn btn-primary">Configure</button>
       </div>
     `;
 
@@ -317,8 +316,8 @@ class UnifiRenderer implements WidgetRenderer {
         </div>
 
         <div class="widget-dialog-buttons top-margin">
-          <button type="submit" class=" extended">Save</button>
-          <button type="button" id="cancel-btn" class=" extended">Cancel</button>
+          <button type="submit" class="btn btn-small btn-primary">Save</button>
+          <button type="button" id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
         </div>
       </form>
     `;

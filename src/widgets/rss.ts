@@ -46,12 +46,8 @@ export class RssWidgetRenderer implements WidgetRenderer {
           class="widget-dialog-input" />
       </div>
       <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class=" btn btn-small btn-secondary">
-          Cancel
-        </button>
-        <button id="save-btn" class="">
-          Save
-        </button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
       </div>
     `;
 
@@ -115,38 +111,38 @@ export class RssWidgetRenderer implements WidgetRenderer {
     icon.innerHTML = '<i class="fas fa-rss"></i>';
     
     const label = document.createElement('div');
-    label.className = 'rss-setup-label';
+    label.className = 'widget-config-description';
     label.textContent = 'Enter RSS Feed URL';
     
     const urlInput = document.createElement('input');
-    urlInput.className = 'rss-setup-input';
+    urlInput.className = 'widget-dialog-input';
     urlInput.type = 'text';
     urlInput.placeholder = 'https://example.com/feed.xml';
     
     const maxItemsLabel = document.createElement('div');
-    maxItemsLabel.className = 'rss-setup-sublabel';
+    maxItemsLabel.className = 'form-label';
     maxItemsLabel.textContent = 'Max items to display';
     
     const maxItemsInput = document.createElement('input');
-    maxItemsInput.className = 'rss-setup-input number';
+    maxItemsInput.className = 'widget-dialog-input';
     maxItemsInput.type = 'number';
     maxItemsInput.value = '10';
     maxItemsInput.min = '1';
     maxItemsInput.max = '50';
     
     const refreshLabel = document.createElement('div');
-    refreshLabel.className = 'rss-setup-sublabel';
+    refreshLabel.className = 'form-label';
     refreshLabel.textContent = 'Auto-refresh (minutes, 0 = disabled)';
     
     const refreshInput = document.createElement('input');
-    refreshInput.className = 'rss-setup-input number';
+    refreshInput.className = 'widget-dialog-input';
     refreshInput.type = 'number';
     refreshInput.value = '5';
     refreshInput.min = '0';
     refreshInput.max = '1440';
     
     const button = document.createElement('button');
-    button.className = 'rss-setup-button';
+    button.className = 'btn btn-primary btn-full';
     button.textContent = 'Load Feed';
     button.disabled = true;
     
@@ -302,7 +298,7 @@ export const widget = {
   icon: '<i class="fas fa-rss"></i>',
   description: 'Display RSS/Atom feeds',
   renderer: new RssWidgetRenderer(),
-  defaultSize: { w: 400, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: { feedUrl: '', maxItems: 10, refreshInterval: 300 },
   allowedFields: ['feedUrl', 'maxItems', 'refreshInterval']
 };

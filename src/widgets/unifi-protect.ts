@@ -291,14 +291,8 @@ class UnifiProtectRenderer implements WidgetRenderer {
       </div>
 
       <div class="widget-dialog-buttons top-margin">
-        <button id="cancel-btn" 
-          class="">
-          Cancel
-        </button>
-        <button id="save-btn" 
-          class="">
-          Save Configuration
-        </button>
+        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
+        <button id="save-btn" class="btn btn-small btn-primary">Save Configuration</button>
       </div>
     `;
 
@@ -717,7 +711,7 @@ export const widget = {
   icon: '<i class="fas fa-video"></i>',
   description: 'View UniFi Protect cameras and motion detections',
   renderer: new UnifiProtectRenderer(),
-  defaultSize: { w: 600, h: 500 },
+  defaultSize: { w: 400, h: 300 },
   defaultContent: {
     host: '',
     displayMode: 'both',
