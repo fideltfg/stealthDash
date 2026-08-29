@@ -168,6 +168,21 @@
     "hasSettings": true
   },
   {
+    "type": "ha-panel",
+    "name": "Home Assistant Panel",
+    "icon": "<i class=\"fas fa-home\"></i>",
+    "description": "Embed the Home Assistant web interface",
+    "defaultSize": {
+      "w": 600,
+      "h": 500
+    },
+    "defaultContent": {
+      "url": "",
+      "scale": 100
+    },
+    "hasSettings": true
+  },
+  {
     "type": "home-assistant",
     "name": "Home Assistant",
     "icon": "<i class=\"fas fa-home\"></i>",

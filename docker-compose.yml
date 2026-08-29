@@ -28,6 +28,7 @@ services:
       # Mount source files for hot reload
       - ./ping-server/src:/app/src
       - ./ping-server/routes:/app/routes
+      - ./ping-server/plugins:/app/plugins
       - ./ping-server/tests:/app/tests
       - ./ping-server/jest.config.js:/app/jest.config.js
       - ./ping-server/test-reports:/app/test-reports
@@ -73,6 +74,21 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./ping-server/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    restart: unless-stopped
+
+  # Transparent nginx proxy for the HA Panel widget.
+  # Proxies ALL Home Assistant traffic (HTML, JS, CSS, /api, WebSocket) through
+  # port 3003 so the browser never makes cross-origin requests to HA.
+  # Set HA_PANEL_URL in a .env file, e.g.:  HA_PANEL_URL=http://ha.norquay.local:8123
+  ha-panel-proxy:
+    image: nginx:alpine
+    container_name: stealth-ha-panel-proxy
+    ports:
+      - "3003:80"
+    volumes:
+      - ./nginx-ha-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - HA_PANEL_URL=${HA_PANEL_URL:-http://homeassistant.local:8123}
     restart: unless-stopped
 
 volumes:

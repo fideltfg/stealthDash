@@ -59,6 +59,7 @@ interface SensiContent {
   refreshInterval?: number; // seconds, default 30
   temperatureUnit?: 'F' | 'C';
   collapsedDevices?: string[]; // icd_ids of collapsed devices
+  scale?: number; // zoom percentage, default 100
 }
 
 // ==================== RENDERER ====================
@@ -198,8 +199,10 @@ export class SensiRenderer implements WidgetRenderer {
       return;
     }
 
+    const scale = (content.scale ?? 100) / 100;
     const wrapper = document.createElement('div');
     wrapper.className = 'sensi-wrapper card-list';
+    wrapper.style.cssText = `width:${100/scale}%;transform:scale(${scale});transform-origin:top left;`;
     container.appendChild(wrapper);
 
     const collapsed = content.collapsedDevices || [];
@@ -551,6 +554,12 @@ export class SensiRenderer implements WidgetRenderer {
         </select>
       </div>
 
+      <div class="card">
+        <label class="widget-dialog-label medium">Zoom &nbsp;<span id="sensi-scale-display">${content.scale ?? 100}%</span></label>
+        <input type="range" id="sensi-scale" min="25" max="150" step="5"
+               value="${content.scale ?? 100}" style="width:100%;accent-color:var(--accent);" />
+      </div>
+
       <div class="widget-dialog-buttons">
         <div class="btn btn-small btn-secondary" id="sensi-cancel-btn">Cancel</div>
         <div class="btn btn-small btn-primary" id="sensi-save-btn">Save Settings</div>
@@ -565,8 +574,12 @@ export class SensiRenderer implements WidgetRenderer {
 
     const refreshInput = dialog.querySelector('#sensi-refresh') as HTMLInputElement;
     const tempUnitSelect = dialog.querySelector('#sensi-temp-unit') as HTMLSelectElement;
+    const scaleSlider = dialog.querySelector('#sensi-scale') as HTMLInputElement;
+    const scaleDisplay = dialog.querySelector('#sensi-scale-display') as HTMLSpanElement;
     const saveBtn = dialog.querySelector('#sensi-save-btn') as HTMLElement;
     const cancelBtn = dialog.querySelector('#sensi-cancel-btn') as HTMLElement;
+
+    scaleSlider.oninput = () => { scaleDisplay.textContent = `${scaleSlider.value}%`; };
 
     stopAllDragPropagation(dialog);
 
@@ -580,11 +593,13 @@ export class SensiRenderer implements WidgetRenderer {
         return;
       }
 
+      const scale = parseInt(scaleSlider.value) || 100;
       dispatchWidgetUpdate(widget.id, {
         ...content,
         credentialId: credId,
         refreshInterval,
         temperatureUnit: temperatureUnit || undefined,
+        scale,
       });
 
       overlay.remove();
@@ -949,5 +964,5 @@ export const widget = {
     refreshInterval: 30,
   } as SensiContent,
   hasSettings: true,
-  allowedFields: ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices'],
+  allowedFields: ['credentialId', 'refreshInterval', 'temperatureUnit', 'collapsedDevices', 'scale'],
 };
