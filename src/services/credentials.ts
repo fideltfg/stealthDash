@@ -46,7 +46,8 @@ const SERVICE_TYPES: Record<string, {
     { name: 'password', label: 'Password', type: 'password', placeholder: 'UniFi controller password' }
   ]},
   unifi_api: { label: 'UniFi (API Key)', icon: '<i class="fas fa-wifi"></i>', fields: [
-    { name: 'apiKey', label: 'API Key', type: 'password', placeholder: 'API key from unifi.ui.com → API section' }
+    { name: 'apiKey', label: 'API Key', type: 'password', placeholder: 'API key from unifi.ui.com → API section' },
+    { name: 'host', label: 'Controller URL (optional)', type: 'text', placeholder: 'https://192.168.1.1 — leave blank for cloud API', optional: true }
   ]},
   home_assistant: { label: 'Home Assistant', icon: '<i class="fas fa-home"></i>', fields: [
     { name: 'token', label: 'Long-Lived Access Token', type: 'password', placeholder: 'Long-lived access token' }

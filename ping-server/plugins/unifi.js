@@ -85,6 +85,34 @@ async function fetchUnifiLegacy(fetch, httpsAgent, host, site, username, passwor
   };
 }
 
+// Helper: Fetch UniFi data using API key against a local/self-hosted controller
+async function fetchUnifiLocalApiKey(fetch, httpsAgent, host, site, apiKey) {
+  const makeHeaders = () => ({
+    'Accept': 'application/json',
+    'X-API-Key': apiKey
+  });
+  const basePath = `/api/s/${site}/stat`;
+
+  const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
+    fetch(`${host}${basePath}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }),
+    fetch(`${host}${basePath}/device`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+    fetch(`${host}${basePath}/sta`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+    fetch(`${host}${basePath}/alarm`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null)
+  ]);
+
+  if (!healthResponse.ok) {
+    const errorText = await healthResponse.text();
+    throw { status: healthResponse.status, error: `UniFi API returned ${healthResponse.status}`, details: errorText };
+  }
+
+  return {
+    healthData: await healthResponse.json(),
+    devicesData: devicesResponse && devicesResponse.ok ? await devicesResponse.json() : { data: [] },
+    clientsData: clientsResponse && clientsResponse.ok ? await clientsResponse.json() : { data: [] },
+    alarmsData: alarmsResponse && alarmsResponse.ok ? await alarmsResponse.json() : { data: [] }
+  };
+}
+
 // Helper: Fetch UniFi data using API key via cloud Site Manager API
 async function fetchUnifiApiKey(fetch, apiKey) {
   const makeHeaders = () => ({
@@ -289,6 +317,34 @@ router.get('/api/unifi/sites', async (req, res) => {
     }
     
     const fetch = (await import('node-fetch')).default;
+
+    if (credentials.host) {
+      // Local controller - list sites from local API
+      const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+      const defaultSite = [{ siteId: 'default', name: 'default', desc: 'Default', isOwner: true, gateway: '', totalDevices: 0, totalClients: 0 }];
+      try {
+        const response = await fetch(`${credentials.host}/api/self/sites`, {
+          headers: { 'Accept': 'application/json', 'X-API-Key': credentials.apiKey },
+          agent: httpsAgent,
+          timeout: 15000
+        });
+        if (!response.ok) return res.json({ sites: defaultSite });
+        const data = await response.json();
+        const sites = (data.data || []).map(s => ({
+          siteId: s.name || 'default',
+          name: s.name || 'default',
+          desc: s.desc || s.name || 'Default',
+          isOwner: true,
+          gateway: '',
+          totalDevices: 0,
+          totalClients: 0
+        }));
+        return res.json({ sites: sites.length > 0 ? sites : defaultSite });
+      } catch {
+        return res.json({ sites: defaultSite });
+      }
+    }
+
     const response = await fetch(`${UNIFI_CLOUD_API}/v1/sites`, {
       headers: { 'Accept': 'application/json', 'X-API-Key': credentials.apiKey },
       timeout: 15000
@@ -339,18 +395,22 @@ router.get('/api/unifi/stats', async (req, res) => {
     
     if (serviceType === 'unifi_api') {
       if (!credentials.apiKey) return respond.badRequest(res, 'Credential does not contain an API key');
-      const cloudData = await fetchUnifiApiKey(fetch, credentials.apiKey);
-      const stats = transformCloudApiData(cloudData.sitesData, cloudData.devicesData, cloudData.hostsData, cloudData.ispMetrics, site);
-      res.set('Access-Control-Allow-Origin', '*');
-      return res.json(stats);
+      if (!credentials.host) {
+        const cloudData = await fetchUnifiApiKey(fetch, credentials.apiKey);
+        const stats = transformCloudApiData(cloudData.sitesData, cloudData.devicesData, cloudData.hostsData, cloudData.ispMetrics, site);
+        res.set('Access-Control-Allow-Origin', '*');
+        return res.json(stats);
+      }
     }
-    
-    // Legacy auth
+
+    // Legacy auth or local API key auth
     const host = credentials.host;
     if (!host) return respond.badRequest(res, 'Credential does not contain a host URL');
-    if (!credentials.username || !credentials.password) return respond.badRequest(res, 'Missing username or password');
-    
-    const rawData = await fetchUnifiLegacy(fetch, httpsAgent, host, site, credentials.username, credentials.password);
+    if (serviceType === 'unifi' && (!credentials.username || !credentials.password)) return respond.badRequest(res, 'Missing username or password');
+
+    const rawData = serviceType === 'unifi_api'
+      ? await fetchUnifiLocalApiKey(fetch, httpsAgent, host, site, credentials.apiKey)
+      : await fetchUnifiLegacy(fetch, httpsAgent, host, site, credentials.username, credentials.password);
     const { healthData, devicesData, clientsData, alarmsData } = rawData;
     
     // Aggregate stats
