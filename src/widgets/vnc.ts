@@ -1,658 +1,714 @@
 import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
-import { credentialsService } from '../services/credentials';
+import { credentialsService, type Credential } from '../services/credentials';
 import { getPingServerUrl } from '../utils/api';
-import { dispatchWidgetUpdate, stopAllDragPropagation, stopWidgetDragPropagation, injectWidgetStyles } from '../utils/dom';
+import {
+  dispatchWidgetUpdate,
+  escapeHtml,
+  injectWidgetStyles,
+  stopAllDragPropagation,
+  stopWidgetDragPropagation,
+} from '../utils/dom';
 import { authService } from '../services/auth';
-// @ts-ignore — noVNC doesn't ship type declarations
+// @ts-ignore — noVNC 1.5 does not ship TypeScript declarations.
 import RFB from '@novnc/novnc/core/rfb.js';
 
+type ScaleMode = 'local' | 'remote' | 'none';
+type ConnectionPhase = 'disconnected' | 'connecting' | 'connected' | 'error';
+type VncCredentials = { username?: string; password?: string; target?: string };
+
 interface VncContent {
-  credentialId?: number;   // Saved credential ID (contains host, port, password)
-  viewOnly: boolean;       // View-only mode (no keyboard/mouse input)
-  scaleMode: 'remote' | 'local' | 'none';  // Scaling mode
-  clipToWindow: boolean;   // Clip remote resolution to widget
-  showDotCursor: boolean;  // Show cursor as dot
-  qualityLevel: number;    // JPEG quality (0-9)
-  compressionLevel: number; // Compression level (0-9)
-  autoConnect: boolean;    // Auto-connect when widget loads
-  reconnectDelay: number;  // Seconds before auto-reconnect (0 = disabled)
+  credentialId?: number;
+  viewOnly: boolean;
+  scaleMode: ScaleMode;
+  clipToWindow: boolean;
+  dragViewport: boolean;
+  focusOnClick: boolean;
+  shared: boolean;
+  qualityLevel: number;
+  compressionLevel: number;
+  autoConnect: boolean;
+  reconnectDelay: number;
+  background: string;
+}
+
+interface RfbClient extends EventTarget {
+  capabilities: { power?: boolean };
+  clippingViewport: boolean;
+  clipViewport: boolean;
+  compressionLevel: number;
+  dragViewport: boolean;
+  focusOnClick: boolean;
+  qualityLevel: number;
+  resizeSession: boolean;
+  scaleViewport: boolean;
+  viewOnly: boolean;
+  background: string;
+  approveServer(): void;
+  blur(): void;
+  clipboardPasteFrom(text: string): void;
+  disconnect(): void;
+  focus(options?: FocusOptions): void;
+  machineReboot(): void;
+  machineReset(): void;
+  machineShutdown(): void;
+  sendCredentials(credentials: VncCredentials): void;
+  sendCtrlAltDel(): void;
+  sendKey(keysym: number, code: string | null, down?: boolean): void;
+  toBlob(callback: (blob: Blob | null) => void, type?: string, quality?: number): void;
+}
+
+interface VncElements {
+  wrapper: HTMLDivElement;
+  display: HTMLDivElement;
+  status: HTMLSpanElement;
+  statusInfo: HTMLSpanElement;
+  connect: HTMLButtonElement;
+  controls: HTMLButtonElement[];
+  power: HTMLSelectElement;
+  clipboardBadge: HTMLSpanElement;
+}
+
+interface VncSession {
+  generation: number;
+  widget: Widget;
+  content: VncContent;
+  elements: VncElements;
+  phase: ConnectionPhase;
+  rfb?: RfbClient;
+  reconnectTimer?: number;
+  manualDisconnect: boolean;
+  credentials?: Record<string, string>;
+  remoteClipboard: string;
 }
 
 const DEFAULT_CONTENT: VncContent = {
   viewOnly: false,
   scaleMode: 'local',
   clipToWindow: true,
-  showDotCursor: false,
+  dragViewport: false,
+  focusOnClick: true,
+  shared: true,
   qualityLevel: 6,
   compressionLevel: 2,
   autoConnect: true,
   reconnectDelay: 5,
+  background: '#000000',
 };
 
 const VNC_STYLES = `
-.vnc-widget { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
-.vnc-status-bar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: var(--widget-bg, rgba(0, 0, 0, 0.6)); border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 12px; }
-.vnc-status-indicator { display: flex; align-items: center; gap: 4px; font-weight: 500; white-space: nowrap; }
-.vnc-status-indicator::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.vnc-status-indicator.disconnected::before { background: #888; }
-.vnc-status-indicator.connecting::before { background: #f0ad4e; animation: vnc-pulse 1s infinite; }
-.vnc-status-indicator.connected::before { background: #4caf50; }
-.vnc-status-indicator.error::before { background: #f44336; }
-@keyframes vnc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-.vnc-status-info { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; font-size: 11px; }
-.vnc-connect-btn { padding: 2px 10px; border: 1px solid var(--border); border-radius: 4px; background: transparent; cursor: pointer; font-size: 11px; transition: background 0.2s; }
-.vnc-connect-btn:hover { background: var(--hover); }
-.vnc-display { flex: 1; overflow: hidden; position: relative; background: #000; }
-.vnc-display canvas { width: 100% !important; height: 100% !important; }
-.vnc-bell { box-shadow: inset 0 0 20px rgba(255, 255, 0, 0.3); transition: box-shadow 0.2s; }
-.vnc-config-inputs { display: flex; gap: 8px; max-width: 360px; }
-.vnc-config-port { width: 80px; }
-.vnc-config-button:disabled { opacity: 0.4; cursor: not-allowed; }
-.vnc-password-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 10; }
-.vnc-password-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; min-width: 280px; display: flex; flex-direction: column; gap: 12px; }
+.vnc-widget { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; background:#000; color:var(--text); }
+.vnc-widget:fullscreen { width:100vw; height:100vh; background:#000; }
+.vnc-status-bar,.vnc-toolbar { display:flex; align-items:center; gap:6px; padding:4px 7px; flex-shrink:0; background:var(--widget-bg,rgba(25,25,25,.96)); border-bottom:1px solid var(--border); font-size:11px; }
+.vnc-status-indicator { display:flex; align-items:center; gap:5px; font-weight:600; white-space:nowrap; }
+.vnc-status-indicator::before { content:''; width:8px; height:8px; border-radius:50%; background:#888; flex:none; }
+.vnc-status-indicator.connecting::before { background:#f0ad4e; animation:vnc-pulse 1s infinite; }
+.vnc-status-indicator.connected::before { background:#4caf50; }
+.vnc-status-indicator.error::before { background:#f44336; }
+@keyframes vnc-pulse { 50% { opacity:.3; } }
+.vnc-status-info { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.75; }
+.vnc-button,.vnc-select { min-height:25px; border:1px solid var(--border); border-radius:4px; color:inherit; background:var(--surface,rgba(255,255,255,.06)); font:inherit; }
+.vnc-button { padding:3px 8px; cursor:pointer; white-space:nowrap; }
+.vnc-button:hover:not(:disabled),.vnc-select:hover:not(:disabled) { background:var(--hover,rgba(255,255,255,.12)); }
+.vnc-button:disabled,.vnc-select:disabled { opacity:.35; cursor:not-allowed; }
+.vnc-toolbar { overflow-x:auto; scrollbar-width:thin; }
+.vnc-toolbar .vnc-spacer { flex:1; min-width:4px; }
+.vnc-select { padding:2px 4px; max-width:125px; }
+.vnc-clipboard-badge { display:none; color:#4caf50; font-size:10px; }
+.vnc-clipboard-badge.visible { display:inline; }
+.vnc-display { position:relative; flex:1; min-height:0; overflow:auto; background:#000; outline:none; }
+.vnc-display > div { width:100%; height:100%; }
+.vnc-display.vnc-bell { box-shadow:inset 0 0 28px rgba(255,220,0,.55); }
+.vnc-overlay { position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.82); }
+.vnc-panel { width:min(420px,100%); max-height:100%; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:16px; border:1px solid var(--border); border-radius:8px; background:var(--surface,#222); }
+.vnc-panel h4 { margin:0; }
+.vnc-panel-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.vnc-panel textarea { min-height:120px; resize:vertical; }
+.vnc-fingerprint { padding:8px; overflow-wrap:anywhere; border-radius:4px; background:rgba(0,0,0,.25); font-family:monospace; font-size:10px; }
+.vnc-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; }
+.vnc-settings-grid .widget-dialog-field { margin:0; }
+@media (max-width:600px) { .vnc-settings-grid { grid-template-columns:1fr; } }
 `;
 
-/** Get the WebSocket URL for the VNC proxy */
-function getVncWsUrl(host: string, port: number, credentialId?: number): string {
-  const base = getPingServerUrl();
-  const token = authService.getToken() || '';
-  // Convert http(s) to ws(s)
-  const wsBase = base.replace(/^http/, 'ws');
-  let wsUrl = `${wsBase}/api/vnc/connect?host=${encodeURIComponent(host)}&port=${port}&token=${encodeURIComponent(token)}`;
-  if (credentialId) {
-    wsUrl += `&credentialId=${credentialId}`;
-  }
-  return wsUrl;
+const KEY_ACTIONS: Record<string, () => Array<[number, string | null]>> = {
+  escape: () => [[0xff1b, 'Escape']],
+  tab: () => [[0xff09, 'Tab']],
+  meta: () => [[0xffeb, 'MetaLeft']],
+  altF4: () => [[0xffe9, 'AltLeft'], [0xffc1, 'F4']],
+  ctrlEsc: () => [[0xffe3, 'ControlLeft'], [0xff1b, 'Escape']],
+  ctrlAltBackspace: () => [[0xffe3, 'ControlLeft'], [0xffe9, 'AltLeft'], [0xff08, 'Backspace']],
+};
+
+function normalizeContent(content: Partial<VncContent>): VncContent {
+  const merged = { ...DEFAULT_CONTENT, ...content };
+  return {
+    ...merged,
+    qualityLevel: Math.max(0, Math.min(9, Number(merged.qualityLevel) || 0)),
+    compressionLevel: Math.max(0, Math.min(9, Number(merged.compressionLevel) || 0)),
+    reconnectDelay: Math.max(0, Math.min(300, Number(merged.reconnectDelay) || 0)),
+  };
+}
+
+function getVncWsUrl(credentialId: number): string {
+  const base = getPingServerUrl().replace(/^http/, 'ws');
+  const params = new URLSearchParams({
+    credentialId: String(credentialId),
+    token: authService.getToken() || '',
+  });
+  return `${base}/api/vnc/connect?${params}`;
+}
+
+function createButton(label: string, title: string, icon?: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'vnc-button';
+  button.title = title;
+  button.innerHTML = icon ? `<i class="${icon}"></i><span class="sr-only">${escapeHtml(label)}</span>` : escapeHtml(label);
+  stopWidgetDragPropagation(button);
+  return button;
 }
 
 class VncWidgetRenderer implements WidgetRenderer {
-  private connections: Map<string, {
-    rfb: any; // noVNC RFB instance
-    connected: boolean;
-    reconnectTimer?: number;
-  }> = new Map();
+  private sessions = new Map<string, VncSession>();
+  private generation = 0;
 
   configure(widget: Widget): void {
-    this.showConfigDialog(widget);
+    void this.showConfigDialog(widget);
   }
 
   render(container: HTMLElement, widget: Widget): void {
     injectWidgetStyles('vnc', VNC_STYLES);
-    
-    const content = { ...DEFAULT_CONTENT, ...(widget.content as Partial<VncContent>) };
+    this.disposeSession(widget.id, true);
+    const content = normalizeContent(widget.content as Partial<VncContent>);
 
-    // If no credential selected, show config screen
     if (!content.credentialId) {
-      this.renderConfigScreen(container, widget);
+      void this.renderConfigScreen(container, widget);
       return;
     }
 
+    const elements = this.createInterface(widget);
+    container.replaceChildren(elements.wrapper);
+    const session: VncSession = {
+      generation: ++this.generation,
+      widget,
+      content,
+      elements,
+      phase: 'disconnected',
+      manualDisconnect: false,
+      remoteClipboard: '',
+    };
+    this.sessions.set(widget.id, session);
+    this.bindControls(session);
+    this.updateControls(session);
+
+    if (content.autoConnect) {
+      window.setTimeout(() => {
+        if (this.isCurrent(session)) void this.connect(session);
+      }, 250);
+    }
+  }
+
+  private createInterface(widget: Widget): VncElements {
     const wrapper = document.createElement('div');
     wrapper.className = 'vnc-widget';
+    wrapper.id = `vnc-widget-${widget.id}`;
 
-    // Status bar
     const statusBar = document.createElement('div');
     statusBar.className = 'vnc-status-bar';
-
-    const statusIndicator = document.createElement('span');
-    statusIndicator.className = 'vnc-status-indicator disconnected';
-    statusIndicator.textContent = 'Disconnected';
-
+    const status = document.createElement('span');
+    status.className = 'vnc-status-indicator disconnected';
+    status.textContent = 'Disconnected';
     const statusInfo = document.createElement('span');
     statusInfo.className = 'vnc-status-info';
-    statusInfo.textContent = 'Loading...';
+    statusInfo.textContent = 'Ready';
+    const clipboardBadge = document.createElement('span');
+    clipboardBadge.className = 'vnc-clipboard-badge';
+    clipboardBadge.textContent = 'Clipboard received';
+    const connect = createButton('Connect', 'Connect or disconnect');
+    statusBar.append(status, statusInfo, clipboardBadge, connect);
 
-    const connectBtn = document.createElement('button');
-    connectBtn.className = 'vnc-connect-btn';
-    connectBtn.textContent = 'Connect';
-    stopWidgetDragPropagation(connectBtn);
+    const toolbar = document.createElement('div');
+    toolbar.className = 'vnc-toolbar';
+    const focus = createButton('Focus', 'Focus remote keyboard', 'fas fa-keyboard');
+    const cad = createButton('Ctrl+Alt+Del', 'Send Ctrl+Alt+Delete', 'fas fa-shield-halved');
+    const clipboard = createButton('Clipboard', 'Open clipboard transfer', 'fas fa-clipboard');
+    const screenshot = createButton('Screenshot', 'Download screenshot', 'fas fa-camera');
+    const viewOnly = createButton('View only', 'Toggle view-only mode', 'fas fa-eye');
+    const fullscreen = createButton('Fullscreen', 'Toggle fullscreen', 'fas fa-expand');
 
-    statusBar.appendChild(statusIndicator);
-    statusBar.appendChild(statusInfo);
-    statusBar.appendChild(connectBtn);
+    const keySelect = document.createElement('select');
+    keySelect.className = 'vnc-select';
+    keySelect.title = 'Send a special key sequence';
+    keySelect.innerHTML = '<option value="">Send key…</option><option value="escape">Escape</option><option value="tab">Tab</option><option value="meta">Windows / Meta</option><option value="altF4">Alt+F4</option><option value="ctrlEsc">Ctrl+Escape</option><option value="ctrlAltBackspace">Ctrl+Alt+Backspace</option>';
+    stopWidgetDragPropagation(keySelect);
 
-    // VNC display container
-    const vncContainer = document.createElement('div');
-    vncContainer.className = 'vnc-display';
-    vncContainer.id = `vnc-display-${widget.id}`;
+    const power = document.createElement('select');
+    power.className = 'vnc-select';
+    power.title = 'Remote power controls (server support required)';
+    power.innerHTML = '<option value="">Power…</option><option value="shutdown">Shutdown</option><option value="reboot">Reboot</option><option value="reset">Force reset</option>';
+    stopWidgetDragPropagation(power);
 
-    // Prevent widget drag inside the VNC display
-    stopWidgetDragPropagation(vncContainer);
+    const spacer = document.createElement('span');
+    spacer.className = 'vnc-spacer';
+    toolbar.append(focus, cad, keySelect, clipboard, screenshot, viewOnly, spacer, power, fullscreen);
 
-    wrapper.appendChild(statusBar);
-    wrapper.appendChild(vncContainer);
-    container.appendChild(wrapper);
+    const display = document.createElement('div');
+    display.className = 'vnc-display';
+    display.id = `vnc-display-${widget.id}`;
+    display.tabIndex = 0;
+    stopWidgetDragPropagation(display);
 
-    const doConnect = () => this.connectVnc(widget, content, vncContainer, statusIndicator, connectBtn);
-    const doDisconnect = () => this.disconnectVnc(widget.id, statusIndicator, connectBtn);
-
-    connectBtn.onclick = () => {
-      const conn = this.connections.get(widget.id);
-      if (conn?.connected) {
-        doDisconnect();
-      } else {
-        doConnect();
-      }
-    };
-
-    // Auto-connect if configured
-    if (content.autoConnect) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => doConnect(), 300);
-    }
+    wrapper.append(statusBar, toolbar, display);
+    return { wrapper, display, status, statusInfo, connect, controls: [focus, cad, clipboard, screenshot, viewOnly], power, clipboardBadge };
   }
 
-  private async connectVnc(
-    widget: Widget,
-    content: VncContent,
-    vncContainer: HTMLElement,
-    statusIndicator: HTMLElement,
-    connectBtn: HTMLElement,
-  ): Promise<void> {
-    const widgetId = widget.id;
+  private bindControls(session: VncSession): void {
+    const { elements } = session;
+    const [focus, cad, clipboard, screenshot, viewOnly] = elements.controls;
 
-    // Disconnect any existing connection
-    this.disconnectVnc(widgetId, statusIndicator, connectBtn);
+    elements.connect.onclick = () => {
+      if (session.phase === 'connecting' || session.phase === 'connected') {
+        this.disconnectCurrent(session);
+      } else {
+        void this.connect(session);
+      }
+    };
+    focus.onclick = () => session.rfb?.focus({ preventScroll: true });
+    cad.onclick = () => session.rfb?.sendCtrlAltDel();
+    clipboard.onclick = () => this.showClipboardPanel(session);
+    screenshot.onclick = () => this.downloadScreenshot(session);
+    viewOnly.onclick = () => {
+      if (!session.rfb) return;
+      session.content.viewOnly = !session.content.viewOnly;
+      session.rfb.viewOnly = session.content.viewOnly;
+      this.updateControls(session);
+    };
 
-    statusIndicator.className = 'vnc-status-indicator connecting';
-    statusIndicator.textContent = 'Connecting...';
-    connectBtn.textContent = 'Cancel';
+    const keySelect = elements.wrapper.querySelector('.vnc-toolbar .vnc-select') as HTMLSelectElement;
+    keySelect.onchange = () => {
+      if (keySelect.value) this.sendKeyChord(session, keySelect.value);
+      keySelect.value = '';
+    };
+
+    elements.power.onchange = () => {
+      const action = elements.power.value as 'shutdown' | 'reboot' | 'reset' | '';
+      elements.power.value = '';
+      if (action) this.runPowerAction(session, action);
+    };
+
+    const fullscreen = elements.wrapper.querySelector('[title="Toggle fullscreen"]') as HTMLButtonElement;
+    fullscreen.onclick = async () => {
+      if (document.fullscreenElement === elements.wrapper) await document.exitFullscreen();
+      else await elements.wrapper.requestFullscreen();
+    };
+  }
+
+  private async connect(session: VncSession): Promise<void> {
+    if (!session.content.credentialId || !this.isCurrent(session)) return;
+    this.clearReconnectTimer(session);
+    session.manualDisconnect = false;
+    session.phase = 'connecting';
+    session.elements.display.replaceChildren();
+    this.setStatus(session, 'connecting', 'Connecting…');
+    this.updateControls(session);
 
     try {
-      // Fetch connection info from credential
-      let host: string;
-      let port: number;
-      let vncPassword: string | undefined;
+      const credential = await credentialsService.getById(session.content.credentialId);
+      if (!this.isCurrent(session)) return;
+      const data = credential.data || {};
+      if (!data.host) throw new Error('The selected credential has no VNC host');
+      session.credentials = data;
+      session.elements.statusInfo.textContent = `${data.host}:${Number(data.port) || 5900}`;
 
-      if (!content.credentialId) {
-        throw new Error('No VNC credential configured');
-      }
+      const credentials: VncCredentials = {};
+      if (data.username) credentials.username = data.username;
+      if (data.password !== undefined) credentials.password = data.password;
+      if (data.target) credentials.target = data.target;
 
-      try {
-        const cred = await credentialsService.getById(content.credentialId);
-        host = cred.data?.host;
-        port = parseInt(cred.data?.port) || 5900;
-        vncPassword = cred.data?.password;
-        if (!host) {
-          throw new Error('Credential is missing host');
-        }
-      } catch (e: any) {
-        throw new Error(`Could not load credential: ${e.message}`);
-      }
-
-      // Update status bar with connection info
-      const statusInfo = vncContainer.parentElement?.querySelector('.vnc-status-info');
-      if (statusInfo) statusInfo.textContent = `${host}:${port}`;
-
-      const wsUrl = getVncWsUrl(host, port, content.credentialId);
-
-      // Create RFB connection
-      // noVNC RFB takes: target (DOM element), url (WebSocket URL), options
-
-      // Monkey-patch getContext to add willReadFrequently hint for noVNC's canvas.
-      // This suppresses the "Multiple readback operations using getImageData are
-      // faster with the willReadFrequently attribute" console warning.
-      const _origGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, attrs?: any) {
-        if (type === '2d') {
-          attrs = { ...attrs, willReadFrequently: true };
-        }
-        return _origGetContext.call(this, type, attrs);
-      } as typeof HTMLCanvasElement.prototype.getContext;
-
-      // Suppress the "noVNC requires a secure context (TLS)" warning during
-      // construction. Standard VNC password auth (DES) works fine without TLS;
-      // only RSA-AES auth needs SubtleCrypto / secure context.
-      // noVNC's Log functions are bound at module load time, so patching
-      // console.error/warn won't help. Instead, temporarily override
-      // window.isSecureContext so the check in RFB's constructor passes.
-      const secureContextDesc = Object.getOwnPropertyDescriptor(window, 'isSecureContext');
-      Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
-
-      const rfb = new RFB(vncContainer, wsUrl, {
-        credentials: vncPassword ? { password: vncPassword } : undefined,
+      const rfb = new RFB(session.elements.display, getVncWsUrl(session.content.credentialId), {
+        shared: session.content.shared,
+        credentials,
+        repeaterID: data.repeaterID || data.repeaterId,
         wsProtocols: ['binary'],
-      });
-
-      // Restore original getContext and isSecureContext immediately after construction
-      HTMLCanvasElement.prototype.getContext = _origGetContext;
-      if (secureContextDesc) {
-        Object.defineProperty(window, 'isSecureContext', secureContextDesc);
-      } else {
-        delete (window as any).isSecureContext;
-      }
-
-      // Configure RFB
-      rfb.viewOnly = content.viewOnly;
-      rfb.scaleViewport = content.scaleMode === 'local';
-      rfb.resizeSession = content.scaleMode === 'remote';
-      rfb.clipViewport = content.clipToWindow;
-      rfb.showDotCursor = content.showDotCursor;
-      rfb.qualityLevel = content.qualityLevel;
-      rfb.compressionLevel = content.compressionLevel;
-
-      // Event handlers
-      rfb.addEventListener('connect', () => {
-        statusIndicator.className = 'vnc-status-indicator connected';
-        statusIndicator.textContent = 'Connected';
-        connectBtn.textContent = 'Disconnect';
-        const conn = this.connections.get(widgetId);
-        if (conn) conn.connected = true;
-      });
-
-      rfb.addEventListener('disconnect', (e: any) => {
-        const clean = e.detail?.clean;
-        statusIndicator.className = 'vnc-status-indicator disconnected';
-        statusIndicator.textContent = clean ? 'Disconnected' : 'Connection lost';
-        connectBtn.textContent = 'Connect';
-        const conn = this.connections.get(widgetId);
-        if (conn) conn.connected = false;
-
-        // Auto-reconnect if enabled and not a clean disconnect
-        if (!clean && content.reconnectDelay > 0) {
-          statusIndicator.textContent = `Reconnecting in ${content.reconnectDelay}s...`;
-          const timer = window.setTimeout(() => {
-            this.connectVnc(widget, content, vncContainer, statusIndicator, connectBtn);
-          }, content.reconnectDelay * 1000);
-          if (conn) conn.reconnectTimer = timer;
-        }
-      });
-
-      rfb.addEventListener('credentialsrequired', () => {
-        // Show inline password dialog instead of browser prompt()
-        this.showPasswordPrompt(vncContainer, (password) => {
-          if (password !== null) {
-            rfb.sendCredentials({ password });
-          } else {
-            rfb.disconnect();
-          }
-        });
-      });
-
-      rfb.addEventListener('desktopname', (e: any) => {
-        const name = e.detail?.name;
-        if (name) {
-          const statusInfoEl = vncContainer.parentElement?.querySelector('.vnc-status-info');
-          if (statusInfoEl) {
-            statusInfoEl.textContent = `${name} (${host}:${port})`;
-          }
-        }
-      });
-
-      rfb.addEventListener('bell', () => {
-        // Visual bell — briefly flash the border
-        vncContainer.classList.add('vnc-bell');
-        setTimeout(() => vncContainer.classList.remove('vnc-bell'), 200);
-      });
-
-      this.connections.set(widgetId, { rfb, connected: false });
-
-    } catch (err: any) {
-      console.error('VNC connection error:', err);
-      statusIndicator.className = 'vnc-status-indicator error';
-      statusIndicator.textContent = `Error: ${err.message}`;
-      connectBtn.textContent = 'Retry';
+      }) as RfbClient;
+      session.rfb = rfb;
+      this.applyRfbSettings(session);
+      this.bindRfbEvents(session, rfb, credential);
+    } catch (error) {
+      if (!this.isCurrent(session)) return;
+      session.phase = 'error';
+      this.setStatus(session, 'error', error instanceof Error ? error.message : 'Connection failed');
+      this.updateControls(session);
     }
   }
 
-  private disconnectVnc(widgetId: string, statusIndicator: HTMLElement, connectBtn: HTMLElement): void {
-    const conn = this.connections.get(widgetId);
-    if (conn) {
-      if (conn.reconnectTimer) {
-        clearTimeout(conn.reconnectTimer);
-      }
-      try {
-        // Only disconnect if the RFB object is still in a connected/connecting state
-        if (conn.rfb && conn.rfb._rfbConnectionState !== 'disconnected') {
-          conn.rfb.disconnect();
-        }
-      } catch (e) {
-        // Ignore errors during disconnect
-      }
-      this.connections.delete(widgetId);
-    }
-    statusIndicator.className = 'vnc-status-indicator disconnected';
-    statusIndicator.textContent = 'Disconnected';
-    connectBtn.textContent = 'Connect';
+  private applyRfbSettings(session: VncSession): void {
+    const rfb = session.rfb;
+    if (!rfb) return;
+    const c = session.content;
+    rfb.viewOnly = c.viewOnly;
+    rfb.scaleViewport = c.scaleMode === 'local';
+    rfb.resizeSession = c.scaleMode === 'remote';
+    rfb.clipViewport = c.clipToWindow;
+    rfb.dragViewport = c.dragViewport;
+    rfb.focusOnClick = c.focusOnClick;
+    rfb.qualityLevel = c.qualityLevel;
+    rfb.compressionLevel = c.compressionLevel;
+    rfb.background = c.background;
   }
 
-  /** Show an inline password prompt overlay inside the VNC display container */
-  private showPasswordPrompt(vncContainer: HTMLElement, callback: (password: string | null) => void): void {
-    // Remove any existing prompt
-    const existing = vncContainer.querySelector('.vnc-password-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'vnc-password-overlay';
-
-    const box = document.createElement('div');
-    box.className = 'vnc-password-box';
-
-    const title = document.createElement('div');
-    title.className = 'vnc-password-title';
-    title.innerHTML = '<i class="fas fa-lock"></i> VNC Authentication Required';
-
-    const input = document.createElement('input');
-    input.type = 'password';
-    input.placeholder = 'Enter VNC password (or leave blank)';
-    input.className = 'widget-dialog-input';
-    stopWidgetDragPropagation(input);
-
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display: flex; gap: 8px; justify-content: flex-end;';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.className = 'btn btn-small btn-secondary';
-    stopWidgetDragPropagation(cancelBtn);
-
-    const connectBtn = document.createElement('button');
-    connectBtn.textContent = 'Connect';
-    connectBtn.className = 'btn btn-small btn-primary';
-    stopWidgetDragPropagation(connectBtn);
-
-    btnRow.appendChild(cancelBtn);
-    btnRow.appendChild(connectBtn);
-
-    box.appendChild(title);
-    box.appendChild(input);
-    box.appendChild(btnRow);
-    overlay.appendChild(box);
-    vncContainer.appendChild(overlay);
-
-    input.focus();
-
-    const cleanup = () => overlay.remove();
-
-    connectBtn.onclick = () => {
-      cleanup();
-      callback(input.value); // Allow empty password
-    };
-
-    cancelBtn.onclick = () => {
-      cleanup();
-      callback(null);
-    };
-
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        cleanup();
-        callback(input.value);
-      }
+  private bindRfbEvents(session: VncSession, rfb: RfbClient, credential: Credential): void {
+    rfb.addEventListener('connect', () => {
+      if (!this.isActiveRfb(session, rfb)) return;
+      session.phase = 'connected';
+      this.setStatus(session, 'connected', 'Connected');
+      session.elements.statusInfo.textContent = credential.name;
+      this.updateControls(session);
+      rfb.focus({ preventScroll: true });
     });
+
+    rfb.addEventListener('disconnect', ((event: CustomEvent<{ clean: boolean }>) => {
+      if (!this.isActiveRfb(session, rfb)) return;
+      session.rfb = undefined;
+      session.phase = 'disconnected';
+      const clean = Boolean(event.detail?.clean);
+      this.setStatus(session, clean ? 'disconnected' : 'error', clean ? 'Disconnected' : 'Connection lost');
+      this.updateControls(session);
+      if (!clean && !session.manualDisconnect) this.scheduleReconnect(session);
+    }) as EventListener);
+
+    rfb.addEventListener('credentialsrequired', ((event: CustomEvent<{ types: string[] }>) => {
+      if (!this.isActiveRfb(session, rfb)) return;
+      this.requestCredentials(session, event.detail?.types || ['password']);
+    }) as EventListener);
+
+    rfb.addEventListener('securityfailure', ((event: CustomEvent<{ status: number; reason?: string }>) => {
+      if (!this.isActiveRfb(session, rfb)) return;
+      const reason = event.detail?.reason || `Security negotiation failed (${event.detail?.status ?? 'unknown'})`;
+      this.setStatus(session, 'error', reason);
+    }) as EventListener);
+
+    rfb.addEventListener('serververification', ((event: CustomEvent<{ type: string; publickey?: Uint8Array }>) => {
+      if (this.isActiveRfb(session, rfb)) this.requestServerApproval(session, event.detail);
+    }) as EventListener);
+
+    rfb.addEventListener('desktopname', ((event: CustomEvent<{ name: string }>) => {
+      if (this.isActiveRfb(session, rfb) && event.detail?.name) session.elements.statusInfo.textContent = event.detail.name;
+    }) as EventListener);
+
+    rfb.addEventListener('clipboard', ((event: CustomEvent<{ text: string }>) => {
+      if (!this.isActiveRfb(session, rfb)) return;
+      session.remoteClipboard = event.detail?.text || '';
+      session.elements.clipboardBadge.classList.add('visible');
+    }) as EventListener);
+
+    rfb.addEventListener('capabilities', () => this.updateControls(session));
+    rfb.addEventListener('clippingviewport', () => {
+      session.elements.display.title = rfb.clippingViewport ? 'Remote desktop is clipped; drag to pan' : '';
+    });
+    rfb.addEventListener('bell', () => {
+      session.elements.display.classList.add('vnc-bell');
+      window.setTimeout(() => session.elements.display.classList.remove('vnc-bell'), 250);
+    });
+  }
+
+  private requestCredentials(session: VncSession, types: string[]): void {
+    const initial = session.credentials || {};
+    const fields = types.filter(type => ['username', 'password', 'target'].includes(type));
+    this.showFormOverlay(session, 'VNC authentication required', fields, initial, values => {
+      if (values && session.rfb) session.rfb.sendCredentials(values);
+      else this.disconnectCurrent(session);
+    });
+  }
+
+  private requestServerApproval(session: VncSession, detail: { type: string; publickey?: Uint8Array }): void {
+    const fingerprint = detail.publickey
+      ? Array.from(detail.publickey, byte => byte.toString(16).padStart(2, '0')).join(':')
+      : 'No fingerprint supplied';
+    const overlay = this.createOverlay(session, 'Verify VNC server');
+    const message = document.createElement('p');
+    message.textContent = `The server requests ${detail.type || 'identity'} verification. Confirm this fingerprint before continuing.`;
+    const key = document.createElement('div');
+    key.className = 'vnc-fingerprint';
+    key.textContent = fingerprint;
+    const actions = document.createElement('div');
+    actions.className = 'vnc-panel-actions';
+    const reject = createButton('Reject', 'Reject server identity');
+    const approve = createButton('Approve', 'Approve server identity');
+    reject.onclick = () => { overlay.remove(); this.disconnectCurrent(session); };
+    approve.onclick = () => { overlay.remove(); session.rfb?.approveServer(); };
+    actions.append(reject, approve);
+    overlay.firstElementChild?.append(message, key, actions);
+  }
+
+  private showClipboardPanel(session: VncSession): void {
+    const overlay = this.createOverlay(session, 'Clipboard');
+    const textarea = document.createElement('textarea');
+    textarea.className = 'widget-dialog-input';
+    textarea.value = session.remoteClipboard;
+    textarea.placeholder = 'Text received from the server or text to send';
+    stopWidgetDragPropagation(textarea);
+    const actions = document.createElement('div');
+    actions.className = 'vnc-panel-actions';
+    const readLocal = createButton('Read local', 'Read browser clipboard');
+    const copyLocal = createButton('Copy local', 'Copy text to browser clipboard');
+    const send = createButton('Send remote', 'Send text to remote clipboard');
+    const close = createButton('Close', 'Close clipboard');
+    const reportClipboardError = (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Clipboard access was denied';
+      this.setStatus(session, 'error', message);
+    };
+    readLocal.onclick = async () => {
+      try { textarea.value = await navigator.clipboard.readText(); }
+      catch (error) { reportClipboardError(error); }
+    };
+    copyLocal.onclick = async () => {
+      try { await navigator.clipboard.writeText(textarea.value); }
+      catch (error) { reportClipboardError(error); }
+    };
+    send.onclick = () => { session.rfb?.clipboardPasteFrom(textarea.value); session.remoteClipboard = textarea.value; };
+    close.onclick = () => overlay.remove();
+    actions.append(readLocal, copyLocal, send, close);
+    overlay.firstElementChild?.append(textarea, actions);
+    session.elements.clipboardBadge.classList.remove('visible');
+  }
+
+  private showFormOverlay(
+    session: VncSession,
+    title: string,
+    fields: string[],
+    initial: Record<string, string>,
+    callback: (values: VncCredentials | null) => void,
+  ): void {
+    const overlay = this.createOverlay(session, title);
+    const panel = overlay.firstElementChild as HTMLElement;
+    const inputs = new Map<string, HTMLInputElement>();
+    for (const field of fields) {
+      const label = document.createElement('label');
+      label.textContent = field[0].toUpperCase() + field.slice(1);
+      const input = document.createElement('input');
+      input.className = 'widget-dialog-input';
+      input.type = field === 'password' ? 'password' : 'text';
+      input.value = initial[field] || '';
+      stopWidgetDragPropagation(input);
+      label.append(input);
+      panel.append(label);
+      inputs.set(field, input);
+    }
+    const actions = document.createElement('div');
+    actions.className = 'vnc-panel-actions';
+    const cancel = createButton('Cancel', 'Cancel authentication');
+    const submit = createButton('Continue', 'Submit credentials');
+    const finish = (result: VncCredentials | null) => { overlay.remove(); callback(result); };
+    cancel.onclick = () => finish(null);
+    submit.onclick = () => finish(Object.fromEntries(Array.from(inputs, ([name, input]) => [name, input.value])));
+    actions.append(cancel, submit);
+    panel.append(actions);
+    inputs.values().next().value?.focus();
+  }
+
+  private createOverlay(session: VncSession, title: string): HTMLDivElement {
+    session.elements.display.querySelector('.vnc-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'vnc-overlay';
+    const panel = document.createElement('div');
+    panel.className = 'vnc-panel';
+    const heading = document.createElement('h4');
+    heading.textContent = title;
+    panel.append(heading);
+    overlay.append(panel);
+    session.elements.display.append(overlay);
+    return overlay;
+  }
+
+  private sendKeyChord(session: VncSession, action: string): void {
+    const rfb = session.rfb;
+    const keys = KEY_ACTIONS[action]?.();
+    if (!rfb || !keys) return;
+    if (keys.length === 1) {
+      rfb.sendKey(keys[0][0], keys[0][1]);
+      return;
+    }
+    keys.forEach(([keysym, code]) => rfb.sendKey(keysym, code, true));
+    [...keys].reverse().forEach(([keysym, code]) => rfb.sendKey(keysym, code, false));
+  }
+
+  private runPowerAction(session: VncSession, action: 'shutdown' | 'reboot' | 'reset'): void {
+    if (!session.rfb?.capabilities.power) return;
+    const label = action === 'reset' ? 'force reset' : action;
+    if (!window.confirm(`Send ${label} to the remote machine?`)) return;
+    if (action === 'shutdown') session.rfb.machineShutdown();
+    if (action === 'reboot') session.rfb.machineReboot();
+    if (action === 'reset') session.rfb.machineReset();
+  }
+
+  private downloadScreenshot(session: VncSession): void {
+    session.rfb?.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `vnc-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
+  }
+
+  private scheduleReconnect(session: VncSession): void {
+    if (!session.content.reconnectDelay || !this.isCurrent(session)) return;
+    const delay = session.content.reconnectDelay;
+    session.elements.status.textContent = `Reconnect in ${delay}s`;
+    session.reconnectTimer = window.setTimeout(() => {
+      if (this.isCurrent(session) && !session.manualDisconnect) void this.connect(session);
+    }, delay * 1000);
+  }
+
+  private updateControls(session: VncSession): void {
+    const connected = session.phase === 'connected';
+    session.elements.connect.textContent = connected || session.phase === 'connecting' ? 'Disconnect' : 'Connect';
+    session.elements.controls.forEach(button => { button.disabled = !connected; });
+    const keySelect = session.elements.wrapper.querySelector('.vnc-toolbar .vnc-select') as HTMLSelectElement;
+    keySelect.disabled = !connected || session.content.viewOnly;
+    session.elements.power.disabled = !connected || !session.rfb?.capabilities.power;
+    const viewOnly = session.elements.controls[4];
+    viewOnly.disabled = !connected;
+    viewOnly.title = session.content.viewOnly ? 'Enable remote input' : 'Enable view-only mode';
+    viewOnly.classList.toggle('active', session.content.viewOnly);
+  }
+
+  private setStatus(session: VncSession, phase: ConnectionPhase, text: string): void {
+    session.phase = phase;
+    session.elements.status.className = `vnc-status-indicator ${phase}`;
+    session.elements.status.textContent = text;
+  }
+
+  private clearReconnectTimer(session: VncSession): void {
+    if (session.reconnectTimer !== undefined) window.clearTimeout(session.reconnectTimer);
+    session.reconnectTimer = undefined;
+  }
+
+  private disconnectCurrent(session: VncSession): void {
+    if (!this.isCurrent(session)) return;
+    session.manualDisconnect = true;
+    this.clearReconnectTimer(session);
+    const rfb = session.rfb;
+    session.rfb = undefined;
+    try { rfb?.disconnect(); } catch { /* connection is already closed */ }
+    session.elements.display.replaceChildren();
+    session.elements.statusInfo.textContent = 'Ready';
+    session.elements.clipboardBadge.classList.remove('visible');
+    this.setStatus(session, 'disconnected', 'Disconnected');
+    this.updateControls(session);
+  }
+
+  private disposeSession(widgetId: string, manual: boolean): void {
+    const session = this.sessions.get(widgetId);
+    if (session) {
+      session.manualDisconnect = manual;
+      this.clearReconnectTimer(session);
+      this.sessions.delete(widgetId);
+      try { session.rfb?.disconnect(); } catch { /* connection is already closed */ }
+    }
+  }
+
+  private isCurrent(session: VncSession): boolean {
+    return this.sessions.get(session.widget.id) === session;
+  }
+
+  private isActiveRfb(session: VncSession, rfb: RfbClient): boolean {
+    return this.isCurrent(session) && session.rfb === rfb;
   }
 
   private async renderConfigScreen(container: HTMLElement, widget: Widget): Promise<void> {
-    const div = document.createElement('div');
-    div.className = 'widget-config-screen padded';
-
-    const icon = document.createElement('div');
-    icon.innerHTML = '<i class="fas fa-desktop"></i>';
-    icon.className = 'widget-config-icon';
-
-    const label = document.createElement('div');
-    label.textContent = 'Configure VNC Connection';
-    label.className = 'widget-config-description';
-
-    const inputGroup = document.createElement('div');
-    inputGroup.style.cssText = 'width: 100%;';
-
-    // Credential selector
-    const credSelect = document.createElement('select');
-    credSelect.className = 'widget-dialog-input';
-    credSelect.innerHTML = '<option value="">Select VNC credential...</option>';
-
-    let credentials: any[] = [];
-    try {
-      const allCreds = await credentialsService.getAll();
-      credentials = allCreds.filter(c => ['vnc', 'custom'].includes(c.service_type));
-      credentials.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = String(c.id);
-        opt.textContent = `${c.name} (${c.service_type})`;
-        credSelect.appendChild(opt);
-      });
-    } catch (e) {
-      console.warn('Could not load credentials:', e);
-    }
-
-    const button = document.createElement('button');
-    button.textContent = 'Connect';
-    button.className = 'btn btn-primary btn-full';
+    const screen = document.createElement('div');
+    screen.className = 'widget-config-screen padded';
+    screen.innerHTML = '<div class="widget-config-icon"><i class="fas fa-desktop"></i></div><div class="widget-config-description">Configure VNC Connection</div>';
+    const select = document.createElement('select');
+    select.className = 'widget-dialog-input';
+    select.append(new Option('Select VNC credential…', ''));
+    for (const credential of await this.loadCredentials()) select.append(new Option(`${credential.name} (${credential.service_type})`, String(credential.id)));
+    const button = createButton('Use credential', 'Configure VNC');
+    button.classList.add('btn', 'btn-primary', 'btn-full');
     button.disabled = true;
-
-    credSelect.addEventListener('change', () => {
-      button.disabled = !credSelect.value;
-    });
-
-    button.addEventListener('click', () => {
-      const credentialId = parseInt(credSelect.value);
-      if (credentialId) {
-        dispatchWidgetUpdate(widget.id, {
-          ...DEFAULT_CONTENT,
-          credentialId,
-        });
-      }
-    });
-
-    stopWidgetDragPropagation(credSelect);
-    stopWidgetDragPropagation(button);
-
-    inputGroup.appendChild(credSelect);
-
-    div.appendChild(icon);
-    div.appendChild(label);
-    div.appendChild(inputGroup);
-    div.appendChild(button);
-    container.appendChild(div);
+    select.onchange = () => { button.disabled = !select.value; };
+    button.onclick = () => dispatchWidgetUpdate(widget.id, { ...DEFAULT_CONTENT, credentialId: Number(select.value) });
+    stopWidgetDragPropagation(select);
+    screen.append(select, button);
+    container.replaceChildren(screen);
   }
 
   private async showConfigDialog(widget: Widget): Promise<void> {
-    const content = { ...DEFAULT_CONTENT, ...(widget.content as Partial<VncContent>) };
-
+    const content = normalizeContent(widget.content as Partial<VncContent>);
+    const credentials = await this.loadCredentials();
     const overlay = document.createElement('div');
     overlay.className = 'widget-overlay';
-
     const dialog = document.createElement('div');
     dialog.className = 'widget-dialog vnc-config-dialog';
-
-    // Load credentials for dropdown
-    let credentials: any[] = [];
-    try {
-      const allCreds = await credentialsService.getAll();
-      credentials = allCreds.filter(c =>
-        ['vnc', 'custom', 'basic'].includes(c.service_type)
-      );
-    } catch (e) {
-      console.warn('Could not load credentials:', e);
-    }
-
     dialog.innerHTML = `
       <h3 class="widget-dialog-title">Configure VNC</h3>
-      
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">VNC Credential</label>
-        <select id="vnc-credential" class="widget-dialog-input">
-          <option value="">Select credential...</option>
-          ${credentials.map(c => `
-            <option value="${c.id}" ${c.id === content.credentialId ? 'selected' : ''}>
-              ${c.name} (${c.service_type})
-            </option>
-          `).join('')}
-        </select>
+      <div class="vnc-settings-grid">
+        <div class="widget-dialog-field"><label class="widget-dialog-label">VNC credential</label><select data-field="credentialId" class="widget-dialog-input"><option value="">Select credential…</option>${credentials.map(c => `<option value="${c.id}" ${c.id === content.credentialId ? 'selected' : ''}>${escapeHtml(c.name)} (${escapeHtml(c.service_type)})</option>`).join('')}</select></div>
+        <div class="widget-dialog-field"><label class="widget-dialog-label">Scaling</label><select data-field="scaleMode" class="widget-dialog-input"><option value="local" ${content.scaleMode === 'local' ? 'selected' : ''}>Scale locally</option><option value="remote" ${content.scaleMode === 'remote' ? 'selected' : ''}>Resize remote session</option><option value="none" ${content.scaleMode === 'none' ? 'selected' : ''}>1:1</option></select></div>
+        <label><input type="checkbox" data-field="viewOnly" ${content.viewOnly ? 'checked' : ''}> View only</label>
+        <label><input type="checkbox" data-field="shared" ${content.shared ? 'checked' : ''}> Shared session</label>
+        <label><input type="checkbox" data-field="clipToWindow" ${content.clipToWindow ? 'checked' : ''}> Clip to widget</label>
+        <label><input type="checkbox" data-field="dragViewport" ${content.dragViewport ? 'checked' : ''}> Drag clipped viewport</label>
+        <label><input type="checkbox" data-field="focusOnClick" ${content.focusOnClick ? 'checked' : ''}> Focus keyboard on click</label>
+        <label><input type="checkbox" data-field="autoConnect" ${content.autoConnect ? 'checked' : ''}> Auto-connect</label>
+        <div class="widget-dialog-field"><label class="widget-dialog-label">Quality: <span data-value="quality">${content.qualityLevel}</span></label><input type="range" min="0" max="9" value="${content.qualityLevel}" data-field="qualityLevel"></div>
+        <div class="widget-dialog-field"><label class="widget-dialog-label">Compression: <span data-value="compression">${content.compressionLevel}</span></label><input type="range" min="0" max="9" value="${content.compressionLevel}" data-field="compressionLevel"></div>
+        <div class="widget-dialog-field"><label class="widget-dialog-label">Reconnect delay (seconds)</label><input type="number" min="0" max="300" value="${content.reconnectDelay}" data-field="reconnectDelay" class="widget-dialog-input"></div>
+        <div class="widget-dialog-field"><label class="widget-dialog-label">Display background</label><input type="color" value="${/^#[0-9a-f]{6}$/i.test(content.background) ? content.background : '#000000'}" data-field="background" class="widget-dialog-input"></div>
       </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">
-          <input type="checkbox" id="vnc-view-only" ${content.viewOnly ? 'checked' : ''} />
-          View Only (no keyboard/mouse input)
-        </label>
-      </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Scaling Mode</label>
-        <select id="vnc-scale-mode" class="widget-dialog-input">
-          <option value="local" ${content.scaleMode === 'local' ? 'selected' : ''}>Scale to Fit (local)</option>
-          <option value="remote" ${content.scaleMode === 'remote' ? 'selected' : ''}>Resize Remote Desktop</option>
-          <option value="none" ${content.scaleMode === 'none' ? 'selected' : ''}>No Scaling (1:1)</option>
-        </select>
-      </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Quality Level (0-9)</label>
-        <input type="range" id="vnc-quality" min="0" max="9" value="${content.qualityLevel}" 
-               class="widget-dialog-input" />
-        <span id="vnc-quality-value">${content.qualityLevel}</span>
-      </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Compression Level (0-9)</label>
-        <input type="range" id="vnc-compression" min="0" max="9" value="${content.compressionLevel}" 
-               class="widget-dialog-input" />
-        <span id="vnc-compression-value">${content.compressionLevel}</span>
-      </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">
-          <input type="checkbox" id="vnc-auto-connect" ${content.autoConnect ? 'checked' : ''} />
-          Auto-connect on load
-        </label>
-      </div>
-
-      <div class="widget-dialog-field">
-        <label class="widget-dialog-label">Reconnect Delay (seconds, 0 = disabled)</label>
-        <input type="number" id="vnc-reconnect" value="${content.reconnectDelay}" 
-               min="0" max="300" class="widget-dialog-input" />
-      </div>
-
-      <div class="widget-dialog-buttons">
-        <button id="cancel-btn" class="btn btn-small btn-secondary">Cancel</button>
-        <button id="save-btn" class="btn btn-small btn-primary">Save</button>
-      </div>
-    `;
-
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
-
+      <div class="widget-dialog-buttons"><button data-action="cancel" class="btn btn-small btn-secondary">Cancel</button><button data-action="save" class="btn btn-small btn-primary">Save</button></div>`;
+    overlay.append(dialog);
+    document.body.append(overlay);
     stopAllDragPropagation(dialog);
 
-    // Quality/compression display update
-    const qualitySlider = dialog.querySelector('#vnc-quality') as HTMLInputElement;
-    const qualityValue = dialog.querySelector('#vnc-quality-value') as HTMLElement;
-    qualitySlider.oninput = () => { qualityValue.textContent = qualitySlider.value; };
-
-    const compSlider = dialog.querySelector('#vnc-compression') as HTMLInputElement;
-    const compValue = dialog.querySelector('#vnc-compression-value') as HTMLElement;
-    compSlider.oninput = () => { compValue.textContent = compSlider.value; };
-
+    const quality = dialog.querySelector('[data-field="qualityLevel"]') as HTMLInputElement;
+    const compression = dialog.querySelector('[data-field="compressionLevel"]') as HTMLInputElement;
+    quality.oninput = () => { (dialog.querySelector('[data-value="quality"]') as HTMLElement).textContent = quality.value; };
+    compression.oninput = () => { (dialog.querySelector('[data-value="compression"]') as HTMLElement).textContent = compression.value; };
     const close = () => overlay.remove();
-
-    (dialog.querySelector('#cancel-btn') as HTMLElement).onclick = close;
-    overlay.onclick = (e) => { if (e.target === overlay) close(); };
-
-    (dialog.querySelector('#save-btn') as HTMLElement).onclick = () => {
-      const credentialSelect = dialog.querySelector('#vnc-credential') as HTMLSelectElement;
-      const credentialId = credentialSelect.value ? parseInt(credentialSelect.value) : undefined;
-      const viewOnly = (dialog.querySelector('#vnc-view-only') as HTMLInputElement).checked;
-      const scaleMode = (dialog.querySelector('#vnc-scale-mode') as HTMLSelectElement).value as VncContent['scaleMode'];
-      const qualityLevel = parseInt(qualitySlider.value);
-      const compressionLevel = parseInt(compSlider.value);
-      const autoConnect = (dialog.querySelector('#vnc-auto-connect') as HTMLInputElement).checked;
-      const reconnectDelay = parseInt((dialog.querySelector('#vnc-reconnect') as HTMLInputElement).value) || 0;
-
-      if (credentialId) {
-        dispatchWidgetUpdate(widget.id, {
-          credentialId,
-          viewOnly,
-          scaleMode,
-          clipToWindow: true,
-          showDotCursor: false,
-          qualityLevel,
-          compressionLevel,
-          autoConnect,
-          reconnectDelay,
-        });
-
-        // Disconnect existing connection so it reconnects with new settings
-        const conn = this.connections.get(widget.id);
-        if (conn) {
-          try { conn.rfb?.disconnect(); } catch (e) { /* ignore */ }
-          this.connections.delete(widget.id);
-        }
-      }
-
+    (dialog.querySelector('[data-action="cancel"]') as HTMLButtonElement).onclick = close;
+    overlay.onclick = event => { if (event.target === overlay) close(); };
+    (dialog.querySelector('[data-action="save"]') as HTMLButtonElement).onclick = () => {
+      const get = <T extends HTMLElement>(field: string) => dialog.querySelector(`[data-field="${field}"]`) as T;
+      const credentialId = Number(get<HTMLSelectElement>('credentialId').value) || undefined;
+      if (!credentialId) return;
+      dispatchWidgetUpdate(widget.id, {
+        credentialId,
+        scaleMode: get<HTMLSelectElement>('scaleMode').value as ScaleMode,
+        viewOnly: get<HTMLInputElement>('viewOnly').checked,
+        shared: get<HTMLInputElement>('shared').checked,
+        clipToWindow: get<HTMLInputElement>('clipToWindow').checked,
+        dragViewport: get<HTMLInputElement>('dragViewport').checked,
+        focusOnClick: get<HTMLInputElement>('focusOnClick').checked,
+        autoConnect: get<HTMLInputElement>('autoConnect').checked,
+        qualityLevel: Number(quality.value),
+        compressionLevel: Number(compression.value),
+        reconnectDelay: Number(get<HTMLInputElement>('reconnectDelay').value),
+        background: get<HTMLInputElement>('background').value,
+      });
       close();
     };
   }
 
-  getHeaderButtons(widget: Widget): HTMLElement[] {
-    const buttons: HTMLElement[] = [];
-    const content = widget.content as Partial<VncContent>;
-
-    if (content.credentialId) {
-      // Fullscreen button
-      const fullscreenBtn = document.createElement('button');
-      fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-      fullscreenBtn.title = 'Fullscreen';
-      fullscreenBtn.onclick = () => {
-        const container = document.querySelector(`#vnc-display-${widget.id}`);
-        if (container) {
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          } else {
-            container.requestFullscreen();
-          }
-        }
-      };
-      buttons.push(fullscreenBtn);
-
-      // Ctrl+Alt+Del button
-      const cadBtn = document.createElement('button');
-      cadBtn.innerHTML = '<i class="fas fa-keyboard"></i>';
-      cadBtn.title = 'Send Ctrl+Alt+Del';
-      cadBtn.onclick = () => {
-        const conn = this.connections.get(widget.id);
-        if (conn?.rfb && conn.connected) {
-          conn.rfb.sendCtrlAltDel();
-        }
-      };
-      buttons.push(cadBtn);
-
-      // Clipboard sync button
-      const clipBtn = document.createElement('button');
-      clipBtn.innerHTML = '<i class="fas fa-clipboard"></i>';
-      clipBtn.title = 'Paste Clipboard';
-      clipBtn.onclick = async () => {
-        const conn = this.connections.get(widget.id);
-        if (conn?.rfb && conn.connected) {
-          try {
-            const text = await navigator.clipboard.readText();
-            conn.rfb.clipboardPasteFrom(text);
-          } catch (e) {
-            console.warn('Clipboard read not available:', e);
-          }
-        }
-      };
-      buttons.push(clipBtn);
+  private async loadCredentials(): Promise<Credential[]> {
+    try {
+      return (await credentialsService.getAll()).filter(credential => ['vnc', 'custom', 'basic'].includes(credential.service_type));
+    } catch (error) {
+      console.warn('Could not load VNC credentials:', error);
+      return [];
     }
+  }
 
-    return buttons;
+  getHeaderButtons(): HTMLElement[] {
+    return [];
   }
 
   destroy(): void {
-    // Clean up all VNC connections
-    this.connections.forEach((conn, _widgetId) => {
-      if (conn.reconnectTimer) {
-        clearTimeout(conn.reconnectTimer);
-      }
-      try {
-        conn.rfb?.disconnect();
-      } catch (e) {
-        // Ignore
-      }
-    });
-    this.connections.clear();
+    for (const widgetId of [...this.sessions.keys()]) this.disposeSession(widgetId, true);
   }
 }
 
@@ -660,10 +716,14 @@ export const widget = {
   type: 'vnc',
   name: 'VNC Remote Desktop',
   icon: '<i class="fas fa-desktop"></i>',
-  description: 'Connect to remote VNC servers and display their desktops',
+  description: 'Full noVNC remote desktop client with clipboard, keys, screenshots, power controls, and reconnect',
   renderer: new VncWidgetRenderer(),
-  defaultSize: { w: 400, h: 300 },
+  defaultSize: { w: 560, h: 420 },
   defaultContent: { ...DEFAULT_CONTENT },
   hasSettings: true,
-  allowedFields: ['credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'showDotCursor', 'qualityLevel', 'compressionLevel', 'autoConnect', 'reconnectDelay'],
+  allowedFields: [
+    'credentialId', 'viewOnly', 'scaleMode', 'clipToWindow', 'dragViewport',
+    'focusOnClick', 'shared', 'qualityLevel', 'compressionLevel', 'autoConnect',
+    'reconnectDelay', 'background',
+  ],
 };
