@@ -65,7 +65,9 @@ interface VncElements {
   statusInfo: HTMLSpanElement;
   connect: HTMLButtonElement;
   controls: HTMLButtonElement[];
+  keySelect: HTMLSelectElement;
   power: HTMLSelectElement;
+  overflow: HTMLDetailsElement;
   clipboardBadge: HTMLSpanElement;
 }
 
@@ -99,23 +101,28 @@ const DEFAULT_CONTENT: VncContent = {
 const VNC_STYLES = `
 .vnc-widget { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; background:#000; color:var(--text); }
 .vnc-widget:fullscreen { width:100vw; height:100vh; background:#000; }
-.vnc-status-bar,.vnc-toolbar { display:flex; align-items:center; gap:6px; padding:4px 7px; flex-shrink:0; background:var(--widget-bg,rgba(25,25,25,.96)); border-bottom:1px solid var(--border); font-size:11px; }
+.vnc-status-bar { position:relative; display:flex; align-items:center; gap:3px; min-height:27px; padding:2px 5px; flex-shrink:0; background:var(--widget-bg,rgba(25,25,25,.94)); border-bottom:1px solid var(--border); font-size:11px; }
 .vnc-status-indicator { display:flex; align-items:center; gap:5px; font-weight:600; white-space:nowrap; }
-.vnc-status-indicator::before { content:''; width:8px; height:8px; border-radius:50%; background:#888; flex:none; }
+.vnc-status-indicator::before { content:''; width:7px; height:7px; border-radius:50%; background:#888; flex:none; }
 .vnc-status-indicator.connecting::before { background:#f0ad4e; animation:vnc-pulse 1s infinite; }
 .vnc-status-indicator.connected::before { background:#4caf50; }
 .vnc-status-indicator.error::before { background:#f44336; }
 @keyframes vnc-pulse { 50% { opacity:.3; } }
 .vnc-status-info { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.75; }
-.vnc-button,.vnc-select { min-height:25px; border:1px solid var(--border); border-radius:4px; color:inherit; background:var(--surface,rgba(255,255,255,.06)); font:inherit; }
-.vnc-button { padding:3px 8px; cursor:pointer; white-space:nowrap; }
+.vnc-button,.vnc-select { min-height:23px; border:1px solid transparent; border-radius:4px; color:inherit; background:transparent; font:inherit; }
+.vnc-button { min-width:24px; padding:2px 5px; cursor:pointer; white-space:nowrap; }
 .vnc-button:hover:not(:disabled),.vnc-select:hover:not(:disabled) { background:var(--hover,rgba(255,255,255,.12)); }
 .vnc-button:disabled,.vnc-select:disabled { opacity:.35; cursor:not-allowed; }
-.vnc-toolbar { overflow-x:auto; scrollbar-width:thin; }
-.vnc-toolbar .vnc-spacer { flex:1; min-width:4px; }
-.vnc-select { padding:2px 4px; max-width:125px; }
-.vnc-clipboard-badge { display:none; color:#4caf50; font-size:10px; }
-.vnc-clipboard-badge.visible { display:inline; }
+.vnc-connect-btn { margin-left:2px; }
+.vnc-select { width:100%; padding:3px 5px; border-color:var(--border); background:var(--surface,#222); }
+.vnc-clipboard-badge { display:none; width:6px; height:6px; margin-right:1px; border-radius:50%; background:#4caf50; }
+.vnc-clipboard-badge.visible { display:block; }
+.vnc-more { position:relative; }
+.vnc-more > summary { display:flex; align-items:center; justify-content:center; width:24px; min-height:23px; border-radius:4px; cursor:pointer; list-style:none; }
+.vnc-more > summary::-webkit-details-marker { display:none; }
+.vnc-more > summary:hover,.vnc-more[open] > summary { background:var(--hover,rgba(255,255,255,.12)); }
+.vnc-more-menu { position:absolute; z-index:30; top:calc(100% + 4px); right:0; width:170px; display:flex; flex-direction:column; gap:7px; padding:9px; border:1px solid var(--border); border-radius:6px; background:var(--surface,#222); box-shadow:0 6px 18px rgba(0,0,0,.45); }
+.vnc-more-menu label { display:flex; flex-direction:column; gap:3px; color:var(--text-muted,var(--text)); font-size:10px; }
 .vnc-display { position:relative; flex:1; min-height:0; overflow:auto; background:#000; outline:none; }
 .vnc-display > div { width:100%; height:100%; }
 .vnc-display.vnc-bell { box-shadow:inset 0 0 28px rgba(255,220,0,.55); }
@@ -223,12 +230,9 @@ class VncWidgetRenderer implements WidgetRenderer {
     statusInfo.textContent = 'Ready';
     const clipboardBadge = document.createElement('span');
     clipboardBadge.className = 'vnc-clipboard-badge';
-    clipboardBadge.textContent = 'Clipboard received';
-    const connect = createButton('Connect', 'Connect or disconnect');
-    statusBar.append(status, statusInfo, clipboardBadge, connect);
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'vnc-toolbar';
+    clipboardBadge.title = 'Clipboard received';
+    const connect = createButton('Connect', 'Connect', 'fas fa-plug');
+    connect.classList.add('vnc-connect-btn');
     const focus = createButton('Focus', 'Focus remote keyboard', 'fas fa-keyboard');
     const cad = createButton('Ctrl+Alt+Del', 'Send Ctrl+Alt+Delete', 'fas fa-shield-halved');
     const clipboard = createButton('Clipboard', 'Open clipboard transfer', 'fas fa-clipboard');
@@ -248,9 +252,20 @@ class VncWidgetRenderer implements WidgetRenderer {
     power.innerHTML = '<option value="">Power…</option><option value="shutdown">Shutdown</option><option value="reboot">Reboot</option><option value="reset">Force reset</option>';
     stopWidgetDragPropagation(power);
 
-    const spacer = document.createElement('span');
-    spacer.className = 'vnc-spacer';
-    toolbar.append(focus, cad, keySelect, clipboard, screenshot, viewOnly, spacer, power, fullscreen);
+    const overflow = document.createElement('details');
+    overflow.className = 'vnc-more';
+    overflow.innerHTML = '<summary title="More VNC controls"><i class="fas fa-ellipsis-vertical"></i><span class="sr-only">More controls</span></summary>';
+    const menu = document.createElement('div');
+    menu.className = 'vnc-more-menu';
+    const keyLabel = document.createElement('label');
+    keyLabel.append('Special key', keySelect);
+    const powerLabel = document.createElement('label');
+    powerLabel.append('Remote power', power);
+    menu.append(keyLabel, powerLabel);
+    overflow.append(menu);
+    stopAllDragPropagation(overflow);
+
+    statusBar.append(status, statusInfo, clipboardBadge, focus, cad, clipboard, screenshot, viewOnly, fullscreen, overflow, connect);
 
     const display = document.createElement('div');
     display.className = 'vnc-display';
@@ -258,8 +273,8 @@ class VncWidgetRenderer implements WidgetRenderer {
     display.tabIndex = 0;
     stopWidgetDragPropagation(display);
 
-    wrapper.append(statusBar, toolbar, display);
-    return { wrapper, display, status, statusInfo, connect, controls: [focus, cad, clipboard, screenshot, viewOnly], power, clipboardBadge };
+    wrapper.append(statusBar, display);
+    return { wrapper, display, status, statusInfo, connect, controls: [focus, cad, clipboard, screenshot, viewOnly], keySelect, power, overflow, clipboardBadge };
   }
 
   private bindControls(session: VncSession): void {
@@ -284,16 +299,18 @@ class VncWidgetRenderer implements WidgetRenderer {
       this.updateControls(session);
     };
 
-    const keySelect = elements.wrapper.querySelector('.vnc-toolbar .vnc-select') as HTMLSelectElement;
+    const keySelect = elements.keySelect;
     keySelect.onchange = () => {
       if (keySelect.value) this.sendKeyChord(session, keySelect.value);
       keySelect.value = '';
+      elements.overflow.open = false;
     };
 
     elements.power.onchange = () => {
       const action = elements.power.value as 'shutdown' | 'reboot' | 'reset' | '';
       elements.power.value = '';
       if (action) this.runPowerAction(session, action);
+      elements.overflow.open = false;
     };
 
     const fullscreen = elements.wrapper.querySelector('[title="Toggle fullscreen"]') as HTMLButtonElement;
@@ -565,9 +582,11 @@ class VncWidgetRenderer implements WidgetRenderer {
 
   private updateControls(session: VncSession): void {
     const connected = session.phase === 'connected';
-    session.elements.connect.textContent = connected || session.phase === 'connecting' ? 'Disconnect' : 'Connect';
+    const disconnect = connected || session.phase === 'connecting';
+    session.elements.connect.title = disconnect ? 'Disconnect' : 'Connect';
+    session.elements.connect.innerHTML = `<i class="fas ${disconnect ? 'fa-plug-circle-xmark' : 'fa-plug'}"></i><span class="sr-only">${disconnect ? 'Disconnect' : 'Connect'}</span>`;
     session.elements.controls.forEach(button => { button.disabled = !connected; });
-    const keySelect = session.elements.wrapper.querySelector('.vnc-toolbar .vnc-select') as HTMLSelectElement;
+    const keySelect = session.elements.keySelect;
     keySelect.disabled = !connected || session.content.viewOnly;
     session.elements.power.disabled = !connected || !session.rfb?.capabilities.power;
     const viewOnly = session.elements.controls[4];
