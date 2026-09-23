@@ -67,7 +67,9 @@ interface VncElements {
   controls: HTMLButtonElement[];
   keySelect: HTMLSelectElement;
   power: HTMLSelectElement;
-  overflow: HTMLDetailsElement;
+  fullscreen: HTMLButtonElement;
+  overflow: HTMLDivElement;
+  headerButton?: HTMLButtonElement;
   clipboardBadge: HTMLSpanElement;
 }
 
@@ -101,7 +103,7 @@ const DEFAULT_CONTENT: VncContent = {
 const VNC_STYLES = `
 .vnc-widget { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; background:#000; color:var(--text); }
 .vnc-widget:fullscreen { width:100vw; height:100vh; background:#000; }
-.vnc-status-bar { position:relative; display:flex; align-items:center; gap:3px; min-height:27px; padding:2px 5px; flex-shrink:0; background:var(--widget-bg,rgba(25,25,25,.94)); border-bottom:1px solid var(--border); font-size:11px; }
+.vnc-status-bar { display:flex; align-items:center; gap:6px; padding:7px 9px; border-bottom:1px solid var(--border); font-size:11px; }
 .vnc-status-indicator { display:flex; align-items:center; gap:5px; font-weight:600; white-space:nowrap; }
 .vnc-status-indicator::before { content:''; width:7px; height:7px; border-radius:50%; background:#888; flex:none; }
 .vnc-status-indicator.connecting::before { background:#f0ad4e; animation:vnc-pulse 1s infinite; }
@@ -110,20 +112,24 @@ const VNC_STYLES = `
 @keyframes vnc-pulse { 50% { opacity:.3; } }
 .vnc-status-info { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.75; }
 .vnc-button,.vnc-select { min-height:23px; border:1px solid transparent; border-radius:4px; color:inherit; background:transparent; font:inherit; }
-.vnc-button { display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px; width:24px; min-width:24px; padding:2px; cursor:pointer; white-space:nowrap; }
+.vnc-button { display:inline-flex; align-items:center; justify-content:flex-start; gap:8px; width:100%; min-width:0; padding:5px 8px; cursor:pointer; white-space:nowrap; }
 .vnc-widget .sr-only { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+.vnc-header-menu .sr-only { position:static !important; width:auto !important; height:auto !important; margin:0 !important; overflow:visible !important; clip:auto !important; }
 .vnc-button:hover:not(:disabled),.vnc-select:hover:not(:disabled) { background:var(--hover,rgba(255,255,255,.12)); }
 .vnc-button:disabled,.vnc-select:disabled { opacity:.35; cursor:not-allowed; }
-.vnc-connect-btn { margin-left:2px; }
 .vnc-select { width:100%; padding:3px 5px; border-color:var(--border); background:var(--surface,#222); }
 .vnc-clipboard-badge { display:none; width:6px; height:6px; margin-right:1px; border-radius:50%; background:#4caf50; }
 .vnc-clipboard-badge.visible { display:block; }
-.vnc-more { position:relative; }
-.vnc-more > summary { display:flex; align-items:center; justify-content:center; width:24px; min-height:23px; border-radius:4px; cursor:pointer; list-style:none; }
-.vnc-more > summary::-webkit-details-marker { display:none; }
-.vnc-more > summary:hover,.vnc-more[open] > summary { background:var(--hover,rgba(255,255,255,.12)); }
-.vnc-more-menu { position:absolute; z-index:30; top:calc(100% + 4px); right:0; width:170px; display:flex; flex-direction:column; gap:7px; padding:9px; border:1px solid var(--border); border-radius:6px; background:var(--surface,#222); box-shadow:0 6px 18px rgba(0,0,0,.45); }
-.vnc-more-menu label { display:flex; flex-direction:column; gap:3px; color:var(--text-muted,var(--text)); font-size:10px; }
+.vnc-header-menu { position:fixed; z-index:10000; width:210px; display:none; padding:5px; border:1px solid var(--border); border-radius:6px; color:var(--text); background:var(--surface,#222); box-shadow:0 6px 18px rgba(0,0,0,.45); }
+.vnc-header-menu .vnc-status-info { text-align:right; }
+.vnc-header-menu .vnc-button i { width:14px; text-align:center; }
+.vnc-header-menu-fields { display:flex; flex-direction:column; gap:7px; padding:7px 4px 4px; border-top:1px solid var(--border); }
+.vnc-header-menu-fields label { display:flex; flex-direction:column; gap:3px; color:var(--text-muted,var(--text)); font-size:10px; }
+.vnc-header-menu-btn::after { content:''; position:absolute; right:2px; bottom:2px; width:5px; height:5px; border-radius:50%; background:#888; }
+.vnc-header-menu-btn { position:relative; }
+.vnc-header-menu-btn.connecting::after { background:#f0ad4e; }
+.vnc-header-menu-btn.connected::after { background:#4caf50; }
+.vnc-header-menu-btn.error::after { background:#f44336; }
 .vnc-display { position:relative; flex:1; min-height:0; overflow:auto; background:#000; outline:none; }
 .vnc-display > div { width:100%; height:100%; }
 .vnc-display.vnc-bell { box-shadow:inset 0 0 28px rgba(255,220,0,.55); }
@@ -233,7 +239,6 @@ class VncWidgetRenderer implements WidgetRenderer {
     clipboardBadge.className = 'vnc-clipboard-badge';
     clipboardBadge.title = 'Clipboard received';
     const connect = createButton('Connect', 'Connect', 'fas fa-plug');
-    connect.classList.add('vnc-connect-btn');
     const focus = createButton('Focus', 'Focus remote keyboard', 'fas fa-keyboard');
     const cad = createButton('Ctrl+Alt+Del', 'Send Ctrl+Alt+Delete', 'fas fa-shield-halved');
     const clipboard = createButton('Clipboard', 'Open clipboard transfer', 'fas fa-clipboard');
@@ -253,20 +258,20 @@ class VncWidgetRenderer implements WidgetRenderer {
     power.innerHTML = '<option value="">Power…</option><option value="shutdown">Shutdown</option><option value="reboot">Reboot</option><option value="reset">Force reset</option>';
     stopWidgetDragPropagation(power);
 
-    const overflow = document.createElement('details');
-    overflow.className = 'vnc-more';
-    overflow.innerHTML = '<summary title="More VNC controls"><i class="fas fa-ellipsis-vertical"></i><span class="sr-only">More controls</span></summary>';
-    const menu = document.createElement('div');
-    menu.className = 'vnc-more-menu';
+    const overflow = document.createElement('div');
+    overflow.className = 'vnc-header-menu';
     const keyLabel = document.createElement('label');
     keyLabel.append('Special key', keySelect);
     const powerLabel = document.createElement('label');
     powerLabel.append('Remote power', power);
-    menu.append(keyLabel, powerLabel);
-    overflow.append(menu);
+    const fields = document.createElement('div');
+    fields.className = 'vnc-header-menu-fields';
+    fields.append(keyLabel, powerLabel);
+    statusBar.append(status, statusInfo, clipboardBadge);
+    overflow.append(statusBar, connect, focus, cad, clipboard, screenshot, viewOnly, fullscreen, fields);
     stopAllDragPropagation(overflow);
-
-    statusBar.append(status, statusInfo, clipboardBadge, focus, cad, clipboard, screenshot, viewOnly, fullscreen, overflow, connect);
+    overflow.addEventListener('click', event => event.stopPropagation());
+    document.body.append(overflow);
 
     const display = document.createElement('div');
     display.className = 'vnc-display';
@@ -274,8 +279,9 @@ class VncWidgetRenderer implements WidgetRenderer {
     display.tabIndex = 0;
     stopWidgetDragPropagation(display);
 
-    wrapper.append(statusBar, display);
-    return { wrapper, display, status, statusInfo, connect, controls: [focus, cad, clipboard, screenshot, viewOnly], keySelect, power, overflow, clipboardBadge };
+    wrapper.append(display);
+    const headerButton = document.querySelector(`#widget-${widget.id} [data-vnc-menu]`) as HTMLButtonElement | null;
+    return { wrapper, display, status, statusInfo, connect, controls: [focus, cad, clipboard, screenshot, viewOnly], keySelect, power, fullscreen, overflow, headerButton: headerButton || undefined, clipboardBadge };
   }
 
   private bindControls(session: VncSession): void {
@@ -283,18 +289,20 @@ class VncWidgetRenderer implements WidgetRenderer {
     const [focus, cad, clipboard, screenshot, viewOnly] = elements.controls;
 
     elements.connect.onclick = () => {
+      elements.overflow.style.display = 'none';
       if (session.phase === 'connecting' || session.phase === 'connected') {
         this.disconnectCurrent(session);
       } else {
         void this.connect(session);
       }
     };
-    focus.onclick = () => session.rfb?.focus({ preventScroll: true });
-    cad.onclick = () => session.rfb?.sendCtrlAltDel();
-    clipboard.onclick = () => this.showClipboardPanel(session);
-    screenshot.onclick = () => this.downloadScreenshot(session);
+    focus.onclick = () => { elements.overflow.style.display = 'none'; session.rfb?.focus({ preventScroll: true }); };
+    cad.onclick = () => { elements.overflow.style.display = 'none'; session.rfb?.sendCtrlAltDel(); };
+    clipboard.onclick = () => { elements.overflow.style.display = 'none'; this.showClipboardPanel(session); };
+    screenshot.onclick = () => { elements.overflow.style.display = 'none'; this.downloadScreenshot(session); };
     viewOnly.onclick = () => {
       if (!session.rfb) return;
+      elements.overflow.style.display = 'none';
       session.content.viewOnly = !session.content.viewOnly;
       session.rfb.viewOnly = session.content.viewOnly;
       this.updateControls(session);
@@ -304,18 +312,19 @@ class VncWidgetRenderer implements WidgetRenderer {
     keySelect.onchange = () => {
       if (keySelect.value) this.sendKeyChord(session, keySelect.value);
       keySelect.value = '';
-      elements.overflow.open = false;
+      elements.overflow.style.display = 'none';
     };
 
     elements.power.onchange = () => {
       const action = elements.power.value as 'shutdown' | 'reboot' | 'reset' | '';
       elements.power.value = '';
       if (action) this.runPowerAction(session, action);
-      elements.overflow.open = false;
+      elements.overflow.style.display = 'none';
     };
 
-    const fullscreen = elements.wrapper.querySelector('[title="Toggle fullscreen"]') as HTMLButtonElement;
+    const fullscreen = elements.fullscreen;
     fullscreen.onclick = async () => {
+      elements.overflow.style.display = 'none';
       if (document.fullscreenElement === elements.wrapper) await document.exitFullscreen();
       else await elements.wrapper.requestFullscreen();
     };
@@ -600,6 +609,11 @@ class VncWidgetRenderer implements WidgetRenderer {
     session.phase = phase;
     session.elements.status.className = `vnc-status-indicator ${phase}`;
     session.elements.status.textContent = text;
+    if (session.elements.headerButton) {
+      session.elements.headerButton.classList.remove('disconnected', 'connecting', 'connected', 'error');
+      session.elements.headerButton.classList.add(phase);
+      session.elements.headerButton.title = `VNC controls — ${text}`;
+    }
   }
 
   private clearReconnectTimer(session: VncSession): void {
@@ -628,6 +642,7 @@ class VncWidgetRenderer implements WidgetRenderer {
       this.clearReconnectTimer(session);
       this.sessions.delete(widgetId);
       try { session.rfb?.disconnect(); } catch { /* connection is already closed */ }
+      session.elements.overflow.remove();
     }
   }
 
@@ -723,8 +738,27 @@ class VncWidgetRenderer implements WidgetRenderer {
     }
   }
 
-  getHeaderButtons(): HTMLElement[] {
-    return [];
+  getHeaderButtons(widget: Widget): HTMLElement[] {
+    const button = document.createElement('button');
+    button.dataset.vncMenu = widget.id;
+    button.className = 'vnc-header-menu-btn disconnected';
+    button.innerHTML = '<i class="fas fa-display"></i>';
+    button.title = 'VNC controls';
+    button.setAttribute('aria-label', 'VNC controls');
+    button.onclick = event => {
+      event.stopPropagation();
+      const menu = this.sessions.get(widget.id)?.elements.overflow;
+      if (!menu) return;
+      const opening = menu.style.display !== 'block';
+      document.querySelectorAll<HTMLElement>('.vnc-header-menu').forEach(item => { item.style.display = 'none'; });
+      if (!opening) return;
+      const rect = button.getBoundingClientRect();
+      menu.style.display = 'block';
+      menu.style.top = `${rect.bottom + 4}px`;
+      menu.style.left = `${Math.max(6, Math.min(window.innerWidth - menu.offsetWidth - 6, rect.right - menu.offsetWidth))}px`;
+      window.setTimeout(() => document.addEventListener('click', () => { menu.style.display = 'none'; }, { once: true }), 0);
+    };
+    return [button];
   }
 
   destroy(): void {
