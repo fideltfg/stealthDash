@@ -92,8 +92,20 @@ If you didn't request this password reset, you can safely ignore this email.
   return false;
 }
 
-// Enable CORS for all origins (adjust in production)
-app.use(cors());
+// Browser API access is restricted to explicitly configured Dashboard origins.
+// Requests without an Origin header are internal/non-browser calls and remain allowed.
+const allowedCorsOrigins = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS || process.env.DASHBOARD_URL || 'http://localhost:3000')
+    .split(',')
+    .map(origin => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean)
+);
+app.use(cors({
+  origin(origin, callback) {
+    const normalizedOrigin = origin?.replace(/\/$/, '');
+    callback(null, !origin || allowedCorsOrigins.has(normalizedOrigin));
+  },
+}));
 app.use(express.json());
 
 // Import route modules
