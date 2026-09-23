@@ -26,7 +26,7 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 ## Features
 
 - **Zero-Chrome UI** — No sidebars or menus, just floating controls and a slide-out hamburger panel
-- **24 Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet, Crypto and more
+- **26 Widget Types** — Docker, VNC, Gmail, Unifi, Home Assistant, Pi-Hole, Sensi, Comet, Crypto and more
 - **Multi-Dashboard** — Create, rename, reorder, and switch between multiple dashboards per user
 - **Multi-User** — Secure login, registration, password recovery, and admin management
 - **A Bunch of Themes** — Css themes allows simple switching and users can have different themes on each dashboard
@@ -341,14 +341,17 @@ docker compose up -d
 ### Production
 
 ```bash
-# Build and start
-docker compose -f docker-compose.prod.yml up -d
+# Build and start the production stack
+docker compose up -d --build
+
+# Optional production overlay (the base stack already uses Dockerfile.prod)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # View logs
-docker compose -f docker-compose.prod.yml logs -f
+docker compose logs -f
 
 # Stop
-docker compose -f docker-compose.prod.yml down
+docker compose down
 ```
 
 ### Makefile Commands
@@ -383,8 +386,9 @@ POSTGRES_USER=dashboard
 POSTGRES_PASSWORD=your-secure-password
 POSTGRES_DB=dashboard
 
-# Security
-JWT_SECRET=your-secret-key-change-this
+# Security (generate fresh values; never use the examples verbatim)
+ENCRYPTION_KEY=<64-character random hex value>
+JWT_SECRET=<strong random value>
 
 # Email (for password recovery)
 SMTP_HOST=smtp.gmail.com
@@ -393,6 +397,8 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 EMAIL_FROM=Dashboard <noreply@yourdomain.com>
 DASHBOARD_URL=http://localhost:3000
+# Comma-separated, exact browser origins allowed to call the API
+CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 # Server
 VITE_ALLOWED_HOSTS=localhost,.local
@@ -586,10 +592,10 @@ netstat -tuln | grep 3000
 
 ```bash
 # Check ping-server logs
-docker logs dashboard-ping-server --tail 50
+docker logs stealth-ping-server --tail 50
 
 # Verify database connection
-docker exec -it dashboard-postgres psql -U dashboard -d dashboard \
+docker exec -it stealth-postgres psql -U dashboard -d dashboard \
   -c "SELECT COUNT(*) FROM users;"
 ```
 
@@ -600,7 +606,7 @@ docker exec -it dashboard-postgres psql -U dashboard -d dashboard \
 docker ps | grep postgres
 
 # View database logs
-docker logs dashboard-postgres
+docker logs stealth-postgres
 
 # Reset database
 docker compose down -v
@@ -616,7 +622,7 @@ docker compose up -d
 ### Email Not Sending
 
 1. Verify SMTP credentials in `.env`
-2. Check ping-server logs: `docker logs dashboard-ping-server`
+2. Check ping-server logs: `docker logs stealth-ping-server`
 3. If SMTP is not configured, the reset token is logged to the server console
 
 ### Sync Conflict
@@ -668,7 +674,10 @@ See [TESTING.md](./TESTING.md) for the full testing guide.
 ## Security Considerations
 
 - **Change default passwords** in `.env` file
-- **Use a strong JWT_SECRET** (32+ random characters)
+- **Use a strong `JWT_SECRET`** (generate it with `openssl rand -hex 64`); Compose refuses to start the backend when it is absent
+- **Restrict `CORS_ALLOWED_ORIGINS`** to the exact Dashboard browser origin or origins
+- **Keep `.env` private** (`chmod 600 .env`) and never commit it
+- **Keep backend Docker access behind the included socket proxy**; only container listing, logs, start, stop, and restart paths are allowed
 - **Enable HTTPS** in production (use a reverse proxy like Nginx or Traefik)
 - **Regular backups** of PostgreSQL data
 - **Keep dependencies updated**: `npm audit` and `docker pull`
@@ -680,7 +689,7 @@ See [TESTING.md](./TESTING.md) for the full testing guide.
 
 For production deployment:
 
-1. Use `docker-compose.prod.yml`
+1. Run `docker compose up -d --build`; the base stack builds the frontend with `Dockerfile.prod`
 2. Configure a reverse proxy (Nginx/Traefik) with SSL
 3. Set secure environment variables
 4. Enable firewall rules

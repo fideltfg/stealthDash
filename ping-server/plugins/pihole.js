@@ -126,7 +126,6 @@ router.get('/api/pihole', async (req, res) => {
     console.log('Pi-hole stats data:', JSON.stringify(data).substring(0, 500));
     
     // Set CORS headers
-    res.set('Access-Control-Allow-Origin', '*');
     res.set('Content-Type', 'application/json');
     
     res.json(data);

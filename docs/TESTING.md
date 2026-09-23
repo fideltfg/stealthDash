@@ -252,12 +252,12 @@ The security suite (`tests/security/security.test.js`) tests for 14 categories o
 
 The test suite documents the following findings for awareness:
 
-| Finding | Severity | Details |
-|---------|----------|---------|
-| X-Powered-By Header | Low | Express version exposed in response headers |
-| CORS Configuration | Medium | `Access-Control-Allow-Origin: *` allows any origin |
-| No Email Validation | Low | Server accepts malformed email addresses |
-| Default Secrets | Critical | Default JWT secret and encryption key should be changed in production |
+| Check | Severity | Current mitigation / action |
+|-------|----------|-----------------------------|
+| X-Powered-By Header | Low | Express version exposure remains to be removed |
+| CORS Configuration | Medium | Mitigated in production through `CORS_ALLOWED_ORIGINS`; unlisted browser origins receive no CORS header |
+| No Email Validation | Low | Malformed email validation remains to be tightened |
+| Default Secrets | Critical | Compose requires `JWT_SECRET`; production must also replace the example encryption key |
 
 > **Note**: These findings are logged in the HTML report's security warnings section. See [DEPLOYMENT.md](./DEPLOYMENT.md#security-hardening) for production hardening steps.
 

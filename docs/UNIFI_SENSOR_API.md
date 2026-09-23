@@ -231,7 +231,7 @@ curl -s -X GET "${API_URL}" \
 
 ## CORS
 
-CORS is enabled with `Access-Control-Allow-Origin: *` for external access.
+Browser access follows the backend `CORS_ALLOWED_ORIGINS` allowlist. Add the exact trusted frontend origin when external browser access is required.
 
 ## Security Considerations
 
@@ -277,12 +277,11 @@ location /api/unifi-protect/sensors {
 For issues or questions:
 1. Check ping-server logs: `docker compose logs -f ping-server`
 2. Verify UniFi Protect API access
-3. Test with the standalone web app first
+3. Test the Dashboard API endpoint directly
 4. Check Dashboard documentation
 
 ## Related Documentation
 
-- [Standalone Web App](../unifi-protect/README.md)
-- [Dashboard Widget](UNIFI_SENSOR_WIDGET.md)
-- [UniFi Protect Widget](UNIFI_PROTECT_WIDGET.md)
+- [Dashboard Widget](widgets/UNIFI_SENSOR_WIDGET.md)
+- [UniFi Protect Widget](widgets/UNIFI_PROTECT_WIDGET.md)
 - [Dashboard API Documentation](DOCUMENTATION.md)

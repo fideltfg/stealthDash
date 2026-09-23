@@ -30,17 +30,17 @@ cp .env.example .env
 nano .env  # Edit with production values
 
 # Start production containers
-docker-compose -f docker-compose.prod.yml up -d
+docker compose up -d --build
 
 # Make first user admin
-docker exec -i dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -i stealth-postgres psql -U dashboard -d dashboard -c \
   "UPDATE users SET is_admin = true WHERE id = 1;"
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose logs -f
 ```
 
-Access: `http://your-server-ip:8080`
+Access: `http://your-server-ip:3000`
 
 ---
 
@@ -56,8 +56,9 @@ POSTGRES_USER=dashboard
 POSTGRES_PASSWORD=ChangeMeToSecurePassword123!
 POSTGRES_DB=dashboard
 
-# Security (generate with: openssl rand -base64 32)
-JWT_SECRET=your-very-long-random-secret-key-change-this-in-production
+# Security (generate separate values and never reuse the examples)
+ENCRYPTION_KEY=<64-character random hex value>
+JWT_SECRET=<output of: openssl rand -hex 64>
 
 # Email for Password Recovery
 SMTP_HOST=smtp.gmail.com
@@ -70,17 +71,27 @@ EMAIL_FROM=Dashboard <noreply@yourdomain.com>
 # Dashboard URL (your public URL)
 DASHBOARD_URL=https://dashboard.yourdomain.com
 
+# Exact browser origins allowed to call the backend; separate multiple values with commas
+CORS_ALLOWED_ORIGINS=https://dashboard.yourdomain.com
+
 # Vite server (for development mode only)
 VITE_ALLOWED_HOSTS=localhost,.yourdomain.com
 ```
 
-### Generate Secure JWT Secret
+### Generate Secure Secrets
+
+Generate different values for JWT signing and credential encryption, then protect the file:
 
 ```bash
-# Generate 32-byte random key
-openssl rand -base64 32
+# JWT signing secret
+openssl rand -hex 64
 
-# Or use Node.js
+# Credential encryption key
+openssl rand -hex 32
+
+chmod 600 .env
+
+# Alternative JWT generator using Node.js
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
@@ -115,35 +126,35 @@ SMTP_SECURE=true  # Use true for port 465 (SSL)
 
 ### Production Docker Compose
 
-The `docker-compose.prod.yml` file is optimized for production:
+The base `docker-compose.yml` already builds the frontend with `Dockerfile.prod`. The small `docker-compose.prod.yml` file is an optional overlay and must be used together with the base file:
 
-```yaml
-# Key differences from development:
-# - Optimized build with multi-stage Dockerfile
-# - No volume mounts (code baked into image)
-# - Production Nginx config
-# - Health checks enabled
-# - Restart policies set
-# - Resource limits configured
-```
+- The frontend uses a multi-stage build and is served by the production Nginx container.
+- The frontend container has a health check and an `unless-stopped` restart policy.
+- The backend source is bind-mounted so backend-only fixes can be loaded by recreating `ping-server`.
+- PostgreSQL data is stored in the named `postgres_data` volume.
+- The Docker socket proxy has a read-only filesystem, drops Linux capabilities, publishes no port, and uses an exact API-path allowlist.
+
+The frontend is compiled by Vite and served by Nginx on port `3000`; it is not a development server. The backend is on port `3001`. Local Docker operations pass through the private `docker_api` network to a read-only Nginx socket proxy. The proxy publishes no host port and permits only container listing, logs, start, stop, and restart API paths.
+
+The backend requires `JWT_SECRET` at Compose-render time. Browser API access is restricted by `CORS_ALLOWED_ORIGINS`; requests without an `Origin` header remain available for container health checks and trusted server-to-server calls.
 
 ### Build and Deploy
 
 ```bash
 # Build production images
-docker-compose -f docker-compose.prod.yml build
+docker compose build
 
 # Start services
-docker-compose -f docker-compose.prod.yml up -d
+docker compose up -d --build
 
 # Check status
-docker-compose -f docker-compose.prod.yml ps
+docker compose ps
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose logs -f
 
 # Stop services
-docker-compose -f docker-compose.prod.yml down
+docker compose down
 ```
 
 ### Update Deployment
@@ -153,7 +164,7 @@ docker-compose -f docker-compose.prod.yml down
 git pull origin main
 
 # Rebuild and restart
-docker-compose -f docker-compose.prod.yml up --build -d
+docker compose up --build -d
 
 # Clean old images
 docker image prune -f
@@ -351,7 +362,7 @@ Create `/opt/dashboard-backup.sh`:
 
 # Configuration
 BACKUP_DIR="/backup/dashboard"
-CONTAINER_NAME="dashboard-postgres"
+CONTAINER_NAME="stealth-postgres"
 DB_NAME="dashboard"
 DB_USER="dashboard"
 RETENTION_DAYS=7
@@ -389,13 +400,13 @@ crontab -e
 
 ```bash
 # Backup database
-docker exec dashboard-postgres pg_dump -U dashboard dashboard > backup.sql
+docker exec stealth-postgres pg_dump -U dashboard dashboard > backup.sql
 
 # Compress backup
 gzip backup.sql
 
 # Backup with timestamp
-docker exec dashboard-postgres pg_dump -U dashboard dashboard | \
+docker exec stealth-postgres pg_dump -U dashboard dashboard | \
   gzip > dashboard_backup_$(date +%Y%m%d).sql.gz
 ```
 
@@ -403,17 +414,17 @@ docker exec dashboard-postgres pg_dump -U dashboard dashboard | \
 
 ```bash
 # Stop services
-docker-compose -f docker-compose.prod.yml down
+docker compose down
 
 # Start only database
-docker-compose -f docker-compose.prod.yml up -d postgres
+docker compose up -d --build postgres
 
 # Restore backup
-gunzip -c backup.sql.gz | docker exec -i dashboard-postgres \
+gunzip -c backup.sql.gz | docker exec -i stealth-postgres \
   psql -U dashboard -d dashboard
 
 # Start all services
-docker-compose -f docker-compose.prod.yml up -d
+docker compose up -d --build
 ```
 
 ### Backup Docker Volumes
@@ -440,7 +451,7 @@ docker run --rm \
 
 **Check container status:**
 ```bash
-docker-compose -f docker-compose.prod.yml ps
+docker compose ps
 ```
 
 **View resource usage:**
@@ -451,31 +462,31 @@ docker stats
 **Check logs:**
 ```bash
 # All services
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose logs -f
 
 # Specific service
-docker logs dashboard-app -f --tail 100
-docker logs dashboard-ping-server -f --tail 100
-docker logs dashboard-postgres -f --tail 100
+docker logs stealth-dashboard-app -f --tail 100
+docker logs stealth-ping-server -f --tail 100
+docker logs stealth-postgres -f --tail 100
 ```
 
 ### Database Monitoring
 
 **Connection count:**
 ```bash
-docker exec -it dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -it stealth-postgres psql -U dashboard -d dashboard -c \
   "SELECT COUNT(*) FROM pg_stat_activity;"
 ```
 
 **Database size:**
 ```bash
-docker exec -it dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -it stealth-postgres psql -U dashboard -d dashboard -c \
   "SELECT pg_size_pretty(pg_database_size('dashboard'));"
 ```
 
 **User statistics:**
 ```bash
-docker exec -it dashboard-postgres psql -U dashboard -d dashboard -c \
+docker exec -it stealth-postgres psql -U dashboard -d dashboard -c \
   "SELECT COUNT(*) as total_users,
    COUNT(*) FILTER (WHERE is_admin) as admins
    FROM users;"
@@ -516,7 +527,7 @@ git pull origin main
 /opt/dashboard-backup.sh
 
 # Rebuild and restart
-docker-compose -f docker-compose.prod.yml up --build -d
+docker compose up --build -d
 
 # Clean up
 docker image prune -f
@@ -548,7 +559,7 @@ git clone https://github.com/yourusername/stealthDash.git
 cd stealthDash/Dashboard
 cp .env.example .env
 nano .env  # Configure
-docker-compose -f docker-compose.prod.yml up -d
+docker compose up -d --build
 ```
 
 **4. Configure security group:**
@@ -757,29 +768,29 @@ See [TESTING.md](./TESTING.md) for the full testing guide, including CI/CD integ
 
 ```bash
 # Check logs
-docker logs dashboard-app
-docker logs dashboard-ping-server
-docker logs dashboard-postgres
+docker logs stealth-dashboard-app
+docker logs stealth-ping-server
+docker logs stealth-postgres
 
 # Check ports
 sudo netstat -tuln | grep -E '3000|3001|5432|8080'
 
 # Restart services
-docker-compose -f docker-compose.prod.yml restart
+docker compose restart
 ```
 
 ### Database Connection Issues
 
 ```bash
 # Test database connection
-docker exec -it dashboard-postgres psql -U dashboard -d dashboard
+docker exec -it stealth-postgres psql -U dashboard -d dashboard
 
 # Check environment variables
-docker exec dashboard-ping-server env | grep DB_
+docker exec stealth-ping-server env | grep DB_
 
 # Recreate containers
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml up -d
+docker compose down
+docker compose up -d --build
 ```
 
 ### High Memory Usage
@@ -789,7 +800,7 @@ docker-compose -f docker-compose.prod.yml up -d
 docker stats
 
 # Restart specific container
-docker restart dashboard-app
+docker restart stealth-dashboard-app
 
 # Add resource limits to docker-compose.prod.yml
 ```
@@ -861,10 +872,10 @@ If update causes issues:
 
 ```bash
 # Stop current version
-docker-compose -f docker-compose.prod.yml down
+docker compose down
 
 # Restore database backup
-gunzip -c backup.sql.gz | docker exec -i dashboard-postgres \
+gunzip -c backup.sql.gz | docker exec -i stealth-postgres \
   psql -U dashboard -d dashboard
 
 # Checkout previous version
@@ -872,7 +883,7 @@ git log --oneline  # Find commit
 git checkout <commit-hash>
 
 # Rebuild and start
-docker-compose -f docker-compose.prod.yml up --build -d
+docker compose up --build -d
 ```
 
 ---

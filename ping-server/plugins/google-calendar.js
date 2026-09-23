@@ -71,7 +71,6 @@ router.get('/api/google-calendar/events', async (req, res) => {
     console.log(`Google Calendar events retrieved: ${data.items?.length || 0} events`);
     
     // Set CORS headers
-    res.set('Access-Control-Allow-Origin', '*');
     res.set('Content-Type', 'application/json');
     
     res.json(data);

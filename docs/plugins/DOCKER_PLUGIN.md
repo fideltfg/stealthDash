@@ -78,9 +78,11 @@ For remote Docker hosts with TLS:
 1. Store credential in Credential Manager with service type `docker`
 2. Include `host`, `ca`, `cert`, `key` fields for TLS client authentication
 
-For local Docker socket:
-- No credential needed — uses the mounted Docker socket directly
-- Requires Docker socket volume mount in `docker-compose.yml`
+For the local Docker engine:
+- No credential is needed.
+- `ping-server` does not mount `/var/run/docker.sock`.
+- The dedicated `docker-socket-proxy` holds the read-only socket mount on the private `docker_api` network.
+- Exact-path rules allow container listing, logs, start, stop, and restart. Every other Docker API path returns `403`.
 
 ## Notes
 
