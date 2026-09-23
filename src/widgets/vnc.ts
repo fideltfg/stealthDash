@@ -110,7 +110,8 @@ const VNC_STYLES = `
 @keyframes vnc-pulse { 50% { opacity:.3; } }
 .vnc-status-info { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.75; }
 .vnc-button,.vnc-select { min-height:23px; border:1px solid transparent; border-radius:4px; color:inherit; background:transparent; font:inherit; }
-.vnc-button { min-width:24px; padding:2px 5px; cursor:pointer; white-space:nowrap; }
+.vnc-button { display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px; width:24px; min-width:24px; padding:2px; cursor:pointer; white-space:nowrap; }
+.vnc-widget .sr-only { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
 .vnc-button:hover:not(:disabled),.vnc-select:hover:not(:disabled) { background:var(--hover,rgba(255,255,255,.12)); }
 .vnc-button:disabled,.vnc-select:disabled { opacity:.35; cursor:not-allowed; }
 .vnc-connect-btn { margin-left:2px; }
