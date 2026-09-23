@@ -39,7 +39,7 @@ services:
       - DB_NAME=dashboard
       - DB_USER=dashboard
       - DB_PASSWORD=dashboard123
-      - JWT_SECRET=your-secret-key-change-in-production
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_SECURE=${SMTP_SECURE:-false}
