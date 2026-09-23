@@ -194,7 +194,7 @@ class VncWidgetRenderer implements WidgetRenderer {
       // This suppresses the "Multiple readback operations using getImageData are
       // faster with the willReadFrequently attribute" console warning.
       const _origGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function (type: string, attrs?: any) {
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, attrs?: any) {
         if (type === '2d') {
           attrs = { ...attrs, willReadFrequently: true };
         }

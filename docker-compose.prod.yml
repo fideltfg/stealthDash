@@ -1,11 +1,7 @@
+# Optional production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build dashboard
+# The base stack also uses the production image, so ordinary restarts stay in production mode.
 services:
-  dashboard-prod:
+  dashboard:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: stealth-dashboard-app-prod
-    ports:
-      - "3000:80"
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production

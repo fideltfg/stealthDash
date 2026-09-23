@@ -1197,7 +1197,7 @@ class UnifiRenderer implements WidgetRenderer {
             <div class="flex flex-column gap-8">
               ${alarms.slice(0, 3).map(alarm => {
                 const date = new Date(alarm.datetime * 1000);
-                const timeAgo = formatTimeAgo(date);
+                const timeAgo = formatTimeAgo(date.getTime());
                 
                 return `
                   <div class="unifi-alarm-card">

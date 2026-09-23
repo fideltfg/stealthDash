@@ -16,6 +16,13 @@ const { decrypt } = require('../src/crypto-utils');
 async function dockerRequest(host, endpoint, method = 'GET', credentialId = null) {
   return new Promise(async (resolve, reject) => {
     try {
+      // Local Docker access is routed through a path-filtering proxy. This
+      // preserves existing widget settings without mounting the host socket
+      // into the externally reachable backend container.
+      if (host.startsWith('unix://') && process.env.LOCAL_DOCKER_PROXY_URL) {
+        host = process.env.LOCAL_DOCKER_PROXY_URL;
+      }
+
       // Handle Unix socket
       if (host.startsWith('unix://')) {
         const socketPath = host.replace('unix://', '');

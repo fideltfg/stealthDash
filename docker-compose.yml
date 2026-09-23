@@ -1,23 +1,18 @@
 services:
   dashboard:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: stealth-dashboard-app
     ports:
-      - "3000:3000"
-    volumes:
-      # Mount source code for hot reload during development
-      - ./src:/app/src
-      - ./http:/app/http
-      - ./scripts:/app/scripts
-      - ./vite.config.ts:/app/vite.config.ts
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-localhost}
+      - "3000:80"
     restart: unless-stopped
-    stdin_open: true
-    tty: true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   ping-server:
     build: ./ping-server
@@ -34,10 +29,11 @@ services:
       - ./ping-server/test-reports:/app/test-reports
       # Prevent node_modules from being overwritten
       - /app/node_modules
-      # Mount Docker socket to access host's Docker daemon
-      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PING_SERVER_PORT=3001
+      # Existing unix:///var/run/docker.sock widget settings are routed through
+      # the restricted proxy instead of exposing the host socket here.
+      - LOCAL_DOCKER_PROXY_URL=http://docker-socket-proxy:2375
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=dashboard
@@ -57,16 +53,38 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+      - docker-socket-proxy
+    networks:
+      - default
+      - docker_api
     # Required for ICMP ping to work in container
     cap_add:
       - NET_RAW
       - NET_ADMIN
 
+  docker-socket-proxy:
+    image: nginx:alpine
+    container_name: stealth-docker-socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./nginx-docker-socket-proxy-main.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-docker-socket-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - docker_api
+    restart: unless-stopped
+
   postgres:
     image: postgres:15-alpine
     container_name: stealth-postgres
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_DB=dashboard
       - POSTGRES_USER=dashboard
@@ -93,3 +111,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  docker_api:
+    internal: true

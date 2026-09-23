@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Keep strict type checking; unused legacy UI helpers do not block packaging.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  }
+}
