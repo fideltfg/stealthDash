@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "StealthDash desktop app — borderless background dashboard viewer",
   "main": "main.js",
-  "author": "fideltgf <fideltfg@gmail.com>",
-  "homepage": "https://github.com/fideltgf/stealthdash",
+  "author": "fideltfg <fideltfg@gmail.com>",
+  "homepage": "https://github.com/fideltfg/stealthDash",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "start": "electron .",
     "build:win": "electron-builder --win",
