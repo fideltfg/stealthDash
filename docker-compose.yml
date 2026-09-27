@@ -3,7 +3,7 @@ services:
     build: .
     container_name: stealth-dashboard-app
     ports:
-      - "3000:3000"
+      - "80:3000"
     volumes:
       # Mount source code for hot reload during development
       - ./src:/app/src
@@ -76,20 +76,20 @@ services:
       - ./ping-server/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     restart: unless-stopped
 
-  # Transparent nginx proxy for the HA Panel widget.
+  # Transparent nginx proxy for the HA Panel widget. Disabled: no Home Assistant instance running.
   # Proxies ALL Home Assistant traffic (HTML, JS, CSS, /api, WebSocket) through
   # port 3003 so the browser never makes cross-origin requests to HA.
   # Set HA_PANEL_URL in a .env file, e.g.:  HA_PANEL_URL=http://ha.norquay.local:8123
-  ha-panel-proxy:
-    image: nginx:alpine
-    container_name: stealth-ha-panel-proxy
-    ports:
-      - "3003:80"
-    volumes:
-      - ./nginx-ha-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
-    environment:
-      - HA_PANEL_URL=${HA_PANEL_URL:-http://homeassistant.local:8123}
-    restart: unless-stopped
+  # ha-panel-proxy:
+  #   image: nginx:alpine
+  #   container_name: stealth-ha-panel-proxy
+  #   ports:
+  #     - "3003:80"
+  #   volumes:
+  #     - ./nginx-ha-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
+  #   environment:
+  #     - HA_PANEL_URL=${HA_PANEL_URL:-http://homeassistant.local:8123}
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:

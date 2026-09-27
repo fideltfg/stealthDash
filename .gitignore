@@ -28,3 +28,4 @@ docs/images/GruvBoxTheme.png
 docs/images/DarkSystmeTheme.png
 TEMP/*
 ping-server/test-reports/*
+docker-compose.yml

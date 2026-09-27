@@ -1383,32 +1383,32 @@ class UnifiRenderer implements WidgetRenderer {
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
         <!-- WAN Speed / Network Throughput Header -->
-        <div style="background: linear-gradient(135deg, var(--accent) 0%, #0077ff 100%); padding: 20px; border-radius: 12px; color: white;">
-          <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">${hasTrafficBytes ? 'Network Throughput' : 'WAN Link Speed'}</div>
+        <div class="card" style="padding: 20px;">
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--muted);">${hasTrafficBytes ? 'Network Throughput' : 'WAN Link Speed'}</div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             <div>
-              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
+              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
               ${hasTrafficBytes 
-                ? `<div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.tx_bytes)}</div>`
-                : `<div style="font-size: 28px; font-weight: 700;">${wanUpMbps.toFixed(0)}</div>
-                   <div style="font-size: 12px; opacity: 0.9;">Mbps</div>`
+                ? `<div style="font-size: 28px; font-weight: 700; color: var(--accent);">${formatBytes(traffic.tx_bytes)}</div>`
+                : `<div style="font-size: 28px; font-weight: 700; color: var(--accent);">${wanUpMbps.toFixed(0)}</div>
+                   <div style="font-size: 12px; color: var(--muted);">Mbps</div>`
               }
             </div>
             <div>
-              <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
+              <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
               ${hasTrafficBytes 
-                ? `<div style="font-size: 28px; font-weight: 700;">${formatBytes(traffic.rx_bytes)}</div>`
-                : `<div style="font-size: 28px; font-weight: 700;">${wanDownMbps.toFixed(0)}</div>
-                   <div style="font-size: 12px; opacity: 0.9;">Mbps</div>`
+                ? `<div style="font-size: 28px; font-weight: 700; color: var(--accent);">${formatBytes(traffic.rx_bytes)}</div>`
+                : `<div style="font-size: 28px; font-weight: 700; color: var(--accent);">${wanDownMbps.toFixed(0)}</div>
+                   <div style="font-size: 12px; color: var(--muted);">Mbps</div>`
               }
             </div>
           </div>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; font-size: 12px;">
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 12px; color: var(--muted);">
             ${hasTrafficBytes 
-              ? `<span>Total: <strong>${formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
-                 <span>Packets: <strong>${formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>`
-              : `<span>Latency: <strong>${data.latency || data.speedtest_ping || '\u2014'}ms</strong></span>
-                 <span>ISP: <strong>${data.isp_name || 'Unknown'}</strong></span>`
+              ? `<span>Total: <strong style="color: var(--text);">${formatBytes(traffic.tx_bytes + traffic.rx_bytes)}</strong></span>
+                 <span>Packets: <strong style="color: var(--text);">${formatNumber(traffic.tx_packets + traffic.rx_packets)}</strong></span>`
+              : `<span>Latency: <strong style="color: var(--text);">${data.latency || data.speedtest_ping || '\u2014'}ms</strong></span>
+                 <span>ISP: <strong style="color: var(--text);">${data.isp_name || 'Unknown'}</strong></span>`
             }
           </div>
         </div>
@@ -1581,26 +1581,26 @@ class UnifiRenderer implements WidgetRenderer {
       <div style="display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
         <!-- WAN Speed (Speedtest Results) -->
         ${hasSpeedtest ? `
-          <div style="background: linear-gradient(135deg, #0077ff 0%, #00d4ff 100%); padding: 20px; border-radius: 12px; color: white;">
-            <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; opacity: 0.9; display: flex; align-items: center; gap: 8px;">
+          <div class="card" style="padding: 20px;">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px;">
               <span><i class="fa-solid fa-rocket"></i></span>
               <span>WAN Speed (Speedtest)</span>
             </div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
               <div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
-                <div style="font-size: 32px; font-weight: 700;">${((data.xput_up || 0) / 1000000).toFixed(1)}</div>
-                <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;"><i class="fa-solid fa-arrow-up"></i> UPLOAD</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${((data.xput_up || 0) / 1000000).toFixed(1)}</div>
+                <div style="font-size: 12px; color: var(--muted);">Mbps</div>
               </div>
               <div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
-                <div style="font-size: 32px; font-weight: 700;">${((data.xput_down || 0) / 1000000).toFixed(1)}</div>
-                <div style="font-size: 12px; opacity: 0.9;">Mbps</div>
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;"><i class="fa-solid fa-arrow-down"></i> DOWNLOAD</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${((data.xput_down || 0) / 1000000).toFixed(1)}</div>
+                <div style="font-size: 12px; color: var(--muted);">Mbps</div>
               </div>
             </div>
             ${data.speedtest_ping ? `
-              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 12px;">
-                <span style="opacity: 0.8;">Latency:</span> <strong>${data.speedtest_ping}ms</strong>
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);">
+                <span>Latency:</span> <strong style="color: var(--text);">${data.speedtest_ping}ms</strong>
               </div>
             ` : ''}
           </div>

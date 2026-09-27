@@ -33,6 +33,7 @@ export const THEMES: readonly ThemeDefinition[] = [
   { value: 'peachy',      label: 'Peachy',      icon: 'fa-solid fa-heart' },
   { value: 'stealth',     label: 'Stealth',     icon: 'fa-solid fa-shield-halved' },
   { value: 'tactical',    label: 'Tactical',    icon: 'fa-solid fa-crosshairs' },
+  { value: 'synthwave',   label: 'Synthwave',   icon: 'fa-solid fa-wave-square' },
   { value: 'futurist',    label: 'Futurist',    icon: 'fa-solid fa-satellite' },
   { value: 'retro',       label: 'Retro',       icon: 'fa-solid fa-floppy-disk' },
   { value: 'ethereal',    label: 'Ethereal',    icon: 'fa-solid fa-cloud' },

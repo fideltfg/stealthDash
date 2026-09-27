@@ -161,6 +161,23 @@
   --card-background: rgba(139, 99, 13, 0.25);
 }
 
+/* Synthwave Theme - Retro sunset cityscape, magenta/purple with neon accents */
+.theme-synthwave {
+  --bg: #1a0b2e;
+  --surface: #2d1b4e;
+  --text: #ffe5f9;
+  --muted: #b892d0;
+  --accent: #ff2e88;
+  --ring: #05d9e8;
+  --shadow: rgba(255, 46, 136, 0.35);
+  --border: #6b3fa0;
+  --hover: #3d2461;
+  --info: #05d9e8;
+  --bg-info: rgba(5, 217, 232, 0.2);
+  --font-body: 'Audiowide', 'Orbitron', 'Century Gothic', sans-serif;
+  --card-background: rgba(45, 27, 78, 0.5);
+}
+
 /* === THEME OVERRIDES === */
 /* Stealth - Cyberpunk HUD */
 .theme-stealth .widget {
@@ -327,6 +344,65 @@
 
 .theme-futurist ::-webkit-scrollbar-thumb:hover {
   background: rgba(180, 200, 230, 0.25);
+}
+
+/* Synthwave - Neon sunset grid */
+.theme-synthwave .widget {
+  border: 1px solid rgba(255, 46, 136, 0.3);
+  box-shadow: 0 0 10px rgba(255, 46, 136, 0.1), inset 0 0 10px rgba(5, 217, 232, 0.04);
+  background: linear-gradient(135deg, rgba(255, 46, 136, 0.05) 0%, rgba(26, 11, 46, 0.6) 100%);
+}
+
+.theme-synthwave .widget:hover,
+.theme-synthwave .widget:focus-within {
+  box-shadow: 0 0 18px rgba(255, 46, 136, 0.2), 0 0 32px rgba(5, 217, 232, 0.08);
+  border-color: rgba(5, 217, 232, 0.45);
+}
+
+.theme-synthwave .widget.selected {
+  box-shadow: 0 0 0 2px rgba(5, 217, 232, 0.35), 0 0 22px rgba(255, 46, 136, 0.2);
+}
+
+.theme-synthwave .widget-header {
+  border-bottom-color: rgba(255, 46, 136, 0.2);
+}
+
+.theme-synthwave .widget-title {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  background: linear-gradient(90deg, #ff2e88, #05d9e8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.theme-synthwave .canvas[data-background="grid"] {
+  background-image: linear-gradient(rgba(255, 46, 136, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(5, 217, 232, 0.08) 1px, transparent 1px);
+}
+
+.theme-synthwave .canvas[data-background="dots"] {
+  background-image: radial-gradient(circle, rgba(255, 46, 136, 0.15) 1px, transparent 1px);
+}
+
+.theme-synthwave .theme-menu-dropdown,
+.theme-synthwave .widget-menu-dropdown {
+  border: 1px solid rgba(255, 46, 136, 0.25);
+  background: #1a0b2eee;
+  box-shadow: 0 0 24px rgba(255, 46, 136, 0.1);
+}
+
+.theme-synthwave .theme-menu-item:hover,
+.theme-synthwave .widget-menu-item:hover {
+  background: rgba(5, 217, 232, 0.1);
+}
+
+.theme-synthwave ::-webkit-scrollbar-thumb {
+  background: rgba(255, 46, 136, 0.3);
+}
+
+.theme-synthwave ::-webkit-scrollbar-thumb:hover {
+  background: rgba(5, 217, 232, 0.4);
 }
 
 /* Retro - DOS/EGA */

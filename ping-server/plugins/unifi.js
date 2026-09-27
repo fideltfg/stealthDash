@@ -13,39 +13,64 @@ const { db, getCredentials, verifyAuth, decryptCredentials, createCache, respond
 // Session cache for legacy auth (30 minute TTL)
 const sessionCache = createCache(30 * 60 * 1000);
 
+// Cache of detected API path style per host (30 minute TTL)
+const prefixCache = createCache(30 * 60 * 1000);
+
 // Cloud API base URL
 const UNIFI_CLOUD_API = 'https://api.ui.com';
+
+// Helper: Distinguish a real UniFi API response from an SPA/static-file fallback page.
+// Some controllers (both UniFi OS and classic) serve their web UI's index.html with a
+// 200 (or even 404) status for any unrecognized route, so status codes alone are not a
+// reliable signal - a genuine API response is always JSON.
+function isUnifiJsonResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  return contentType.includes('json');
+}
 
 // Helper: Fetch UniFi data using legacy cookie-based auth (self-hosted controllers)
 async function fetchUnifiLegacy(fetch, httpsAgent, host, site, username, password) {
   const cacheKey = `${host}:${username}:${password}`;
   
-  let cookies;
+  let cookies, prefix;
   const cachedSession = sessionCache.get(cacheKey);
   
   if (cachedSession) {
     console.log('Using cached UniFi legacy session');
     cookies = cachedSession.cookies;
+    prefix = cachedSession.prefix;
   } else {
-    // Authenticate
-    const loginUrl = `${host}/api/login`;
-    console.log(`Authenticating with UniFi Controller (legacy) at: ${loginUrl}`);
-    
-    const loginResponse = await fetch(loginUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ 
-        username: username,
-        password: password,
-        remember: false
-      }),
-      agent: httpsAgent,
-      timeout: 10000
-    });
-    
+    // UniFi OS consoles (UDM/UDM-Pro/UDR/UCG-Max/Cloud Key Gen2 Plus) use /api/auth/login and
+    // require API paths prefixed with /proxy/network. Classic controllers (software installs,
+    // Cloud Key Gen1/Gen2) use /api/login with no prefix. Probe both and keep whichever
+    // actually returns a UniFi API (JSON) response, rather than guessing from status codes.
+    const loginBody = JSON.stringify({ username, password, remember: false });
+    const cachedPrefix = prefixCache.get(host);
+    const candidates = cachedPrefix !== null ? [cachedPrefix] : ['/proxy/network', ''];
+
+    let loginResponse;
+    for (const candidatePrefix of candidates) {
+      const loginUrl = candidatePrefix ? `${host}/api/auth/login` : `${host}/api/login`;
+      console.log(`Authenticating with UniFi Controller (legacy${candidatePrefix ? ', UniFi OS' : ''}) at: ${loginUrl}`);
+      loginResponse = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: loginBody,
+        agent: httpsAgent,
+        timeout: 10000
+      });
+      if (isUnifiJsonResponse(loginResponse)) {
+        prefix = candidatePrefix;
+        break;
+      }
+    }
+
+    if (prefix === undefined) {
+      // Neither /api/auth/login nor /api/login returned a real UniFi API response
+      const errorText = await loginResponse.text();
+      throw { status: loginResponse.status, error: `UniFi authentication failed: ${loginResponse.status}`, details: errorText };
+    }
+
     if (!loginResponse.ok) {
       const errorText = await loginResponse.text();
       throw { status: loginResponse.status, error: `UniFi authentication failed: ${loginResponse.status}`, details: errorText };
@@ -57,12 +82,13 @@ async function fetchUnifiLegacy(fetch, httpsAgent, host, site, username, passwor
     }
     
     cookies = setCookieHeaders.map(cookie => cookie.split(';')[0]).join('; ');
-    sessionCache.set(cacheKey, { cookies: cookies });
+    prefixCache.set(host, prefix);
+    sessionCache.set(cacheKey, { cookies, prefix });
     console.log('UniFi legacy authentication successful');
   }
   
   const makeHeaders = () => ({ 'Accept': 'application/json', 'Cookie': cookies });
-  const basePath = `/api/s/${site}/stat`;
+  const basePath = `${prefix}/api/s/${site}/stat`;
   
   const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
     fetch(`${host}${basePath}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }),
@@ -91,14 +117,41 @@ async function fetchUnifiLocalApiKey(fetch, httpsAgent, host, site, apiKey) {
     'Accept': 'application/json',
     'X-API-Key': apiKey
   });
-  const basePath = `/api/s/${site}/stat`;
+  const basePath = (prefix) => `${prefix}/api/s/${site}/stat`;
 
-  const [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
-    fetch(`${host}${basePath}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }),
-    fetch(`${host}${basePath}/device`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
-    fetch(`${host}${basePath}/sta`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
-    fetch(`${host}${basePath}/alarm`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null)
-  ]);
+  const cachedPrefix = prefixCache.get(host);
+  let prefix, healthResponse, devicesResponse, clientsResponse, alarmsResponse;
+
+  if (cachedPrefix !== null) {
+    prefix = cachedPrefix;
+    [healthResponse, devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
+      fetch(`${host}${basePath(prefix)}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }),
+      fetch(`${host}${basePath(prefix)}/device`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+      fetch(`${host}${basePath(prefix)}/sta`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+      fetch(`${host}${basePath(prefix)}/alarm`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null)
+    ]);
+  } else {
+    // Prefix unknown for this host yet - probe /stat/health with each candidate until one
+    // returns a real UniFi API (JSON) response, since status codes alone can be misleading.
+    for (const candidatePrefix of ['/proxy/network', '']) {
+      healthResponse = await fetch(`${host}${basePath(candidatePrefix)}/health`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 });
+      if (isUnifiJsonResponse(healthResponse)) {
+        prefix = candidatePrefix;
+        break;
+      }
+    }
+    if (prefix === undefined) {
+      const errorText = await healthResponse.text();
+      throw { status: healthResponse.status, error: `UniFi API returned ${healthResponse.status}`, details: errorText };
+    }
+    prefixCache.set(host, prefix);
+
+    [devicesResponse, clientsResponse, alarmsResponse] = await Promise.all([
+      fetch(`${host}${basePath(prefix)}/device`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+      fetch(`${host}${basePath(prefix)}/sta`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null),
+      fetch(`${host}${basePath(prefix)}/alarm`, { headers: makeHeaders(), agent: httpsAgent, timeout: 10000 }).catch(() => null)
+    ]);
+  }
 
   if (!healthResponse.ok) {
     const errorText = await healthResponse.text();
@@ -323,12 +376,20 @@ router.get('/api/unifi/sites', async (req, res) => {
       const httpsAgent = new https.Agent({ rejectUnauthorized: false });
       const defaultSite = [{ siteId: 'default', name: 'default', desc: 'Default', isOwner: true, gateway: '', totalDevices: 0, totalClients: 0 }];
       try {
-        const response = await fetch(`${credentials.host}/api/self/sites`, {
-          headers: { 'Accept': 'application/json', 'X-API-Key': credentials.apiKey },
-          agent: httpsAgent,
-          timeout: 15000
-        });
-        if (!response.ok) return res.json({ sites: defaultSite });
+        const headers = { 'Accept': 'application/json', 'X-API-Key': credentials.apiKey };
+        const cachedPrefix = prefixCache.get(credentials.host);
+        const candidates = cachedPrefix !== null ? [cachedPrefix] : ['/proxy/network', ''];
+
+        let response;
+        for (const candidatePrefix of candidates) {
+          response = await fetch(`${credentials.host}${candidatePrefix}/api/self/sites`, { headers, agent: httpsAgent, timeout: 15000 });
+          if (isUnifiJsonResponse(response)) {
+            prefixCache.set(credentials.host, candidatePrefix);
+            break;
+          }
+        }
+
+        if (!response || !response.ok) return res.json({ sites: defaultSite });
         const data = await response.json();
         const sites = (data.data || []).map(s => ({
           siteId: s.name || 'default',

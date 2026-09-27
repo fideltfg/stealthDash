@@ -9,7 +9,8 @@ import { authService } from '../services/auth';
 export function getPingServerUrl(): string {
   const envUrl = (import.meta as any).env?.VITE_PING_SERVER_URL;
   if (envUrl) return envUrl;
-  return window.location.origin.replace(':3000', ':3001');
+  // ping-server always listens on 3001 regardless of what host port the dashboard itself is mapped to
+  return `${window.location.protocol}//${window.location.hostname}:3001`;
 }
 
 /** Build standard auth + JSON headers */
