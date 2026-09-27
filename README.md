@@ -50,7 +50,7 @@ StealthDash runs as a production Nginx frontend, an Express backend, PostgreSQL,
 1. **Clone the repository**
    ```bash
    git clone https://github.com/fideltfg/stealthDash.git
-   cd stealthDash/Dashboard
+   cd stealthDash
    ```
 
 2. **Configure environment**
@@ -457,7 +457,7 @@ Build output is written to `stealthdash-desktop-app/dist/`.
 ## Project Structure
 
 ```
-Dashboard/
+stealthDash/
 ├── src/
 │   ├── main.ts                    # Application entry point (Dashboard class)
 │   ├── themes.ts                  # Theme registry (15 themes)
