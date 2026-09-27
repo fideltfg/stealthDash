@@ -181,7 +181,6 @@ router.get('/api/unifi-protect/bootstrap', async (req, res) => {
     
     console.log(`UniFi Protect data: ${cameras.length} cameras, ${events.length} events, ${sensors.length} sensors`);
     
-    res.set('Access-Control-Allow-Origin', '*');
     res.json({ cameras, events, sensors });
     
   } catch (error) {
@@ -268,7 +267,6 @@ router.get('/api/unifi-protect/sensors', async (req, res) => {
       } : null
     }));
     
-    res.set('Access-Control-Allow-Origin', '*');
     res.json({
       success: true,
       timestamp: new Date().toISOString(),

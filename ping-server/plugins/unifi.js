@@ -459,7 +459,6 @@ router.get('/api/unifi/stats', async (req, res) => {
       if (!credentials.host) {
         const cloudData = await fetchUnifiApiKey(fetch, credentials.apiKey);
         const stats = transformCloudApiData(cloudData.sitesData, cloudData.devicesData, cloudData.hostsData, cloudData.ispMetrics, site);
-        res.set('Access-Control-Allow-Origin', '*');
         return res.json(stats);
       }
     }
@@ -573,7 +572,6 @@ router.get('/api/unifi/stats', async (req, res) => {
       }));
     }
     
-    res.set('Access-Control-Allow-Origin', '*');
     res.json(stats);
     
   } catch (error) {

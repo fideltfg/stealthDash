@@ -1,10 +1,10 @@
-import type { Widget, WidgetContent } from '../types/types';
+import type { Widget } from '../types/types';
 import type { WidgetRenderer } from '../types/base-widget';
 import { stopAllDragPropagation, dispatchWidgetUpdate } from '../utils/dom';
 import { WidgetPoller } from '../utils/polling';
 import { renderConfigPrompt, renderLoading, renderError } from '../utils/widgetRendering';
 
-export interface MTNXMLContent extends WidgetContent {
+export interface MTNXMLContent {
   feedUrl: string;
   refreshInterval: number; // in seconds
   displayMode: 'summary' | 'detailed';

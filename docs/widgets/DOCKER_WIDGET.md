@@ -29,7 +29,7 @@ Monitor and manage Docker containers directly from your dashboard.
 
 - Real-time container status
 - Start/stop/restart containers
-- Remove containers
+- View container logs
 - View container details
 - Color-coded status indicators (green=running, red=stopped, yellow=paused)
 - Quick actions with confirmation dialogs
@@ -39,12 +39,12 @@ Monitor and manage Docker containers directly from your dashboard.
 - **Start**: Start a stopped container
 - **Stop**: Gracefully stop a running container
 - **Restart**: Restart a container
-- **Remove**: Delete a container (requires confirmation)
+- **Remove**: Available only for remote Docker endpoints that permit deletion; the local socket proxy rejects it
 
 ## Requirements
 
-- Docker Engine accessible from ping-server
-- Proper permissions to manage containers
+- Docker Engine accessible through the included restricted socket proxy
+- The `ping-server` and socket proxy connected to the private `docker_api` network
 - For remote Docker: TLS certificates or credentials configured
 
 ## Troubleshooting
@@ -53,10 +53,12 @@ Monitor and manage Docker containers directly from your dashboard.
 - Verify Docker is running and accessible
 
 **Permission denied**
-- Ensure user has Docker permissions
+- Confirm `stealth-docker-socket-proxy` is running and attached to `docker_api`
+- Confirm the requested operation is one of: list, logs, start, stop, or restart
 
 **Actions not working**
-- Check Docker socket permissions
+- Check the socket-proxy and backend logs
+- The proxy intentionally rejects image, volume, exec, filesystem, secret, remove, and other Docker API paths
 
 **Remote host not connecting**
 - Verify host URL and credentials

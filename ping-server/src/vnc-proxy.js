@@ -65,31 +65,34 @@ function initVncProxy(server) {
 
   wss.on('connection', async (ws, req) => {
     const query = req.query || url.parse(req.url, true).query;
-    const { host, port: portStr, credentialId } = query;
-    const port = parseInt(portStr) || 5900;
+    const { credentialId } = query;
     const userId = req.userId;
 
-    console.log(`VNC proxy: connecting to ${host}:${port} for user ${userId}`);
-
-    // Validate host
-    if (!host) {
-      ws.close(4400, 'Missing host parameter');
+    if (!credentialId) {
+      ws.close(4400, 'A VNC credential is required');
       return;
     }
 
-    // If credentialId is provided, validate that it exists and belongs to this user.
-    // The actual VNC password is fetched by the frontend via REST API and passed
-    // directly to the noVNC RFB client for VNC authentication. The proxy is a
-    // pure binary bridge and must NOT inject any messages into the WebSocket stream.
-    if (credentialId) {
-      try {
-        await getCredentials(parseInt(credentialId), userId);
-      } catch (err) {
-        console.error('VNC proxy credential error:', err.message);
-        ws.close(4401, 'Invalid credentials');
-        return;
-      }
+    // Resolve the TCP target from the authenticated user's stored credential.
+    // Never accept a browser-supplied host or port: that would turn this bridge
+    // into an authenticated arbitrary TCP proxy.
+    let credential;
+    try {
+      credential = await getCredentials(parseInt(credentialId), userId);
+    } catch (err) {
+      console.error('VNC proxy credential error:', err.message);
+      ws.close(4401, 'Invalid credentials');
+      return;
     }
+
+    const host = credential.host;
+    const port = Number.parseInt(credential.port, 10) || 5900;
+    if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
+      ws.close(4400, 'Credential has an invalid VNC target');
+      return;
+    }
+
+    console.log(`VNC proxy: connecting to ${host}:${port} for user ${userId}`);
 
     // Create TCP connection to VNC server
     const tcpSocket = net.createConnection({ host, port }, () => {

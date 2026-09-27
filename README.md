@@ -6,7 +6,7 @@ StealthDash is a minimalist, zero-chrome dashboard built in TypeScript. It lets 
 
 The goal of StealthDash is to bring together information from multiple services securely and simply—so your “personal homepage” and your monitoring command center can be the same clean, reliable place.
 
-![Dashboard Screenshot](images/AnimatedBackgrounds.png)
+![Dashboard Screenshot](docs/images/AnimatedBackgrounds.png)
 
 StealthDash started life as a project called Concordia, built for an operations center where we needed a lot of information spread across multiple screens—status pages, charts, maps, and other dashboards. The pain point was simple: if the system rebooted (or a browser crashed), it could take forever to reopen everything and get it all back in the right places.
 
@@ -45,18 +45,20 @@ StealthDash uses plugin-style widgets to display nearly anything—from embedded
 
 ### Installation
 
-Stealthdash runs inside three containers, one for the web app, one for the database and one for backend the Ping/proxy server. To get started clone the repo, set your settings in the .env file, run docker compose up -d --build. Once compleated, open your browser, enter the address and port (defalt 3000) and you are ready to start building your first dashboard.
+StealthDash runs as a production Nginx frontend, an Express backend, PostgreSQL, and restricted proxy services for Docker and Home Assistant. Clone the repository, generate the required secrets in `.env`, restrict `CORS_ALLOWED_ORIGINS`, protect the file with mode `600`, and run `docker compose up -d --build`. Open the server address on port `3000` to create your first dashboard.
 
 1. **Clone the repository**
    ```bash
    git clone https://github.com/fideltfg/stealthDash.git
-   cd stealthDash/Dashboard
+   cd stealthDash
    ```
 
 2. **Configure environment**
    ```bash
    cp .env.example .env
-   # Edit .env with your settings (optional for basic setup)
+   # Generate unique ENCRYPTION_KEY and JWT_SECRET values.
+   # Set DASHBOARD_URL and CORS_ALLOWED_ORIGINS, then protect the file:
+   chmod 600 .env
    ```
 
 3. **Start the application**
@@ -79,7 +81,7 @@ Stealthdash runs inside three containers, one for the web app, one for the datab
 git clone https://github.com/fideltfg/stealthDash.git && cd stealthDash && chmod +x setup.sh && ./setup.sh
 ```
 
-The script creates `.env` from `.env.example`, builds then starts StealthDash automatically. 
+The script creates `.env` from `.env.example`, builds then starts StealthDash automatically.
 
 After setup, open `http://localhost:3000` to register your account.
 
@@ -155,13 +157,13 @@ After setup, open `http://localhost:3000` to register your account.
 
 ### Themes & Backgrounds
 
-![Dashboard Themes](images/Multitheme.png)
+![Dashboard Themes](docs/images/Multitheme.png)
 
 **Change Theme**
 - Open the theme picker from the hamburger menu (bottom-left)
 - Choose from 15 themes: Light, Dark, Gruvbox, Tokyo Night, Catppuccin, Forest, Sunset, Peachy, Stealth, Tactical, Futurist, Retro, Ethereal, Medieval, or System (follows OS preference)
 
-![Dashboard Themes](images/ThemeList.png)
+![Dashboard Themes](docs/images/ThemeList.png)
 
 **Change Background**
 - Click the background button (grid icon) in the toolbar or menu
@@ -187,7 +189,7 @@ After setup, open `http://localhost:3000` to register your account.
 **Fullscreen**
 - Toggle fullscreen mode from the menu
 
-![Dashboard Screenshot](images/AnimatedBackgrounds3.png)
+![Dashboard Screenshot](docs/images/AnimatedBackgrounds3.png)
 
 ### Credential Management
 
@@ -198,7 +200,7 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 3. Add a credential with a name, type, and value
 4. Reference credentials in widget settings
 
-![Dashboard Themes](images/Creadentials1.png)
+![Dashboard Themes](docs/images/Creadentials1.png)
 
 **Supported Credential Types:**
 - API Keys (Weather, etc.)
@@ -273,7 +275,7 @@ Many widgets require API keys or credentials. Store them securely in the encrypt
 | **MTN XML** | Display ski resort conditions from MTNXML feeds |
 | **VNC** | Remote desktop access via VNC protocol with noVNC web client |
 
-See [WIDGETS.md](./WIDGETS.md) for detailed widget configuration guides.
+See [WIDGETS.md](docs/WIDGETS.md) for detailed widget configuration guides.
 
 ## Administration
 
@@ -455,7 +457,7 @@ Build output is written to `stealthdash-desktop-app/dist/`.
 ## Project Structure
 
 ```
-Dashboard/
+stealthDash/
 ├── src/
 │   ├── main.ts                    # Application entry point (Dashboard class)
 │   ├── themes.ts                  # Theme registry (15 themes)
@@ -669,7 +671,7 @@ HTML and JSON reports are generated in `ping-server/test-reports/`:
 - `latest-report.html` — Most recent HTML report
 - `test-results.json` — Machine-readable JSON results
 
-See [TESTING.md](./TESTING.md) for the full testing guide.
+See [TESTING.md](docs/TESTING.md) for the full testing guide.
 
 ## Security Considerations
 
@@ -696,7 +698,7 @@ For production deployment:
 5. Set up automated backups
 6. Monitor logs regularly
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for a detailed production deployment guide.
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for a detailed production deployment guide.
 
 ## Development
 
@@ -723,7 +725,7 @@ node src/server.js
 
 Widgets are auto-discovered by `import.meta.glob` — no manual registration needed.
 
-See existing widgets for examples and [WIDGETS.md](./WIDGETS.md) for the development guide.
+See existing widgets for examples and [WIDGETS.md](docs/WIDGETS.md) for the development guide.
 
 ## Browser Support
 
@@ -748,9 +750,9 @@ MIT License — see LICENSE file for details.
 
 - **Issues**: [GitHub Issues](https://github.com/fideltfg/stealthDash/issues)
 - **Documentation**: See the `docs/` folder for additional guides
-- **Widget Guide**: [WIDGETS.md](./WIDGETS.md)
-- **Testing**: [TESTING.md](./TESTING.md)
-- **Deployment**: [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **Desktop App**: [../stealthdash-desktop-app/README.md](../stealthdash-desktop-app/README.md)
-- **Theming**: [THEMING.md](./THEMING.md)
-- **CSS Reference**: [CSS-COMPONENT-REFERENCE.md](./CSS-COMPONENT-REFERENCE.md)
+- **Widget Guide**: [WIDGETS.md](docs/WIDGETS.md)
+- **Testing**: [TESTING.md](docs/TESTING.md)
+- **Deployment**: [DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- **Desktop App**: [../stealthdash-desktop-app/README.md](stealthdash-desktop-app/README.md)
+- **Theming**: [THEMING.md](docs/THEMING.md)
+- **CSS Reference**: [CSS-COMPONENT-REFERENCE.md](docs/CSS-COMPONENT-REFERENCE.md)

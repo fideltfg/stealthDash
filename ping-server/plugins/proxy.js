@@ -43,7 +43,6 @@ router.get('/embed-proxy', async (req, res) => {
       }
 
       // Allow embedding from any origin
-      res.set('Access-Control-Allow-Origin', '*');
       res.removeHeader('X-Frame-Options');
 
       proxyRes.pipe(res);
@@ -95,7 +94,6 @@ router.get('/ha-embed-proxy', async (req, res) => {
         }
       }
 
-      res.set('Access-Control-Allow-Origin', '*');
 
       const contentType = (proxyRes.headers['content-type'] || '').toLowerCase();
 
@@ -152,7 +150,6 @@ router.get('/proxy', async (req, res) => {
     protocol.get(targetUrl, (proxyRes) => {
       // Forward the content-type header
       res.set('Content-Type', proxyRes.headers['content-type'] || 'text/xml');
-      res.set('Access-Control-Allow-Origin', '*');
       
       // Pipe the response
       proxyRes.pipe(res);

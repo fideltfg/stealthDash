@@ -12,7 +12,7 @@ Proxy a webpage with frame-blocking headers stripped — used by the Embed widge
 |-----------|------|-----|----------|-------------|
 | `url` | string | query | Yes | Target URL to proxy (http/https only) |
 
-**Response:** Proxied HTML content with `X-Frame-Options` and `Content-Security-Policy` headers removed, and `Access-Control-Allow-Origin: *` added.
+**Response:** Proxied HTML content with `X-Frame-Options` and `Content-Security-Policy` headers removed. Browser access follows the backend `CORS_ALLOWED_ORIGINS` policy.
 
 ### `GET /proxy`
 
